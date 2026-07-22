@@ -25,18 +25,22 @@ import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
-const HERO_COLLAGE_TOP_FALLBACK =
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop'
+/** First-party LCP hero (same Unsplash photo-1571260899304…, 4:3). See public/hero/. */
+const HERO_COLLAGE_TOP_FALLBACK = '/hero/hero-top-800.webp'
 const HERO_COLLAGE_BOTTOM_FALLBACK =
   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=640&q=70&auto=format&fit=crop'
 const LANDLORD_SECTION_IMAGE =
   'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=960&q=70&auto=format&fit=crop'
 
-/** Responsive Unsplash variants for the stable homepage LCP image. */
-const HERO_TOP_SRCSET = [
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=480&q=75&auto=format&fit=crop 480w',
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=640&q=75&auto=format&fit=crop 640w',
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop 800w',
+const HERO_TOP_AVIF_SRCSET = [
+  '/hero/hero-top-480.avif 480w',
+  '/hero/hero-top-640.avif 640w',
+  '/hero/hero-top-800.avif 800w',
+].join(', ')
+const HERO_TOP_WEBP_SRCSET = [
+  '/hero/hero-top-480.webp 480w',
+  '/hero/hero-top-640.webp 640w',
+  '/hero/hero-top-800.webp 800w',
 ].join(', ')
 const HERO_TOP_SIZES = '(min-width: 1024px) 36vw, 75vw'
 
@@ -343,13 +347,13 @@ export default function Home() {
     return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
   })()
 
-  // Keep the top collage on the preloaded Unsplash fallback so LCP is discoverable
+  // Keep the top collage on the preloaded first-party asset so LCP is discoverable
   // immediately (do not wait on / swap after the featured Supabase fetch).
   const heroCollageTopSrc = HERO_COLLAGE_TOP_FALLBACK
   const heroCollageBottomSrc =
     withUnsplashWidth(firstPropertyImageUrl(featured[0]?.images ?? null) ?? HERO_COLLAGE_BOTTOM_FALLBACK, 640)
 
-  const homeOgImage = HERO_COLLAGE_TOP_FALLBACK
+  const homeOgImage = absoluteUrl(HERO_COLLAGE_TOP_FALLBACK)
 
   const homeJsonLd = {
     '@context': 'https://schema.org',
@@ -516,20 +520,24 @@ export default function Home() {
                 <span className="text-[11px] font-semibold leading-tight">Fast Wifi</span>
               </div>
 
-              {/* Top image - right */}
+              {/* Top image - right (LCP; first-party AVIF/WebP) */}
               <div className="relative z-10 flex justify-end pr-1">
                 <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
-                  <img
-                    src={heroCollageTopSrc}
-                    srcSet={HERO_TOP_SRCSET}
-                    sizes={HERO_TOP_SIZES}
-                    alt=""
-                    width={800}
-                    height={600}
-                    fetchPriority="high"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
+                  <picture>
+                    <source type="image/avif" srcSet={HERO_TOP_AVIF_SRCSET} sizes={HERO_TOP_SIZES} />
+                    <source type="image/webp" srcSet={HERO_TOP_WEBP_SRCSET} sizes={HERO_TOP_SIZES} />
+                    <img
+                      src={heroCollageTopSrc}
+                      srcSet={HERO_TOP_WEBP_SRCSET}
+                      sizes={HERO_TOP_SIZES}
+                      alt=""
+                      width={800}
+                      height={600}
+                      fetchPriority="high"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  </picture>
                 </div>
               </div>
               {/* Bottom image - left, overlaps */}
