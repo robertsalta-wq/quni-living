@@ -1682,9 +1682,10 @@ export default function AdminApps() {
             <h2 className="text-sm font-semibold text-gray-900">How to use this page</h2>
             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
               This tab pulls real-user performance from Sentry for key route patterns on{' '}
-              <span className="font-medium text-gray-800">production</span> over the last {perfStatsPeriod}. It
-              helps you see whether important pages are fast enough against Google&apos;s Core Web Vitals (CWV)
-              before users complain or SEO traffic grows.
+              <span className="font-medium text-gray-800">production</span> over the last {perfStatsPeriod},
+              including the homepage (<span className="font-medium text-gray-800">/</span>) and other high-traffic
+              routes. It helps you see whether important pages are fast enough against Google&apos;s Core Web
+              Vitals (CWV) before users complain or SEO traffic grows.
             </p>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 list-disc list-inside">
               <li>
