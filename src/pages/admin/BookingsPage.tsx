@@ -782,6 +782,13 @@ function DocuSealReconcileSection({
   }, [loadLeaseDoc])
 
   async function reconcileFromDocuseal() {
+    const confirmed = window.confirm(
+      'Reconcile this booking from DocuSeal?\n\n' +
+        'This can change booking status, tenancy status, and signature timestamps to match DocuSeal. ' +
+        'Withdrawn bookings (cancelled/declined) are blocked server-side.',
+    )
+    if (!confirmed) return
+
     setReconciling(true)
     setActionError(null)
     setSummary(null)

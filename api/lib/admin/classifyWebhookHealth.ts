@@ -2,7 +2,12 @@
  * Living Console platform tile: classify `provider_webhook_health` rows.
  *
  * Never invents a green "all providers" stub. Handles `last_received_at = null`
- * as "no events recorded yet" (Stripe's current state) — watch, not alarm.
+ * as "no events recorded yet" — watch, not alarm.
+ *
+ * All three providers are wired to `touchProviderWebhookHealth`:
+ * DocuSeal (`api/webhooks/docuseal.ts`), Resend (`api/webhooks/resend.ts`),
+ * Stripe (`api/stripe-webhook.js`). A persistent Stripe null means receipts
+ * are not landing (ops), not that the write path is missing — keep the row.
  */
 
 export type WebhookHealthRow = {
@@ -27,7 +32,7 @@ export type WebhookAttentionItem = {
 export const WEBHOOK_THRESHOLDS_DAYS = {
   docuseal: { watch: 14, action: 30 },
   resend: { watch: 7, action: 14 },
-  /** Until Stripe populates the table, null stays watch-only; aged data uses these. */
+  /** Null stays watch-only (not critical). Aged timestamps use these once data lands. */
   stripe: { watch: 7, action: 14 },
 } as const
 
