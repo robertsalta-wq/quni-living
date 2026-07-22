@@ -56,7 +56,7 @@ export function LandlordWholePlaceListingCard({
     .join(' · ')
 
   return (
-    <article className="quni-dashboard-panel">
+    <article className="quni-card overflow-hidden">
       <button
         type="button"
         onClick={() => onEdit(listing)}
@@ -94,7 +94,7 @@ export default function LandlordPropertyGroupCard({
   const suburbLine = roomsHeaderSubline(group)
 
   return (
-    <article className="quni-dashboard-panel">
+    <article className="quni-card overflow-hidden">
       <button
         type="button"
         onClick={onToggleExpanded}
