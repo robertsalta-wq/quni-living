@@ -1,3 +1,4 @@
+import { StatusPill } from '../../ui/Section'
 import { RefreshCw, ProfileSectionIcon } from './profileSectionIcons'
 import { routeSectionTitle } from '../../../lib/renterProfileSection'
 import type { RenterSituation } from '../../../lib/renterSituation'
@@ -58,24 +59,24 @@ export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm,
 export function RenterProfileLockedRouteSection() {
   return (
     <div
-      className="quni-card flex items-center gap-[14px] border-dashed border-[var(--quni-line)] px-5 py-[17px]"
+      className="quni-card flex items-center gap-[14px] border-dashed border-[var(--quni-line)] px-5 py-[17px] font-sans"
       id="renter-section-route-locked"
     >
-      <div className="renter-profile-icon-wrap renter-profile-icon-wrap-lg" style={{ background: 'var(--quni-surface-3)', color: 'var(--quni-ink-5)' }}>
+      <div className="renter-profile-icon-wrap renter-profile-icon-wrap-lg bg-[var(--quni-surface-3)] text-[var(--quni-ink-5)]">
         <ProfileSectionIcon kind="verify" />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
-          <span className="renter-profile-section-num" style={{ color: 'var(--quni-ink-5)' }}>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-[9px]">
+          <span className="shrink-0 text-[var(--text-caption-size)] font-bold tracking-[0.02em] text-[var(--quni-ink-5)]">
             03
           </span>
-          <span className="renter-profile-section-title" style={{ color: 'var(--quni-ink-5)' }}>
+          <span className="text-[var(--text-body-size)] font-semibold tracking-[-0.01em] text-[var(--quni-ink-5)]">
             Your route details
           </span>
         </div>
-        <p style={{ marginTop: 3, fontSize: 13, color: 'var(--quni-ink-5)' }}>Choose your situation to unlock</p>
+        <p className="mt-[3px] text-[13px] text-[var(--quni-ink-5)]">Choose your situation to unlock</p>
       </div>
-      <span className="renter-profile-pill renter-profile-pill-locked">Locked</span>
+      <StatusPill status="locked" />
     </div>
   )
 }

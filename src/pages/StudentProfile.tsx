@@ -498,7 +498,10 @@ export default function StudentProfile() {
               style={{ padding: '20px' }}
               aria-labelledby="danger-zone-heading"
             >
-              <h2 id="danger-zone-heading" className="renter-profile-section-title">
+              <h2
+                id="danger-zone-heading"
+                className="text-[var(--text-body-size)] font-semibold tracking-[-0.01em] text-[var(--quni-ink)]"
+              >
                 Danger zone
               </h2>
               <p style={{ marginTop: 8, fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>

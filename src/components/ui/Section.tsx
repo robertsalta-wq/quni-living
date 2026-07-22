@@ -19,7 +19,7 @@ function CheckIcon({ className }: { className?: string }) {
   )
 }
 
-function StatusPill({ status }: { status: SectionStatus }) {
+export function StatusPill({ status }: { status: SectionStatus }) {
   if (status === 'done') {
     return (
       <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-admin-pill bg-admin-success-bg px-2 py-1 text-xs font-semibold text-admin-success-fg">
@@ -76,6 +76,7 @@ export default function Section({
   id,
   icon,
   title,
+  sectionNum,
   subtitle,
   status,
   summary,
@@ -87,6 +88,7 @@ export default function Section({
   children,
 }: SectionProps) {
   const isOpen = !collapsible || expanded
+  const showBody = isOpen && children != null
   const showSummaryRow = collapsible && !expanded && summary != null
   const showDoneGlyph = status === 'done'
 
@@ -101,7 +103,14 @@ export default function Section({
       ) : null}
 
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold text-admin-ink">{title}</span>
+        <span className="flex min-w-0 items-baseline gap-[7px]">
+          {sectionNum ? (
+            <span className="shrink-0 text-[var(--text-caption-size)] font-bold tracking-[0.02em] text-admin-coral">
+              {sectionNum}
+            </span>
+          ) : null}
+          <span className="block text-[15px] font-semibold text-admin-ink">{title}</span>
+        </span>
         {subtitle ? (
           <span
             className={`mt-0.5 block text-[12.5px] ${tone === 'ai' ? 'text-admin-ai' : 'text-admin-ink-4'}`}
@@ -133,7 +142,7 @@ export default function Section({
   return (
     <section
       id={id}
-      className={`quni-card scroll-mt-below-header overflow-hidden ${toneBorderClass(tone)}`}
+      className={`quni-card scroll-mt-below-header overflow-hidden font-sans ${toneBorderClass(tone)}`}
     >
       {collapsible ? (
         <button
@@ -149,7 +158,7 @@ export default function Section({
         <div className="flex w-full items-center gap-2.5 px-5 py-[18px] text-left">{headerInner}</div>
       )}
 
-      {isOpen ? (
+      {showBody ? (
         <div
           id={`${id}-body`}
           className="border-t border-admin-line-soft px-5 pb-[22px] pt-[18px]"
