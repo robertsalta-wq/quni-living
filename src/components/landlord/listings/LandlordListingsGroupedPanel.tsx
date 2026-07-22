@@ -116,7 +116,8 @@ export default function LandlordListingsGroupedPanel({
       className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--quni-coral-hover)]"
     >
       <Plus className="h-4 w-4" aria-hidden />
-      Add
+      <span className="min-[840px]:hidden">Add</span>
+      <span className="hidden min-[840px]:inline">Add listing</span>
     </Link>
   ) : (
     <Link
@@ -125,7 +126,8 @@ export default function LandlordListingsGroupedPanel({
       className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[10px] border-2 border-stone-300 bg-stone-100 px-4 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
     >
       <Plus className="h-4 w-4" aria-hidden />
-      Add
+      <span className="min-[840px]:hidden">Add</span>
+      <span className="hidden min-[840px]:inline">Add listing</span>
     </Link>
   )
 
@@ -172,22 +174,30 @@ export default function LandlordListingsGroupedPanel({
   return (
     <div className="w-full min-w-0 max-w-full space-y-4">
       <div className="sticky top-0 z-10 space-y-3 bg-admin-surface-2/95 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-admin-surface-2/80">
-        <div className="flex items-center gap-2">
-          <label className="relative min-w-0 flex-1">
-            <span className="sr-only">Search address or room</span>
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--quni-ink-5)]"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search address or room"
-              className="w-full rounded-[10px] border border-[var(--quni-line)] bg-white py-2.5 pl-9 pr-3 text-sm text-[var(--quni-ink)] placeholder:text-[var(--quni-ink-5)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral-border)]"
-            />
-          </label>
-          {addButton}
+        <div className="flex flex-col gap-3 min-[840px]:flex-row min-[840px]:items-end min-[840px]:justify-between">
+          <div className="hidden min-[840px]:block min-w-0">
+            <h1 className="text-[26px] font-bold leading-tight text-[var(--quni-ink)]">Listings</h1>
+            <p className="mt-1 text-sm text-[var(--quni-ink-4)]">
+              {listings.length} {listings.length === 1 ? 'listing' : 'listings'} across your properties
+            </p>
+          </div>
+          <div className="flex items-center gap-2 min-[840px]:shrink-0">
+            <label className="relative min-w-0 flex-1 min-[840px]:w-[280px] min-[840px]:flex-none">
+              <span className="sr-only">Search address or room</span>
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--quni-ink-5)]"
+                aria-hidden
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search address or room"
+                className="w-full rounded-[10px] border border-[var(--quni-line)] bg-white py-2.5 pl-9 pr-3 text-sm text-[var(--quni-ink)] placeholder:text-[var(--quni-ink-5)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral-border)]"
+              />
+            </label>
+            {addButton}
+          </div>
         </div>
         <LandlordListingsStatusChips active={statusFilter} counts={counts} onChange={setStatusFilter} />
       </div>
