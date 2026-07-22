@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useAuthContext } from '../context/AuthContext'
 import { useSavedProperties } from '../context/SavedPropertiesContext'
-import { isRenterRole } from '../lib/authProfile'
-import { consumePendingSaveProperty, peekPendingSavePropertyId } from '../lib/savedProperties'
+import { isRenterRole } from '../lib/marketplaceRole'
+import { peekPendingSavePropertyId } from '../lib/savedPropertiesPending'
 
 /**
  * Central authenticated-session consumer for guest “save then sign in”.
@@ -22,11 +22,12 @@ export function PendingSaveConsumer() {
     inFlightRef.current = true
     void (async () => {
       const id = peekPendingSavePropertyId()
+      const { consumePendingSaveProperty } = await import('../lib/savedProperties')
       const ok = await consumePendingSaveProperty()
       if (ok && id) markSavedLocal(id)
       inFlightRef.current = false
     })()
-  }, [user?.id, role, loading, markSavedLocal])
+  }, [loading, user, role, markSavedLocal])
 
   return null
 }

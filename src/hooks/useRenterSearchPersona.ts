@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
-import { isRenterRole } from '../lib/authProfile'
+import { isRenterRole } from '../lib/marketplaceRole'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import {
   getFallbackLegalEntity,
   legalEntitiesEqual,
@@ -24,6 +24,7 @@ function useProvideLegalEntity(): LegalEntityContextValue {
     let cancelled = false
 
     void (async () => {
+      const { supabase } = await import('../lib/supabase')
       // View omitted from generated Database types so existing .from() overloads stay stable.
       type LegalEntityClient = {
         from(table: 'public_legal_entity'): {

@@ -3,7 +3,13 @@ import { createPortal } from 'react-dom'
 import { Bell, Info, Mail } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
+import {
+  getNavDashboardPath,
+  INCOMPLETE_RENTER_DESTINATION,
+  isRenterRole,
+  needsOnboarding,
+  type UserRole,
+} from '../lib/authProfileRouting'
 import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import {
   dashboardMobileSectionTitle,

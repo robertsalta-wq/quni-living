@@ -1,11 +1,46 @@
-import { createContext, useContext, type ReactNode } from 'react'
-import { useProvideAuth, type AuthState } from '../hooks/useAuth'
+import { useContext, useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import type { AuthState } from '../hooks/useAuth'
+import { shouldBootstrapAuthEagerly } from '../lib/shouldBootstrapAuthEagerly'
+import { AUTH_LOADING_DEFAULT, AuthContext } from './authContextShared'
 
-const AuthContext = createContext<AuthState | null>(null)
+type LiveProvider = ComponentType<{ children: ReactNode }>
+
+function scheduleAuthBootstrap(start: () => void): () => void {
+  if (typeof window === 'undefined') {
+    // SSR / prerender: keep loading shell (no session on server).
+    return () => {}
+  }
+  if (shouldBootstrapAuthEagerly()) {
+    start()
+    return () => {}
+  }
+  const ric = window.requestIdleCallback as
+    | ((cb: () => void, opts?: { timeout: number }) => number)
+    | undefined
+  if (typeof ric === 'function') {
+    const id = ric(start, { timeout: 2500 })
+    return () => window.cancelIdleCallback(id)
+  }
+  const t = window.setTimeout(start, 1)
+  return () => window.clearTimeout(t)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const value = useProvideAuth()
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  const [Live, setLive] = useState<LiveProvider | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    return scheduleAuthBootstrap(() => {
+      void import('./AuthProviderLive').then((m) => {
+        if (!cancelled) setLive(() => m.AuthProviderLive)
+      })
+    })
+  }, [])
+
+  if (!Live) {
+    return <AuthContext.Provider value={AUTH_LOADING_DEFAULT}>{children}</AuthContext.Provider>
+  }
+  return <Live>{children}</Live>
 }
 
 /* Hook lives next to provider - consumers import from here */

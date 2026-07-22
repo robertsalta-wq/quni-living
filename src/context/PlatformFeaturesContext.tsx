@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { buildManagedOverridesMap } from '../lib/serviceTier/matrix'
 import type { ManagedOverridesMap } from '../lib/serviceTier'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 
 export type PlatformFeatures = {
   managedTierEnabled: boolean
@@ -42,6 +42,7 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
     let cancelled = false
 
     void (async () => {
+      const { supabase } = await import('../lib/supabase')
       type FeaturesClient = {
         from(table: 'public_platform_features'): {
           select(cols: '*'): {

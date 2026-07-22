@@ -9,7 +9,7 @@ import {
   type UniversityCampusReferenceScope,
 } from '../lib/universityCampusReference'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 
 export type UniversityCampusSelectProps = {
   universityId: string | null

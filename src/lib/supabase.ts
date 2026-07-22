@@ -1,14 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
+import {
+  getSupabaseEnvAnonKey,
+  getSupabaseEnvUrl,
+  isSupabaseConfigured,
+} from './supabaseConfigured'
 
-const viteEnv = (import.meta as { env?: Record<string, string | undefined> }).env
-const nodeEnv =
-  typeof globalThis !== 'undefined' && 'process' in globalThis
-    ? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
-    : undefined
+export { isSupabaseConfigured }
 
-const envUrl = (viteEnv?.VITE_SUPABASE_URL ?? nodeEnv?.VITE_SUPABASE_URL ?? nodeEnv?.SUPABASE_URL ?? '').trim()
-const envKey = (viteEnv?.VITE_SUPABASE_ANON_KEY ?? nodeEnv?.VITE_SUPABASE_ANON_KEY ?? nodeEnv?.SUPABASE_ANON_KEY ?? '').trim()
+const envUrl = getSupabaseEnvUrl()
+const envKey = getSupabaseEnvAnonKey()
 
 /** JWT `role` claim (unsigned decode) - detects service_role misuse in the browser. */
 function readJwtRole(token: string): string | undefined {
@@ -51,9 +52,6 @@ if (typeof window !== 'undefined' && envKey) {
     console.error('[Supabase]', misuse)
   }
 }
-
-/** True when real credentials are in `.env.local` */
-export const isSupabaseConfigured = Boolean(envUrl && envKey)
 
 /** Edge function URL from `VITE_SUPABASE_URL` (e.g. `qase-triage`). */
 export function getSupabaseEdgeFunctionUrl(functionName: string): string | null {
