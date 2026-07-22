@@ -330,8 +330,8 @@ export default function BookingLeasePanel({
           <p className="text-xs leading-relaxed text-admin-ink">
             Your residential tenancy agreement has been drafted.{' '}
             {viewer_role === 'tenant'
-              ? 'Check your email for DocuSeal signing, or use the button below when ready. Bond payment is separate - see bond guidance on your dashboard.'
-              : 'Check your email for DocuSeal signing, or use the button below. Record bond receipt on Quni when the renter has paid (this does not block signing).'}
+              ? 'Check your email for a signing link, or use the button below when ready. Bond payment is separate - see bond guidance on your dashboard.'
+              : 'Check your email for a signing link, or use the button below. Record bond receipt on Quni when the renter has paid (this does not block signing).'}
           </p>
           {preview_url && (
             <a
@@ -363,7 +363,7 @@ export default function BookingLeasePanel({
             </a>
           ) : (
             <p className="text-xs text-admin-warning-fg">
-              Signing link is not yet available in-app. Check the email we sent you with your DocuSeal signing link.
+              Signing link is not yet available in-app. Check the email we sent you with your signing link.
             </p>
           )}
           {preview_url && (
