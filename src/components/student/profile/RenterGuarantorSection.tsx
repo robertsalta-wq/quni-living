@@ -16,6 +16,16 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterCheckboxErrorClass,
+  renterFormActionsColumnClass,
+  renterFormGridStackClass,
+  renterFullWidthClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const GUARANTOR_HINT_LABELS = {
   guarantorName: 'guarantor name',
@@ -167,10 +177,10 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid renter-profile-form-grid--stack">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridStackClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
-        <label htmlFor="rg-name" className="renter-profile-field-label">
+        <label htmlFor="rg-name" className={renterLabelClass}>
           Full name
         </label>
         <input
@@ -180,14 +190,14 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             setGuarantorName(e.target.value)
             clearFieldError('guarantorName')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorName))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.guarantorName))}
           aria-invalid={fieldErrors.guarantorName ? true : undefined}
           aria-describedby={fieldErrors.guarantorName ? 'rg-name-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rg-name-error" message={fieldErrors.guarantorName} />
       </div>
       <div>
-        <label htmlFor="rg-rel" className="renter-profile-field-label">
+        <label htmlFor="rg-rel" className={renterLabelClass}>
           Relationship
         </label>
         <input
@@ -197,14 +207,14 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             setGuarantorRelationship(e.target.value)
             clearFieldError('guarantorRelationship')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorRelationship))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.guarantorRelationship))}
           aria-invalid={fieldErrors.guarantorRelationship ? true : undefined}
           aria-describedby={fieldErrors.guarantorRelationship ? 'rg-rel-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rg-rel-error" message={fieldErrors.guarantorRelationship} />
       </div>
       <div>
-        <label htmlFor="rg-phone" className="renter-profile-field-label">
+        <label htmlFor="rg-phone" className={renterLabelClass}>
           Phone
         </label>
         <input
@@ -215,14 +225,14 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             setGuarantorPhone(e.target.value)
             clearFieldError('guarantorPhone')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorPhone))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.guarantorPhone))}
           aria-invalid={fieldErrors.guarantorPhone ? true : undefined}
           aria-describedby={fieldErrors.guarantorPhone ? 'rg-phone-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rg-phone-error" message={fieldErrors.guarantorPhone} />
       </div>
       <div>
-        <label htmlFor="rg-email" className="renter-profile-field-label">
+        <label htmlFor="rg-email" className={renterLabelClass}>
           Email
         </label>
         <input
@@ -233,14 +243,14 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             setGuarantorEmail(e.target.value)
             clearFieldError('guarantorEmail')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorEmail))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.guarantorEmail))}
           aria-invalid={fieldErrors.guarantorEmail ? true : undefined}
           aria-describedby={fieldErrors.guarantorEmail ? 'rg-email-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rg-email-error" message={fieldErrors.guarantorEmail} />
       </div>
-      <div style={{ gridColumn: '1 / -1' }}>
-        <label htmlFor="rg-income" className="renter-profile-field-label">
+      <div className={renterFullWidthClass}>
+        <label htmlFor="rg-income" className={renterLabelClass}>
           Income band
         </label>
         <select
@@ -250,7 +260,7 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             setGuarantorIncomeBand(e.target.value)
             clearFieldError('guarantorIncomeBand')
           }}
-          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.guarantorIncomeBand))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.guarantorIncomeBand))}
           aria-invalid={fieldErrors.guarantorIncomeBand ? true : undefined}
           aria-describedby={fieldErrors.guarantorIncomeBand ? 'rg-income-error' : undefined}
         >
@@ -263,7 +273,7 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
         </select>
         <RenterProfileFieldErrorMsg id="rg-income-error" message={fieldErrors.guarantorIncomeBand} />
       </div>
-      <div style={{ gridColumn: '1 / -1' }}>
+      <div className={renterFullWidthClass}>
         <label
           style={{
             display: 'flex',
@@ -281,7 +291,7 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
               setGuarantorConsent(e.target.checked)
               clearFieldError('guarantorConsent')
             }}
-            className={fieldErrors.guarantorConsent ? 'renter-profile-checkbox--error' : undefined}
+            className={fieldErrors.guarantorConsent ? renterCheckboxErrorClass : undefined}
             style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
             aria-invalid={fieldErrors.guarantorConsent ? true : undefined}
             aria-describedby={fieldErrors.guarantorConsent ? 'rg-consent-error' : undefined}
@@ -293,9 +303,9 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
 
       <RenterProfileWriteError message={saveError} />
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

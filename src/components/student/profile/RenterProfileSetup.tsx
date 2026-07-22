@@ -221,7 +221,6 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         title="Verification"
         status={verificationComplete ? 'done' : 'todo'}
         summary={situation ? verificationSummary(profile, situation, docUpload) : undefined}
-        stack
       >
         {situation ? (
           <RenterUniversalVerificationSection
@@ -301,7 +300,6 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         title="About you"
         status="optional"
         summary={aboutHasContent ? 'A short intro and the languages you speak' : undefined}
-        stack
       >
         <RenterProfileAboutSection profile={profile} userId={userId} onSaved={handleRefresh} />
       </ProfileSetupSection>

@@ -24,6 +24,19 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFieldGroupHeadingClass,
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterFullWidthClass,
+  renterInputClass,
+  renterLabelClass,
+  renterNoteClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const WORKING_ROUTE_HINT_LABELS = {
   employmentStatus: 'employment status',
@@ -272,10 +285,10 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
 
   return (
     <>
-      <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+      <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
         <RenterProfileSectionErrorBanner message={sectionError} />
-        <div className="renter-profile-field">
-          <label htmlFor="rw-status" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-status" className={renterLabelClass}>
             Employment status
           </label>
           <select
@@ -285,7 +298,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               setEmploymentStatus(e.target.value)
               clearFieldError('employmentStatus')
             }}
-            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.employmentStatus))}
+            className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.employmentStatus))}
             aria-invalid={fieldErrors.employmentStatus ? true : undefined}
             aria-describedby={fieldErrors.employmentStatus ? 'rw-status-error' : undefined}
           >
@@ -298,8 +311,8 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <RenterProfileFieldErrorMsg id="rw-status-error" message={fieldErrors.employmentStatus} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-employer" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-employer" className={renterLabelClass}>
             Employer name
           </label>
           <input
@@ -310,15 +323,15 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               clearFieldError('employerName')
             }}
             placeholder="e.g. Acme Pty Ltd"
-            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.employerName))}
+            className={renterFieldClass(renterInputClass, Boolean(fieldErrors.employerName))}
             aria-invalid={fieldErrors.employerName ? true : undefined}
             aria-describedby={fieldErrors.employerName ? 'rw-employer-error' : undefined}
           />
           <RenterProfileFieldErrorMsg id="rw-employer-error" message={fieldErrors.employerName} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-title" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-title" className={renterLabelClass}>
             Job title
           </label>
           <input
@@ -329,15 +342,15 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               clearFieldError('jobTitle')
             }}
             placeholder="e.g. Software engineer"
-            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.jobTitle))}
+            className={renterFieldClass(renterInputClass, Boolean(fieldErrors.jobTitle))}
             aria-invalid={fieldErrors.jobTitle ? true : undefined}
             aria-describedby={fieldErrors.jobTitle ? 'rw-title-error' : undefined}
           />
           <RenterProfileFieldErrorMsg id="rw-title-error" message={fieldErrors.jobTitle} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-type" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-type" className={renterLabelClass}>
             Employment type
           </label>
           <select
@@ -347,7 +360,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               setEmploymentType(e.target.value)
               clearFieldError('employmentType')
             }}
-            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.employmentType))}
+            className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.employmentType))}
             aria-invalid={fieldErrors.employmentType ? true : undefined}
             aria-describedby={fieldErrors.employmentType ? 'rw-type-error' : undefined}
           >
@@ -360,8 +373,8 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <RenterProfileFieldErrorMsg id="rw-type-error" message={fieldErrors.employmentType} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-income" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-income" className={renterLabelClass}>
             Income band
           </label>
           <select
@@ -371,7 +384,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               setIncomeBand(e.target.value)
               clearFieldError('incomeBand')
             }}
-            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeBand))}
+            className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.incomeBand))}
             aria-invalid={fieldErrors.incomeBand ? true : undefined}
             aria-describedby={fieldErrors.incomeBand ? 'rw-income-error' : undefined}
           >
@@ -385,10 +398,10 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <RenterProfileFieldErrorMsg id="rw-income-error" message={fieldErrors.incomeBand} />
         </div>
 
-        <h3 className="renter-profile-field-group-heading">Work location (optional)</h3>
+        <h3 className={renterFieldGroupHeadingClass}>Work location (optional)</h3>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-wl-label" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-wl-label" className={renterLabelClass}>
             Label
           </label>
           <input
@@ -396,12 +409,12 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
             value={workplaceLabel}
             onChange={(e) => setWorkplaceLabel(e.target.value)}
             placeholder="e.g. Martin Place office"
-            className="renter-profile-input"
+            className={renterInputClass}
           />
         </div>
 
-        <div className="renter-profile-field" style={{ gridColumn: '1 / -1' }}>
-          <label htmlFor="rw-wl-addr" className="renter-profile-field-label">
+        <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
+          <label htmlFor="rw-wl-addr" className={renterLabelClass}>
             Street address
           </label>
           <input
@@ -409,13 +422,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
             value={workplaceAddress}
             onChange={(e) => setWorkplaceAddress(e.target.value)}
             placeholder="e.g. 1 Martin Place"
-            className="renter-profile-input"
+            className={renterInputClass}
             autoComplete="street-address"
           />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-wl-sub" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-wl-sub" className={renterLabelClass}>
             Suburb
           </label>
           <input
@@ -425,7 +438,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               setWorkplaceSuburb(e.target.value)
               clearFieldError('workplaceSuburb')
             }}
-            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.workplaceSuburb))}
+            className={renterFieldClass(renterInputClass, Boolean(fieldErrors.workplaceSuburb))}
             autoComplete="address-level2"
             aria-invalid={fieldErrors.workplaceSuburb ? true : undefined}
             aria-describedby={fieldErrors.workplaceSuburb ? 'rw-wl-sub-error' : undefined}
@@ -433,8 +446,8 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <RenterProfileFieldErrorMsg id="rw-wl-sub-error" message={fieldErrors.workplaceSuburb} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-wl-st" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-wl-st" className={renterLabelClass}>
             State
           </label>
           <select
@@ -444,7 +457,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               setWorkplaceState(e.target.value)
               clearFieldError('workplaceState')
             }}
-            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.workplaceState))}
+            className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.workplaceState))}
             aria-invalid={fieldErrors.workplaceState ? true : undefined}
             aria-describedby={fieldErrors.workplaceState ? 'rw-wl-st-error' : undefined}
           >
@@ -457,8 +470,8 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <RenterProfileFieldErrorMsg id="rw-wl-st-error" message={fieldErrors.workplaceState} />
         </div>
 
-        <div className="renter-profile-field">
-          <label htmlFor="rw-wl-pc" className="renter-profile-field-label">
+        <div className={renterFieldWrapClass}>
+          <label htmlFor="rw-wl-pc" className={renterLabelClass}>
             Postcode
           </label>
           <input
@@ -469,7 +482,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               clearFieldError('workplacePostcode')
             }}
             inputMode="numeric"
-            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.workplacePostcode))}
+            className={renterFieldClass(renterInputClass, Boolean(fieldErrors.workplacePostcode))}
             autoComplete="postal-code"
             aria-invalid={fieldErrors.workplacePostcode ? true : undefined}
             aria-describedby={fieldErrors.workplacePostcode ? 'rw-wl-pc-error' : undefined}
@@ -480,21 +493,21 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
         <RenterProfileWriteError message={saveError} />
 
         {saveNotice && !saveError ? (
-          <p className="renter-profile-note" style={{ gridColumn: '1 / -1', marginTop: 0 }} role="status">
+          <p className={`${renterNoteClass} ${renterFullWidthClass} !mt-0`} role="status">
             {saveNotice}
           </p>
         ) : null}
 
-        <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className={renterFormActionsColumnClass}>
           <RenterProfileSaveHint message={sectionSaveHint} />
-          <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+          <button type="submit" disabled={saving} className={renterSaveBtnClass}>
             {saving ? 'Saving…' : 'Save section'}
           </button>
         </div>
       </form>
 
       {routeComplete ? (
-        <p className="renter-profile-success-flash" role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Employment section complete.
         </p>
       ) : null}

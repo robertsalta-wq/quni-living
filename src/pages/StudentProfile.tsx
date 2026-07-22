@@ -11,6 +11,7 @@ import { RenterProfileSetup } from '../components/student/profile/RenterProfileS
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { renterWriteErrorClass } from '../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -245,7 +246,7 @@ export default function StudentProfile() {
   if (loadError || !profile) {
     return (
       <RenterDashboardTabShell activeTab={activeTab === 'bookings' ? 'bookings' : 'profile'}>
-        <p className="renter-profile-error">{loadError ?? 'Profile unavailable.'}</p>
+        <p className={renterWriteErrorClass}>{loadError ?? 'Profile unavailable.'}</p>
         <Link to="/student-dashboard" className="renter-profile-edit-btn" style={{ marginTop: 16, display: 'inline-flex' }}>
           Go to dashboard
         </Link>

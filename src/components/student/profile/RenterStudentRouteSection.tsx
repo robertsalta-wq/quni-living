@@ -26,6 +26,17 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterFullWidthClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const STUDENT_ROUTE_HINT_LABELS = {
   universityId: 'university',
@@ -36,10 +47,6 @@ const STUDENT_ROUTE_HINT_LABELS = {
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type DocUploadApi = ReturnType<typeof useStudentVerificationDocUpload>
-
-const labelClass = 'renter-profile-field-label'
-const inputClass = 'renter-profile-input'
-const selectClass = 'renter-profile-select'
 
 function studyLevelToYear(level: string): number | null {
   const m: Record<string, number> = {
@@ -198,9 +205,9 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
   const enrolSlot = enrolComplete && enrolFileName ? verificationDocRowSlot(profile, 'enrolment') : null
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
-      <div style={{ gridColumn: '1 / -1' }}>
+      <div className={renterFullWidthClass}>
         <UniversityCampusSelect
           universityId={universityId || null}
           campusId={campusId || null}
@@ -213,17 +220,17 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
           referenceScope="full"
           required
           showState
-          labelClassName={labelClass}
-          universitySelectClassName={renterFieldClass(selectClass, Boolean(fieldErrors.universityId))}
-          campusSelectClassName={selectClass}
+          labelClassName={renterLabelClass}
+          universitySelectClassName={renterFieldClass(renterSelectClass, Boolean(fieldErrors.universityId))}
+          campusSelectClassName={renterSelectClass}
           universityIdAttr="rs-uni"
           campusIdAttr="rs-campus"
         />
         <RenterProfileFieldErrorMsg id="rs-uni-error" message={fieldErrors.universityId} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rs-course" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rs-course" className={renterLabelClass}>
           Course / degree
         </label>
         <input
@@ -234,15 +241,15 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
             clearFieldError('course')
           }}
           placeholder="e.g. Bachelor of Commerce"
-          className={renterFieldClass(inputClass, Boolean(fieldErrors.course))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.course))}
           aria-invalid={fieldErrors.course ? true : undefined}
           aria-describedby={fieldErrors.course ? 'rs-course-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rs-course-error" message={fieldErrors.course} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rs-study" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rs-study" className={renterLabelClass}>
           Year of study
         </label>
         <select
@@ -252,7 +259,7 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
             setStudyLevel(e.target.value)
             clearFieldError('studyLevel')
           }}
-          className={renterFieldClass(selectClass, Boolean(fieldErrors.studyLevel))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.studyLevel))}
           aria-invalid={fieldErrors.studyLevel ? true : undefined}
           aria-describedby={fieldErrors.studyLevel ? 'rs-study-error' : undefined}
         >
@@ -266,8 +273,8 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
         <RenterProfileFieldErrorMsg id="rs-study-error" message={fieldErrors.studyLevel} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rs-income" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rs-income" className={renterLabelClass}>
           Income band
         </label>
         <select
@@ -277,7 +284,7 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
             setIncomeBand(e.target.value)
             clearFieldError('incomeBand')
           }}
-          className={renterFieldClass(selectClass, Boolean(fieldErrors.incomeBand))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.incomeBand))}
           aria-invalid={fieldErrors.incomeBand ? true : undefined}
           aria-describedby={fieldErrors.incomeBand ? 'rs-income-error' : undefined}
         >
@@ -291,8 +298,8 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
         <RenterProfileFieldErrorMsg id="rs-income-error" message={fieldErrors.incomeBand} />
       </div>
 
-      <div className="renter-profile-field" style={{ gridColumn: '1 / -1' }}>
-        <span className={labelClass}>Proof of enrolment</span>
+      <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
+        <span className={renterLabelClass}>Proof of enrolment</span>
         <input ref={enrolInputRef} type="file" accept="image/*,application/pdf" className="sr-only" />
         {enrolComplete && enrolFileName && enrolSlot ? (
           <RenterProfileVerificationRow
@@ -315,14 +322,14 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
       <RenterProfileWriteError message={saveError} />
 
       {routeComplete ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Study section complete.
         </p>
       ) : null}
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

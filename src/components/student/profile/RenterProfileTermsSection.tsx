@@ -16,6 +16,11 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterCheckboxErrorClass,
+  renterFormActionsColumnClass,
+  renterSaveBtnClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const TERMS_HINT_LABELS = {
   agreeTerms: 'terms acceptance',
@@ -77,7 +82,7 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-stack">
+    <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
       <RenterProfileSectionErrorBanner message={sectionError} />
       <p style={{ fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
         Accept our policies before you browse listings or apply.
@@ -103,7 +108,7 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
               setAccepted(ev.target.checked)
               clearFieldError('agreeTerms')
             }}
-            className={fieldErrors.agreeTerms ? 'renter-profile-checkbox--error' : undefined}
+            className={fieldErrors.agreeTerms ? renterCheckboxErrorClass : undefined}
             style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
             aria-invalid={fieldErrors.agreeTerms ? true : undefined}
             aria-describedby={fieldErrors.agreeTerms ? 'renter-profile-terms-error' : undefined}
@@ -122,9 +127,9 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
         <RenterProfileFieldErrorMsg id="renter-profile-terms-error" message={fieldErrors.agreeTerms} />
       </div>
       <RenterProfileWriteError message={saveError} />
-      <div className="renter-profile-form-actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={submitting} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={submitting} className={renterSaveBtnClass}>
           {submitting ? 'Saving…' : 'Accept and continue'}
         </button>
       </div>

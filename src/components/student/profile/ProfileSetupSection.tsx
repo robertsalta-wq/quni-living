@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Section, { StatusPill } from '../../ui/Section'
 import type { SectionStatus } from '../../ui/sectionTypes'
 import { ChevronDown, ChevronUp, ProfileSectionIcon, type ProfileSectionIconKind } from './profileSectionIcons'
+import {
+  renterNoteClass,
+} from '../../../lib/renterProfileFormClasses'
 
 export type ProfileSectionStatus = SectionStatus
 
@@ -17,8 +20,6 @@ type SharedProps = {
 
 type Props = SharedProps & {
   sectionNum?: string
-  /** Single-column field grid (ProfileSection.dc.html `stack`). */
-  stack?: boolean
   /** When true, header is not clickable (e.g. locked placeholder). */
   staticHeader?: boolean
 }
@@ -31,7 +32,6 @@ export function ProfileSetupSection({
   status,
   summary,
   note,
-  stack = false,
   children,
   staticHeader = false,
 }: Props) {
@@ -57,10 +57,10 @@ export function ProfileSetupSection({
       editLabel="Edit"
     >
       {staticHeader ? null : (
-        <div className={stack ? 'renter-profile-section-body-inner--stack' : undefined}>
+        <div>
           {children}
           {note ? (
-            <div className="renter-profile-note" role="note">
+            <div className={renterNoteClass} role="note">
               {note}
             </div>
           ) : null}
@@ -115,7 +115,7 @@ export function ProfileNestedSection({
         <div id={`${id}-panel`} className="renter-profile-nested-body">
           {children}
           {note ? (
-            <div className="renter-profile-note" role="note">
+            <div className={renterNoteClass} role="note">
               {note}
             </div>
           ) : null}

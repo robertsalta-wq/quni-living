@@ -12,6 +12,12 @@ import {
 } from '../../lib/verificationOtpPendingStorage'
 import { verificationEmailRowSlot } from '../../lib/verificationItemState'
 import { RenterProfileVerificationRow } from './profile/RenterProfileVerificationRow'
+import {
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterWriteErrorClass,
+} from '../../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -162,16 +168,16 @@ export function StudentWorkEmailVerification({
 
   const inputClass =
     variant === 'renter-profile'
-      ? 'renter-profile-input'
+      ? renterInputClass
       : 'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 bg-white'
   const labelClass =
-    variant === 'renter-profile' ? 'renter-profile-field-label' : 'block text-sm font-semibold text-gray-900 mb-1'
+    variant === 'renter-profile' ? renterLabelClass : 'block text-sm font-semibold text-gray-900 mb-1'
   const coralBtn =
     variant === 'renter-profile'
-      ? 'renter-profile-btn-primary'
+      ? renterSaveBtnClass
       : 'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2 disabled:opacity-50'
   const blockClass = variant === 'renter-profile' ? 'renter-profile-email-block' : 'space-y-4'
-  const errorClass = variant === 'renter-profile' ? 'renter-profile-error' : 'text-xs text-red-600 mt-2'
+  const errorClass = variant === 'renter-profile' ? renterWriteErrorClass : 'text-xs text-red-600 mt-2'
   const waitBoxClass =
     variant === 'renter-profile'
       ? 'renter-profile-email-wait-box'

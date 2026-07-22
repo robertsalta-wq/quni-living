@@ -3,6 +3,9 @@ import Section from '../../ui/Section'
 import { RENTER_SITUATION_OPTIONS, type RenterSituation } from '../../../lib/renterSituation'
 import { routeSectionTitle as routeTitleForSituation } from '../../../lib/renterProfileSection'
 import { Check, ProfileSectionIcon, SITUATION_TILE_ICONS } from './profileSectionIcons'
+import {
+  renterWriteErrorClass,
+} from '../../../lib/renterProfileFormClasses'
 
 type Props = {
   currentSituation: RenterSituation | null
@@ -38,7 +41,7 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
       editLabel="Edit"
     >
       {error ? (
-        <p className="renter-profile-error" role="alert">
+        <p className={renterWriteErrorClass} role="alert">
           {error}
         </p>
       ) : null}

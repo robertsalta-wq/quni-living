@@ -19,6 +19,18 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterFullWidthClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+  renterWriteErrorClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const LEGAL_NAME_LOCKED_SAVE_MESSAGE =
   "Your legal name is verified and can't be edited here."
@@ -294,12 +306,12 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
       {legalNameLocked ? (
         <>
           <div>
-            <label htmlFor="renter-legal-first" className="renter-profile-field-label">
+            <label htmlFor="renter-legal-first" className={renterLabelClass}>
               Legal first name (verified)
             </label>
             <input
@@ -308,12 +320,12 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
               value={firstName}
               readOnly
               disabled
-              className="renter-profile-input"
+              className={renterInputClass}
               aria-describedby="renter-legal-name-hint"
             />
           </div>
           <div>
-            <label htmlFor="renter-legal-last" className="renter-profile-field-label">
+            <label htmlFor="renter-legal-last" className={renterLabelClass}>
               Legal last name (verified)
             </label>
             <input
@@ -322,7 +334,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
               value={lastName}
               readOnly
               disabled
-              className="renter-profile-input"
+              className={renterInputClass}
               aria-describedby="renter-legal-name-hint"
             />
             <p id="renter-legal-name-hint" className="renter-profile-email-hint" style={{ marginTop: 6 }}>
@@ -330,7 +342,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             </p>
           </div>
           <div>
-            <label htmlFor="renter-preferred" className="renter-profile-field-label">
+            <label htmlFor="renter-preferred" className={renterLabelClass}>
               Preferred name
             </label>
             <input
@@ -339,14 +351,14 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
               autoComplete="nickname"
               value={preferredName}
               onChange={(e) => setPreferredName(e.target.value)}
-              className="renter-profile-input"
+              className={renterInputClass}
             />
           </div>
         </>
       ) : (
         <>
           <div>
-            <label htmlFor="renter-first" className="renter-profile-field-label">
+            <label htmlFor="renter-first" className={renterLabelClass}>
               First name
             </label>
             <input
@@ -358,14 +370,14 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
                 setFirstName(e.target.value)
                 clearFieldError('firstName')
               }}
-              className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.firstName))}
+              className={renterFieldClass(renterInputClass, Boolean(fieldErrors.firstName))}
               aria-invalid={fieldErrors.firstName ? true : undefined}
               aria-describedby={fieldErrors.firstName ? 'renter-first-error' : undefined}
             />
             <RenterProfileFieldErrorMsg id="renter-first-error" message={fieldErrors.firstName} />
           </div>
           <div>
-            <label htmlFor="renter-last" className="renter-profile-field-label">
+            <label htmlFor="renter-last" className={renterLabelClass}>
               Last name
             </label>
             <input
@@ -377,7 +389,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
                 setLastName(e.target.value)
                 clearFieldError('lastName')
               }}
-              className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.lastName))}
+              className={renterFieldClass(renterInputClass, Boolean(fieldErrors.lastName))}
               aria-invalid={fieldErrors.lastName ? true : undefined}
               aria-describedby={fieldErrors.lastName ? 'renter-last-error' : undefined}
             />
@@ -386,7 +398,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
         </>
       )}
       <div>
-        <label htmlFor="renter-dob" className="renter-profile-field-label">
+        <label htmlFor="renter-dob" className={renterLabelClass}>
           Date of birth
         </label>
         <AUDateField
@@ -394,11 +406,11 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           birthDate
           value={dateOfBirth}
           onChange={setDateOfBirth}
-          className="renter-profile-input"
+          className={renterInputClass}
         />
       </div>
       <div>
-        <label htmlFor="renter-phone" className="renter-profile-field-label">
+        <label htmlFor="renter-phone" className={renterLabelClass}>
           Phone
         </label>
         <input
@@ -410,14 +422,14 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             setPhone(e.target.value)
             clearFieldError('phone')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.phone))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.phone))}
           aria-invalid={fieldErrors.phone ? true : undefined}
           aria-describedby={fieldErrors.phone ? 'renter-phone-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="renter-phone-error" message={fieldErrors.phone} />
       </div>
       <div>
-        <label htmlFor="renter-gender" className="renter-profile-field-label">
+        <label htmlFor="renter-gender" className={renterLabelClass}>
           Gender
         </label>
         <select
@@ -427,7 +439,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             setGender(e.target.value)
             clearFieldError('gender')
           }}
-          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.gender))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.gender))}
           aria-invalid={fieldErrors.gender ? true : undefined}
           aria-describedby={fieldErrors.gender ? 'renter-gender-error' : undefined}
         >
@@ -440,14 +452,14 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
         <RenterProfileFieldErrorMsg id="renter-gender-error" message={fieldErrors.gender} />
       </div>
       <div>
-        <label htmlFor="renter-nationality" className="renter-profile-field-label">
+        <label htmlFor="renter-nationality" className={renterLabelClass}>
           Nationality
         </label>
         <select
           id="renter-nationality"
           value={nationality}
           onChange={(e) => setNationality(e.target.value)}
-          className="renter-profile-select"
+          className={renterSelectClass}
         >
           {NATIONALITY_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
@@ -456,8 +468,8 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           ))}
         </select>
       </div>
-      <div style={{ gridColumn: '1 / -1' }} className="renter-profile-field">
-        <span className="renter-profile-field-label">Profile photo</span>
+      <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
+        <span className={renterLabelClass}>Profile photo</span>
         <div className="renter-profile-photo-row">
           <div className="renter-profile-photo-preview">
             {profilePhotoUrl ? (
@@ -490,19 +502,19 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             >
               {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
             </button>
-            {photoError ? <p className="renter-profile-error">{photoError}</p> : null}
+            {photoError ? <p className={renterWriteErrorClass}>{photoError}</p> : null}
           </div>
         </div>
       </div>
       {savedFlash ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Personal details saved.
         </p>
       ) : null}
       <RenterProfileWriteError message={saveError} />
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

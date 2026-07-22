@@ -13,6 +13,11 @@ import type { useStudentVerificationDocUpload } from '../../../hooks/useStudentV
 import { useHoistedVerificationFileInputs } from '../../../hooks/useHoistedVerificationFileInputs'
 import type { RenterSituation } from '../../../lib/renterSituation'
 import { RenterProfileVerificationRow } from './RenterProfileVerificationRow'
+import {
+  renterFieldWrapClass,
+  renterFormGridStackClass,
+  renterLabelClass,
+} from '../../../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type DocUploadApi = ReturnType<typeof useStudentVerificationDocUpload>
@@ -107,10 +112,10 @@ export function RenterUniversalVerificationSection({
   const showEmail = situationShowsVerificationEmail(situation)
 
   return (
-    <div className="renter-profile-form-grid renter-profile-form-grid--stack">
+    <div className={renterFormGridStackClass}>
       {hoistedFileInputs}
-      <div className="renter-profile-field">
-        <span className="renter-profile-field-label">Government photo ID</span>
+      <div className={renterFieldWrapClass}>
+        <span className={renterLabelClass}>Government photo ID</span>
         <VerificationDocField
           profile={profile}
           kind="id"
@@ -122,8 +127,8 @@ export function RenterUniversalVerificationSection({
         />
       </div>
 
-      <div className="renter-profile-field">
-        <span className="renter-profile-field-label">Supporting document</span>
+      <div className={renterFieldWrapClass}>
+        <span className={renterLabelClass}>Supporting document</span>
         <VerificationDocField
           profile={profile}
           kind="identity_supporting"
@@ -136,8 +141,8 @@ export function RenterUniversalVerificationSection({
       </div>
 
       {showEmail ? (
-        <div className="renter-profile-field">
-          <span className="renter-profile-field-label">{verificationEmailFieldLabel(situation)}</span>
+        <div className={renterFieldWrapClass}>
+          <span className={renterLabelClass}>{verificationEmailFieldLabel(situation)}</span>
           {situation === 'student' ? (
             <StudentUniEmailVerification
               profile={profile}

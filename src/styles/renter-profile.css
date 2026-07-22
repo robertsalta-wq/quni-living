@@ -27,12 +27,6 @@
   border-radius: var(--radius-md);
 }
 
-/* Form-grid stack helper (R3 owns the form grid; keep this until then). */
-.renter-profile-section-body-inner--stack > .renter-profile-form-grid,
-.renter-profile-form-grid--stack {
-  grid-template-columns: 1fr;
-}
-
 /* Verification-row pills only (not section StatusPill) — R4/cleanup. */
 .renter-profile-pill {
   flex: none;
@@ -81,101 +75,7 @@
   color: var(--quni-coral-hover);
 }
 
-.renter-profile-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.renter-profile-field-label {
-  display: block;
-  font-size: 11px;
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--quni-ink-5);
-  line-height: 1.35;
-  margin: 0;
-}
-
-.renter-profile-form-grid > div > .renter-profile-field-label {
-  margin-bottom: 6px;
-}
-
-.renter-profile-field > .renter-profile-field-label {
-  margin-bottom: 0;
-}
-
-.renter-profile-field-group-heading {
-  grid-column: 1 / -1;
-  margin: 5px 0 0;
-  font-size: var(--text-body-sm-size);
-  font-weight: var(--weight-semibold);
-  color: var(--quni-ink);
-  letter-spacing: -0.01em;
-  line-height: 1.35;
-}
-
-.renter-profile-input,
-.renter-profile-select,
-.renter-profile-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--quni-line);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  font-size: var(--text-body-sm-size);
-  font-family: inherit;
-  color: var(--quni-ink-2);
-  background: var(--quni-surface-1);
-}
-
-.renter-profile-input:focus,
-.renter-profile-select:focus,
-.renter-profile-textarea:focus {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  border-color: var(--quni-coral);
-}
-
-.renter-profile-field--error {
-  border-color: var(--quni-danger-fg) !important;
-  box-shadow: 0 0 0 1px var(--quni-danger-fg);
-}
-
-.renter-profile-field--error:focus {
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
-  border-color: var(--quni-danger-fg);
-}
-
-.renter-profile-section-error {
-  font-size: var(--text-body-sm-size);
-  color: var(--quni-danger-fg);
-  margin: 0 0 4px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: rgba(220, 38, 38, 0.06);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-}
-
-.renter-profile-field-error {
-  font-size: 12px;
-  color: var(--quni-danger-fg);
-  margin: 4px 0 0;
-}
-
-.renter-profile-save-hint {
-  font-size: 12px;
-  color: var(--quni-danger-fg);
-  margin: 0;
-}
-
-.renter-profile-checkbox--error {
-  outline: 2px solid var(--quni-danger-fg);
-  outline-offset: 2px;
-}
-
+/* Shell modal + photo/situation secondary — form saves use Tailwind (R3a). */
 .renter-profile-btn-primary {
   background: var(--quni-coral);
   color: var(--quni-surface-1);
@@ -209,20 +109,6 @@
   font-size: var(--text-body-sm-size);
   font-family: inherit;
   cursor: pointer;
-}
-
-.renter-profile-note {
-  margin-top: 15px;
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 11px 13px;
-  border-radius: var(--radius-md);
-  background: var(--quni-surface-2);
-  border: 1px solid var(--quni-line-soft);
-  font-size: 12.5px;
-  color: var(--quni-ink-4);
-  line-height: 1.5;
 }
 
 .renter-profile-optional-divider {
@@ -283,30 +169,6 @@
 
 .renter-profile-situation-tile-selected .renter-profile-situation-tile-label {
   color: var(--quni-ink);
-}
-
-.renter-profile-form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
-  gap: 15px 16px;
-}
-
-.renter-profile-form-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.renter-profile-error {
-  font-size: var(--text-body-sm-size);
-  color: var(--quni-danger-fg);
-  margin: 0;
-}
-
-.renter-profile-success-flash {
-  font-size: var(--text-body-sm-size);
-  color: var(--quni-success-fg);
-  margin: 0;
 }
 
 .renter-profile-upload-btn {

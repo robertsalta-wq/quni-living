@@ -17,6 +17,15 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const LIVING_PREFS_HINT_LABELS = {
   budgetMin: 'budget minimum',
@@ -240,13 +249,13 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
-        <label htmlFor="renter-room" className="renter-profile-field-label">
+        <label htmlFor="renter-room" className={renterLabelClass}>
           Room type preference
         </label>
-        <select id="renter-room" value={roomPref} onChange={(e) => setRoomPref(e.target.value)} className="renter-profile-select">
+        <select id="renter-room" value={roomPref} onChange={(e) => setRoomPref(e.target.value)} className={renterSelectClass}>
           {ROOM_PREF_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
@@ -255,10 +264,10 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </select>
       </div>
       <div>
-        <label htmlFor="renter-occ" className="renter-profile-field-label">
+        <label htmlFor="renter-occ" className={renterLabelClass}>
           Occupancy type
         </label>
-        <select id="renter-occ" value={occupancyType} onChange={(e) => setOccupancyType(e.target.value)} className="renter-profile-select">
+        <select id="renter-occ" value={occupancyType} onChange={(e) => setOccupancyType(e.target.value)} className={renterSelectClass}>
           <option value="">No preference</option>
           {STUDENT_OCCUPANCY_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -268,7 +277,7 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </select>
       </div>
       <div>
-        <label htmlFor="renter-bmin" className="renter-profile-field-label">
+        <label htmlFor="renter-bmin" className={renterLabelClass}>
           Weekly budget — min
         </label>
         <input
@@ -280,14 +289,14 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
             setBudgetMin(e.target.value)
             clearFieldError('budgetMin')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.budgetMin))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.budgetMin))}
           aria-invalid={fieldErrors.budgetMin ? true : undefined}
           aria-describedby={fieldErrors.budgetMin ? 'renter-bmin-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="renter-bmin-error" message={fieldErrors.budgetMin} />
       </div>
       <div>
-        <label htmlFor="renter-bmax" className="renter-profile-field-label">
+        <label htmlFor="renter-bmax" className={renterLabelClass}>
           Weekly budget — max
         </label>
         <input
@@ -299,23 +308,23 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
             setBudgetMax(e.target.value)
             clearFieldError('budgetMax')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.budgetMax))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.budgetMax))}
           aria-invalid={fieldErrors.budgetMax ? true : undefined}
           aria-describedby={fieldErrors.budgetMax ? 'renter-bmax-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="renter-bmax-error" message={fieldErrors.budgetMax} />
       </div>
       <div>
-        <label htmlFor="renter-move-in" className="renter-profile-field-label">
+        <label htmlFor="renter-move-in" className={renterLabelClass}>
           Preferred move-in date
         </label>
-        <input id="renter-move-in" type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} className="renter-profile-input" />
+        <input id="renter-move-in" type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} className={renterInputClass} />
       </div>
       <div>
-        <label htmlFor="renter-mflex" className="renter-profile-field-label">
+        <label htmlFor="renter-mflex" className={renterLabelClass}>
           Move-in flexibility
         </label>
-        <select id="renter-mflex" value={moveInFlex} onChange={(e) => setMoveInFlex(e.target.value)} className="renter-profile-select">
+        <select id="renter-mflex" value={moveInFlex} onChange={(e) => setMoveInFlex(e.target.value)} className={renterSelectClass}>
           {MOVE_IN_FLEX_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
@@ -324,10 +333,10 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </select>
       </div>
       <div>
-        <label htmlFor="renter-lease" className="renter-profile-field-label">
+        <label htmlFor="renter-lease" className={renterLabelClass}>
           Preferred lease length
         </label>
-        <select id="renter-lease" value={leaseLength} onChange={(e) => setLeaseLength(e.target.value)} className="renter-profile-select">
+        <select id="renter-lease" value={leaseLength} onChange={(e) => setLeaseLength(e.target.value)} className={renterSelectClass}>
           {LEASE_LENGTH_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
@@ -350,10 +359,10 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </label>
       </div>
       <div>
-        <label htmlFor="renter-bills" className="renter-profile-field-label">
+        <label htmlFor="renter-bills" className={renterLabelClass}>
           Bills preference
         </label>
-        <select id="renter-bills" value={billsPref} onChange={(e) => setBillsPref(e.target.value)} className="renter-profile-select">
+        <select id="renter-bills" value={billsPref} onChange={(e) => setBillsPref(e.target.value)} className={renterSelectClass}>
           {BILLS_PREF_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
@@ -362,10 +371,10 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </select>
       </div>
       <div>
-        <label htmlFor="renter-furnish" className="renter-profile-field-label">
+        <label htmlFor="renter-furnish" className={renterLabelClass}>
           Furnishing preference
         </label>
-        <select id="renter-furnish" value={furnishingPref} onChange={(e) => setFurnishingPref(e.target.value)} className="renter-profile-select">
+        <select id="renter-furnish" value={furnishingPref} onChange={(e) => setFurnishingPref(e.target.value)} className={renterSelectClass}>
           {FURNISHING_PREF_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
               {o.label}
@@ -374,14 +383,14 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         </select>
       </div>
       {savedFlash ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Living preferences saved.
         </p>
       ) : null}
       <RenterProfileWriteError message={saveError} />
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

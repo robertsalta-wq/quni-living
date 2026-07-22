@@ -18,6 +18,15 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const GENERAL_ROUTE_HINT_LABELS = {
   incomeBand: 'weekly income band',
@@ -139,10 +148,10 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
   const routeComplete = isGeneralRouteSectionComplete(profile)
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
-      <div className="renter-profile-field">
-        <label htmlFor="rg-income" className="renter-profile-field-label">
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rg-income" className={renterLabelClass}>
           Income band
         </label>
         <select
@@ -152,7 +161,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
             setIncomeBand(e.target.value)
             clearFieldError('incomeBand')
           }}
-          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeBand))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.incomeBand))}
           aria-invalid={fieldErrors.incomeBand ? true : undefined}
           aria-describedby={fieldErrors.incomeBand ? 'rg-income-error' : undefined}
         >
@@ -166,8 +175,8 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
         <RenterProfileFieldErrorMsg id="rg-income-error" message={fieldErrors.incomeBand} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rg-source" className="renter-profile-field-label">
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rg-source" className={renterLabelClass}>
           Income source
         </label>
         <select
@@ -177,7 +186,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
             setIncomeSource(e.target.value)
             clearFieldError('incomeSource')
           }}
-          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeSource))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.incomeSource))}
           aria-invalid={fieldErrors.incomeSource ? true : undefined}
           aria-describedby={fieldErrors.incomeSource ? 'rg-source-error' : undefined}
         >
@@ -192,15 +201,15 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
 
       <RenterProfileWriteError message={saveError} />
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>
 
       {routeComplete ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Income section complete.
         </p>
       ) : null}
