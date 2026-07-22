@@ -95,6 +95,9 @@ function clearBookingDraft(listingId: string) {
   }
 }
 
+const LISTING_ACKNOWLEDGMENT_LABEL =
+  'I confirm I have had the opportunity to review the listing details, photos, and information for this property, and to ask questions before booking. I am choosing to proceed based on my review of those materials and any inspection I have chosen to undertake. (This does not waive your legal protections under the Australian Consumer Law if the listing information provided to you is inaccurate or misleading.)'
+
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 type LandlordForBooking = NonNullable<Property['landlord_profiles']> & {
@@ -619,6 +622,7 @@ export default function Booking() {
   const [message, setMessage] = useState('')
   const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('quni_platform')
   const [bondCheck, setBondCheck] = useState(false)
+  const [listingCheck, setListingCheck] = useState(false)
   const [occupantCount, setOccupantCount] = useState<1 | 2>(1)
   const [parkingSelected, setParkingSelected] = useState(false)
   const [coTenantForm, setCoTenantForm] = useState<CoTenantFormState>({
@@ -1010,6 +1014,7 @@ export default function Booking() {
           leaseLength?: string
           message?: string
           bondCheck?: boolean
+          listingCheck?: boolean
           clientSecret?: string | null
           depositCents?: number | null
           rentPaymentMethod?: string
@@ -1026,6 +1031,7 @@ export default function Booking() {
           setLeaseLength(leaseOk)
           if (typeof d.message === 'string') setMessage(d.message)
           if (typeof d.bondCheck === 'boolean') setBondCheck(d.bondCheck)
+          if (typeof d.listingCheck === 'boolean') setListingCheck(d.listingCheck)
           if (d.rentPaymentMethod === 'bank_transfer' || d.rentPaymentMethod === 'quni_platform') {
             setRentPaymentMethod(d.rentPaymentMethod)
           }
@@ -1111,6 +1117,7 @@ export default function Booking() {
           message,
           rentPaymentMethod,
           bondCheck,
+          listingCheck,
           occupantCount,
           parkingSelected,
           coTenantForm,
@@ -1131,6 +1138,7 @@ export default function Booking() {
     message,
     rentPaymentMethod,
     bondCheck,
+    listingCheck,
     occupantCount,
     parkingSelected,
     coTenantForm,
@@ -1276,6 +1284,10 @@ export default function Booking() {
     setSubmitError(null)
     setBookingConflict(null)
     if (!property?.id || !studentProfile) return
+    if (!listingCheck) {
+      setSubmitError('Please confirm you have reviewed the listing details before continuing.')
+      return
+    }
     const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
     if (moveInErr) {
       setSubmitError(moveInErr)
@@ -1309,6 +1321,7 @@ export default function Booking() {
           leaseLength,
           studentMessage: message.trim(),
           bondAcknowledged: true,
+          listingAcknowledged: listingCheck,
           occupantCount,
           parkingSelected,
           ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
@@ -1396,6 +1409,7 @@ export default function Booking() {
     message,
     occupantCount,
     parkingSelected,
+    listingCheck,
     validateOccupancyStep,
   ])
 
@@ -1403,6 +1417,10 @@ export default function Booking() {
 
   const finalizeListingBooking = useCallback(async () => {
     if (!property?.id || !property.landlord_id || !studentProfile) return
+    if (!listingCheck) {
+      setSubmitError('Please confirm you have reviewed the listing details before submitting.')
+      return
+    }
     setSubmitError(null)
     setBookingConflict(null)
     const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
@@ -1437,6 +1455,7 @@ export default function Booking() {
           leaseLength,
           studentMessage: message.trim(),
           bondAcknowledged: true,
+          listingAcknowledged: listingCheck,
           propertyType: propertyTypeSnapshot,
           occupantCount,
           parkingSelected,
@@ -1517,12 +1536,17 @@ export default function Booking() {
     tenantInviteToken,
     occupantCount,
     parkingSelected,
+    listingCheck,
     buildCoTenantPayload,
   ])
 
   const finalizeBooking = useCallback(
     async (paymentIntentId: string) => {
       if (!property?.id || !property.landlord_id || !studentProfile) return
+      if (!listingCheck) {
+        setSubmitError('Please confirm you have reviewed the listing details before paying.')
+        return
+      }
       setSubmitError(null)
       setBookingConflict(null)
       const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
@@ -1558,6 +1582,7 @@ export default function Booking() {
             leaseLength,
             studentMessage: message.trim(),
             bondAcknowledged: true,
+            listingAcknowledged: listingCheck,
             propertyType: propertyTypeSnapshot,
             rentPaymentMethod,
             occupantCount,
@@ -1627,6 +1652,7 @@ export default function Booking() {
       conversationIdFromThread,
       occupantCount,
       parkingSelected,
+      listingCheck,
       buildCoTenantPayload,
     ],
   )
@@ -2306,6 +2332,16 @@ export default function Booking() {
             </span>
           </label>
 
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={listingCheck}
+              onChange={(e) => setListingCheck(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
+            />
+            <span className="text-sm text-gray-800">{LISTING_ACKNOWLEDGMENT_LABEL}</span>
+          </label>
+
           {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -2322,9 +2358,9 @@ export default function Booking() {
             </button>
             <button
               type="button"
-              disabled={!bondCheck || piBusy || submittingBooking}
+              disabled={!bondCheck || !listingCheck || piBusy || submittingBooking}
               onClick={() => {
-                if (!bondCheck) return
+                if (!bondCheck || !listingCheck) return
                 if (isListingProperty) {
                   void finalizeListingBooking()
                   return
@@ -2410,6 +2446,16 @@ export default function Booking() {
                 </div>
               </div>
 
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={listingCheck}
+                  onChange={(e) => setListingCheck(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
+                />
+                <span className="text-sm text-gray-800">{LISTING_ACKNOWLEDGMENT_LABEL}</span>
+              </label>
+
               {clientSecret && isStripePublishableKeyConfigured() && stripePromise ? (
                 <PaymentsSecuredByStripe align="start" className="max-w-md" />
               ) : null}
@@ -2451,7 +2497,15 @@ export default function Booking() {
                   >
                     <DepositPaymentInner
                       totalAudDisplay={totalChargeDisplay}
-                      onPaid={(piId) => void finalizeBooking(piId)}
+                      onPaid={(piId) => {
+                        if (!listingCheck) {
+                          setSubmitError(
+                            'Please confirm you have reviewed the listing details before paying.',
+                          )
+                          return
+                        }
+                        void finalizeBooking(piId)
+                      }}
                     />
                   </Elements>
                 </div>
