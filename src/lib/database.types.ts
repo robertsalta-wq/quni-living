@@ -1654,6 +1654,10 @@ export interface Database {
           listing_agreement_status: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error: string | null
           bond_acknowledged: boolean | null
+          listing_acknowledged: boolean | null
+          listing_acknowledged_at: string | null
+          listing_snapshot: Json | null
+          listing_snapshot_hash: string | null
           property_type: string | null
           rent_payment_method: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id: string | null
@@ -1721,6 +1725,10 @@ export interface Database {
           listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
+          listing_acknowledged?: boolean | null
+          listing_acknowledged_at?: string | null
+          listing_snapshot?: Json | null
+          listing_snapshot_hash?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
@@ -1787,6 +1795,10 @@ export interface Database {
           listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
+          listing_acknowledged?: boolean | null
+          listing_acknowledged_at?: string | null
+          listing_snapshot?: Json | null
+          listing_snapshot_hash?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
