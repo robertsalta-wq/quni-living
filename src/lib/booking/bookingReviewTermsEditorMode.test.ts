@@ -60,6 +60,34 @@ describe('resolveBookingReviewTermsEditorMode', () => {
     ).toBe('agreed_rent_readonly')
   })
 
+  it('Managed + overrideApplied still returns none (fail-closed listing gate)', () => {
+    expect(
+      resolveBookingReviewTermsEditorMode({
+        status: 'confirmed',
+        serviceTierAtRequest: 'managed',
+        serviceTierFinal: 'managed',
+        rentBreakdown: {
+          override_applied: true,
+          agreed_weekly_rent_aud: 400,
+        },
+      }),
+    ).toBe('none')
+  })
+
+  it('null/unknown tier + overrideApplied returns none (fail-closed)', () => {
+    expect(
+      resolveBookingReviewTermsEditorMode({
+        status: 'confirmed',
+        serviceTierAtRequest: null,
+        serviceTierFinal: null,
+        rentBreakdown: {
+          override_applied: true,
+          agreed_weekly_rent_aud: 400,
+        },
+      }),
+    ).toBe('none')
+  })
+
   it('returns none when inputs are disabled', () => {
     expect(
       resolveBookingReviewTermsEditorMode({

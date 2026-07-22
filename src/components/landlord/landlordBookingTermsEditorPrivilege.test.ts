@@ -57,6 +57,11 @@ describe('landlord booking terms editor privilege boundary', () => {
     expect(editorModule).toContain('booking-update-terms')
   })
 
+  it('agreed-rent editor hard-returns null for non-listing tiers', () => {
+    const src = readSrc('src/components/landlord/LandlordBookingAgreedRentEditor.tsx')
+    expect(src).toMatch(/if\s*\(\s*serviceTierAtRequest\s*!==\s*['"]listing['"]\s*\)\s*return\s+null/)
+  })
+
   it('applicant profile drawer is type-enforced to LandlordSafeStudentSnapshot and does not widen PII', () => {
     const drawer = readSrc('src/components/landlord/LandlordApplicantProfileDrawer.tsx')
     expect(drawer).toContain('LandlordSafeStudentSnapshot')
