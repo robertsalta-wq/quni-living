@@ -475,7 +475,15 @@ function ListingDescriptionAiBlock({
         placeholder="Describe the room or home the tenant will rent - not only the whole building."
       />
       <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
-        Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.
+        Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.{' '}
+        <a
+          href="/guides/listing-for-renters-who-cant-visit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
+        >
+          Listing for renters who can&apos;t visit
+        </a>
       </p>
       <AIDescriptionGenerator
         roomType={roomTypeLabel}

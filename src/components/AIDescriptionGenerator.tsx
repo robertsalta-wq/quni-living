@@ -145,6 +145,11 @@ export default function AIDescriptionGenerator({
           <p className="text-xs text-gray-500">Add room type and suburb to use AI.</p>
         )}
       </div>
+      <p className="text-xs text-gray-500 leading-relaxed">
+        This is a drafting aid. It works only from the details you&apos;ve entered and doesn&apos;t know
+        anything about your property you haven&apos;t told it. Check everything before you publish —
+        you&apos;re responsible for the accuracy of your listing.
+      </p>
       {error && (
         <p className="text-sm text-red-600" role="alert">
           {error}

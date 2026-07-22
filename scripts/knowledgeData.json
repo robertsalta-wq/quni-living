@@ -264,5 +264,19 @@
     "category": "platform_policy",
     "state": null,
     "content": "Source: docs/feature-inventory.md (living product inventory). Live = shipped end-to-end. UI only = shown in the app but not fully backed - say \"coming soon\" if asked. Deprecated = replaced. Do not invent features or routes not listed here.\n\n| Area | Students | Landlords |\n|------|----------|-----------|\n| Home / browse | `/listings` | `/listings` (preview own) |\n| Dashboard | `/student-dashboard` | `/landlord/dashboard` |\n| Profile | `/student-profile` | `/landlord-profile` |\n| Onboarding | `/onboarding/student` | `/onboarding/landlord` |\n| Book | `/booking/:propertyId` | - |\n| Review booking | - | `/landlord/bookings/:id/review` |\n| Listing editor | - | `/landlord/property/new`, `.../edit/:id` |\n| Messages | `/messages` | `/messages` |\n\n---"
+  },
+  {
+    "id": "6fad4b80-0028-4000-8000-000000000028",
+    "title": "Booking a place you haven't visited",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Most international and interstate students book Quni accommodation before arriving in Australia, which is normal and expected. Renters can review all listing photos, ask the landlord through Quni messaging for a video walkthrough or a live video call, and ask questions in writing so there is a record. Landlords are not required to provide a walkthrough, but asking costs nothing. Quni stores a snapshot of the listing as it appeared at booking. On arrival, renters should check the property against the listing, go through the condition report carefully if they are given one, and raise any mismatch in writing straight away. Full guidance: /guides/booking-a-place-you-havent-visited"
+  },
+  {
+    "id": "6fad4b80-0029-4000-8000-000000000029",
+    "title": "Listing for renters who can't visit",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Many Quni renters are overseas or interstate when they book, so the listing does the work an inspection would usually do. Under the Australian Consumer Law, listings that are inaccurate or misleading can expose a landlord to a claim, and the renter having booked without inspecting does not change that. Landlords should use recent photos of every room the renter will use, show the room as it will be handed over, describe what is not obvious such as stairs, outlooks or shared facilities, and record a short walkthrough video. The AI description tool is a drafting aid and works only from the details the landlord enters — the landlord remains responsible for accuracy. Full guidance: /guides/listing-for-renters-who-cant-visit"
   }
 ]

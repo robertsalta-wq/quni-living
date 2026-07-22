@@ -2341,6 +2341,16 @@ export default function Booking() {
             />
             <span className="text-sm text-gray-800">{LISTING_ACKNOWLEDGMENT_LABEL}</span>
           </label>
+          <p className="text-sm text-gray-600">
+            <Link
+              to="/guides/booking-a-place-you-havent-visited"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
+            >
+              Booking a place you haven&apos;t visited
+            </Link>
+          </p>
 
           {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
 
@@ -2455,6 +2465,16 @@ export default function Booking() {
                 />
                 <span className="text-sm text-gray-800">{LISTING_ACKNOWLEDGMENT_LABEL}</span>
               </label>
+              <p className="text-sm text-gray-600">
+                <Link
+                  to="/guides/booking-a-place-you-havent-visited"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
+                >
+                  Booking a place you haven&apos;t visited
+                </Link>
+              </p>
 
               {clientSecret && isStripePublishableKeyConfigured() && stripePromise ? (
                 <PaymentsSecuredByStripe align="start" className="max-w-md" />
