@@ -65,14 +65,6 @@ export function landlordListingUiStatusPillClass(status: LandlordListingUiStatus
   return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }
 
-export function landlordListingRollupChipClass(status: LandlordListingUiStatus): string {
-  const base =
-    'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none'
-  if (status === 'live') return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
-  if (status === 'booked') return `${base} bg-admin-navy-tint text-[var(--quni-navy)]`
-  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
-}
-
 function normalizeAddressKey(address: string | null | undefined, suburb: string | null | undefined): string | null {
   const a = (address ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
   const s = (suburb ?? '').trim().toLowerCase()
