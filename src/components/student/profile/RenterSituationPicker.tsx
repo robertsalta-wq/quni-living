@@ -4,6 +4,11 @@ import { RENTER_SITUATION_OPTIONS, type RenterSituation } from '../../../lib/ren
 import { routeSectionTitle as routeTitleForSituation } from '../../../lib/renterProfileSection'
 import { Check, ProfileSectionIcon, SITUATION_TILE_ICONS } from './profileSectionIcons'
 import {
+  renterSituationGridClass,
+  renterSituationTileClass,
+  renterSituationTileLabelClass,
+  renterSituationTileLabelSelectedClass,
+  renterSituationTileSelectedClass,
   renterWriteErrorClass,
 } from '../../../lib/renterProfileFormClasses'
 
@@ -50,7 +55,7 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
           Tell us your situation so we ask for the right details.
         </p>
       ) : null}
-      <div className="renter-profile-situation-grid">
+      <div className={renterSituationGridClass}>
         {RENTER_SITUATION_OPTIONS.map((opt) => {
           const selected = currentSituation === opt.value
           const TileIcon = SITUATION_TILE_ICONS[opt.value]
@@ -63,7 +68,7 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
                 onSelect(opt.value)
                 if (currentSituation != null) setEditing(false)
               }}
-              className={`renter-profile-situation-tile${selected ? ' renter-profile-situation-tile-selected' : ''}`}
+              className={`${renterSituationTileClass}${selected ? ` ${renterSituationTileSelectedClass}` : ''}`}
             >
               {selected ? (
                 <span
@@ -79,7 +84,11 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
                 color={selected ? 'var(--quni-coral)' : 'var(--quni-ink-2)'}
                 aria-hidden
               />
-              <span className="renter-profile-situation-tile-label">{opt.label}</span>
+              <span
+                className={`${renterSituationTileLabelClass}${selected ? ` ${renterSituationTileLabelSelectedClass}` : ''}`}
+              >
+                {opt.label}
+              </span>
             </button>
           )
         })}

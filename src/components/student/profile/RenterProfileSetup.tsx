@@ -12,6 +12,11 @@ import { isStudentUniEmailVerified } from '../../../lib/studentUniEmailVerificat
 import { situationShowsVerificationEmail } from '../../../lib/renterVerificationEmail'
 import { isStep2Saved } from '../../../lib/studentOnboarding'
 import {
+  renterOptionalDividerClass,
+  renterOptionalDividerLineClass,
+  renterStackClass,
+} from '../../../lib/renterProfileFormClasses'
+import {
   emergencySummary,
   isPersonalDetailsComplete,
   personalDetailsSummary,
@@ -168,7 +173,7 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
   )
 
   return (
-    <div className="renter-profile-stack">
+    <div className={renterStackClass}>
       {switchDialog ? (
         <SwitchSituationDialog
           fromSituation={switchDialog.from}
@@ -289,8 +294,10 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         <RenterProfileEmergencySection profile={profile} userId={userId} onSaved={handleRefresh} />
       </ProfileSetupSection>
 
-      <div className="renter-profile-optional-divider">
-        <span>Optional · helps landlords match you</span>
+      <div className={renterOptionalDividerClass} role="separator">
+        <span className={renterOptionalDividerLineClass} aria-hidden />
+        <span className="whitespace-nowrap">Optional · helps landlords match you</span>
+        <span className={renterOptionalDividerLineClass} aria-hidden />
       </div>
 
       <ProfileSetupSection
