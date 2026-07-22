@@ -1,34 +1,21 @@
 import { supabase } from './supabase'
 import type { Property } from './listings'
 import { PROPERTY_CARD_LIST_SELECT } from './propertyCardSelect'
+import {
+  clearPendingSavePropertyId,
+  peekPendingSavePropertyId,
+  PENDING_SAVE_PROPERTY_KEY,
+  setPendingSavePropertyId,
+} from './savedPropertiesPending'
 
-export const PENDING_SAVE_PROPERTY_KEY = 'quni_save_property_id'
+export {
+  clearPendingSavePropertyId,
+  peekPendingSavePropertyId,
+  PENDING_SAVE_PROPERTY_KEY,
+  setPendingSavePropertyId,
+}
 
 const UNIQUE_VIOLATION = '23505'
-
-export function peekPendingSavePropertyId(): string | null {
-  try {
-    return sessionStorage.getItem(PENDING_SAVE_PROPERTY_KEY)
-  } catch {
-    return null
-  }
-}
-
-export function setPendingSavePropertyId(propertyId: string): void {
-  try {
-    sessionStorage.setItem(PENDING_SAVE_PROPERTY_KEY, propertyId)
-  } catch {
-    /* ignore */
-  }
-}
-
-export function clearPendingSavePropertyId(): void {
-  try {
-    sessionStorage.removeItem(PENDING_SAVE_PROPERTY_KEY)
-  } catch {
-    /* ignore */
-  }
-}
 
 /** Fetch saved property ids for the current auth user (RLS-scoped). */
 export async function fetchSavedPropertyIds(): Promise<string[]> {

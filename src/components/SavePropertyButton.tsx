@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { useSavedProperties } from '../context/SavedPropertiesContext'
-import { setPendingSavePropertyId } from '../lib/savedProperties'
+import { setPendingSavePropertyId } from '../lib/savedPropertiesPending'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 
 type Variant = 'card' | 'detail'

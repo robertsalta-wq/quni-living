@@ -1,4 +1,4 @@
-import type { AuthProfile, UserRole } from './authProfile'
+import type { AuthProfile, UserRole } from './authProfileRouting'
 
 const STORAGE_KEY = 'quni-auth-snapshot:v2'
 

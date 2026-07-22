@@ -9,13 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useAuthContext } from './AuthContext'
-import { isRenterRole } from '../lib/authProfile'
-import {
-  deleteSavedProperty,
-  fetchSavedPropertyIds,
-  insertSavedProperty,
-  listSavedProperties,
-} from '../lib/savedProperties'
+import { isRenterRole } from '../lib/marketplaceRole'
 import type { Property } from '../lib/listings'
 
 type Toast = { message: string } | null
@@ -71,6 +65,7 @@ export function SavedPropertiesProvider({ children }: { children: ReactNode }) {
     setIdsLoading(true)
     void (async () => {
       try {
+        const { fetchSavedPropertyIds } = await import('../lib/savedProperties')
         const ids = await fetchSavedPropertyIds()
         if (!cancelled) setSavedIds(new Set(ids))
       } catch {
@@ -110,6 +105,8 @@ export function SavedPropertiesProvider({ children }: { children: ReactNode }) {
       if (!user) return 'needs_auth'
       if (!isRenterRole(role)) return 'error'
 
+      const { deleteSavedProperty, insertSavedProperty } = await import('../lib/savedProperties')
+
       const currentlySaved = savedIds.has(propertyId)
       if (currentlySaved) {
         removeFromLocal(propertyId)
@@ -138,7 +135,10 @@ export function SavedPropertiesProvider({ children }: { children: ReactNode }) {
     [user, role, savedIds, removeFromLocal, markSavedLocal, showToast],
   )
 
-  const listSaved = useCallback(() => listSavedProperties(), [])
+  const listSaved = useCallback(async () => {
+    const { listSavedProperties } = await import('../lib/savedProperties')
+    return listSavedProperties()
+  }, [])
 
   const value = useMemo<SavedPropertiesContextValue>(
     () => ({

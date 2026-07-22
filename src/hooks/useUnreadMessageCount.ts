@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { supabase } from '../lib/supabase'
 
 const REALTIME_DEBOUNCE_MS = 400
 
@@ -13,6 +12,8 @@ export function useUnreadMessageCount(userId: string | undefined): number {
       setCount(0)
       return
     }
+
+    const { supabase } = await import('../lib/supabase')
 
     type RpcClient = {
       rpc(
@@ -67,18 +68,28 @@ export function useUnreadMessageCount(userId: string | undefined): number {
 
   useEffect(() => {
     if (!userId) return
-    const channel = supabase
-      .channel(`unread:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'conversations' },
-        () => {
-          scheduleLoad()
-        },
-      )
-      .subscribe()
+    let cancelled = false
+    let channel: { unsubscribe?: () => void } | null = null
+
+    void import('../lib/supabase').then(({ supabase }) => {
+      if (cancelled) return
+      channel = supabase
+        .channel(`unread:${userId}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'conversations' },
+          () => {
+            scheduleLoad()
+          },
+        )
+        .subscribe()
+    })
+
     return () => {
-      void supabase.removeChannel(channel)
+      cancelled = true
+      void import('../lib/supabase').then(({ supabase }) => {
+        if (channel) void supabase.removeChannel(channel as never)
+      })
     }
   }, [userId, scheduleLoad])
 

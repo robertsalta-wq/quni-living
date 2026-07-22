@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Session, User } from '@supabase/supabase-js'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import {
   clearProfileHydrateInflight,
   deleteProfileHydrateInflight,
   fetchRoleAndProfileDeduped,
-  type AuthProfile,
-  type UserRole,
 } from '../lib/authProfile'
+import type { AuthProfile, UserRole } from '../lib/authProfileRouting'
 import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'

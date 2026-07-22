@@ -3,10 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
-import {
-  getIncompleteOnboardingDestination,
-  needsOnboarding,
-} from '../lib/authProfile'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
 
 /**
@@ -43,16 +39,25 @@ export function PostAuthOnboardingRedirect() {
       return
     }
 
-    if (!needsOnboarding(role, profile, user.id)) {
-      clearAwaitingSignInOnboardingRedirect()
-      return
-    }
+    let cancelled = false
+    void import('../lib/authProfileRouting').then(
+      ({ getIncompleteOnboardingDestination, needsOnboarding }) => {
+        if (cancelled) return
+        if (!needsOnboarding(role, profile, user.id)) {
+          clearAwaitingSignInOnboardingRedirect()
+          return
+        }
 
-    const dest = getIncompleteOnboardingDestination(role, profile, user.id)
-    if (location.pathname !== dest && !location.pathname.startsWith(`${dest}/`)) {
-      navigate(dest, { replace: true })
+        const dest = getIncompleteOnboardingDestination(role, profile, user.id)
+        if (location.pathname !== dest && !location.pathname.startsWith(`${dest}/`)) {
+          navigate(dest, { replace: true })
+        }
+        clearAwaitingSignInOnboardingRedirect()
+      },
+    )
+    return () => {
+      cancelled = true
     }
-    clearAwaitingSignInOnboardingRedirect()
   }, [
     awaitingSignInOnboardingRedirect,
     clearAwaitingSignInOnboardingRedirect,

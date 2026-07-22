@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
-import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfile'
+import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfileRouting'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
 
 /**

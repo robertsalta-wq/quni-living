@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import type { Property } from '../lib/listings'
 import { PropertyCard } from '../components/PropertyCard'
-import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import LandlordAIBanner from '../components/LandlordAIBanner'
+
+const UniversityCampusSelect = lazy(() => import('../components/UniversityCampusSelect'))
 import Seo from '../components/Seo'
 import {
   SITE_URL,
@@ -231,21 +232,22 @@ export default function Home() {
     }
     let cancelled = false
     setCountLoading(true)
-    applyPropertyListingDateWindow(
-      supabase.from('properties').select('id', { count: 'exact', head: true }),
-      listingIsoDateUtc(),
-    )
-      .eq('status', 'active')
-      .then(({ count, error }) => {
-        if (cancelled) return
-        if (error) {
-          console.error(error)
-          setListingCount(null)
-        } else {
-          setListingCount(count ?? 0)
-        }
-        setCountLoading(false)
-      })
+    void (async () => {
+      const { supabase } = await import('../lib/supabase')
+      if (cancelled) return
+      const { count, error } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        listingIsoDateUtc(),
+      ).eq('status', 'active')
+      if (cancelled) return
+      if (error) {
+        console.error(error)
+        setListingCount(null)
+      } else {
+        setListingCount(count ?? 0)
+      }
+      setCountLoading(false)
+    })()
     return () => {
       cancelled = true
     }
@@ -258,31 +260,33 @@ export default function Home() {
     }
     let cancelled = false
     setFeaturedLoading(true)
-    applyPropertyListingDateWindow(
-      supabase.from('properties').select(
-        `
+    void (async () => {
+      const { supabase } = await import('../lib/supabase')
+      if (cancelled) return
+      const { data, error } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select(
+          `
         *,
         landlord_profiles ( id, full_name, avatar_url, verified ),
         universities ( id, name, slug ),
         campuses ( id, name )
       `,
-      ),
-      listingIsoDateUtc(),
-    )
-      .eq('status', 'active')
-      .eq('featured', true)
-      .order('created_at', { ascending: false })
-      .limit(6)
-      .then(({ data, error }) => {
-        if (cancelled) return
-        if (error) {
-          console.error(error)
-          setFeatured([])
-        } else {
-          setFeatured((data ?? []) as Property[])
-        }
-        setFeaturedLoading(false)
-      })
+        ),
+        listingIsoDateUtc(),
+      )
+        .eq('status', 'active')
+        .eq('featured', true)
+        .order('created_at', { ascending: false })
+        .limit(6)
+      if (cancelled) return
+      if (error) {
+        console.error(error)
+        setFeatured([])
+      } else {
+        setFeatured((data ?? []) as Property[])
+      }
+      setFeaturedLoading(false)
+    })()
     return () => {
       cancelled = true
     }
@@ -429,26 +433,35 @@ export default function Home() {
                     <label className="sr-only" htmlFor="home-search-campus">
                       Campus
                     </label>
-                    <UniversityCampusSelect
-                      universityId={universityId || null}
-                      campusId={campusId || null}
-                      onUniversityChange={(id) => {
-                        setUniversityId(id)
-                        setCampusId('')
-                      }}
-                      onCampusChange={setCampusId}
-                      referenceScope="full"
-                      showState
-                      showLabels={false}
-                      variant="stack"
-                      className="w-full min-w-0 flex flex-col gap-3"
-                      campusPlaceholderNoUniversity="Select campus"
-                      campusPlaceholderWithUniversity="All campuses"
-                      universitySelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
-                      campusSelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
-                      universityIdAttr="home-search-uni"
-                      campusIdAttr="home-search-campus"
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="flex w-full min-w-0 flex-col gap-3" aria-hidden>
+                          <div className="h-[46px] w-full rounded-xl border border-gray-200 bg-white/80" />
+                          <div className="h-[46px] w-full rounded-xl border border-gray-200 bg-white/80" />
+                        </div>
+                      }
+                    >
+                      <UniversityCampusSelect
+                        universityId={universityId || null}
+                        campusId={campusId || null}
+                        onUniversityChange={(id) => {
+                          setUniversityId(id)
+                          setCampusId('')
+                        }}
+                        onCampusChange={setCampusId}
+                        referenceScope="full"
+                        showState
+                        showLabels={false}
+                        variant="stack"
+                        className="w-full min-w-0 flex flex-col gap-3"
+                        campusPlaceholderNoUniversity="Select campus"
+                        campusPlaceholderWithUniversity="All campuses"
+                        universitySelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                        campusSelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
+                        universityIdAttr="home-search-uni"
+                        campusIdAttr="home-search-campus"
+                      />
+                    </Suspense>
                   </>
                 )}
                 <button
