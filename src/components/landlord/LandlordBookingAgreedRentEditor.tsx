@@ -144,6 +144,8 @@ export default function LandlordBookingAgreedRentEditor({
     }
   }, [agreedRent, applyCap, bondOverrideEnabled, bondOverrideWeeks, bookingId, onSaved, reason])
 
+  // Listing-only: Managed (and null/unknown tier) must never render this editor.
+  if (serviceTierAtRequest !== 'listing') return null
   if (!editable && !prov.overrideApplied) return null
 
   return (
