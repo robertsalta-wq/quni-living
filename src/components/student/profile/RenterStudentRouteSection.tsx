@@ -299,15 +299,26 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
       </div>
 
       <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
-        <span className={renterLabelClass}>Proof of enrolment</span>
-        <input ref={enrolInputRef} type="file" accept="image/*,application/pdf" className="sr-only" />
+        <span id="rs-enrol-label" className={renterLabelClass}>
+          Proof of enrolment
+        </span>
+        <input
+          ref={enrolInputRef}
+          id="rs-enrol-input"
+          type="file"
+          accept="image/*,application/pdf"
+          className="sr-only"
+          aria-label="Upload proof of enrolment"
+        />
         {enrolComplete && enrolFileName && enrolSlot ? (
-          <RenterProfileVerificationRow
-            value={enrolFileName}
-            rightSlot={enrolSlot}
-            onAction={enrolSlot.kind === 'action' ? () => enrolInputRef.current?.click() : undefined}
-            actionDisabled={enrolUploading}
-          />
+          <div role="group" aria-labelledby="rs-enrol-label">
+            <RenterProfileVerificationRow
+              value={enrolFileName}
+              rightSlot={enrolSlot}
+              onAction={enrolSlot.kind === 'action' ? () => enrolInputRef.current?.click() : undefined}
+              actionDisabled={enrolUploading}
+            />
+          </div>
         ) : (
           <StudentVerificationDocPick
             busy={enrolUploading}
@@ -315,6 +326,8 @@ export function RenterStudentRouteSection({ profile, userId, onRefresh, docUploa
             onPickClick={() => enrolInputRef.current?.click()}
             error={enrolUploadError}
             variant="renter-profile"
+            pickId="rs-enrol-pick"
+            ariaLabelledBy="rs-enrol-label"
           />
         )}
       </div>
