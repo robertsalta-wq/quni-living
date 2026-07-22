@@ -5,6 +5,16 @@ import { withSentryMonitoring } from '../../../lib/supabaseErrorMonitor'
 import LanguagesSpokenSelector from '../../profile/LanguagesSpokenSelector'
 import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../../../lib/languagesSpoken'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import {
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridStackClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSuccessFlashClass,
+  renterTextareaClass,
+  renterWriteErrorClass,
+} from '../../../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -79,9 +89,9 @@ export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid renter-profile-form-grid--stack">
-      <div className="renter-profile-field">
-        <label htmlFor="renter-bio" className="renter-profile-field-label">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridStackClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="renter-bio" className={renterLabelClass}>
           Bio
         </label>
         <textarea
@@ -90,11 +100,11 @@ export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           placeholder="Tell landlords a bit about yourself — your course, what you're after in a place, and how you like to live."
-          className="renter-profile-textarea"
+          className={renterTextareaClass}
         />
       </div>
-      <div className="renter-profile-field">
-        <span className="renter-profile-field-label">Languages spoken</span>
+      <div className={renterFieldWrapClass}>
+        <span className={renterLabelClass}>Languages spoken</span>
         <LanguagesSpokenSelector
           id="renter-about-languages"
           value={languagesSpoken}
@@ -103,17 +113,17 @@ export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
         />
       </div>
       {saveError ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
+        <p className={renterWriteErrorClass} role="alert">
           {saveError}
         </p>
       ) : null}
       {savedFlash ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           About you saved.
         </p>
       ) : null}
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <div className={renterFormActionsColumnClass}>
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

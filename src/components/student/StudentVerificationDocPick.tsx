@@ -1,3 +1,5 @@
+import { renterWriteErrorClass } from '../../lib/renterProfileFormClasses'
+
 const defaultPickButtonClass =
   'w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50'
 
@@ -40,7 +42,10 @@ export function StudentVerificationDocPick({
         {busy ? busyLabel : label}
       </button>
       {error ? (
-        <p className={variant === 'renter-profile' ? 'renter-profile-error' : 'text-xs text-red-600 mt-2 break-words'} role="alert">
+        <p
+          className={variant === 'renter-profile' ? renterWriteErrorClass : 'mt-2 break-words text-xs text-red-600'}
+          role="alert"
+        >
           {error}
         </p>
       ) : null}

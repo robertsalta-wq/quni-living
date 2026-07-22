@@ -3,6 +3,7 @@ import {
   workplaceLocationFieldsTouched,
   type WorkplaceLocationFields,
 } from './workplaceLocationSave'
+import { renterControlClass } from './renterProfileFormClasses'
 
 export const RENTER_SAVE_WRITE_FAILURE = "Couldn't save — try again"
 
@@ -22,7 +23,7 @@ export function buildRenterSectionSaveHint(
 }
 
 export function renterFieldClass(baseClass: string, hasError: boolean): string {
-  return hasError ? `${baseClass} renter-profile-field--error` : baseClass
+  return renterControlClass(baseClass, hasError)
 }
 
 export function personalSectionFieldErrors(draft: {

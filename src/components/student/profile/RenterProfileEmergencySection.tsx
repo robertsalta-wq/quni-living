@@ -15,6 +15,14 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const EMERGENCY_HINT_LABELS = {
   emergencyName: 'emergency contact name',
@@ -130,10 +138,10 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
-        <label htmlFor="renter-em-name" className="renter-profile-field-label">
+        <label htmlFor="renter-em-name" className={renterLabelClass}>
           Full name
         </label>
         <input
@@ -144,14 +152,14 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
             setEmergencyName(e.target.value)
             clearFieldError('emergencyName')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.emergencyName))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.emergencyName))}
           aria-invalid={fieldErrors.emergencyName ? true : undefined}
           aria-describedby={fieldErrors.emergencyName ? 'renter-em-name-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="renter-em-name-error" message={fieldErrors.emergencyName} />
       </div>
       <div>
-        <label htmlFor="renter-em-rel" className="renter-profile-field-label">
+        <label htmlFor="renter-em-rel" className={renterLabelClass}>
           Relationship
         </label>
         <input
@@ -160,11 +168,11 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
           value={emergencyRelationship}
           onChange={(e) => setEmergencyRelationship(e.target.value)}
           placeholder="e.g. Parent"
-          className="renter-profile-input"
+          className={renterInputClass}
         />
       </div>
       <div>
-        <label htmlFor="renter-em-phone" className="renter-profile-field-label">
+        <label htmlFor="renter-em-phone" className={renterLabelClass}>
           Phone
         </label>
         <input
@@ -175,14 +183,14 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
             setEmergencyPhone(e.target.value)
             clearFieldError('emergencyPhone')
           }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.emergencyPhone))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.emergencyPhone))}
           aria-invalid={fieldErrors.emergencyPhone ? true : undefined}
           aria-describedby={fieldErrors.emergencyPhone ? 'renter-em-phone-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="renter-em-phone-error" message={fieldErrors.emergencyPhone} />
       </div>
       <div>
-        <label htmlFor="renter-em-email" className="renter-profile-field-label">
+        <label htmlFor="renter-em-email" className={renterLabelClass}>
           Email
         </label>
         <input
@@ -190,18 +198,18 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
           type="email"
           value={emergencyEmail}
           onChange={(e) => setEmergencyEmail(e.target.value)}
-          className="renter-profile-input"
+          className={renterInputClass}
         />
       </div>
       {savedFlash ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Emergency contact saved.
         </p>
       ) : null}
       <RenterProfileWriteError message={saveError} />
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

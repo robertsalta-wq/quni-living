@@ -25,6 +25,18 @@ import {
   RenterProfileSectionErrorBanner,
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
+import {
+  renterFieldGroupHeadingClass,
+  renterFieldWrapClass,
+  renterFormActionsColumnClass,
+  renterFormGridClass,
+  renterFullWidthClass,
+  renterInputClass,
+  renterLabelClass,
+  renterSaveBtnClass,
+  renterSelectClass,
+  renterSuccessFlashClass,
+} from '../../../lib/renterProfileFormClasses'
 
 const VISA_ROUTE_HINT_LABELS = {
   visaStatus: 'visa status',
@@ -34,10 +46,6 @@ const VISA_ROUTE_HINT_LABELS = {
 } as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
-
-const labelClass = 'renter-profile-field-label'
-const inputClass = 'renter-profile-input'
-const selectClass = 'renter-profile-select'
 
 const VISA_STATUS_OPTIONS = [
   { value: '', label: 'Select status' },
@@ -186,10 +194,10 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
   const routeComplete = isVisaRouteSectionComplete(profile)
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+    <form onSubmit={(e) => void handleSubmit(e)} className={renterFormGridClass}>
       <RenterProfileSectionErrorBanner message={sectionError} />
-      <div className="renter-profile-field">
-        <label htmlFor="rv-status" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rv-status" className={renterLabelClass}>
           Visa status
         </label>
         <select
@@ -199,7 +207,7 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
             setVisaStatus(e.target.value)
             clearFieldError('visaStatus')
           }}
-          className={renterFieldClass(selectClass, Boolean(fieldErrors.visaStatus))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.visaStatus))}
           aria-invalid={fieldErrors.visaStatus ? true : undefined}
           aria-describedby={fieldErrors.visaStatus ? 'rv-status-error' : undefined}
         >
@@ -212,8 +220,8 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
         <RenterProfileFieldErrorMsg id="rv-status-error" message={fieldErrors.visaStatus} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rv-subclass" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rv-subclass" className={renterLabelClass}>
           Visa subclass
         </label>
         <input
@@ -224,15 +232,15 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
             clearFieldError('visaSubclass')
           }}
           placeholder="e.g. 417"
-          className={renterFieldClass(inputClass, Boolean(fieldErrors.visaSubclass))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.visaSubclass))}
           aria-invalid={fieldErrors.visaSubclass ? true : undefined}
           aria-describedby={fieldErrors.visaSubclass ? 'rv-subclass-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rv-subclass-error" message={fieldErrors.visaSubclass} />
       </div>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rv-expiry" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rv-expiry" className={renterLabelClass}>
           Visa expiry date
         </label>
         <input
@@ -243,15 +251,15 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
             setVisaExpiry(e.target.value)
             clearFieldError('visaExpiry')
           }}
-          className={renterFieldClass(inputClass, Boolean(fieldErrors.visaExpiry))}
+          className={renterFieldClass(renterInputClass, Boolean(fieldErrors.visaExpiry))}
           aria-invalid={fieldErrors.visaExpiry ? true : undefined}
           aria-describedby={fieldErrors.visaExpiry ? 'rv-expiry-error' : undefined}
         />
         <RenterProfileFieldErrorMsg id="rv-expiry-error" message={fieldErrors.visaExpiry} />
       </div>
 
-      <div className="renter-profile-field" style={{ gridColumn: '1 / -1' }}>
-        <span className={labelClass}>Visa document</span>
+      <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
+        <span className={renterLabelClass}>Visa document</span>
         <input ref={visaInputRef} type="file" accept="image/*,application/pdf" className="sr-only" />
         {hasVisaDoc && visaFileName && visaSlot ? (
           <RenterProfileVerificationRow
@@ -271,10 +279,10 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
         )}
       </div>
 
-      <h3 className="renter-profile-field-group-heading">Funding</h3>
+      <h3 className={renterFieldGroupHeadingClass}>Funding</h3>
 
-      <div className="renter-profile-field">
-        <label htmlFor="rv-income" className={labelClass}>
+      <div className={renterFieldWrapClass}>
+        <label htmlFor="rv-income" className={renterLabelClass}>
           Income band
         </label>
         <select
@@ -284,7 +292,7 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
             setIncomeBand(e.target.value)
             clearFieldError('incomeBand')
           }}
-          className={renterFieldClass(selectClass, Boolean(fieldErrors.incomeBand))}
+          className={renterFieldClass(renterSelectClass, Boolean(fieldErrors.incomeBand))}
           aria-invalid={fieldErrors.incomeBand ? true : undefined}
           aria-describedby={fieldErrors.incomeBand ? 'rv-income-error' : undefined}
         >
@@ -301,14 +309,14 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
       <RenterProfileWriteError message={saveError} />
 
       {routeComplete ? (
-        <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
+        <p className={renterSuccessFlashClass} role="status">
           Visa section complete.
         </p>
       ) : null}
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
+        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>
