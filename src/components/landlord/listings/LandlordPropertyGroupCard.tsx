@@ -120,7 +120,7 @@ export default function LandlordPropertyGroupCard({
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="border-t border-[var(--quni-line-soft)] bg-[var(--quni-surface-2)]">
+          <div className="border-t border-[var(--quni-line-soft)]">
             {group.visibleListings.map((listing) => {
               const index = group.listings.findIndex((l) => l.id === listing.id)
               const uiStatus = toLandlordListingUiStatus(listing, bookings)
