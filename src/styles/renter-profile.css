@@ -75,7 +75,7 @@
   color: var(--quni-coral-hover);
 }
 
-/* Shell modal + photo/situation secondary — form saves use Tailwind (R3a). */
+/* Shell modal only — form saves / secondary migrated (R3a/R3b). */
 .renter-profile-btn-primary {
   background: var(--quni-coral);
   color: var(--quni-surface-1);
@@ -171,94 +171,6 @@
   color: var(--quni-ink);
 }
 
-.renter-profile-upload-btn {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px dashed #dad8dc;
-  border-radius: 10px;
-  padding: 11px 12px;
-  font-size: 13px;
-  font-family: inherit;
-  font-weight: var(--weight-semibold);
-  color: var(--quni-ink-4);
-  background: var(--quni-surface-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.renter-profile-upload-btn:hover:not(:disabled) {
-  border-color: var(--quni-coral);
-  color: var(--quni-coral);
-}
-
-.renter-profile-upload-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.renter-profile-upload-filled {
-  border: 1px solid #cdebdd;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: var(--quni-success-fg);
-  background: #f3fbf7;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.renter-profile-upload-filled-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.renter-profile-filled-row-action {
-  flex: none;
-  background: none;
-  border: 0;
-  color: var(--quni-coral);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
-  font-family: inherit;
-  cursor: pointer;
-  padding: 6px 4px;
-  line-height: 1.2;
-}
-
-.renter-profile-filled-row-action:hover:not(:disabled) {
-  color: var(--quni-coral-hover);
-}
-
-.renter-profile-filled-row-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.renter-profile-photo-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px;
-}
-
-.renter-profile-photo-preview {
-  width: 96px;
-  height: 96px;
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-  background: var(--quni-surface-2);
-  border: 1px solid var(--quni-line);
-  flex: none;
-}
-
 .renter-profile-nested-section {
   margin-top: 15px;
   padding-top: 16px;
@@ -280,41 +192,6 @@
 
 .renter-profile-nested-body {
   padding-top: 16px;
-}
-
-.renter-profile-email-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.renter-profile-email-hint {
-  font-size: 12px;
-  color: var(--quni-ink-4);
-  line-height: 1.45;
-  margin: 0;
-}
-
-.renter-profile-email-wait-box {
-  border: 1px solid var(--quni-line-soft);
-  border-radius: 10px;
-  background: var(--quni-surface-2);
-  padding: 11px 13px;
-  font-size: 12px;
-  color: var(--quni-ink-3);
-  line-height: 1.45;
-}
-
-.renter-profile-email-wait-box ul {
-  margin: 6px 0 0;
-  padding-left: 16px;
-}
-
-.renter-profile-email-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
 }
 
 @media (min-width: 640px) {

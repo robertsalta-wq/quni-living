@@ -14,6 +14,12 @@ const KEY_BY_KIND: Record<VerificationDocKind, string> = {
   identity_supporting: 'verif-input-identity-supporting',
 }
 
+const ARIA_LABEL_BY_KIND: Record<VerificationDocKind, string> = {
+  id: 'Upload government photo ID',
+  enrolment: 'Upload proof of enrolment',
+  identity_supporting: 'Upload supporting document',
+}
+
 export type VerificationFilePickSlot = {
   kind: VerificationDocKind
   pick: (file: File) => void
@@ -106,10 +112,12 @@ export function useHoistedVerificationFileInputs(slots: VerificationFilePickSlot
       {slots.map(({ kind }) => (
         <input
           key={KEY_BY_KIND[kind]}
+          id={KEY_BY_KIND[kind]}
           ref={refForKind(kind)}
           type="file"
           accept={ACCEPT_BY_KIND[kind]}
           className="sr-only"
+          aria-label={ARIA_LABEL_BY_KIND[kind]}
         />
       ))}
     </>

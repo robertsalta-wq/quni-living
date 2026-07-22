@@ -1,4 +1,9 @@
 import type { VerificationItemRightSlot } from '../../../lib/verificationItemState'
+import {
+  renterFilledRowActionClass,
+  renterUploadFilledClass,
+  renterUploadFilledTextClass,
+} from '../../../lib/renterProfileFormClasses'
 
 type Props = {
   value: string
@@ -45,13 +50,13 @@ function PillCheckIcon() {
 
 export function RenterProfileVerificationRow({ value, rightSlot, onAction, actionDisabled = false }: Props) {
   return (
-    <div className="renter-profile-upload-filled">
+    <div className={renterUploadFilledClass}>
       <TickIcon />
-      <span className="renter-profile-upload-filled-text">{value}</span>
+      <span className={renterUploadFilledTextClass}>{value}</span>
       {rightSlot.kind === 'action' ? (
         <button
           type="button"
-          className="renter-profile-filled-row-action"
+          className={renterFilledRowActionClass}
           onClick={onAction}
           disabled={actionDisabled || !onAction}
         >

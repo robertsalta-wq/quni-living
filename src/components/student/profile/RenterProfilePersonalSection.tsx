@@ -20,13 +20,17 @@ import {
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
 import {
+  renterEmailHintClass,
   renterFieldWrapClass,
   renterFormActionsColumnClass,
   renterFormGridClass,
   renterFullWidthClass,
   renterInputClass,
   renterLabelClass,
+  renterPhotoPreviewClass,
+  renterPhotoRowClass,
   renterSaveBtnClass,
+  renterSecondaryBtnClass,
   renterSelectClass,
   renterSuccessFlashClass,
   renterWriteErrorClass,
@@ -337,7 +341,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
               className={renterInputClass}
               aria-describedby="renter-legal-name-hint"
             />
-            <p id="renter-legal-name-hint" className="renter-profile-email-hint" style={{ marginTop: 6 }}>
+            <p id="renter-legal-name-hint" className={`${renterEmailHintClass} mt-1.5`}>
               From your verified ID. Contact support to change.
             </p>
           </div>
@@ -469,36 +473,36 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
         </select>
       </div>
       <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
-        <span className={renterLabelClass}>Profile photo</span>
-        <div className="renter-profile-photo-row">
-          <div className="renter-profile-photo-preview">
+        <span id="renter-photo-label" className={renterLabelClass}>
+          Profile photo
+        </span>
+        <div className={renterPhotoRowClass} role="group" aria-labelledby="renter-photo-label">
+          <div className={renterPhotoPreviewClass}>
             {profilePhotoUrl ? (
-              <img src={profilePhotoUrl} alt="Your profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={profilePhotoUrl} alt="Your profile" className="h-full w-full object-cover" />
             ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--quni-navy)',
-                  fontSize: 20,
-                  fontWeight: 600,
-                }}
-              >
+              <div className="flex h-full w-full items-center justify-center text-[20px] font-semibold text-[var(--quni-navy)]">
                 {initialsFromDisplay(studentDisplayName(profile), displayEmail)}
               </div>
             )}
           </div>
           <div>
-            <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} />
+            <input
+              ref={fileInputRef}
+              id="renter-photo-input"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              aria-label="Upload profile photo"
+              onChange={handlePhotoChange}
+            />
             <button
               type="button"
+              id="renter-photo-pick"
               disabled={uploadingPhoto}
               onClick={() => fileInputRef.current?.click()}
-              className="renter-profile-btn-secondary"
-              style={{ flex: 'none', width: 'auto' }}
+              className={renterSecondaryBtnClass}
+              aria-labelledby="renter-photo-label"
             >
               {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
             </button>

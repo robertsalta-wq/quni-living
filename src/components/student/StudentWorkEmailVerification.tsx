@@ -13,6 +13,9 @@ import {
 import { verificationEmailRowSlot } from '../../lib/verificationItemState'
 import { RenterProfileVerificationRow } from './profile/RenterProfileVerificationRow'
 import {
+  renterEmailActionsClass,
+  renterEmailBlockClass,
+  renterEmailWaitBoxClass,
   renterInputClass,
   renterLabelClass,
   renterSaveBtnClass,
@@ -32,6 +35,7 @@ type Props = {
   required?: boolean
   variant?: 'default' | 'renter-profile'
   hideFieldLabel?: boolean
+  labelledBy?: string
 }
 
 export function StudentWorkEmailVerification({
@@ -42,6 +46,7 @@ export function StudentWorkEmailVerification({
   required = false,
   variant = 'default',
   hideFieldLabel = false,
+  labelledBy,
 }: Props) {
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
@@ -176,23 +181,31 @@ export function StudentWorkEmailVerification({
     variant === 'renter-profile'
       ? renterSaveBtnClass
       : 'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2 disabled:opacity-50'
-  const blockClass = variant === 'renter-profile' ? 'renter-profile-email-block' : 'space-y-4'
-  const errorClass = variant === 'renter-profile' ? renterWriteErrorClass : 'text-xs text-red-600 mt-2'
+  const blockClass = variant === 'renter-profile' ? renterEmailBlockClass : 'space-y-4'
+  const errorClass = variant === 'renter-profile' ? renterWriteErrorClass : 'mt-2 text-xs text-red-600'
   const waitBoxClass =
     variant === 'renter-profile'
-      ? 'renter-profile-email-wait-box'
-      : 'rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4'
-  const actionsClass = variant === 'renter-profile' ? 'renter-profile-email-actions' : 'flex flex-wrap items-center gap-3 mt-3'
+      ? renterEmailWaitBoxClass
+      : 'mb-4 space-y-1.5 rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700'
+  const actionsClass =
+    variant === 'renter-profile' ? renterEmailActionsClass : 'mt-3 flex flex-wrap items-center gap-3'
   const embedded = variant === 'renter-profile' && hideFieldLabel
 
   if (embedded && workEmailVerified) {
     const slot = verificationEmailRowSlot(profile, 'work')
     if (slot?.kind === 'verified') {
-      return (
+      const row = (
         <RenterProfileVerificationRow
           value={profile.work_email ?? ''}
           rightSlot={slot}
         />
+      )
+      return labelledBy ? (
+        <div role="group" aria-labelledby={labelledBy}>
+          {row}
+        </div>
+      ) : (
+        row
       )
     }
   }
@@ -231,7 +244,7 @@ export function StudentWorkEmailVerification({
       ) : (
         <div className={blockClass}>
           {!workCodeSent ? (
-            <div className={embedded ? 'renter-profile-email-block' : undefined}>
+            <div className={embedded ? renterEmailBlockClass : undefined}>
               {!hideFieldLabel ? (
                 <label htmlFor="work-email-verify" className={labelClass}>
                   Work email
@@ -256,6 +269,7 @@ export function StudentWorkEmailVerification({
                 }}
                 placeholder="you@company.com"
                 className={inputClass}
+                aria-labelledby={hideFieldLabel ? labelledBy : undefined}
               />
               {workSendError ? (
                 <p className={errorClass} role="alert">

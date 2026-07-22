@@ -39,6 +39,8 @@ function uploadFileName(doc: { displayFileName?: string } | null): string | null
 type DocRowProps = {
   profile: StudentRow
   kind: VerificationDocKind
+  labelId: string
+  pickId: string
   doc: VerificationUploadedDoc | null
   fileName: string | null
   uploading: boolean
@@ -49,6 +51,8 @@ type DocRowProps = {
 function VerificationDocField({
   profile,
   kind,
+  labelId,
+  pickId,
   doc,
   fileName,
   uploading,
@@ -61,12 +65,14 @@ function VerificationDocField({
   return (
     <>
       {complete && fileName && slot ? (
-        <RenterProfileVerificationRow
-          value={fileName}
-          rightSlot={slot}
-          onAction={slot.kind === 'action' ? onPickClick : undefined}
-          actionDisabled={uploading}
-        />
+        <div role="group" aria-labelledby={labelId}>
+          <RenterProfileVerificationRow
+            value={fileName}
+            rightSlot={slot}
+            onAction={slot.kind === 'action' ? onPickClick : undefined}
+            actionDisabled={uploading}
+          />
+        </div>
       ) : (
         <StudentVerificationDocPick
           busy={uploading}
@@ -74,6 +80,8 @@ function VerificationDocField({
           onPickClick={onPickClick}
           error={error}
           variant="renter-profile"
+          pickId={pickId}
+          ariaLabelledBy={labelId}
         />
       )}
     </>
@@ -110,15 +118,22 @@ export function RenterUniversalVerificationSection({
   const { hoistedFileInputs, openPicker } = useHoistedVerificationFileInputs(pickSlots)
 
   const showEmail = situationShowsVerificationEmail(situation)
+  const idLabelId = 'renter-verify-id-label'
+  const supportLabelId = 'renter-verify-support-label'
+  const emailLabelId = 'renter-verify-email-label'
 
   return (
     <div className={renterFormGridStackClass}>
       {hoistedFileInputs}
       <div className={renterFieldWrapClass}>
-        <span className={renterLabelClass}>Government photo ID</span>
+        <span id={idLabelId} className={renterLabelClass}>
+          Government photo ID
+        </span>
         <VerificationDocField
           profile={profile}
           kind="id"
+          labelId={idLabelId}
+          pickId="renter-verify-id-pick"
           doc={idDoc}
           fileName={uploadFileName(idDoc)}
           uploading={idUploading}
@@ -128,10 +143,14 @@ export function RenterUniversalVerificationSection({
       </div>
 
       <div className={renterFieldWrapClass}>
-        <span className={renterLabelClass}>Supporting document</span>
+        <span id={supportLabelId} className={renterLabelClass}>
+          Supporting document
+        </span>
         <VerificationDocField
           profile={profile}
           kind="identity_supporting"
+          labelId={supportLabelId}
+          pickId="renter-verify-support-pick"
           doc={identitySupportDoc}
           fileName={uploadFileName(identitySupportDoc)}
           uploading={identitySupportUploading}
@@ -142,7 +161,9 @@ export function RenterUniversalVerificationSection({
 
       {showEmail ? (
         <div className={renterFieldWrapClass}>
-          <span className={renterLabelClass}>{verificationEmailFieldLabel(situation)}</span>
+          <span id={emailLabelId} className={renterLabelClass}>
+            {verificationEmailFieldLabel(situation)}
+          </span>
           {situation === 'student' ? (
             <StudentUniEmailVerification
               profile={profile}
@@ -150,6 +171,7 @@ export function RenterUniversalVerificationSection({
               onProfilePatch={onProfilePatch}
               variant="renter-profile"
               hideFieldLabel
+              labelledBy={emailLabelId}
             />
           ) : (
             <StudentWorkEmailVerification
@@ -160,6 +182,7 @@ export function RenterUniversalVerificationSection({
               required
               variant="renter-profile"
               hideFieldLabel
+              labelledBy={emailLabelId}
             />
           )}
         </div>

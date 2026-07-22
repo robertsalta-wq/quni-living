@@ -1,13 +1,13 @@
-import { renterWriteErrorClass } from '../../lib/renterProfileFormClasses'
+import { renterUploadBtnClass, renterWriteErrorClass } from '../../lib/renterProfileFormClasses'
 
 const defaultPickButtonClass =
   'w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50'
 
 /**
  * Button-only picker trigger. The actual hidden <input type="file"> lives at the
- * root of StudentVerificationPanel (hoisted with a stable key) so that re-renders
- * of the surrounding card UI never tear down / remount the input — which on
- * Android Chrome would drop the picker's `change` event. This component just
+ * root of StudentVerificationPanel / renter verification (hoisted with a stable key)
+ * so that re-renders of the surrounding card UI never tear down / remount the input —
+ * which on Android Chrome would drop the picker's `change` event. This component just
  * invokes the panel-level click callback.
  */
 export function StudentVerificationDocPick({
@@ -17,6 +17,8 @@ export function StudentVerificationDocPick({
   error,
   onPickClick,
   variant = 'default',
+  pickId,
+  ariaLabelledBy,
 }: {
   busy: boolean
   label: string
@@ -24,12 +26,22 @@ export function StudentVerificationDocPick({
   error: string | null
   onPickClick: () => void
   variant?: 'default' | 'renter-profile'
+  /** Stable id for label association (htmlFor / aria-labelledby). */
+  pickId?: string
+  ariaLabelledBy?: string
 }) {
-  const buttonClass = variant === 'renter-profile' ? 'renter-profile-upload-btn' : defaultPickButtonClass
+  const buttonClass = variant === 'renter-profile' ? renterUploadBtnClass : defaultPickButtonClass
 
   return (
     <div className="min-w-0">
-      <button type="button" disabled={busy} onClick={onPickClick} className={buttonClass}>
+      <button
+        type="button"
+        id={pickId}
+        disabled={busy}
+        onClick={onPickClick}
+        className={buttonClass}
+        aria-labelledby={ariaLabelledBy}
+      >
         {variant === 'renter-profile' ? (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

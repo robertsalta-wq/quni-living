@@ -11,7 +11,7 @@ import { RenterProfileSetup } from '../components/student/profile/RenterProfileS
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
-import { renterWriteErrorClass } from '../lib/renterProfileFormClasses'
+import { renterSecondaryBtnClass, renterWriteErrorClass } from '../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -514,8 +514,7 @@ export default function StudentProfile() {
                   setDeleteAccountError(null)
                   setDeleteAccountOpen(true)
                 }}
-                className="renter-profile-btn-secondary"
-                style={{ marginTop: 16, width: 'auto', color: 'var(--quni-danger-fg)', borderColor: 'var(--quni-danger-bg)' }}
+                className={`${renterSecondaryBtnClass} mt-4 w-auto border-[var(--quni-danger-bg)] text-[var(--quni-danger-fg)]`}
               >
                 Delete account
               </button>

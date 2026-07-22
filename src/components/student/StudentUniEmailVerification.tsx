@@ -14,6 +14,10 @@ import {
 import { verificationEmailRowSlot } from '../../lib/verificationItemState'
 import { RenterProfileVerificationRow } from './profile/RenterProfileVerificationRow'
 import {
+  renterEmailActionsClass,
+  renterEmailBlockClass,
+  renterEmailHintClass,
+  renterEmailWaitBoxClass,
   renterInputClass,
   renterLabelClass,
   renterSaveBtnClass,
@@ -34,6 +38,8 @@ type Props = {
   showAdminResendHint?: boolean
   /** Parent grid supplies the field label (§02 Verification). */
   hideFieldLabel?: boolean
+  /** When hideFieldLabel, associate the email control with the parent label. */
+  labelledBy?: string
 }
 
 export function StudentUniEmailVerification({
@@ -43,6 +49,7 @@ export function StudentUniEmailVerification({
   variant = 'profile',
   showAdminResendHint = variant === 'profile',
   hideFieldLabel = false,
+  labelledBy,
 }: Props) {
   const emailVerified = isStudentUniEmailVerified(profile)
   const userId = profile.user_id
@@ -107,14 +114,15 @@ export function StudentUniEmailVerification({
     variant === 'renter-profile'
       ? renterSaveBtnClass
       : 'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2 disabled:opacity-50'
-  const blockClass = variant === 'renter-profile' ? 'renter-profile-email-block' : 'space-y-4'
-  const hintClass = variant === 'renter-profile' ? 'renter-profile-email-hint' : 'text-xs text-stone-500 mt-1.5'
-  const errorClass = variant === 'renter-profile' ? renterWriteErrorClass : 'text-xs text-red-600 mt-2'
+  const blockClass = variant === 'renter-profile' ? renterEmailBlockClass : 'space-y-4'
+  const hintClass = variant === 'renter-profile' ? renterEmailHintClass : 'mt-1.5 text-xs text-stone-500'
+  const errorClass = variant === 'renter-profile' ? renterWriteErrorClass : 'mt-2 text-xs text-red-600'
   const waitBoxClass =
     variant === 'renter-profile'
-      ? 'renter-profile-email-wait-box'
-      : 'rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4'
-  const actionsClass = variant === 'renter-profile' ? 'renter-profile-email-actions' : 'flex flex-wrap items-center gap-3 mt-3'
+      ? renterEmailWaitBoxClass
+      : 'mb-4 space-y-1.5 rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700'
+  const actionsClass =
+    variant === 'renter-profile' ? renterEmailActionsClass : 'mt-3 flex flex-wrap items-center gap-3'
 
   const sendCode = useCallback(async () => {
     setSendError(null)
@@ -212,11 +220,18 @@ export function StudentUniEmailVerification({
     if (variant === 'renter-profile') {
       const slot = verificationEmailRowSlot(profile, 'uni')
       if (slot) {
-        return (
+        const row = (
           <RenterProfileVerificationRow
             value={profile.uni_email ?? ''}
             rightSlot={slot}
           />
+        )
+        return labelledBy ? (
+          <div role="group" aria-labelledby={labelledBy}>
+            {row}
+          </div>
+        ) : (
+          row
         )
       }
     }
@@ -237,7 +252,7 @@ export function StudentUniEmailVerification({
   }
 
   if (embeddedFilledEmail?.kind === 'action' && !editingEmail) {
-    return (
+    const row = (
       <RenterProfileVerificationRow
         value={profile.uni_email ?? ''}
         rightSlot={embeddedFilledEmail}
@@ -247,12 +262,19 @@ export function StudentUniEmailVerification({
         }}
       />
     )
+    return labelledBy ? (
+      <div role="group" aria-labelledby={labelledBy}>
+        {row}
+      </div>
+    ) : (
+      row
+    )
   }
 
   return (
     <div className={blockClass}>
       {!codeSent ? (
-        <div className={variant === 'renter-profile' ? 'renter-profile-email-block' : undefined}>
+        <div className={variant === 'renter-profile' ? renterEmailBlockClass : undefined}>
           {!hideFieldLabel ? (
             <label htmlFor="uni-email-verify" className={labelClass}>
               University email <span className="text-red-500">*</span>
@@ -270,6 +292,7 @@ export function StudentUniEmailVerification({
             }}
             placeholder="you@student.unsw.edu.au"
             className={inputClass}
+            aria-labelledby={hideFieldLabel ? labelledBy : undefined}
           />
           <p className={hintClass}>
             Use your official student address (e.g. @student.unsw.edu.au), not your personal Gmail.

@@ -259,15 +259,26 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
       </div>
 
       <div className={`${renterFieldWrapClass} ${renterFullWidthClass}`}>
-        <span className={renterLabelClass}>Visa document</span>
-        <input ref={visaInputRef} type="file" accept="image/*,application/pdf" className="sr-only" />
+        <span id="rv-visa-doc-label" className={renterLabelClass}>
+          Visa document
+        </span>
+        <input
+          ref={visaInputRef}
+          id="rv-visa-doc-input"
+          type="file"
+          accept="image/*,application/pdf"
+          className="sr-only"
+          aria-label="Upload visa document"
+        />
         {hasVisaDoc && visaFileName && visaSlot ? (
-          <RenterProfileVerificationRow
-            value={visaFileName}
-            rightSlot={visaSlot}
-            onAction={visaSlot.kind === 'action' ? () => visaInputRef.current?.click() : undefined}
-            actionDisabled={uploading}
-          />
+          <div role="group" aria-labelledby="rv-visa-doc-label">
+            <RenterProfileVerificationRow
+              value={visaFileName}
+              rightSlot={visaSlot}
+              onAction={visaSlot.kind === 'action' ? () => visaInputRef.current?.click() : undefined}
+              actionDisabled={uploading}
+            />
+          </div>
         ) : (
           <StudentVerificationDocPick
             busy={uploading}
@@ -275,6 +286,8 @@ export function RenterVisaRouteSection({ profile, userId, onRefresh }: Props) {
             onPickClick={() => visaInputRef.current?.click()}
             error={uploadError}
             variant="renter-profile"
+            pickId="rv-visa-doc-pick"
+            ariaLabelledBy="rv-visa-doc-label"
           />
         )}
       </div>
