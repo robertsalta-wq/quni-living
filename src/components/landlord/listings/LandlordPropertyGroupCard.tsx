@@ -60,7 +60,7 @@ export function LandlordWholePlaceListingCard({
       <button
         type="button"
         onClick={() => onEdit(listing)}
-        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)] min-[840px]:hover:bg-[#FBFAF7]"
+        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
       >
         <WholePlaceHouseIcon />
         <div className="min-w-0 flex-1">
@@ -99,7 +99,7 @@ export default function LandlordPropertyGroupCard({
         type="button"
         onClick={onToggleExpanded}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)] min-[840px]:hover:bg-[#FBFAF7]"
+        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-bold text-[var(--quni-ink)] min-[840px]:text-[17px]">
