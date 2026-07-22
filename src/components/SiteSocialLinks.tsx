@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { BookOpen, MessageCircle, Music2, Share2 } from 'lucide-react'
-import { socials, type SocialKey } from '../config/site'
+import { useEffect, useState } from 'react'
+import { AtSign, BookOpen, Globe, Link2, MessageCircle, Music2, Share2, Video } from 'lucide-react'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
+import {
+  parseSocialAccountsJson,
+  publicSocialLinksFromAccounts,
+  type PublicSocialLink,
+} from '../lib/socialAccounts'
+import { socials } from '../config/site'
 
 type SiteSocialLinksProps = {
   /** Footer uses light icons on coral; mobile drawer uses dark on white. */
@@ -8,59 +14,91 @@ type SiteSocialLinksProps = {
   className?: string
 }
 
-type SocialEntry =
-  | { key: SocialKey; kind: 'url'; href: string; label: string }
-  | { key: SocialKey; kind: 'wechat'; id: string; label: string }
-
-function configuredSocials(): SocialEntry[] {
-  const out: SocialEntry[] = []
+/** Build-time / empty-DB fallback from `config/site.ts` (legacy). */
+function fallbackLinksFromConfig(): PublicSocialLink[] {
+  const out: PublicSocialLink[] = []
   if (socials.instagram.trim()) {
-    out.push({ key: 'instagram', kind: 'url', href: socials.instagram.trim(), label: 'Instagram' })
+    out.push({
+      key: 'instagram',
+      platform: 'Instagram',
+      href: socials.instagram.trim(),
+      label: 'Instagram',
+    })
   }
   if (socials.tiktok.trim()) {
-    out.push({ key: 'tiktok', kind: 'url', href: socials.tiktok.trim(), label: 'TikTok' })
+    out.push({ key: 'tiktok', platform: 'TikTok', href: socials.tiktok.trim(), label: 'TikTok' })
   }
   if (socials.xiaohongshu.trim()) {
     out.push({
       key: 'xiaohongshu',
-      kind: 'url',
+      platform: 'Xiaohongshu (RED)',
       href: socials.xiaohongshu.trim(),
       label: 'Xiaohongshu (RED)',
     })
   }
-  if (socials.wechat.trim()) {
-    out.push({ key: 'wechat', kind: 'wechat', id: socials.wechat.trim(), label: 'WeChat' })
-  }
   return out
 }
 
-function SocialIcon({ entry, className }: { entry: SocialEntry; className: string }) {
-  switch (entry.key) {
+function SocialIcon({ platformKey, className }: { platformKey: string; className: string }) {
+  switch (platformKey) {
     case 'instagram':
-      return <Share2 className={className} aria-hidden />
+      return <AtSign className={className} aria-hidden />
     case 'tiktok':
       return <Music2 className={className} aria-hidden />
+    case 'linkedin':
+      return <Link2 className={className} aria-hidden />
+    case 'facebook':
+      return <Globe className={className} aria-hidden />
+    case 'youtube':
+      return <Video className={className} aria-hidden />
+    case 'twitter':
+      return <Share2 className={className} aria-hidden />
     case 'xiaohongshu':
       return <BookOpen className={className} aria-hidden />
     case 'wechat':
       return <MessageCircle className={className} aria-hidden />
     default:
-      return null
+      return <Link2 className={className} aria-hidden />
   }
 }
 
 export default function SiteSocialLinks({ variant = 'footer', className = '' }: SiteSocialLinksProps) {
-  const entries = useMemo(() => configuredSocials(), [])
-  const [wechatCopied, setWechatCopied] = useState(false)
-  const [wechatOpen, setWechatOpen] = useState(false)
+  const [links, setLinks] = useState<PublicSocialLink[]>(() => fallbackLinksFromConfig())
 
   useEffect(() => {
-    if (!wechatCopied) return
-    const timer = window.setTimeout(() => setWechatCopied(false), 2000)
-    return () => window.clearTimeout(timer)
-  }, [wechatCopied])
+    if (!isSupabaseConfigured) return
 
-  if (entries.length === 0) return null
+    let cancelled = false
+    void (async () => {
+      const { supabase } = await import('../lib/supabase')
+      type PublicSocialClient = {
+        from(table: 'public_social_links'): {
+          select(cols: 'accounts_json'): {
+            maybeSingle(): Promise<{
+              data: { accounts_json: string | null } | null
+              error: { message: string } | null
+            }>
+          }
+        }
+      }
+      const { data, error } = await (supabase as unknown as PublicSocialClient)
+        .from('public_social_links')
+        .select('accounts_json')
+        .maybeSingle()
+      if (cancelled || error || !data) return
+
+      const parsed = parseSocialAccountsJson(data.accounts_json)
+      if (!parsed) return
+      const next = publicSocialLinksFromAccounts(parsed)
+      setLinks(next.length > 0 ? next : fallbackLinksFromConfig())
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (links.length === 0) return null
 
   const iconClass = variant === 'footer' ? 'h-5 w-5 text-[var(--quni-navy)]' : 'h-5 w-5 text-[var(--quni-navy)]'
   const buttonClass =
@@ -70,45 +108,19 @@ export default function SiteSocialLinks({ variant = 'footer', className = '' }: 
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`.trim()} role="list" aria-label="Social media">
-      {entries.map((entry) =>
-        entry.kind === 'url' ? (
-          <a
-            key={entry.key}
-            href={entry.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClass}
-            aria-label={entry.label}
-            role="listitem"
-          >
-            <SocialIcon entry={entry} className={iconClass} />
-          </a>
-        ) : (
-          <div key={entry.key} className="relative" role="listitem">
-            <button
-              type="button"
-              className={buttonClass}
-              aria-label={`${entry.label}: ${entry.id}`}
-              aria-describedby={wechatOpen ? `wechat-id-${entry.key}` : undefined}
-              onClick={() => {
-                void navigator.clipboard.writeText(entry.id).then(() => setWechatCopied(true))
-                setWechatOpen(true)
-              }}
-            >
-              <SocialIcon entry={entry} className={iconClass} />
-            </button>
-            {wechatOpen ? (
-              <span
-                id={`wechat-id-${entry.key}`}
-                className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[var(--quni-navy)] px-2.5 py-1.5 text-xs font-medium text-white shadow-lg"
-                role="status"
-              >
-                {wechatCopied ? 'Copied!' : entry.id}
-              </span>
-            ) : null}
-          </div>
-        ),
-      )}
+      {links.map((link) => (
+        <a
+          key={link.key}
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonClass}
+          aria-label={link.label}
+          role="listitem"
+        >
+          <SocialIcon platformKey={link.key} className={iconClass} />
+        </a>
+      ))}
     </div>
   )
 }
