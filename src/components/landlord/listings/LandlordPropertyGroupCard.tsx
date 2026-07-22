@@ -1,11 +1,8 @@
-import { Building2, ChevronDown, ChevronUp, Home, Plus } from 'lucide-react'
+import { ChevronRight, Home, Plus } from 'lucide-react'
 import {
-  landlordListingRollupChipClass,
-  landlordListingUiStatusLabel,
   landlordRoomDisplayName,
   toLandlordListingUiStatus,
   type LandlordListingForGroup,
-  type LandlordListingUiStatus,
   type LandlordPropertyGroup,
 } from '../../../lib/landlordListingsGrouped'
 import LandlordListingRoomRow from './LandlordListingRoomRow'
@@ -15,8 +12,6 @@ function formatWeeklyRent(n: number | null | undefined): string {
   if (n == null || Number.isNaN(Number(n))) return '— /wk'
   return `$${Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 })} /wk`
 }
-
-const ROLLUP_ORDER: LandlordListingUiStatus[] = ['live', 'booked', 'draft', 'paused', 'vacant']
 
 type Actions = {
   onEdit: (listing: LandlordListingForGroup) => void
@@ -36,20 +31,17 @@ type GroupCardProps = Actions & {
   bookings: Array<{ property_id: string | null; status: string }>
 }
 
-function PropertyBuildingIcon() {
-  return (
-    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--quni-surface-3)]">
-      <Building2 className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
-    </div>
-  )
-}
-
 function WholePlaceHouseIcon() {
   return (
     <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--quni-surface-3)]">
       <Home className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
     </div>
   )
+}
+
+function roomsHeaderSubline(group: LandlordPropertyGroup): string {
+  const booked = group.rollup.booked ?? 0
+  return [group.suburb?.trim(), group.roomCountLabel, `${booked} booked`].filter(Boolean).join(' · ')
 }
 
 export function LandlordWholePlaceListingCard({
@@ -68,11 +60,13 @@ export function LandlordWholePlaceListingCard({
       <button
         type="button"
         onClick={() => onEdit(listing)}
-        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
+        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)] min-[840px]:hover:bg-[#FBFAF7]"
       >
         <WholePlaceHouseIcon />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14.5px] font-bold text-[var(--quni-ink)]">{group.addressLabel}</p>
+          <p className="truncate text-base font-bold text-[var(--quni-ink)] min-[840px]:text-[17px]">
+            {group.addressLabel}
+          </p>
           <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
         </div>
         <LandlordListingStatusPill status={uiStatus} />
@@ -97,7 +91,7 @@ export default function LandlordPropertyGroupCard({
     return <LandlordWholePlaceListingCard group={group} bookings={bookings} onEdit={onEdit} />
   }
 
-  const suburbLine = [group.suburb?.trim(), group.roomCountLabel].filter(Boolean).join(' · ')
+  const suburbLine = roomsHeaderSubline(group)
 
   return (
     <article className="quni-dashboard-panel">
@@ -105,26 +99,19 @@ export default function LandlordPropertyGroupCard({
         type="button"
         onClick={onToggleExpanded}
         aria-expanded={expanded}
-        className="flex w-full items-start gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
+        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)] min-[840px]:hover:bg-[#FBFAF7]"
       >
-        <PropertyBuildingIcon />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14.5px] font-bold text-[var(--quni-ink)]">{group.addressLabel}</p>
+          <p className="truncate text-base font-bold text-[var(--quni-ink)] min-[840px]:text-[17px]">
+            {group.addressLabel}
+          </p>
           <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {ROLLUP_ORDER.map((status) => {
-              const count = group.rollup[status] ?? 0
-              if (count <= 0) return null
-              return (
-                <span key={status} className={landlordListingRollupChipClass(status)}>
-                  {count} {landlordListingUiStatusLabel(status).toLowerCase()}
-                </span>
-              )
-            })}
-          </div>
         </div>
-        <span className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--quni-ink-4)]">
-          {expanded ? <ChevronUp className="h-4 w-4" aria-hidden /> : <ChevronDown className="h-4 w-4" aria-hidden />}
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--quni-ink-4)]">
+          <ChevronRight
+            className={`h-4 w-4 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+            aria-hidden
+          />
         </span>
       </button>
 
@@ -138,35 +125,34 @@ export default function LandlordPropertyGroupCard({
               const index = group.listings.findIndex((l) => l.id === listing.id)
               const uiStatus = toLandlordListingUiStatus(listing, bookings)
               return (
-                <div key={listing.id} className="border-b border-[var(--quni-line-soft)] last:border-b-0">
-                  <LandlordListingRoomRow
-                    listing={listing}
-                    roomName={landlordRoomDisplayName(listing, index >= 0 ? index : 0)}
-                    uiStatus={uiStatus}
-                    weeklyRentLabel={formatWeeklyRent(listing.rent_per_week)}
-                    busy={busyListingId === listing.id}
-                    onOpenDetail={() => onEdit(listing)}
-                    onEdit={() => onEdit(listing)}
-                    onDuplicate={() => onDuplicate(listing)}
-                    onTogglePause={
-                      listing.status === 'active' || listing.status === 'inactive'
-                        ? () => onTogglePause(listing)
-                        : undefined
-                    }
-                    onDeleteDraft={
-                      listing.status === 'draft' && onDeleteDraft
-                        ? () => onDeleteDraft(listing)
-                        : undefined
-                    }
-                  />
-                </div>
+                <LandlordListingRoomRow
+                  key={listing.id}
+                  listing={listing}
+                  roomName={landlordRoomDisplayName(listing, index >= 0 ? index : 0)}
+                  uiStatus={uiStatus}
+                  weeklyRentLabel={formatWeeklyRent(listing.rent_per_week)}
+                  busy={busyListingId === listing.id}
+                  onOpenDetail={() => onEdit(listing)}
+                  onEdit={() => onEdit(listing)}
+                  onDuplicate={() => onDuplicate(listing)}
+                  onTogglePause={
+                    listing.status === 'active' || listing.status === 'inactive'
+                      ? () => onTogglePause(listing)
+                      : undefined
+                  }
+                  onDeleteDraft={
+                    listing.status === 'draft' && onDeleteDraft
+                      ? () => onDeleteDraft(listing)
+                      : undefined
+                  }
+                />
               )
             })}
-            <div className="px-4 py-3 pl-6">
+            <div className="px-4 py-3 pl-4 min-[840px]:pl-6">
               <button
                 type="button"
                 onClick={() => onAddRoom(group)}
-                className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-semibold text-[var(--quni-coral)] hover:underline underline-offset-2"
+                className="inline-flex min-h-[44px] items-center gap-1.5 whitespace-nowrap text-[13px] font-semibold text-[var(--quni-coral)] hover:underline underline-offset-2"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Add room
