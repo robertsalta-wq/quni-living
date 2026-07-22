@@ -1297,6 +1297,8 @@ export interface Database {
           strata_bylaws_applicable: boolean | null
           authority_to_let_attested_at: string | null
           water_separately_metered_efficient_attested_at: string | null
+          accuracy_attested_at: string | null
+          accuracy_attested_content_hash: string | null
           utilities_services: Json | null
           lister_role: 'owner' | 'head_tenant'
         }
@@ -1357,6 +1359,8 @@ export interface Database {
           strata_bylaws_applicable?: boolean | null
           authority_to_let_attested_at?: string | null
           water_separately_metered_efficient_attested_at?: string | null
+          accuracy_attested_at?: string | null
+          accuracy_attested_content_hash?: string | null
           lister_role?: 'owner' | 'head_tenant'
         }
         Update: {
@@ -1416,6 +1420,8 @@ export interface Database {
           strata_bylaws_applicable?: boolean | null
           authority_to_let_attested_at?: string | null
           water_separately_metered_efficient_attested_at?: string | null
+          accuracy_attested_at?: string | null
+          accuracy_attested_content_hash?: string | null
           utilities_services?: Json | null
           lister_role?: 'owner' | 'head_tenant'
         }
