@@ -29,8 +29,15 @@ async function uploadDashboardDoc(
   profileUrlColumn: StudentVerificationDocUrlColumn,
 ): Promise<void> {
   const region = page.getByRole('region', { name: regionName })
+  await expect(region).toBeVisible({ timeout: 60_000 })
+  // Expand if the section chrome collapsed (summary Edit row).
+  const editBtn = region.getByRole('button', { name: 'Edit' })
+  if (await editBtn.isVisible().catch(() => false)) {
+    await editBtn.click()
+  }
   const input = region.locator('input[type="file"]').nth(fileInputIndex)
-  await input.scrollIntoViewIfNeeded()
+  // sr-only file inputs inside overflow-hidden cards hang scrollIntoViewIfNeeded — set files directly.
+  await expect(input).toBeAttached({ timeout: 30_000 })
   await Promise.all([
     page.waitForResponse(
       (response) =>

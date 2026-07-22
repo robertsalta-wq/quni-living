@@ -9,28 +9,6 @@
   margin: 0 auto;
 }
 
-.renter-profile-card-header {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 18px 18px;
-  cursor: pointer;
-  user-select: none;
-  border: 0;
-  background: transparent;
-  width: 100%;
-  text-align: left;
-}
-
-.renter-profile-card-header-situation {
-  gap: 14px;
-  padding: 18px 20px;
-}
-
-.renter-profile-card-header-static {
-  cursor: default;
-}
-
 .renter-profile-icon-wrap {
   flex: none;
   width: 38px;
@@ -49,44 +27,13 @@
   border-radius: var(--radius-md);
 }
 
-.renter-profile-section-num {
-  font-size: var(--text-caption-size);
-  font-weight: var(--weight-bold);
-  color: var(--quni-coral);
-  letter-spacing: 0.02em;
-  flex: none;
-}
-
-.renter-profile-section-title {
-  font-size: var(--text-body-size);
-  font-weight: var(--weight-semibold);
-  color: var(--quni-ink);
-  letter-spacing: -0.01em;
-}
-
-.renter-profile-section-summary {
-  margin-top: 4px;
-  font-size: var(--text-caption-size);
-  color: var(--quni-ink-4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.renter-profile-section-body {
-  padding: 2px 20px 20px;
-  border-top: 1px solid var(--quni-line-soft);
-}
-
-.renter-profile-section-body-inner {
-  padding-top: 16px;
-}
-
+/* Form-grid stack helper (R3 owns the form grid; keep this until then). */
 .renter-profile-section-body-inner--stack > .renter-profile-form-grid,
 .renter-profile-form-grid--stack {
   grid-template-columns: 1fr;
 }
 
+/* Verification-row pills only (not section StatusPill) — R4/cleanup. */
 .renter-profile-pill {
   flex: none;
   display: inline-flex;
@@ -105,13 +52,6 @@
   color: var(--quni-success-fg);
 }
 
-.renter-profile-pill-todo {
-  background: var(--quni-warning-bg);
-  color: var(--quni-warning-fg);
-}
-
-.renter-profile-pill-optional,
-.renter-profile-pill-locked,
 .renter-profile-pill-review {
   background: var(--quni-navy-tint);
   color: var(--quni-ink-4);
@@ -139,11 +79,6 @@
 
 .renter-profile-edit-btn:hover {
   color: var(--quni-coral-hover);
-}
-
-.renter-profile-chevron {
-  flex: none;
-  color: var(--quni-ink-5);
 }
 
 .renter-profile-field {
