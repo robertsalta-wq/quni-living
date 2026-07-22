@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { isLegacyMetadataAdmin } from './adminEmails'
+import { authUserEmail } from './adminEmails'
 
-describe('isLegacyMetadataAdmin', () => {
-  it('returns true when user_metadata.role is admin', () => {
-    expect(isLegacyMetadataAdmin({ user_metadata: { role: 'admin' } } as never)).toBe(true)
+describe('authUserEmail', () => {
+  it('prefers user.email (trimmed)', () => {
+    expect(authUserEmail({ email: '  a@b.com ' } as never)).toBe('a@b.com')
   })
 
-  it('returns false otherwise', () => {
-    expect(isLegacyMetadataAdmin({ user_metadata: { role: 'landlord' } } as never)).toBe(false)
-    expect(isLegacyMetadataAdmin(null)).toBe(false)
+  it('falls back to identities email when user.email is empty', () => {
+    expect(
+      authUserEmail({ email: '', identities: [{ identity_data: { email: 'c@d.com' } }] } as never),
+    ).toBe('c@d.com')
+  })
+
+  it('returns null when no email is present', () => {
+    expect(authUserEmail(null)).toBeNull()
+    expect(authUserEmail({ email: '', identities: [] } as never)).toBeNull()
   })
 })

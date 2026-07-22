@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfileRouting'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
@@ -14,7 +13,7 @@ export function OnboardingResumeBanner() {
   const location = useLocation()
 
   if (loading || !user) return null
-  if (role === 'admin' || isLegacyMetadataAdmin(user)) return null
+  if (role === 'admin') return null
   if (isOnboardingResumeExempt(location.pathname)) return null
   if (userNeedsEmailAddressVerification(user)) return null
   if (!needsOnboarding(role, profile, user.id)) return null

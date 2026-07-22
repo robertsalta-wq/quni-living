@@ -15,8 +15,3 @@ export function authUserEmail(user: User | null | undefined): string | null {
   }
   return null
 }
-
-/** Legacy JWT metadata fallback only - prefer `role === 'admin'` from AuthContext (platform_staff RPC). */
-export function isLegacyMetadataAdmin(user: User | null | undefined): boolean {
-  return user?.user_metadata?.role === 'admin'
-}

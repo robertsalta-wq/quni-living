@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
 
@@ -29,7 +28,7 @@ export function PostAuthOnboardingRedirect() {
       return
     }
 
-    if (role === 'admin' || isLegacyMetadataAdmin(user)) {
+    if (role === 'admin') {
       clearAwaitingSignInOnboardingRedirect()
       return
     }

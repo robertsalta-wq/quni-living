@@ -1,5 +1,5 @@
 /**
- * Verify Supabase JWT and platform admin (platform_staff table or legacy user_metadata.role).
+ * Verify Supabase JWT and platform admin via the authoritative platform_staff table.
  */
 import { createClient } from '@supabase/supabase-js'
 
@@ -9,7 +9,6 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function isPlatformAdminUser(user) {
   if (!user) return false
-  if (user.user_metadata?.role === 'admin') return true
   const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : ''
   if (!email) return false
   const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
