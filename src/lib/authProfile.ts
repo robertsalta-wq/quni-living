@@ -123,8 +123,9 @@ async function loadRoleAndProfileCore(user: User): Promise<{
 }> {
   const meta = user.user_metadata?.role
   const metaIsKnownRole = isRenterRole(meta) || meta === 'landlord'
-  const mayBePlatformAdmin = meta === 'admin' || !metaIsKnownRole
-  if (mayBePlatformAdmin && (meta === 'admin' || (await fetchIsPlatformAdmin()))) {
+  // Never trust user_metadata for admin — verify against platform_staff via RPC.
+  // Known renter/landlord users skip the RPC (perf); everyone else is checked.
+  if (!metaIsKnownRole && (await fetchIsPlatformAdmin())) {
     await linkPlatformStaffUserIfNeeded(user)
     return { role: 'admin', profile: null }
   }

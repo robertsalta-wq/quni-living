@@ -5,7 +5,6 @@ import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole, type StudentProfileRow, type UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import { INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
-import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 type AllowedRole = Exclude<UserRole, null>
@@ -62,7 +61,7 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (role !== 'admin' && !isLegacyMetadataAdmin(user) && userNeedsEmailAddressVerification(user)) {
+  if (role !== 'admin' && userNeedsEmailAddressVerification(user)) {
     return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 
@@ -117,7 +116,7 @@ export function RequireUser({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (role !== 'admin' && !isLegacyMetadataAdmin(user) && userNeedsEmailAddressVerification(user)) {
+  if (role !== 'admin' && userNeedsEmailAddressVerification(user)) {
     return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 

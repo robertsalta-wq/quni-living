@@ -217,8 +217,7 @@ async function resolveAccount(
     role = 'landlord'
   } else if (userId) {
     const { data: authData } = await admin.auth.admin.getUserById(userId)
-    if (authData?.user?.user_metadata?.role === 'admin') role = 'admin'
-    else if (authData?.user?.user_metadata?.role === 'landlord') role = 'landlord'
+    if (authData?.user?.user_metadata?.role === 'landlord') role = 'landlord'
     else if (isRenterRole(authData?.user?.user_metadata?.role)) role = 'renter'
   }
 
