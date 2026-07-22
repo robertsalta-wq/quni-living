@@ -194,9 +194,10 @@ export default function Home() {
   const [countLoading, setCountLoading] = useState(isSupabaseConfigured)
   const [featured, setFeatured] = useState<Property[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(isSupabaseConfigured)
-  const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(
-    () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
-  )
+  const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('quni_nonstu_banner_dismissed') === 'true'
+  })
   const [locationSearchBusy, setLocationSearchBusy] = useState(false)
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')

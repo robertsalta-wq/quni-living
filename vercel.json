@@ -123,9 +123,8 @@
     },
     {
       "source": "/((?!api/).+)",
-      "destination": "/index.html"
-    },
-    { "source": "/", "destination": "/index.html" }
+      "destination": "/spa.html"
+    }
   ],
   "crons": [
     { "path": "/api/cron/expire-bookings", "schedule": "0 * * * *" },
