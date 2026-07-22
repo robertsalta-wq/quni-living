@@ -62,6 +62,8 @@ function injectPrerender(template: string, body: string, head: string): string {
 export async function prerenderRoutes(distDir: string): Promise<void> {
   const templatePath = path.join(distDir, 'index.html')
   const template = readFileSync(templatePath, 'utf8')
+  // Keep an empty SPA shell for client-routed paths (vercel rewrite → spa.html).
+  writeFileSync(path.join(distDir, 'spa.html'), template, 'utf8')
   const pathnames = listPrerenderPathnames()
 
   for (const pathname of pathnames) {
