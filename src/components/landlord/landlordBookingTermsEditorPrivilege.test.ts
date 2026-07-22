@@ -50,7 +50,7 @@ describe('landlord booking terms editor privilege boundary', () => {
     const rail = readSrc('src/components/booking/review/BookingReviewTermsRail.tsx')
     expect(rail).toContain('LandlordBookingTermsEditor')
     expect(rail).toContain('LandlordBookingAgreedRentEditor')
-    expect(rail).toContain('listingBookingTermsEditorEligible')
+    expect(rail).toContain('resolveBookingReviewTermsEditorMode')
 
     const editorModule = readSrc('src/components/landlord/LandlordBookingTermsEditor.tsx')
     expect(editorModule).toContain('Edit booking terms')

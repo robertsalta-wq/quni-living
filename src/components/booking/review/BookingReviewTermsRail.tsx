@@ -7,16 +7,14 @@ import {
   parseRentBreakdownAud,
   formatOccupantCountLabel,
 } from '../../../lib/pricing/bookingOccupancySnapshot'
-import { parseRentOverrideProvenance } from '../../../lib/pricing/rentAgreedOverride'
 import {
   resolveBookingReviewHoldNote,
   resolveBookingReviewHoldRow,
   resolveBookingReviewRentBreakdownRows,
 } from '../../../lib/booking/bookingReviewTermsSummary'
-import LandlordBookingTermsEditor, {
-  listingBookingTermsEditorEligible,
-} from '../../landlord/LandlordBookingTermsEditor'
+import LandlordBookingTermsEditor from '../../landlord/LandlordBookingTermsEditor'
 import LandlordBookingAgreedRentEditor from '../../landlord/LandlordBookingAgreedRentEditor'
+import { resolveBookingReviewTermsEditorMode } from '../../../lib/booking/bookingReviewTermsEditorMode'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 
@@ -67,17 +65,14 @@ export default function BookingReviewTermsRail({
   const breakdown = parseRentBreakdownAud(booking.rent_breakdown)
   const coTenant = parseCoTenantSnapshot(booking.co_tenant)
 
-  const listingEligible = listingBookingTermsEditorEligible(
-    booking.status,
-    booking.service_tier_at_request,
-    booking.service_tier_final,
-  )
-  const agreedRentProv = parseRentOverrideProvenance(booking.rent_breakdown)
-  const agreedRentEditable =
-    booking.service_tier_at_request === 'listing' &&
-    (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
-  const editorPathApplies = listingEligible || agreedRentEditable || agreedRentProv.overrideApplied
-  const canEdit = !inputsDisabled && editorPathApplies
+  const editorMode = resolveBookingReviewTermsEditorMode({
+    status: booking.status,
+    serviceTierAtRequest: booking.service_tier_at_request,
+    serviceTierFinal: booking.service_tier_final,
+    rentBreakdown: booking.rent_breakdown,
+    inputsDisabled,
+  })
+  const canEdit = editorMode !== 'none'
 
   const holdRow = resolveBookingReviewHoldRow({
     tier,
@@ -282,7 +277,7 @@ export default function BookingReviewTermsRail({
               </button>
             </div>
             <div className="p-5">
-              {listingEligible ? (
+              {editorMode === 'listing_terms' ? (
                 <LandlordBookingTermsEditor
                   bookingId={booking.id}
                   status={booking.status}
