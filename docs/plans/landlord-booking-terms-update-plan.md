@@ -285,7 +285,7 @@ When no doc / no tenancy: `any_party_signed: false`.
 ### Still manual (UI / product smoke)
 
 - [x] Managed booking review → agreed-rent editor (closed 2026-07-22): `booking-set-agreed-rent` returns `managed_booking` 400; Terms rail uses `resolveBookingReviewTermsEditorMode` so Managed gets **no** Edit / listing terms editor. Full Managed term edits remain a follow-up.
-- [ ] Full landlord smoke: edit terms → Regenerate agreement → all parties sign via live DocuSeal webhooks (beyond Sahil regenerate + manual reconcile)
+- [x] Full landlord smoke: edit terms → Regenerate agreement → all parties sign via live DocuSeal webhooks (2026-07-22: booking `1b07c4e6-245e-4c51-87ed-b7a5a769405c`, submission 167, QLD residential + co-tenant; `status=signed` + three `*_signed_at` + `document.fully_signed`; no reconcile. Signatures completed via DocuSeal API PUT which still delivered `form.completed` webhooks.)
 
 ---
 
