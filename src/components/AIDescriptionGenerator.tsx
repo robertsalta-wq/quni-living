@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import AiSparkleIcon from './AiSparkleIcon'
+import { supabase } from '../lib/supabase'
 
 const coralBtnClass =
   'inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
@@ -45,10 +46,19 @@ export default function AIDescriptionGenerator({
     setError(null)
     setLoading(true)
     try {
+      const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (sessErr || !token) {
+        throw new Error('You must be signed in to use AI description.')
+      }
+
       const trimmedExistingDescription = existingDescription?.trim() ?? ''
       const res = await fetch('/api/ai/generate-description', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           roomType: roomType.trim(),
           suburb: suburb.trim(),
