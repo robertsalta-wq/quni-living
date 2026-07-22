@@ -14,6 +14,7 @@ import {
   resolveBookingReviewRentBreakdownRows,
 } from '../../../lib/booking/bookingReviewTermsSummary'
 import LandlordBookingTermsEditor, {
+  bookingReviewTermsEditorPathApplies,
   listingBookingTermsEditorEligible,
 } from '../../landlord/LandlordBookingTermsEditor'
 import LandlordBookingAgreedRentEditor from '../../landlord/LandlordBookingAgreedRentEditor'
@@ -73,10 +74,12 @@ export default function BookingReviewTermsRail({
     booking.service_tier_final,
   )
   const agreedRentProv = parseRentOverrideProvenance(booking.rent_breakdown)
-  const agreedRentEditable =
-    booking.service_tier_at_request === 'listing' &&
-    (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
-  const editorPathApplies = listingEligible || agreedRentEditable || agreedRentProv.overrideApplied
+  const editorPathApplies = bookingReviewTermsEditorPathApplies({
+    status: booking.status,
+    serviceTierAtRequest: booking.service_tier_at_request,
+    serviceTierFinal: booking.service_tier_final,
+    overrideApplied: agreedRentProv.overrideApplied,
+  })
   const canEdit = !inputsDisabled && editorPathApplies
 
   const holdRow = resolveBookingReviewHoldRow({

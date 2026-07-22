@@ -51,10 +51,21 @@ describe('landlord booking terms editor privilege boundary', () => {
     expect(rail).toContain('LandlordBookingTermsEditor')
     expect(rail).toContain('LandlordBookingAgreedRentEditor')
     expect(rail).toContain('listingBookingTermsEditorEligible')
+    expect(rail).toContain('bookingReviewTermsEditorPathApplies')
+    // Latent Managed gap: overrideApplied alone must not open Edit (tier guard lives in the helper).
+    expect(rail).not.toMatch(
+      /editorPathApplies\s*=\s*listingEligible\s*\|\|\s*agreedRentEditable\s*\|\|\s*agreedRentProv\.overrideApplied\b/,
+    )
 
     const editorModule = readSrc('src/components/landlord/LandlordBookingTermsEditor.tsx')
     expect(editorModule).toContain('Edit booking terms')
     expect(editorModule).toContain('booking-update-terms')
+    expect(editorModule).toContain('bookingReviewTermsEditorPathApplies')
+  })
+
+  it('agreed-rent editor hard-returns null for non-listing tiers', () => {
+    const src = readSrc('src/components/landlord/LandlordBookingAgreedRentEditor.tsx')
+    expect(src).toMatch(/if\s*\(\s*serviceTierAtRequest\s*!==\s*['"]listing['"]\s*\)\s*return\s+null/)
   })
 
   it('applicant profile drawer is type-enforced to LandlordSafeStudentSnapshot and does not widen PII', () => {

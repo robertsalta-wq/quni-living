@@ -55,6 +55,29 @@ export function listingBookingTermsEditorEligible(
   return status === 'bond_pending' && serviceTierFinal === 'listing'
 }
 
+/**
+ * Managed-review terms rail: Edit / agreed-rent editor only for Listing-tier paths.
+ * `overrideApplied` alone must not open the editor on Managed bookings.
+ */
+export function bookingReviewTermsEditorPathApplies(opts: {
+  status: string
+  serviceTierAtRequest: string | null | undefined
+  serviceTierFinal: string | null | undefined
+  overrideApplied: boolean
+}): boolean {
+  const listingEligible = listingBookingTermsEditorEligible(
+    opts.status,
+    opts.serviceTierAtRequest,
+    opts.serviceTierFinal,
+  )
+  const agreedRentEditable =
+    opts.serviceTierAtRequest === 'listing' &&
+    (opts.status === 'pending_confirmation' || opts.status === 'awaiting_info')
+  const listingOverrideShowsEditor =
+    opts.serviceTierAtRequest === 'listing' && opts.overrideApplied
+  return listingEligible || agreedRentEditable || listingOverrideShowsEditor
+}
+
 function isoDateInputValue(raw: string | null | undefined): string {
   if (typeof raw !== 'string') return ''
   const s = raw.trim().slice(0, 10)
