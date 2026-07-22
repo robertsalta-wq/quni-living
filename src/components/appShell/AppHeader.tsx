@@ -13,7 +13,6 @@ import { dashboardMobileHomePath } from '../../lib/dashboardMobileChrome'
 import { isRenterRole, type LandlordProfileRow } from '../../lib/authProfile'
 import { formatDisplayName } from '../../lib/formatDisplayName'
 import { landlordDisplayName } from '../../lib/nameResolution'
-import { canLandlordCreateListing } from '../../lib/onboardingChecklist'
 import {
   landlordBookingsPath,
   landlordDashboardTabPath,
@@ -171,11 +170,6 @@ export default function AppHeader() {
   /** Same source as marketing Header — initials only when no photo. */
   const profilePhotoUrl = profile?.avatar_url?.trim() || null
 
-  const addListingHref =
-    landlordProfile && canLandlordCreateListing(landlordProfile)
-      ? '/landlord/property/new'
-      : landlordDashboardTabPath('profile')
-
   function goLandlordSection(section: 'overview' | 'listings' | 'bookings' | 'profile') {
     if (section === 'bookings') {
       navigate(landlordBookingsPath())
@@ -277,12 +271,6 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-            <Link
-              to={addListingHref}
-              className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-[15px] py-[9px] text-[13.5px] font-semibold text-white transition-colors duration-200 ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            >
-              + Add new listing
-            </Link>
             <Link
               to="/messages"
               className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
