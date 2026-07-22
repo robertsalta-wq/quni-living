@@ -3353,7 +3353,7 @@ export default function LandlordPropertyFormPage() {
                   {addAnotherUniversityHelpOpen && (
                     <div
                       role="tooltip"
-                      className="mt-2 max-w-sm rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-md"
+                      className="quni-card mt-2 max-w-sm p-3 text-xs text-gray-600"
                     >
                       You can choose one additional university and campus for this listing-for example if your property
                       is a better fit for a campus other than the closest match we suggested above.

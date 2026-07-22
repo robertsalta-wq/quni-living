@@ -1423,7 +1423,7 @@ export default function LandlordDashboard() {
                       key={b.id}
                       className="box-border w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/40 p-5 sm:p-6 shadow-sm space-y-4"
                     >
-                      <div className="min-w-0 overflow-hidden rounded-xl border border-indigo-200/90 bg-white/90 px-4 py-3 shadow-sm">
+                      <div className="min-w-0 overflow-hidden">
                         <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide">Move-in date</p>
                         <p className="mt-1 break-words text-lg font-bold text-gray-900 tabular-nums">
                           {formatMoveInDateProminent(moveInRaw || b.start_date)}

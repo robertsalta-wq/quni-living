@@ -184,13 +184,44 @@ describe('findChromeViolations', () => {
     ).toBe(true)
   })
 
-  it('allowlists containerLegacy + primitive card wrappers for hand-rolled-card', () => {
-    const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+  it('skips fixed/absolute+z overlays; still flags sticky and in-flow cards', () => {
+    const fixedToast = `<div className="fixed bottom-8 left-1/2 z-[80] rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-lg" />`
     expect(
-      findChromeViolations('src/pages/LandlordDashboard.tsx', dirty).filter(
+      findChromeViolations('src/pages/CardLintProbe.tsx', fixedToast).filter(
         (x) => x.id === 'hand-rolled-card',
       ),
     ).toEqual([])
+
+    const absolutePopover = `<div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-xl border border-gray-100 bg-white p-3 shadow-lg" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', absolutePopover).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+
+    const stickyCard = `<div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', stickyCard).some(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toBe(true)
+
+    const inFlowCard = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', inFlowCard).some(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toBe(true)
+  })
+
+  it('allowlists primitive card wrappers; empty containerLegacy means pages are locked', () => {
+    const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    // containerLegacy.json is empty — formerly grandfathered pages are actively locked.
+    expect(
+      findChromeViolations('src/pages/LandlordDashboard.tsx', dirty).some(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toBe(true)
     expect(
       findChromeViolations('src/components/ui/Section.tsx', dirty).filter(
         (x) => x.id === 'hand-rolled-card',

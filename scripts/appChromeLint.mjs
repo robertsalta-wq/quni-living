@@ -307,6 +307,11 @@ export function classLooksLikeHandRolledCard(s) {
   if (/\bhover:bg-/.test(s) && !hasBlockPadding(s)) return false
   // Menus: vertical padding only (e.g. py-1), no px / p-*.
   if (hasAxisPaddingY(s) && !hasAxisPaddingX(s) && !hasBlockPadding(s)) return false
+  // Positioned overlays (toasts, popovers) — not in-flow content cards.
+  // `fixed` alone is enough; `absolute` needs a z-index tell (bare or arbitrary).
+  // Do not exclude `sticky` — sticky cards (e.g. readiness driver) stay flagged.
+  if (/\bfixed\b/.test(s)) return false
+  if (/\babsolute\b/.test(s) && /\bz-(?:\d|\[[^\]]+\])/.test(s)) return false
 
   if (!/\brounded-/.test(s)) return false
   if (!/\bborder\b/.test(s)) return false
