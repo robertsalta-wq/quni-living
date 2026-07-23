@@ -108,6 +108,27 @@ export function getIncompleteOnboardingDestination(
   return '/onboarding'
 }
 
+/**
+ * One-shot post-sign-in destination (used by PostAuthOnboardingRedirect).
+ * Order matches AuthCallback: incomplete onboarding wins and does NOT consume the stored
+ * return path (onboarding consumes it later); only a completed user falls through to the
+ * stored redirect, then the role dashboard.
+ *
+ * `consumeStoredRedirect` is injected (side-effectful) so this stays a pure, unit-testable
+ * decision and callers control when storage is read/cleared.
+ */
+export function resolvePostAuthOneShotDestination(
+  user: User,
+  role: UserRole,
+  profile: AuthProfile | null,
+  opts: { consumeStoredRedirect: () => string | null },
+): string {
+  if (needsOnboarding(role, profile, user.id)) {
+    return getIncompleteOnboardingDestination(role, profile, user.id)
+  }
+  return opts.consumeStoredRedirect() ?? getPostLoginRedirectDestination(user, role, profile)
+}
+
 /** After email confirm or verify-email continue — onboarding when incomplete, else safe return path. */
 export function getPostAuthEntryDestination(
   user: User,
