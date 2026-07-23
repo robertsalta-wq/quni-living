@@ -3,7 +3,7 @@
 **Living register. Add to the bottom of "Open"; move items to "Resolved" once answered.**
 
 Maintained by: Rob · Counsel: Jenny
-Last updated: 10 July 2026
+Last updated: 23 July 2026
 
 ---
 
@@ -190,6 +190,23 @@ Status: Parked (April 2026 brief Q6a–6d, carried over; Tier 3 deferred)
 Area: Boarding Houses Act 2012 · Tier 3
 Question. For 5+ resident properties: what must the T3 occupancy agreement contain, is landlord registration verification required at onboarding, and what are Quni's obligations as a facilitating platform?
 Answer. (pending)
+
+---
+
+### Q-021 — Executed Listing-tier agreements with incorrect Addendum Section 5
+**Status:** Open
+**Area:** ACL misleading/deceptive conduct · executed tenancy documents · remediation
+**Tier/scope:** Listing tier · T2 residential tenancy packages (NSW / QLD; VIC none in scope)
+
+**Context.** Addendum Section 5 previously applied Managed-tier utilities economics to all bookings regardless of service tier, asserting all-inclusive utilities and a quarterly utilities cap. On Listing tier, Quni provides no utilities service and no cap — that assertion was incorrect on those agreements.
+
+Fixed in code by PR #184 (23 July 2026). Newly generated documents branch correctly on service tier. No mass regeneration was performed; executed documents retain the incorrect Section 5.
+
+Scope verified read-only against prod (23 July 2026) — Listing-tier `residential_tenancy` documents: **2 signed** (1 NSW, tenancy active; 1 QLD, booking cancelled), **3 archived**, **0** open or sent. **One live tenancy** is affected. Counts are operational facts from prod `[CONFIRM — Rob]`; legal characterisation of the misstatement and remediation path remain `[OPEN]`.
+
+**Question.** Does the incorrect Section 5 on the live NSW agreement require tenant notification? Should a corrected addendum be issued and re-executed, or is a written correction sufficient? Does this constitute a misleading representation under the ACL (`s.18` `[CONFIRM]`), and does the correction obligation differ now that the tenancy is on foot? Is any action required in respect of the cancelled QLD agreement or the archived documents?
+
+**Answer.** _(pending)_
 
 ---
 
