@@ -15,6 +15,16 @@ describe('isSocialCrawler', () => {
       ),
     ).toBe(false)
   })
+
+  it('ignores Googlebot family so prerendered HTML is served', () => {
+    expect(
+      isSocialCrawler('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'),
+    ).toBe(false)
+    expect(isSocialCrawler('Googlebot-Image/1.0')).toBe(false)
+    expect(isSocialCrawler('Googlebot-News')).toBe(false)
+    expect(isSocialCrawler('AdsBot-Google (+http://www.google.com/adsbot.html)')).toBe(false)
+    expect(isSocialCrawler('Mozilla/5.0 (compatible; Google-InspectionTool/1.0)')).toBe(false)
+  })
 })
 
 describe('buildListingOgHtml', () => {

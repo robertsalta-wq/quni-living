@@ -1,5 +1,6 @@
 /**
  * Server-rendered Open Graph HTML for listing URLs (social crawlers only - see middleware.ts).
+ * Googlebot is excluded from the social rewrite so it receives prerendered listing HTML.
  * GET /api/listing-og?slug=...&path=/listings/...
  */
 import { buildListingOgHtml, fetchListingOgMeta } from './lib/listingOgMeta.js'
