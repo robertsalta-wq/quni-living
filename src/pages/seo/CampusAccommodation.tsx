@@ -273,18 +273,22 @@ export default function CampusAccommodation() {
     }
   }, [routeUniSlug, uniSlugForQuery, campusSlug])
 
-  const shortLabel = university ? universityShortLabel(university) : ''
-  const suburb = campus?.suburb?.trim() ?? 'this area'
-  const state = campus?.state?.trim() || university?.state?.trim() || ''
-
-  /** Content keyed by route slugs — available before Supabase resolves (prerender-safe). */
-  const campusContentFromRoute =
+  /** Sync content — available on first render / prerender with no async dependency. */
+  const campusContent: CampusSeoContent | null =
     uniSlugForQuery && campusSlug
       ? getCampusSeoContent(uniSlugForQuery, campusSlug)
-      : null
-  const campusContent: CampusSeoContent | null =
-    campusContentFromRoute ??
-    (university && campus ? getCampusSeoContent(university.slug, campusUrlSlug(campus)) : null)
+      : university && campus
+        ? getCampusSeoContent(university.slug, campusUrlSlug(campus))
+        : null
+
+  const meta = campusContent?.campus
+  const shortLabel = meta?.universityShortName ?? (university ? universityShortLabel(university) : '')
+  const suburb = meta?.suburb ?? campus?.suburb?.trim() ?? 'this area'
+  const state = meta?.state ?? campus?.state?.trim() ?? university?.state?.trim() ?? ''
+  const campusDisplayName = meta?.name ?? campus?.name ?? 'this campus'
+  const universityDisplayName = meta?.universityName ?? university?.name ?? 'this university'
+  const universityPathSlug = meta?.universitySlug ?? university?.slug ?? uniSlugForQuery
+  const campusPathSlug = meta?.campusSlug ?? (campus ? campusUrlSlug(campus) : campusSlug)
 
   const fallbackMetaDescription =
     university && campus
@@ -305,11 +309,9 @@ export default function CampusAccommodation() {
     (university && campus ? `Student Accommodation near ${shortLabel}, ${suburb}` : null)
 
   const canonicalPath =
-    university && campus
-      ? `/student-accommodation/${university.slug}/${campusUrlSlug(campus)}`
-      : uniSlugForQuery && campusSlug
-        ? `/student-accommodation/${uniSlugForQuery}/${campusSlug}`
-        : '/student-accommodation'
+    universityPathSlug && campusPathSlug
+      ? `/student-accommodation/${universityPathSlug}/${campusPathSlug}`
+      : '/student-accommodation'
 
   const webPageJsonLd =
     campusContent || (university && campus)
@@ -329,21 +331,13 @@ export default function CampusAccommodation() {
                 name: 'Student Accommodation',
                 item: absoluteUrl('/student-accommodation'),
               },
-              ...(university
-                ? [
-                    {
-                      '@type': 'ListItem' as const,
-                      position: 3,
-                      name: university.name,
-                      item: absoluteUrl(`/student-accommodation/${university.slug}`),
-                    },
-                  ]
-                : []),
               {
                 '@type': 'ListItem',
-                position: university ? 4 : 3,
-                name: campus?.name ?? campusSlug,
+                position: 3,
+                name: universityDisplayName,
+                item: absoluteUrl(`/student-accommodation/${universityPathSlug}`),
               },
+              { '@type': 'ListItem', position: 4, name: campusDisplayName },
             ],
           },
         }
@@ -373,7 +367,8 @@ export default function CampusAccommodation() {
 
   const aboutCampusCount = siblingCampuses.length + 1
 
-  if (!isSupabaseConfigured) {
+  // Content pages must still prerender when Supabase env is absent at build time.
+  if (!isSupabaseConfigured && !campusContent) {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-4 py-16">
         <Seo title="Campus accommodation" description={seoDescription} canonicalPath={canonicalPath} noindex />
@@ -382,7 +377,7 @@ export default function CampusAccommodation() {
     )
   }
 
-  if (!loading && notFound) {
+  if (!loading && notFound && !campusContent) {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
         <Seo title="Campus not found" description="This campus guide is not available." noindex />
@@ -408,60 +403,79 @@ export default function CampusAccommodation() {
   }
 
   const listingsQueryAll = campus ? `/listings?campus_id=${encodeURIComponent(campus.id)}` : '/listings'
-  const showSeo = Boolean(campusContent || (university && campus))
+  const tier2Ready = Boolean(!loading && university && campus)
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      {showSeo ? (
+      {(campusContent || (university && campus)) && (
         <Seo
           title={seoTitle}
           description={seoDescription}
           canonicalPath={canonicalPath}
           jsonLd={jsonLd}
         />
-      ) : null}
+      )}
 
       <PageHeroBand
         children={
-          loading && !campusContent ? (
-            <>
-              <div className="h-9 w-2/3 max-w-md bg-white/20 rounded-lg animate-pulse" />
-              <div className="h-4 w-1/2 max-w-sm bg-white/15 rounded mt-3 animate-pulse" />
-            </>
-          ) : heroHeading ? (
+          heroHeading ? (
             <>
               <h1 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 {heroHeading}
               </h1>
               <p className="text-white/85 text-sm sm:text-base mt-2 max-w-2xl">
-                {campus?.suburb?.trim() || suburb}
-                {campus?.state?.trim() || state ? `, ${campus?.state?.trim() || state}` : ''}
+                {suburb}
+                {state ? `, ${state}` : ''}
                 {shortLabel ? ` - Properties for ${shortLabel} students` : ''}
               </p>
+            </>
+          ) : loading ? (
+            <>
+              <div className="h-9 w-2/3 max-w-md bg-white/20 rounded-lg animate-pulse" />
+              <div className="h-4 w-1/2 max-w-sm bg-white/15 rounded mt-3 animate-pulse" />
             </>
           ) : null
         }
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-        {!loading && university && campus && (
+        {/* Tier 1 — sync when content JSON exists (prerender path). */}
+        {campusContent ? (
           <>
             <Breadcrumbs
               items={[
                 { label: 'Home', to: '/' },
                 { label: 'Student Accommodation', to: '/student-accommodation' },
-                { label: university.name, to: `/student-accommodation/${university.slug}` },
-                { label: campus.name },
+                {
+                  label: campusContent.campus.universityName,
+                  to: `/student-accommodation/${campusContent.campus.universitySlug}`,
+                },
+                { label: campusContent.campus.name },
               ]}
             />
 
-            {campusContent ? (
-              <section aria-labelledby="campus-intro-heading" className="max-w-3xl">
-                <h2 id="campus-intro-heading" className="sr-only">
-                  About living near {shortLabel} in {suburb}
-                </h2>
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{campusContent.intro}</p>
-              </section>
+            <section aria-labelledby="campus-intro-heading" className="max-w-3xl">
+              <h2 id="campus-intro-heading" className="sr-only">
+                About living near {campusContent.campus.universityShortName} in{' '}
+                {campusContent.campus.suburb}
+              </h2>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{campusContent.intro}</p>
+            </section>
+          </>
+        ) : null}
+
+        {/* Tier 2 — async listings / siblings / suburbs (and legacy about when no content). */}
+        {tier2Ready && university && campus ? (
+          <>
+            {!campusContent ? (
+              <Breadcrumbs
+                items={[
+                  { label: 'Home', to: '/' },
+                  { label: 'Student Accommodation', to: '/student-accommodation' },
+                  { label: university.name, to: `/student-accommodation/${university.slug}` },
+                  { label: campus.name },
+                ]}
+              />
             ) : null}
 
             <section aria-labelledby="campus-listings-heading">
@@ -479,7 +493,9 @@ export default function CampusAccommodation() {
               {exactListings.length === 0 && nearbyListings.length === 0 ? (
                 <div className="quni-card border-dashed border-gray-200 p-8 text-center">
                   <p className="text-gray-700 font-medium">No listings yet - check back soon</p>
-                  <p className="text-sm text-gray-500 mt-2">Get notified when properties go live near {campus.name}.</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Get notified when properties go live near {campusDisplayName}.
+                  </p>
                   <Link
                     to="/contact"
                     className="inline-flex mt-4 rounded-xl bg-[var(--quni-coral)] text-white font-semibold text-sm px-5 py-2.5 hover:bg-[var(--quni-coral-hover)]"
@@ -510,65 +526,7 @@ export default function CampusAccommodation() {
               )}
             </section>
 
-            {campusContent ? (
-              <>
-                <section className="quni-card p-6 sm:p-8" aria-labelledby="living-heading">
-                  <h2 id="living-heading" className="font-display text-xl font-bold text-gray-900">
-                    {campusContent.livingSection.heading}
-                  </h2>
-                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
-                    {campusContent.livingSection.body}
-                  </p>
-                </section>
-
-                <section className="quni-card p-6 sm:p-8" aria-labelledby="transport-heading">
-                  <h2 id="transport-heading" className="font-display text-xl font-bold text-gray-900">
-                    {campusContent.transportSection.heading}
-                  </h2>
-                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
-                    {campusContent.transportSection.body}
-                  </p>
-                </section>
-
-                <section className="quni-card p-6 sm:p-8" aria-labelledby="cost-heading">
-                  <h2 id="cost-heading" className="font-display text-xl font-bold text-gray-900">
-                    {campusContent.costSection.heading}
-                  </h2>
-                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
-                    {campusContent.costSection.body}
-                  </p>
-                </section>
-
-                <section className="quni-card p-6 sm:p-8" aria-labelledby="tips-heading">
-                  <h2 id="tips-heading" className="font-display text-xl font-bold text-gray-900">
-                    {campusContent.tipsSection.heading}
-                  </h2>
-                  <ul className="mt-4 list-disc pl-5 space-y-2 text-sm sm:text-base text-gray-600 leading-relaxed">
-                    {campusContent.tipsSection.tips.map((tip) => (
-                      <li key={tip.slice(0, 48)}>{tip}</li>
-                    ))}
-                  </ul>
-                </section>
-
-                {campusContent.faqs.length > 0 ? (
-                  <section className="quni-card p-6 sm:p-8" aria-labelledby="campus-faq-heading">
-                    <h2 id="campus-faq-heading" className="font-display text-xl font-bold text-gray-900">
-                      Frequently asked questions
-                    </h2>
-                    <div className="mt-4 space-y-6">
-                      {campusContent.faqs.map((faq) => (
-                        <div key={faq.question}>
-                          <h3 className="text-base font-semibold text-gray-900">{faq.question}</h3>
-                          <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">{faq.answer}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ) : null}
-
-                <p className="text-sm sm:text-base text-gray-700 font-medium max-w-3xl">{campusContent.ctaText}</p>
-              </>
-            ) : (
+            {!campusContent ? (
               <section className="quni-card p-6 sm:p-8" aria-labelledby="about-campus-heading">
                 <h2 id="about-campus-heading" className="font-display text-xl font-bold text-gray-900">
                   About this campus
@@ -580,7 +538,7 @@ export default function CampusAccommodation() {
                   typically search in {suburb} and surrounding areas.
                 </p>
               </section>
-            )}
+            ) : null}
 
             {suburbsFromListings.length > 0 && (
               <section aria-labelledby="nearby-suburbs-heading">
@@ -626,7 +584,70 @@ export default function CampusAccommodation() {
 
             <LandlordCtaBand universityName={university.name} />
           </>
-        )}
+        ) : null}
+
+        {/* Tier 1 continued — body sections after listings slot so layout matches prior order when both present. */}
+        {campusContent ? (
+          <>
+            <section className="quni-card p-6 sm:p-8" aria-labelledby="living-heading">
+              <h2 id="living-heading" className="font-display text-xl font-bold text-gray-900">
+                {campusContent.livingSection.heading}
+              </h2>
+              <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                {campusContent.livingSection.body}
+              </p>
+            </section>
+
+            <section className="quni-card p-6 sm:p-8" aria-labelledby="transport-heading">
+              <h2 id="transport-heading" className="font-display text-xl font-bold text-gray-900">
+                {campusContent.transportSection.heading}
+              </h2>
+              <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                {campusContent.transportSection.body}
+              </p>
+            </section>
+
+            <section className="quni-card p-6 sm:p-8" aria-labelledby="cost-heading">
+              <h2 id="cost-heading" className="font-display text-xl font-bold text-gray-900">
+                {campusContent.costSection.heading}
+              </h2>
+              <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                {campusContent.costSection.body}
+              </p>
+            </section>
+
+            <section className="quni-card p-6 sm:p-8" aria-labelledby="tips-heading">
+              <h2 id="tips-heading" className="font-display text-xl font-bold text-gray-900">
+                {campusContent.tipsSection.heading}
+              </h2>
+              <ul className="mt-4 list-disc pl-5 space-y-2 text-sm sm:text-base text-gray-600 leading-relaxed">
+                {campusContent.tipsSection.tips.map((tip) => (
+                  <li key={tip.slice(0, 48)}>{tip}</li>
+                ))}
+              </ul>
+            </section>
+
+            {campusContent.faqs.length > 0 ? (
+              <section className="quni-card p-6 sm:p-8" aria-labelledby="campus-faq-heading">
+                <h2 id="campus-faq-heading" className="font-display text-xl font-bold text-gray-900">
+                  Frequently asked questions
+                </h2>
+                <div className="mt-4 space-y-6">
+                  {campusContent.faqs.map((faq) => (
+                    <div key={faq.question}>
+                      <h3 className="text-base font-semibold text-gray-900">{faq.question}</h3>
+                      <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <p className="text-sm sm:text-base text-gray-700 font-medium max-w-3xl">{campusContent.ctaText}</p>
+
+            {!tier2Ready ? <LandlordCtaBand universityName={campusContent.campus.universityName} /> : null}
+          </>
+        ) : null}
       </div>
     </div>
   )

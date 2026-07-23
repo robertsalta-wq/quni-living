@@ -277,7 +277,19 @@ async function run() {
     const label = `${campus.shortName} / ${campus.suburb} (${campus.campusSlug})`
     console.log(`Generating: ${label}`)
 
-    const content = await generateWithRetry(campus)
+    const copy = await generateWithRetry(campus)
+    const content = {
+      campus: {
+        name: campus.campusName,
+        suburb: campus.suburb,
+        state: campus.state,
+        universityName: campus.universityName,
+        universityShortName: campus.shortName,
+        universitySlug: campus.universitySlug,
+        campusSlug: campus.campusSlug,
+      },
+      ...copy,
+    }
     const outDir = path.join(repoRoot, 'content', 'campuses', campus.universitySlug)
     await fs.mkdir(outDir, { recursive: true })
     const outPath = path.join(outDir, `${campus.campusSlug}.json`)

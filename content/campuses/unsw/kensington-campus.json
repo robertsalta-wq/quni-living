@@ -1,4 +1,13 @@
 {
+  "campus": {
+    "name": "Kensington Campus",
+    "suburb": "Kensington",
+    "state": "NSW",
+    "universityName": "University of New South Wales",
+    "universityShortName": "UNSW",
+    "universitySlug": "unsw",
+    "campusSlug": "kensington-campus"
+  },
   "metaTitle": "Student Accommodation near UNSW, Kensington",
   "metaDescription": "Find private student accommodation near UNSW in Kensington. Per-room rentals in share houses close to campus, the L3 light rail on Anzac Parade, and Kingsford's shops. Browse rooms on Quni Living.",
   "h1": "Student Accommodation near UNSW, Kensington",
