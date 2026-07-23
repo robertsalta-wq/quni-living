@@ -3,13 +3,49 @@ import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import TurnstileCaptcha from '../components/TurnstileCaptcha'
 import { apiUrl } from '../lib/apiUrl'
+import {
+  uniCaptchaLabelClass,
+  uniColsClass,
+  uniContactClass,
+  uniCredentialClass,
+  uniCtaClass,
+  uniDocClass,
+  uniDocFooterClass,
+  uniEnquiryClass,
+  uniEnquiryCopyClass,
+  uniEnquiryHeadingClass,
+  uniEyebrowClass,
+  uniFieldErrorClass,
+  uniFormClass,
+  uniFormErrorClass,
+  uniFormFieldClass,
+  uniFormSuccessClass,
+  uniInputClass,
+  uniLabelClass,
+  uniLedeClass,
+  uniLogoClass,
+  uniMastheadClass,
+  uniPillarAuditClass,
+  uniPillarClass,
+  uniPillarsClass,
+  uniPrintBtnClass,
+  uniPrintContactClass,
+  uniPrintOnlyClass,
+  uniScopeClass,
+  uniSectionTitleClass,
+  uniShellClass,
+  uniSubmitClass,
+  uniTagClass,
+  uniTalkClass,
+  uniTextareaClass,
+  uniWebOnlyClass,
+} from '../lib/forUniversitiesClasses'
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT, ORGANIZATION_EMAIL } from '../lib/site'
 import {
   REFERENCE_COVERAGE_CAMPUS_COUNT,
   REFERENCE_COVERAGE_UNIVERSITY_COUNT,
 } from '../lib/universityCampusReference'
 import { isTurnstileSiteKeyConfigured } from '../lib/verifyTurnstile'
-import './forUniversities.css'
 
 const BODY_CLASS = 'for-universities-page'
 const FORM_ID = 'partnership-form'
@@ -35,7 +71,11 @@ function scrollToPartnershipForm() {
 
 function PartnershipCtaButton() {
   return (
-    <button type="button" className="partnership-cta partnership-web-only" onClick={scrollToPartnershipForm}>
+    <button
+      type="button"
+      className={`${uniCtaClass} ${uniWebOnlyClass}`}
+      onClick={scrollToPartnershipForm}
+    >
       Start a partnership conversation
     </button>
   )
@@ -141,97 +181,116 @@ function PartnershipEnquiryForm() {
   }
 
   return (
-    <section id={FORM_ID} className="partnership-enquiry partnership-web-only" aria-labelledby="partnership-form-heading">
-      <h2 id="partnership-form-heading" className="partnership-enquiry-heading">
+    <section
+      id={FORM_ID}
+      className={`${uniEnquiryClass} ${uniWebOnlyClass}`}
+      aria-labelledby="partnership-form-heading"
+    >
+      <h2 id="partnership-form-heading" className={uniEnquiryHeadingClass}>
         Start a partnership conversation
       </h2>
-      <p className="partnership-enquiry-intro">{UNIVERSITY_WIN_COPY}</p>
-      <p className="partnership-enquiry-coverage">{COVERAGE_COPY}</p>
+      <p className={uniEnquiryCopyClass}>{UNIVERSITY_WIN_COPY}</p>
+      <p className={uniEnquiryCopyClass}>{COVERAGE_COPY}</p>
 
       {sent ? (
-        <p className="partnership-form-success" role="status">
+        <p className={uniFormSuccessClass} role="status">
           {SUCCESS_MESSAGE}
         </p>
       ) : (
-        <form className="partnership-form" onSubmit={handleSubmit} noValidate>
-          <div className="partnership-form-field">
-            <label htmlFor="partnership-name">Name</label>
+        <form className={uniFormClass} onSubmit={handleSubmit} noValidate>
+          <div className={uniFormFieldClass}>
+            <label htmlFor="partnership-name" className={uniLabelClass}>
+              Name
+            </label>
             <input
               id="partnership-name"
               type="text"
               name="name"
               required
               autoComplete="name"
+              className={uniInputClass}
               value={name}
               onChange={(ev) => setName(ev.target.value)}
               aria-invalid={fieldErrors.name ? true : undefined}
             />
             {fieldErrors.name ? (
-              <p className="partnership-form-field-error" role="alert">
+              <p className={uniFieldErrorClass} role="alert">
                 {fieldErrors.name}
               </p>
             ) : null}
           </div>
-          <div className="partnership-form-field">
-            <label htmlFor="partnership-institution">Institution</label>
+          <div className={uniFormFieldClass}>
+            <label htmlFor="partnership-institution" className={uniLabelClass}>
+              Institution
+            </label>
             <input
               id="partnership-institution"
               type="text"
               name="institution"
               required
               autoComplete="organization"
+              className={uniInputClass}
               value={institution}
               onChange={(ev) => setInstitution(ev.target.value)}
               aria-invalid={fieldErrors.institution ? true : undefined}
             />
             {fieldErrors.institution ? (
-              <p className="partnership-form-field-error" role="alert">
+              <p className={uniFieldErrorClass} role="alert">
                 {fieldErrors.institution}
               </p>
             ) : null}
           </div>
-          <div className="partnership-form-field">
-            <label htmlFor="partnership-role">Your role</label>
+          <div className={uniFormFieldClass}>
+            <label htmlFor="partnership-role" className={uniLabelClass}>
+              Your role
+            </label>
             <input
               id="partnership-role"
               type="text"
               name="role"
               required
               autoComplete="organization-title"
+              className={uniInputClass}
               value={role}
               onChange={(ev) => setRole(ev.target.value)}
               aria-invalid={fieldErrors.role ? true : undefined}
             />
             {fieldErrors.role ? (
-              <p className="partnership-form-field-error" role="alert">
+              <p className={uniFieldErrorClass} role="alert">
                 {fieldErrors.role}
               </p>
             ) : null}
           </div>
-          <div className="partnership-form-field">
-            <label htmlFor="partnership-email">Work email</label>
+          <div className={uniFormFieldClass}>
+            <label htmlFor="partnership-email" className={uniLabelClass}>
+              Work email
+            </label>
             <input
               id="partnership-email"
               type="email"
               name="email"
               required
               autoComplete="work email"
+              className={uniInputClass}
               value={email}
               onChange={(ev) => setEmail(ev.target.value)}
               aria-invalid={fieldErrors.email ? true : undefined}
             />
             {fieldErrors.email ? (
-              <p className="partnership-form-field-error" role="alert">
+              <p className={uniFieldErrorClass} role="alert">
                 {fieldErrors.email}
               </p>
             ) : null}
           </div>
-          <div className="partnership-form-field">
-            <label htmlFor="partnership-notes">Message</label>
+          <div className={uniFormFieldClass}>
+            <label htmlFor="partnership-notes" className={uniLabelClass}>
+              Message
+            </label>
             <textarea
               id="partnership-notes"
               name="message"
               rows={4}
+              className={uniTextareaClass}
               value={notes}
               onChange={(ev) => setNotes(ev.target.value)}
               placeholder="Optional — tell us what you're looking for or any questions."
@@ -243,17 +302,17 @@ function PartnershipEnquiryForm() {
               resetKey={captchaResetKey}
               onTokenChange={setCaptchaToken}
               disabled={submitting}
-              labelClassName="partnership-form-captcha-label"
+              labelClassName={uniCaptchaLabelClass}
             />
           ) : null}
 
           {formError ? (
-            <p className="partnership-form-error" role="alert">
+            <p className={uniFormErrorClass} role="alert">
               {formError}
             </p>
           ) : null}
 
-          <button type="submit" className="partnership-form-submit" disabled={submitting}>
+          <button type="submit" className={uniSubmitClass} disabled={submitting}>
             {submitting ? 'Sending…' : 'Send'}
           </button>
         </form>
@@ -277,23 +336,23 @@ export default function ForUniversities() {
         image={DEFAULT_OG_IMAGE}
         imageAlt={DEFAULT_OG_IMAGE_ALT}
       />
-      <div className="for-universities-shell mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <article className="for-universities-doc">
+      <div className={uniShellClass}>
+        <article className={uniDocClass}>
           <button
             type="button"
-            className="partnership-print-btn partnership-web-only"
+            className={`${uniPrintBtnClass} ${uniWebOnlyClass}`}
             onClick={() => window.print()}
           >
             Print
           </button>
 
-          <div className="partnership-credential">
+          <div className={uniCredentialClass}>
             Licensed real estate agency &nbsp;·&nbsp; Managed tenancies operate under the relevant Residential
             Tenancies Act and anti-discrimination law
           </div>
 
-          <div className="partnership-masthead">
-            <div className="partnership-logo">
+          <div className={uniMastheadClass}>
+            <div className={uniLogoClass}>
               <img
                 src="/quni-logo.png"
                 srcSet="/quni-logo.png 1x, /quni-logo@2x.png 2x"
@@ -302,18 +361,18 @@ export default function ForUniversities() {
                 height={40}
               />
             </div>
-            <div className="partnership-eyebrow">
+            <div className={uniEyebrowClass}>
               Partnership overview for university
               <br />
               accommodation &amp; international offices
             </div>
           </div>
 
-          <p className="partnership-lede">A fair, verified place to send your international students.</p>
+          <p className={uniLedeClass}>A fair, verified place to send your international students.</p>
 
           <PartnershipCtaButton />
 
-          <h2 className="partnership-section-title">The problem your students keep running into</h2>
+          <h2 className={uniSectionTitleClass}>The problem your students keep running into</h2>
           <p>
             International students do some of the hardest renting in Australia. They arrive without a local rental
             history, often without a local guarantor, and into a private market where the bias against them is rarely
@@ -327,14 +386,14 @@ export default function ForUniversities() {
             arrangements, and as a welfare and duty-of-care concern you&apos;re expected to stay ahead of.
           </p>
 
-          <h2 className="partnership-section-title">How Quni is built differently</h2>
+          <h2 className={uniSectionTitleClass}>How Quni is built differently</h2>
           <p>
             Quni Living is a managed student-accommodation marketplace. Two design choices make it a referral your
             office can stand behind.
           </p>
 
-          <div className="partnership-pillars">
-            <div className="partnership-pillar">
+          <div className={uniPillarsClass}>
+            <div className={uniPillarClass}>
               <h3>1. Fairness by architecture, enforced in code</h3>
               <p>
                 The AI tools that help assess students, reply to enquiries and answer their questions{' '}
@@ -346,14 +405,14 @@ export default function ForUniversities() {
                 automated tests and live adversarial probes that try to reintroduce those attributes and confirm they
                 can&apos;t get through.
               </p>
-              <p className="partnership-pillar-audit">
+              <p className={uniPillarAuditClass}>
                 And it&apos;s auditable. Every booking generates an{' '}
                 <strong>immutable, tamper-evident compliance record</strong> showing those protected attributes
                 weren&apos;t used, and a booking cannot complete without one. If a decision is ever questioned,
                 there&apos;s a record of how it was actually made.
               </p>
             </div>
-            <div className="partnership-pillar">
+            <div className={uniPillarClass}>
               <h3>2. Verification: students arrive trusted</h3>
               <p>
                 Every student verifies up front: university email confirmation, government photo ID, and proof of
@@ -363,15 +422,15 @@ export default function ForUniversities() {
                 That addresses the legitimate concerns a landlord is allowed to have, and shifts the conversation onto
                 a student&apos;s actual suitability, so they&apos;re judged on merit, not sorted by origin.
               </p>
-              <p className="partnership-pillar-audit">
+              <p className={uniPillarAuditClass}>
                 Together, fairness and verification do the same job from both ends: the system won&apos;t hold the
                 wrong things against a student, and it gives landlords the right things to say yes to.
               </p>
             </div>
           </div>
 
-          <h2 className="partnership-section-title">Why this matters to your office</h2>
-          <div className="partnership-cols">
+          <h2 className={uniSectionTitleClass}>Why this matters to your office</h2>
+          <div className={uniColsClass}>
             <ul>
               <li>
                 <strong>A referral you can defend.</strong> The matching tools are structurally barred, in code, from
@@ -393,8 +452,8 @@ export default function ForUniversities() {
             </ul>
           </div>
 
-          <h2 className="partnership-section-title">What a partnership can look like</h2>
-          <div className="partnership-cols">
+          <h2 className={uniSectionTitleClass}>What a partnership can look like</h2>
+          <div className={uniColsClass}>
             <ul>
               <li>A co-branded landing page or referral link for your accommodation and international pages</li>
               <li>Inclusion in pre-arrival and orientation accommodation information</li>
@@ -403,7 +462,7 @@ export default function ForUniversities() {
             </ul>
           </div>
 
-          <div className="partnership-scope">
+          <div className={uniScopeClass}>
             <strong>An honest note on scope.</strong> Quni is a marketplace, so the final decision on a privately
             listed room rests with the individual landlord. What we guarantee is that our own tools never receive, and
             cannot use, a student&apos;s nationality, gender, domestic/international status, or date of birth, and that
@@ -414,19 +473,19 @@ export default function ForUniversities() {
 
           <PartnershipEnquiryForm />
 
-          <p className="partnership-print-only partnership-print-contact">{PRINT_CONTACT_COPY}</p>
+          <p className={`${uniPrintOnlyClass} ${uniPrintContactClass}`}>{PRINT_CONTACT_COPY}</p>
 
-          <div className="partnership-doc-footer partnership-web-only">
+          <div className={`${uniDocFooterClass} ${uniWebOnlyClass}`}>
             <div>
-              <span className="partnership-talk">Let&apos;s talk.</span>
-              <span className="partnership-contact">
+              <span className={uniTalkClass}>Let&apos;s talk.</span>
+              <span className={uniContactClass}>
                 {' '}
                 <Link to="/contact">Contact us</Link>
                 {' '}
                 &nbsp;·&nbsp; quni.com.au
               </span>
             </div>
-            <div className="partnership-tag">student accommodation, matched on merit</div>
+            <div className={uniTagClass}>student accommodation, matched on merit</div>
           </div>
         </article>
       </div>
