@@ -3,7 +3,7 @@
 **Living register. Add to the bottom of "Open"; move items to "Resolved" once answered.**
 
 Maintained by: Rob · Counsel: Jenny
-Last updated: 10 July 2026
+Last updated: 23 July 2026
 
 ---
 
@@ -190,6 +190,21 @@ Status: Parked (April 2026 brief Q6a–6d, carried over; Tier 3 deferred)
 Area: Boarding Houses Act 2012 · Tier 3
 Question. For 5+ resident properties: what must the T3 occupancy agreement contain, is landlord registration verification required at onboarding, and what are Quni's obligations as a facilitating platform?
 Answer. (pending)
+
+---
+
+### Q-021 — Single renter taking every room: convert to one whole-unit tenancy?
+**Status:** Open
+**Area:** NSW RTA — characterisation / exclusive possession · bond handling
+**Tier/scope:** T2, NSW (with T1 cross-check)
+
+**Context.** An existing renter holds a T2 per-room tenancy for one bedroom in a self-contained two-bedroom unit (landlord off-site). She now wants the second bedroom as well, becoming sole occupant of the whole unit. We intend to **end the existing room tenancy and issue one whole-unit FT6600 tenancy at the combined rent with a single RBO bond** — not a second per-room agreement.
+
+Our reasoning: a single person in exclusive possession of an entire self-contained premises is in substance one residential tenancy (*Radaich v Smith* (1959) 101 CLR 209; *Street v Mountford* [1985] AC 809), which NCAT would reach on a substance-over-form basis. We also read two concurrent per-room bonds as breaching the 4-week cap on combined rent (`RTA 2010 (NSW) s.159(1)` `[CONFIRM]`) and the one-bond-per-agreement rule (`s.161` `[CONFIRM]`), and the two-agreement structure as risking the contracting-out / anti-avoidance prohibition (`s.219`, evasion limb `s.219(2)` `[CONFIRM]`; inconsistent/prohibited terms void under `s.21` `[VERIFIED]`).
+
+**Question.** Do you confirm that a single renter occupying every room of a self-contained unit should be documented as one whole-unit T2 tenancy (combined rent, single RBO bond) rather than two per-room agreements; that our cited sections (`s.159(1)`, `s.161`, `s.219`) are correct and current; and that the convert sequence — end the room-1 tenancy → execute one whole-unit FT6600 → swap/transfer the bond in RBO — is the compliant path, with nothing further needed in the termination/re-grant to avoid a continuity or re-characterisation argument?
+
+**Answer.** _(pending)_
 
 ---
 
