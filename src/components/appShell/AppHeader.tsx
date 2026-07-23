@@ -41,14 +41,18 @@ type AccountMenuProps = {
   photoUrl: string | null
   profileHref: string
   onSignOut: () => void
+  /** Avatar-only trigger (mobile / task headers). Desktop shows name + chevron. */
+  compact?: boolean
 }
 
-function DesktopAccountMenu({
+/** Shared account menu: Profile + Sign out. No Dashboard — already in the app shell. */
+function AccountMenu({
   displayName,
   initials,
   photoUrl,
   profileHref,
   onSignOut,
+  compact = false,
 }: AccountMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -75,16 +79,26 @@ function DesktopAccountMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className={
+          compact
+            ? `${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`
+            : 'inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
+        }
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Account menu"
       >
-        <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+        {compact ? (
           <AccountAvatar photoUrl={photoUrl} initials={initials} />
-        </span>
-        <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{firstName}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
+        ) : (
+          <>
+            <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+              <AccountAvatar photoUrl={photoUrl} initials={initials} />
+            </span>
+            <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{firstName}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
+          </>
+        )}
       </button>
       {open ? (
         <div
@@ -222,13 +236,14 @@ export default function AppHeader() {
             {title}
           </p>
           {user ? (
-            <Link
-              to={profileHref}
-              className={`${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`}
-              aria-label="Profile"
-            >
-              <AccountAvatar photoUrl={profilePhotoUrl} initials={mobileInitials} />
-            </Link>
+            <AccountMenu
+              compact
+              displayName={displayName}
+              initials={mobileInitials}
+              photoUrl={profilePhotoUrl}
+              profileHref={profileHref}
+              onSignOut={() => void signOut()}
+            />
           ) : (
             <span className="min-w-11 shrink-0" aria-hidden />
           )}
@@ -284,7 +299,7 @@ export default function AppHeader() {
                 />
               ) : null}
             </Link>
-            <DesktopAccountMenu
+            <AccountMenu
               displayName={displayName}
               initials={desktopInitials}
               photoUrl={profilePhotoUrl}
@@ -330,7 +345,7 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-            <DesktopAccountMenu
+            <AccountMenu
               displayName={displayName}
               initials={desktopInitials}
               photoUrl={profilePhotoUrl}
@@ -349,7 +364,7 @@ export default function AppHeader() {
         <div className="flex w-full max-w-full items-center justify-between gap-3">
           <DashboardBrandLockup />
           {user ? (
-            <DesktopAccountMenu
+            <AccountMenu
               displayName={displayName}
               initials={desktopInitials}
               photoUrl={profilePhotoUrl}
@@ -370,13 +385,14 @@ export default function AppHeader() {
         <div className="min-w-0" aria-hidden />
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {user ? (
-            <Link
-              to={profileHref}
-              className={`${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`}
-              aria-label="Profile"
-            >
-              <AccountAvatar photoUrl={profilePhotoUrl} initials={mobileInitials} />
-            </Link>
+            <AccountMenu
+              compact
+              displayName={displayName}
+              initials={mobileInitials}
+              photoUrl={profilePhotoUrl}
+              profileHref={profileHref}
+              onSignOut={() => void signOut()}
+            />
           ) : null}
         </div>
       </div>
