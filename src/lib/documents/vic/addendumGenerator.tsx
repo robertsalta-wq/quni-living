@@ -19,6 +19,7 @@ import {
   AddendumCoTenantSignatureBlock,
   coTenantNameFromAddendumProps,
 } from '../addendumCoTenantExecution.js'
+import { AddendumSection5UtilitiesAndBills } from '../addendumSection5.js'
 import {
   VIC_ADDENDUM_FORM_LABEL,
   VIC_ADDENDUM_LEGISLATION,
@@ -252,43 +253,6 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
         negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant
         caused, the landlord may seek reimbursement in accordance with the {VIC_ADDENDUM_LEGISLATION} and{' '}
         {VIC_ADDENDUM_FORM_LABEL}, including via bond claim processes where applicable.
-      </Text>
-    </View>
-  )
-}
-
-/** Section 5 - Utilities & bills. */
-function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <OccupancyMatchSectionHeading num={5} title="Utilities & bills" />
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Rent is calculated on an all-inclusive basis covering {props.utilitiesDescription.toLowerCase()}.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        A utilities allowance of {formatMoney(props.utilitiesCap)} per quarter applies. Usage within this allowance is
-        included in rent.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as
-        otherwise agreed in writing). Evidence of usage may be supplied as utility account summaries, meter readings,
-        or other reasonable records consistent with how similar properties are typically managed through the platform.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        The tenant must not deliberately waste utilities or circumvent metering. Where excessive usage is clearly
-        tenant-caused, the landlord may request reimbursement in addition to any excess-usage amount, acting reasonably
-        and with supporting information where practicable.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Where internet is included, connection or resumption of service may depend on supplier processes. The tenant must
-        not reconfigure network equipment in a way that could impair other occupants or security devices. Personal
-        streaming, gaming, or study use within ordinary household norms is expected; commercial server hosting or resale
-        of bandwidth is not permitted unless agreed in writing.
       </Text>
     </View>
   )
@@ -800,7 +764,7 @@ export function QuniPlatformAddendumVic(props: QuniPlatformAddendumProps) {
       <Page size="A4" style={occupancyMatchPdf.page}>
         <OccupancyMatchFixedHeader documentTitle="Platform Addendum" subtitle={VIC_ADDENDUM_SUBTITLE} />
         <OccupancyMatchFooter documentId={documentId} generatedAt={generatedAt} variant="addendum" />
-        <Section5UtilitiesAndBills {...props} />
+        <AddendumSection5UtilitiesAndBills {...props} />
         <Section6HouseRules {...props} />
         <Section7MouldPrevention {...props} />
         <Section8ConditionReport {...props} />
