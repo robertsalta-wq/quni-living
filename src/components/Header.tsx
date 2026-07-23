@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, Info, Mail } from 'lucide-react'
+import { Bell, ChevronDown, Info, Mail } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import {
@@ -17,7 +17,12 @@ import {
 } from '../lib/dashboardMobileChrome'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
-import AccountAvatar, { ACCOUNT_AVATAR_FRAME_CLASS } from './AccountAvatar'
+import AccountAvatar, {
+  ACCOUNT_AVATAR_FRAME_CLASS,
+  ACCOUNT_MENU_CHEVRON_CLASS,
+  ACCOUNT_MENU_NAME_CLASS,
+  ACCOUNT_MENU_TRIGGER_CLASS,
+} from './AccountAvatar'
 import SiteBrandLockup, { QuniLogoHomeLink } from './SiteBrandLockup'
 import ChromeHeaderShell from './ChromeHeaderShell'
 import AiSparkleIcon from './AiSparkleIcon'
@@ -461,7 +466,7 @@ export default function Header({ embedded = false }: HeaderProps) {
               {showMessagesNav && (
                 <Link
                   to="/messages"
-                  className="hidden sm:inline-flex sm:items-center sm:gap-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                  className={`hidden sm:inline-flex sm:items-center sm:gap-1.5 ${mainNavLinkClass}`}
                 >
                   Messages
                   {unreadMessageCount > 0 && (
@@ -472,10 +477,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                 </Link>
               )}
               {showDashboardInAuth && (
-                <Link
-                  to={dashboardHref}
-                  className="hidden sm:inline text-sm text-gray-600 hover:text-gray-900 font-medium"
-                >
+                <Link to={dashboardHref} className={`hidden sm:inline ${mainNavLinkClass}`}>
                   Dashboard
                 </Link>
               )}
@@ -484,24 +486,18 @@ export default function Header({ embedded = false }: HeaderProps) {
                   ref={menuButtonRef}
                   type="button"
                   onClick={toggleAccountMenu}
-                  className={`${ACCOUNT_AVATAR_FRAME_CLASS} gap-1 hover:bg-[var(--quni-surface-2)]`}
+                  className={ACCOUNT_MENU_TRIGGER_CLASS}
                   aria-expanded={menuOpen}
                   aria-haspopup="menu"
                   aria-label="Account menu"
                 >
-                  <AccountAvatar photoUrl={profilePhotoUrl} initials={initials} />
-                  <span className="hidden sm:inline max-w-[7rem] truncate pl-0.5 text-sm font-medium text-[var(--quni-ink-2)]">
+                  <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+                    <AccountAvatar photoUrl={profilePhotoUrl} initials={initials} />
+                  </span>
+                  <span className={`hidden max-w-[7rem] truncate sm:inline ${ACCOUNT_MENU_NAME_CLASS}`}>
                     {accountFirstName}
                   </span>
-                  <svg
-                    className="mr-1 hidden h-4 w-4 text-[var(--quni-ink-5)] sm:block"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <ChevronDown className={`hidden sm:block ${ACCOUNT_MENU_CHEVRON_CLASS}`} aria-hidden />
                 </button>
                 {menuOpen &&
                   menuAnchor &&

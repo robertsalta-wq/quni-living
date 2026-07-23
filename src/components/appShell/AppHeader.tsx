@@ -22,7 +22,12 @@ import {
 } from '../../lib/userDashboardNav'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
-import AccountAvatar, { ACCOUNT_AVATAR_FRAME_CLASS } from '../AccountAvatar'
+import AccountAvatar, {
+  ACCOUNT_AVATAR_FRAME_CLASS,
+  ACCOUNT_MENU_CHEVRON_CLASS,
+  ACCOUNT_MENU_NAME_CLASS,
+  ACCOUNT_MENU_TRIGGER_CLASS,
+} from '../AccountAvatar'
 import ChromeHeaderShell from '../ChromeHeaderShell'
 import { DashboardBrandLockup } from '../SiteBrandLockup'
 
@@ -136,7 +141,7 @@ function AccountMenu({
         className={
           compact
             ? `${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`
-            : 'inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
+            : ACCOUNT_MENU_TRIGGER_CLASS
         }
         aria-expanded={open}
         aria-haspopup="menu"
@@ -149,8 +154,8 @@ function AccountMenu({
             <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
               <AccountAvatar photoUrl={photoUrl} initials={initials} />
             </span>
-            <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{firstName}</span>
-            <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
+            <span className={ACCOUNT_MENU_NAME_CLASS}>{firstName}</span>
+            <ChevronDown className={ACCOUNT_MENU_CHEVRON_CLASS} aria-hidden />
           </>
         )}
       </button>
