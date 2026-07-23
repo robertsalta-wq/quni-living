@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import type { AuthState } from '../hooks/useAuth'
 import { shouldBootstrapAuthEagerly } from '../lib/shouldBootstrapAuthEagerly'
-import { AUTH_LOADING_DEFAULT, AuthContext } from './authContextShared'
+import { AUTH_GUEST_DEFAULT, AUTH_LOADING_DEFAULT, AuthContext } from './authContextShared'
 
 type LiveProvider = ComponentType<{ children: ReactNode }>
 
@@ -27,16 +27,21 @@ function scheduleAuthBootstrap(start: () => void): () => void {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [Live, setLive] = useState<LiveProvider | null>(null)
+  const isServer = typeof window === 'undefined'
 
   useEffect(() => {
+    if (isServer) return
     let cancelled = false
     return scheduleAuthBootstrap(() => {
       void import('./AuthProviderLive').then((m) => {
         if (!cancelled) setLive(() => m.AuthProviderLive)
       })
     })
-  }, [])
+  }, [isServer])
 
+  if (isServer) {
+    return <AuthContext.Provider value={AUTH_GUEST_DEFAULT}>{children}</AuthContext.Provider>
+  }
   if (!Live) {
     return <AuthContext.Provider value={AUTH_LOADING_DEFAULT}>{children}</AuthContext.Provider>
   }

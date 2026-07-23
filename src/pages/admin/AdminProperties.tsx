@@ -6,6 +6,7 @@ import type { Database } from '../../lib/database.types'
 import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatMoney } from './adminUi'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
+import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 
@@ -156,6 +157,8 @@ export default function AdminProperties() {
     if (upErr) {
       setError(upErr.message)
       setRows((r) => r.map((row) => (row.id === id ? { ...row, status: prev } : row)))
+    } else if (prev === 'active' || status === 'active') {
+      requestSiteRebuild()
     }
     setUpdatingId(null)
   }

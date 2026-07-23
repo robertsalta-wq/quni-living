@@ -83,11 +83,16 @@ export default async function handler(
         { data: universities, error: universitiesError },
         { data: campuses, error: campusesError },
       ] = await Promise.all([
-        supabase
-          .from('properties')
-          .select('slug, updated_at')
-          .eq('status', 'active')
-          .order('updated_at', { ascending: false }),
+        (() => {
+          // Match browse/prerender: active and not past available_to (see propertyListingDateWindow).
+          const day = new Date().toISOString().slice(0, 10)
+          return supabase
+            .from('properties')
+            .select('slug, updated_at')
+            .eq('status', 'active')
+            .or(`available_to.is.null,available_to.gte.${day}`)
+            .order('updated_at', { ascending: false })
+        })(),
         supabase.from('universities').select('slug').order('slug', { ascending: true }),
         supabase
           .from('campuses')

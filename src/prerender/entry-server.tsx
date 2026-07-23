@@ -4,6 +4,11 @@ import { renderToString } from 'react-dom/server'
 import { HelmetProvider } from 'react-helmet-async'
 import { MemoryRouter } from 'react-router-dom'
 import { AppTree } from '../AppTree'
+import {
+  fetchPublishedListingDetails,
+  listingPrerenderPaths,
+} from '../lib/publishedListings'
+import { writePropertyDetailCache } from '../lib/propertyDetailCache'
 import { listPrerenderPathnames, pathnameToDistDir } from './routes'
 
 function renderAppAt(pathname: string): { body: string; head: string } {
@@ -64,7 +69,15 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
   const template = readFileSync(templatePath, 'utf8')
   // Keep an empty SPA shell for client-routed paths (vercel rewrite → spa.html).
   writeFileSync(path.join(distDir, 'spa.html'), template, 'utf8')
-  const pathnames = listPrerenderPathnames()
+
+  const listings = await fetchPublishedListingDetails()
+  for (const row of listings) {
+    writePropertyDetailCache(row.slug.trim(), row)
+  }
+  const listingPaths = listingPrerenderPaths(listings.map((r) => r.slug))
+  console.log(`prerender-routes: seeded ${listings.length} listing(s) for SSR`)
+
+  const pathnames = listPrerenderPathnames(listingPaths)
 
   for (const pathname of pathnames) {
     const { body, head } = renderAppAt(pathname)

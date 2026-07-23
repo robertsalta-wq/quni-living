@@ -8,6 +8,7 @@ import {
 } from '../lib/authorityToLetAttestation'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
+import { requestSiteRebuild } from '../lib/triggerSiteRebuild'
 
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 
@@ -56,6 +57,7 @@ export function useLandlordPropertyListingActions(args: {
       try {
         const { error: updateError } = await supabase.from('properties').update({ status: 'active' }).eq('id', property.id)
         if (updateError) throw updateError
+        requestSiteRebuild()
         await reload()
         showToast({ kind: 'success', message: 'Listing published and now live.' })
       } catch (e) {
@@ -107,6 +109,7 @@ export function useLandlordPropertyListingActions(args: {
           supabase.from('properties').update({ status: nextStatus }).eq('id', property.id),
         )
         if (updateError) throw updateError
+        requestSiteRebuild()
         await reload()
       } catch (e) {
         reportMutErr(messageFromSupabaseError(e))
