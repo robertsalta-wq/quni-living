@@ -15,6 +15,8 @@ import Home from './pages/Home'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
+import CampusAccommodation from './pages/seo/CampusAccommodation'
+import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -221,6 +223,15 @@ function App() {
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideArticlePage />} />
               <Route path="/for-universities" element={<ForUniversities />} />
+              {/* Eager: campus/uni SEO must mount during renderToString prerender. */}
+              <Route
+                path="/student-accommodation/:universitySlug/:campusSlug"
+                element={<CampusAccommodation />}
+              />
+              <Route
+                path="/student-accommodation/:universitySlug"
+                element={<UniversityAccommodation />}
+              />
               <Route element={<LazyOutlet />}>
                 <Route path="/listings" element={<Lazy.Listings />} />
                 <Route path="/listings/:slug" element={<Lazy.PropertyDetail />} />
@@ -230,14 +241,6 @@ function App() {
                 <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
                 <Route path="/international" element={<Lazy.InternationalStudents />} />
                 <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
-                <Route
-                  path="/student-accommodation/:universitySlug"
-                  element={<Lazy.UniversityAccommodation />}
-                />
-                <Route
-                  path="/student-accommodation/:universitySlug/:campusSlug"
-                  element={<Lazy.CampusAccommodation />}
-                />
                 <Route path="/terms" element={<Lazy.Terms />} />
                 <Route path="/privacy" element={<Lazy.Privacy />} />
                 <Route path="/non-discrimination" element={<Lazy.NonDiscrimination />} />

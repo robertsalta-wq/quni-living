@@ -13,8 +13,20 @@ export type CampusSeoTipsSection = {
   tips: string[]
 }
 
-/** Matches suburb-generator campus content object shape. */
+/** Sync campus identity for prerender — populated at generation time from the DB. */
+export type CampusSeoCampusMeta = {
+  name: string
+  suburb: string
+  state: string
+  universityName: string
+  universityShortName: string
+  universitySlug: string
+  campusSlug: string
+}
+
+/** Campus SEO content file shape (copy + campus identity). */
 export type CampusSeoContent = {
+  campus: CampusSeoCampusMeta
   metaTitle: string
   metaDescription: string
   h1: string
@@ -49,10 +61,24 @@ function moduleKeyToSlugs(modulePath: string): { universitySlug: string; campusS
   }
 }
 
+function isCampusMeta(value: unknown): value is CampusSeoCampusMeta {
+  if (!value || typeof value !== 'object') return false
+  const o = value as Record<string, unknown>
+  return (
+    typeof o.name === 'string' &&
+    typeof o.suburb === 'string' &&
+    typeof o.state === 'string' &&
+    typeof o.universityName === 'string' &&
+    typeof o.universityShortName === 'string' &&
+    typeof o.universitySlug === 'string' &&
+    typeof o.campusSlug === 'string'
+  )
+}
+
 const BY_KEY: Record<string, CampusSeoContent> = {}
 for (const [modulePath, content] of Object.entries(campusContentModules)) {
   const slugs = moduleKeyToSlugs(modulePath)
-  if (!slugs || !content) continue
+  if (!slugs || !content || !isCampusMeta(content.campus)) continue
   BY_KEY[`${slugs.universitySlug}/${slugs.campusSlug}`] = content
 }
 
