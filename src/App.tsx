@@ -19,6 +19,7 @@ import ForUniversities from './pages/ForUniversities'
 import CampusAccommodation from './pages/seo/CampusAccommodation'
 import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import PropertyDetail from './pages/PropertyDetail'
+import NotFoundPage from './pages/NotFoundPage'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -220,6 +221,7 @@ function App() {
               <Route path="qase" element={<Lazy.QaseTicketList />} />
               <Route path="qase/settings" element={<Lazy.QaseSettings />} />
               <Route path="qase/:ticketId" element={<Lazy.QaseTicketDetail />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
 
             {/* Marketing / auth — public Header + Footer */}
@@ -342,6 +344,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
           </Routes>

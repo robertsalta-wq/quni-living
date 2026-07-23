@@ -10,6 +10,29 @@ import {
 } from '../lib/publishedListings'
 import { writePropertyDetailCache } from '../lib/propertyDetailCache'
 import { listPrerenderPathnames, pathnameToDistDir } from './routes'
+import NotFoundPage from '../pages/NotFoundPage'
+
+function renderNotFoundBody(): { body: string; head: string } {
+  const body = renderToString(
+    <HelmetProvider>
+      <MemoryRouter initialEntries={['/__not-found__']} initialIndex={0}>
+        <NotFoundPage />
+      </MemoryRouter>
+    </HelmetProvider>,
+  )
+  // No marketing <header> — hoist leading Helmet tags out of the stream manually.
+  const headParts: string[] = []
+  let rest = body
+  const leading =
+    /^\s*((?:<title[\s\S]*?<\/title>|<meta\b[^>]*\/?>|<link\b[^>]*\/?>|<script\b[^>]*type="application\/ld\+json"[\s\S]*?<\/script>)\s*)/i
+  while (true) {
+    const m = rest.match(leading)
+    if (!m) break
+    headParts.push(m[1].trim())
+    rest = rest.slice(m[0].length)
+  }
+  return { body: stripSuspenseBoundaryComments(rest), head: headParts.join('\n') }
+}
 
 function renderAppAt(pathname: string): { body: string; head: string } {
   const body = renderToString(
@@ -85,6 +108,14 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
     mkdirSync(outDir, { recursive: true })
     writeFileSync(path.join(outDir, 'index.html'), injectPrerender(template, body, head), 'utf8')
     console.log(`prerender-routes: wrote ${pathname}`)
+  }
+
+  // Root 404.html for Edge middleware (HTTP 404) — NotFoundPage without full chrome.
+  {
+    const { body, head } = renderNotFoundBody()
+    const html = injectPrerender(template, body, head)
+    writeFileSync(path.join(distDir, '404.html'), html, 'utf8')
+    console.log('prerender-routes: wrote /404.html')
   }
 
   console.log(`prerender-routes: ${pathnames.length} route(s) prerendered`)
