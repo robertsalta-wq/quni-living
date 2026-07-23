@@ -265,3 +265,126 @@ code {
     }
   }
 }
+
+/*
+ * /for-universities print/PDF — @page + body chrome + A4 typography.
+ * Screen styles live in ForUniversities.tsx + forUniversitiesClasses.ts (Tailwind).
+ * Web/print visibility uses print:hidden / hidden print:block in TSX.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 13mm 14mm 11mm 14mm;
+  }
+
+  body.for-universities-page header,
+  body.for-universities-page footer {
+    display: none !important;
+  }
+
+  body.for-universities-page main {
+    padding-top: 0 !important;
+  }
+
+  body.for-universities-page .for-universities-shell {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .for-universities-doc {
+    font-size: 9.6px;
+    line-height: 1.4;
+    color: var(--quni-ink);
+  }
+
+  .for-universities-doc p {
+    margin: 0 0 6px;
+  }
+
+  .for-universities-doc .partnership-credential {
+    font-size: 7.2px;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+
+  .for-universities-doc .partnership-masthead {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+
+  .for-universities-doc .partnership-logo img {
+    height: 28px;
+  }
+
+  .for-universities-doc .partnership-eyebrow {
+    text-align: right;
+    font-size: 8px;
+    max-width: 58%;
+  }
+
+  .for-universities-doc .partnership-lede {
+    font-size: 19px;
+    line-height: 1.18;
+    margin: 0 0 12px;
+  }
+
+  .for-universities-doc .partnership-section-title {
+    font-size: 10.5px;
+    margin: 12px 0 5px;
+    padding-bottom: 3px;
+  }
+
+  .for-universities-doc .partnership-pillars {
+    display: flex;
+    flex-direction: row;
+    gap: 9px;
+    margin: 8px 0 2px;
+  }
+
+  .for-universities-doc .partnership-pillar {
+    flex: 1;
+    padding: 9px 10px;
+  }
+
+  .for-universities-doc .partnership-pillar h3 {
+    font-size: 9.8px;
+    margin: 0 0 4px;
+  }
+
+  .for-universities-doc .partnership-pillar-audit {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  .for-universities-doc .partnership-cols {
+    column-count: 2;
+    column-gap: 16px;
+    margin-top: 2px;
+  }
+
+  .for-universities-doc .partnership-cols ul {
+    margin: 2px 0;
+    padding-left: 14px;
+  }
+
+  .for-universities-doc .partnership-cols li {
+    margin-bottom: 5px;
+    break-inside: avoid;
+  }
+
+  .for-universities-doc .partnership-scope {
+    font-size: 8.8px;
+    padding: 8px 10px;
+    margin-top: 12px;
+  }
+
+  .for-universities-doc .partnership-print-contact {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 2px solid var(--quni-coral);
+    font-size: 9px;
+    color: var(--quni-ink);
+    line-height: 1.45;
+  }
+}
