@@ -1,12 +1,17 @@
 /**
  * AI listing description (Anthropic Claude) - Vercel Edge.
- * Env: ANTHROPIC_API_KEY
+ * Env: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+ *      SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY
+ *
+ * POST Authorization: Bearer <Supabase access_token> (landlord or platform admin)
  */
+import { createClient } from '@supabase/supabase-js'
 import {
   DESCRIPTION_GENERATOR_SYSTEM_PROMPT,
   buildDescriptionUserPrompt,
   buildImproveDescriptionUserPrompt,
 } from '../../src/lib/aiSurfacePromptAssembly.js'
+import { isPlatformAdminUser } from '../lib/adminAuth.js'
 import { ANTHROPIC_SONNET_MODEL } from '../lib/anthropicModel.js'
 import { reportAiFailure } from '../lib/reportAiFailure.js'
 
@@ -48,11 +53,18 @@ function json(body: unknown, status = 200, origin: string) {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': allowOrigin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
       'Access-Control-Max-Age': '86400',
       'Cache-Control': 'public, max-age=0, s-maxage=0',
     },
   })
+}
+
+function parseBearer(request: Request): string | null {
+  const h = request.headers.get('Authorization')?.trim() ?? ''
+  const m = /^Bearer\s+(.+)$/i.exec(h)
+  const t = m?.[1]?.trim()
+  return t || null
 }
 
 function isStringArray(v: unknown): v is string[] {
@@ -74,7 +86,7 @@ export default async function handler(request: Request) {
       headers: {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
         'Access-Control-Max-Age': '86400',
       },
     })
@@ -82,6 +94,41 @@ export default async function handler(request: Request) {
 
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405, origin)
+  }
+
+  const token = parseBearer(request)
+  if (!token) {
+    return json({ error: 'Authorization Bearer token required' }, 401, origin)
+  }
+
+  const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
+  const serviceRole = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
+  const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+
+  if (!supabaseUrl || !serviceRole || !anonKey) {
+    return json({ error: 'Server configuration error' }, 500, origin)
+  }
+
+  const supabaseAuth = createClient(supabaseUrl, anonKey)
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabaseAuth.auth.getUser(token)
+
+  if (userErr || !user) {
+    return json({ error: 'Invalid or expired session' }, 401, origin)
+  }
+
+  const admin = createClient(supabaseUrl, serviceRole)
+  const { data: lpRow, error: lpErr } = await admin
+    .from('landlord_profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const isLandlord = !lpErr && Boolean(lpRow)
+  if (!isLandlord && !(await isPlatformAdminUser(user))) {
+    return json({ error: 'Landlord profile required' }, 403, origin)
   }
 
   const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim()

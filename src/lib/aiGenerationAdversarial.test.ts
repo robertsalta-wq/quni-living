@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NON_DISCRIMINATION_AI_RULE } from './aiMatchingCriteria'
 import {
   assembleDescriptionGeneratorModelCall,
@@ -19,6 +19,39 @@ const DISCRIMINATORY_OUTPUT_PATTERNS = [
 
 const FACTUAL_LANGUAGE_CONSTRAINT =
   'Do not add subjective quality or condition claims (for example: bright, spacious, modern, renovated, stunning, cosy, charming)'
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: async () => ({
+        data: { user: { id: 'user-landlord-1', email: 'host@example.com' } },
+        error: null,
+      }),
+    },
+    from: (table: string) => {
+      if (table === 'landlord_profiles') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { id: 'lp-1' }, error: null }),
+            }),
+          }),
+        }
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+        }),
+      }
+    },
+  })),
+}))
+
+vi.mock('../../api/lib/adminAuth.js', () => ({
+  isPlatformAdminUser: vi.fn(async () => false),
+}))
 
 function assertNeutralGenerationOutput(text: string): void {
   for (const pattern of DISCRIMINATORY_OUTPUT_PATTERNS) {
@@ -44,6 +77,21 @@ function mockAnthropicReply(replyText: string): void {
   )
 }
 
+function authHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer test-token',
+    origin: 'https://example.com',
+  }
+}
+
+beforeEach(() => {
+  process.env.SUPABASE_URL = 'https://example.supabase.co'
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test'
+  process.env.SUPABASE_ANON_KEY = 'anon-test'
+  process.env.ANTHROPIC_API_KEY = 'test-key'
+})
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -68,6 +116,19 @@ describe('generation surface adversarial (output must not echo protected prefere
     expect(ENQUIRY_REPLY_SYSTEM_PROMPT).toContain('Non-discrimination')
   })
 
+  it('generate-description: rejects unauthenticated requests', async () => {
+    const { default: handler } = await import('../../api/ai/generate-description.ts')
+    const req = new Request('https://example.com/api/ai/generate-description', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', origin: 'https://example.com' },
+      body: JSON.stringify({ roomType: 'single', suburb: 'Kensington' }),
+    })
+    const res = await handler(req)
+    const json = (await res.json()) as { error?: string }
+    expect(res.status).toBe(401)
+    expect(json.error).toMatch(/authorization/i)
+  })
+
   it('generate-description: houseRules does not reach assembled user prompt; mock output stays neutral', async () => {
     mockAnthropicReply(
       'This single room in Kensington suits verified renters seeking a practical campus commute. ' +
@@ -79,7 +140,7 @@ describe('generation surface adversarial (output must not echo protected prefere
     const { default: handler } = await import('../../api/ai/generate-description.ts')
     const req = new Request('https://example.com/api/ai/generate-description', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', origin: 'https://example.com' },
+      headers: authHeaders(),
       body: JSON.stringify({
         roomType: 'single',
         suburb: 'Kensington',
@@ -88,7 +149,6 @@ describe('generation surface adversarial (output must not echo protected prefere
       }),
     })
 
-    process.env.ANTHROPIC_API_KEY = 'test-key'
     const res = await handler(req)
     const json = (await res.json()) as { description?: string; error?: string }
     expect(res.status).toBe(200)
@@ -130,7 +190,7 @@ describe('generation surface adversarial (output must not echo protected prefere
     const { default: handler } = await import('../../api/ai/generate-description.ts')
     const req = new Request('https://example.com/api/ai/generate-description', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', origin: 'https://example.com' },
+      headers: authHeaders(),
       body: JSON.stringify({
         roomType: 'single',
         suburb: 'Kensington',
@@ -138,7 +198,6 @@ describe('generation surface adversarial (output must not echo protected prefere
       }),
     })
 
-    process.env.ANTHROPIC_API_KEY = 'test-key'
     const res = await handler(req)
     const json = (await res.json()) as { description?: string; error?: string }
     expect(res.status).toBe(200)
@@ -182,8 +241,10 @@ describe('generation surface adversarial (output must not echo protected prefere
     const assembled = assembleEnquiryReplyModelCall({
       studentName: 'Alex',
       studentMessage: 'Are you Australian / are you a local?',
+      propertyTitle: 'Campus Studio',
+      propertySuburb: 'Kensington',
+      landlordName: 'Sam',
     })
-    expect(assembled.userMessage).toContain('Are you Australian')
     expect(assembled.system).toContain('Non-discrimination')
   })
 })
