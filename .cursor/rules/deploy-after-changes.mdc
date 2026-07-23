@@ -23,3 +23,5 @@ When you **finish** a task that changes anything that ships to production (e.g. 
 3. If `tsc`, commit, or push fails (not logged in to git, no network, conflicts), say what failed and what the user can do once. Do not block the rest of the answer on push success.
 
 4. Production updates via Vercel’s Git integration; do not run `npx vercel deploy` from the agent.
+
+5. Never `vercel promote` / `vercel redeploy` a preview or branch deployment to production. If a `main` merge did not produce a production deploy, report and stop — see `production-deploy-from-main-only.mdc`.

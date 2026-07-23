@@ -1,0 +1,30 @@
+---
+description: Never promote/redeploy preview or branch builds to production; only main Git deploys. Report stuck main deploys and stop.
+alwaysApply: true
+---
+
+# Production deploys from main only
+
+Git → Vercel production from `main` is the only allowed path. Do not work around a missing production deploy.
+
+## Never
+
+- `vercel promote` against a preview, PR, or feature-branch deployment
+- `vercel redeploy` of a preview / branch deployment with `--target production` (or any equivalent that aliases a non-`main` SHA to production)
+- Dashboard promote/redeploy of a non-`main` deployment onto production domains
+
+Those leave production on an older base and silently overwrite later `main` merges.
+
+## If a merge to main has no production deploy
+
+Transient Vercel webhook misses happen. A single SHA can drop while neighbors deploy normally; the gap often closes on the **next** merge to `main` (as with #183 → #182 ~28 minutes later). Prefer waiting for that over reaching for the CLI.
+
+1. Confirm the merge commit is on `origin/main`.
+2. Check Vercel / GitHub Deployments for that SHA (and whether a deploy was skipped / errored / never created).
+3. **Report findings and stop.** Do not CLI-promote, do not redeploy a PR preview, do not empty-commit-workaround unless the user explicitly asks after seeing the report. Wait for the next merge to `main` rather than improvising.
+
+## Allowed
+
+- Waiting for the normal Git integration deploy of a `main` commit
+- Redeploying an **existing production deployment whose commit is on `main`**, only when the user explicitly asks (dashboard or CLI against that main SHA deployment)
+- Opening a PR into `main` so Git → Vercel produces a new production build from a main tip
