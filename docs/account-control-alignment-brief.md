@@ -24,7 +24,11 @@
 - Center nav content / active underline treatment (marketing IA vs app tabs).
 - Replacing marketing Messages/Dashboard **links** with a bell (dashboard right-rail job stays different).
 - Menu **contents** (marketing may still include Dashboard / Admin / Finish setup; dashboard stays Profile + Sign out).
-- Compact/mobile avatar-only triggers (already frame-on-control by necessity).
+
+## Mobile / compact
+
+- Below `sm`, marketing account trigger uses **frame-on-control** (same as `AppHeader` `compact`): `ACCOUNT_AVATAR_FRAME_CLASS` on the button, avatar only.
+- From `sm` up, open desktop layout (frame on avatar only; name + chevron).
 
 ## Enforcement
 

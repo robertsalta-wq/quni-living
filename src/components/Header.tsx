@@ -28,6 +28,7 @@ import ChromeHeaderShell from './ChromeHeaderShell'
 import AiSparkleIcon from './AiSparkleIcon'
 import SiteSocialLinks from './SiteSocialLinks'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 function finishSetupHref(r: UserRole): string {
@@ -82,6 +83,7 @@ type HeaderProps = {
 
 export default function Header({ embedded = false }: HeaderProps) {
   const { user, profile, loading, signOut, role } = useAuthContext()
+  const isMobile = useIsMobile()
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const dashboardMobileTitle = dashboardMobileChrome
@@ -486,18 +488,28 @@ export default function Header({ embedded = false }: HeaderProps) {
                   ref={menuButtonRef}
                   type="button"
                   onClick={toggleAccountMenu}
-                  className={ACCOUNT_MENU_TRIGGER_CLASS}
+                  className={
+                    isMobile
+                      ? `${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`
+                      : ACCOUNT_MENU_TRIGGER_CLASS
+                  }
                   aria-expanded={menuOpen}
                   aria-haspopup="menu"
                   aria-label="Account menu"
                 >
-                  <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+                  {isMobile ? (
                     <AccountAvatar photoUrl={profilePhotoUrl} initials={initials} />
-                  </span>
-                  <span className={`hidden max-w-[7rem] truncate sm:inline ${ACCOUNT_MENU_NAME_CLASS}`}>
-                    {accountFirstName}
-                  </span>
-                  <ChevronDown className={`hidden sm:block ${ACCOUNT_MENU_CHEVRON_CLASS}`} aria-hidden />
+                  ) : (
+                    <>
+                      <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+                        <AccountAvatar photoUrl={profilePhotoUrl} initials={initials} />
+                      </span>
+                      <span className={`max-w-[7rem] truncate ${ACCOUNT_MENU_NAME_CLASS}`}>
+                        {accountFirstName}
+                      </span>
+                      <ChevronDown className={ACCOUNT_MENU_CHEVRON_CLASS} aria-hidden />
+                    </>
+                  )}
                 </button>
                 {menuOpen &&
                   menuAnchor &&
