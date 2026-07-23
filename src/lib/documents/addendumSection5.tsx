@@ -46,7 +46,7 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
   const nextKey = () => `s5-${n++}`
 
   if (showManagedCap) {
-    paragraphs.push(body(`Rent is calculated on an all-inclusive basis covering ${desc.toLowerCase()}.`, nextKey()))
+    paragraphs.push(body(`Rent is calculated on an all-inclusive basis. ${desc}`, nextKey()))
     paragraphs.push(
       body(
         `A utilities allowance of ${formatMoney(props.utilitiesCap as number)} per quarter applies. Usage within this allowance is included in rent.`,
@@ -80,7 +80,7 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
       ),
     )
   } else if (tier === 'managed' && props.allInclusive) {
-    paragraphs.push(body(`Rent is calculated on an all-inclusive basis covering ${desc.toLowerCase()}.`, nextKey()))
+    paragraphs.push(body(`Rent is calculated on an all-inclusive basis. ${desc}`, nextKey()))
     paragraphs.push(
       body(
         'The tenant must not deliberately waste utilities or circumvent metering. Where excessive usage is clearly tenant-caused, the landlord may request reimbursement, acting reasonably and with supporting information where practicable.',

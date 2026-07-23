@@ -96,6 +96,7 @@ describe('addendum Section 5 matrix', () => {
       expect(text).toContain('utilities allowance')
       expect(text).toContain('$300.00')
       expect(text).toContain('excess of the quarterly allowance')
+      expect(text).not.toMatch(/covering electricity, gas and water usage are included/i)
     },
     30_000,
   )
