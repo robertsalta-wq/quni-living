@@ -7,10 +7,15 @@ import { PLATFORM_CONFIG_KEYS, parseBooleanConfig } from '../../lib/platformConf
 import { Check, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
 import { adminCardClass, adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
 import { FeeExemptAccountsSection } from './FeeExemptAccountsSection'
+import {
+  cloneSocialAccountsInitial,
+  parseSocialAccountsJson,
+  SOCIAL_ACCOUNTS_CONFIG_KEY,
+  SOCIAL_STORAGE_KEY,
+  type SocialAccount,
+} from '../../lib/socialAccounts'
 
 const CHANGELOG_REDACTED = '[redacted]'
-
-const SOCIAL_STORAGE_KEY = 'quni_social_accounts'
 
 type SettingsTabId = 'business' | 'contact' | 'bank' | 'compliance' | 'docs' | 'house_rules' | 'social'
 
@@ -26,70 +31,10 @@ const TAB_LABELS: Record<SettingsTabId, string> = {
   social: 'Social media',
 }
 
-type SocialAccount = {
-  platform: string
-  type: 'Brand' | 'Personal' | 'Company'
-  handle: string
-  url: string
-  status: 'Active' | 'Parked' | 'Not created'
-}
-
-const SOCIAL_ACCOUNTS_INITIAL: SocialAccount[] = [
-  { platform: 'TikTok', type: 'Brand', handle: '@quniliving', url: 'https://tiktok.com/@quniliving', status: 'Active' },
-  { platform: 'TikTok', type: 'Personal', handle: '@quinnleeau', url: 'https://tiktok.com/@quinnleeau', status: 'Not created' },
-  { platform: 'Instagram', type: 'Brand', handle: '@quniliving', url: 'https://instagram.com/quniliving', status: 'Not created' },
-  { platform: 'Instagram', type: 'Personal', handle: '@quinnleeau', url: 'https://instagram.com/quinnleeau', status: 'Not created' },
-  { platform: 'LinkedIn', type: 'Company', handle: 'Quni Living', url: 'https://linkedin.com/company/quniliving', status: 'Not created' },
-  { platform: 'LinkedIn', type: 'Personal', handle: 'Quinn Lee', url: 'https://linkedin.com/in/quinnleeau', status: 'Not created' },
-  { platform: 'Facebook', type: 'Brand', handle: 'Quni Living', url: 'https://facebook.com/quniliving', status: 'Not created' },
-  { platform: 'YouTube', type: 'Brand', handle: '@quniliving', url: 'https://youtube.com/@quniliving', status: 'Not created' },
-  { platform: 'Twitter/X', type: 'Brand', handle: '@quniliving', url: 'https://x.com/quniliving', status: 'Not created' },
-]
-
-function cloneSocialInitial(): SocialAccount[] {
-  return SOCIAL_ACCOUNTS_INITIAL.map((r) => ({ ...r }))
-}
-
-function isSocialStatus(v: unknown): v is SocialAccount['status'] {
-  return v === 'Active' || v === 'Parked' || v === 'Not created'
-}
-
-function isSocialType(v: unknown): v is SocialAccount['type'] {
-  return v === 'Brand' || v === 'Personal' || v === 'Company'
-}
-
-function parseStoredSocialAccounts(raw: string | null): SocialAccount[] | null {
-  if (raw == null || raw.trim() === '') return null
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
-    const out: SocialAccount[] = []
-    for (const item of parsed) {
-      if (!item || typeof item !== 'object') return null
-      const o = item as Record<string, unknown>
-      if (typeof o.platform !== 'string') return null
-      if (!isSocialType(o.type)) return null
-      if (typeof o.handle !== 'string') return null
-      if (typeof o.url !== 'string') return null
-      if (!isSocialStatus(o.status)) return null
-      out.push({
-        platform: o.platform,
-        type: o.type,
-        handle: o.handle,
-        url: o.url,
-        status: o.status,
-      })
-    }
-    return out
-  } catch {
-    return null
-  }
-}
-
-function loadSocialAccountsFromStorage(): SocialAccount[] {
-  if (typeof window === 'undefined') return cloneSocialInitial()
-  const parsed = parseStoredSocialAccounts(localStorage.getItem(SOCIAL_STORAGE_KEY))
-  return parsed ?? cloneSocialInitial()
+function loadSocialAccountsFromBrowserCache(): SocialAccount[] {
+  if (typeof window === 'undefined') return cloneSocialAccountsInitial()
+  const parsed = parseSocialAccountsJson(localStorage.getItem(SOCIAL_STORAGE_KEY))
+  return parsed ?? cloneSocialAccountsInitial()
 }
 
 const SOCIAL_PLATFORM_OPTIONS = [
@@ -334,7 +279,8 @@ function Note({ children }: { children: ReactNode }) {
 export default function AdminSettings() {
   const { user } = useAuthContext()
   const [activeTab, setActiveTab] = useState<SettingsTabId>('business')
-  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>(() => loadSocialAccountsFromStorage())
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>(() => loadSocialAccountsFromBrowserCache())
+  const [socialLoadedFromDb, setSocialLoadedFromDb] = useState(false)
   const [urlEditIndex, setUrlEditIndex] = useState<number | null>(null)
   const [urlEditDraft, setUrlEditDraft] = useState('')
   const [fullEditRowIndex, setFullEditRowIndex] = useState<number | null>(null)
@@ -372,6 +318,16 @@ export default function AdminSettings() {
       const d: Record<string, string> = {}
       for (const r of list) d[r.config_key] = r.config_value ?? ''
       setDraft(d)
+
+      const socialRow = list.find((r) => r.config_key === SOCIAL_ACCOUNTS_CONFIG_KEY)
+      const fromDb = parseSocialAccountsJson(socialRow?.config_value ?? null)
+      if (fromDb) {
+        setSocialAccounts(fromDb)
+        setSocialLoadedFromDb(true)
+      } else {
+        setSocialAccounts(loadSocialAccountsFromBrowserCache())
+        setSocialLoadedFromDb(false)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load settings')
     } finally {
@@ -460,8 +416,64 @@ export default function AdminSettings() {
     setDraft((prev) => ({ ...prev, [key]: value }))
   }
 
+  async function saveSocialAccounts() {
+    if (!isSupabaseConfigured || !user?.email) return
+    setSavingTab('social')
+    setError(null)
+    setMessage(null)
+    const changedBy = user.email
+    const nextVal = JSON.stringify(socialAccounts)
+    const existing = rows.find((r) => r.config_key === SOCIAL_ACCOUNTS_CONFIG_KEY)
+    const prevVal = existing?.config_value ?? ''
+
+    try {
+      if (existing) {
+        if (prevVal !== nextVal) {
+          const { error: uErr } = await supabase
+            .from('platform_config')
+            .update({ config_value: nextVal, updated_by: changedBy })
+            .eq('id', existing.id)
+          if (uErr) throw uErr
+        }
+      } else {
+        const { error: iErr } = await supabase.from('platform_config').insert({
+          config_key: SOCIAL_ACCOUNTS_CONFIG_KEY,
+          config_value: nextVal,
+          label: 'Social media accounts (JSON)',
+          category: 'social',
+          is_sensitive: false,
+          sort_order: 50,
+          updated_by: changedBy,
+        })
+        if (iErr) throw iErr
+      }
+
+      if (prevVal !== nextVal) {
+        const { error: lErr } = await supabase.from('pricing_change_log').insert({
+          tier: null,
+          field_name: SOCIAL_ACCOUNTS_CONFIG_KEY,
+          old_value: prevVal ? formatLogValue(prevVal) : '(empty)',
+          new_value: formatLogValue(nextVal),
+          changed_by: changedBy,
+        })
+        if (lErr) throw lErr
+      }
+
+      setMessage('Saved social media. Active Brand/Company links appear in the public footer.')
+      setSocialLoadedFromDb(true)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed')
+    } finally {
+      setSavingTab(null)
+    }
+  }
+
   async function saveTab(tab: SettingsTabId) {
-    if (tab === 'social') return
+    if (tab === 'social') {
+      await saveSocialAccounts()
+      return
+    }
     if (!isSupabaseConfigured || !user?.email) return
     setSavingTab(tab)
     setError(null)
@@ -874,9 +886,26 @@ export default function AdminSettings() {
           <div className="mb-4 border-b border-gray-100 pb-4">
             <Subheading>Social media</Subheading>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-600">
-              Editable list - stored in this browser only (<span className="font-mono text-[11px]">{SOCIAL_STORAGE_KEY}</span>
-              ). Not saved to Supabase.
+              Active <span className="font-medium text-gray-800">Brand</span> and{' '}
+              <span className="font-medium text-gray-800">Company</span> rows with a full URL show in the public footer
+              and mobile menu. Personal accounts stay admin-only. Click Save to write to Supabase.
             </p>
+            {!socialLoadedFromDb ? (
+              <p className="mt-2 text-[13px] leading-relaxed text-amber-800">
+                Not yet loaded from Supabase for this environment — showing browser draft (
+                <span className="font-mono text-[11px]">{SOCIAL_STORAGE_KEY}</span>). Save once to publish.
+              </p>
+            ) : null}
+          </div>
+          <div className="mb-4">
+            <button
+              type="button"
+              disabled={savingTab === 'social' || fullEditRowIndex !== null || urlEditIndex !== null}
+              onClick={() => void saveTab('social')}
+              className="rounded-lg bg-[var(--quni-navy)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {savingTab === 'social' ? 'Saving…' : 'Save social media'}
+            </button>
           </div>
           <div className={adminTableWrapClass}>
             <table className="min-w-full border-collapse text-left">

@@ -36,6 +36,8 @@ export const PLATFORM_CONFIG_KEYS = {
   UTILITIES_RESOLVER_LISTING_DISCLOSURE_ENABLED: 'utilities_resolver_listing_disclosure_enabled',
   /** When true, tenant signing/bond/doc-gen requires locked legal name (student only). */
   LEGAL_NAME_SIGNING_GATE_ENABLED: 'legal_name_signing_gate_enabled',
+  /** JSON array of social media accounts (Admin → Social media). */
+  SOCIAL_ACCOUNTS: 'social.accounts',
 } as const
 
 export type ServiceTierPlatformFlags = {
