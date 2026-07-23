@@ -17,6 +17,7 @@ import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
 import CampusAccommodation from './pages/seo/CampusAccommodation'
 import UniversityAccommodation from './pages/seo/UniversityAccommodation'
+import PropertyDetail from './pages/PropertyDetail'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -232,12 +233,13 @@ function App() {
                 path="/student-accommodation/:universitySlug"
                 element={<UniversityAccommodation />}
               />
+              {/* Eager: listing SEO must mount during renderToString prerender. */}
+              <Route path="/listings/:slug" element={<PropertyDetail />} />
+              <Route path="/properties/:slug" element={<PropertyDetail />} />
               <Route element={<LazyOutlet />}>
                 <Route path="/listings" element={<Lazy.Listings />} />
-                <Route path="/listings/:slug" element={<Lazy.PropertyDetail />} />
                 <Route path="/search" element={<Navigate to="/listings" replace />} />
                 <Route path="/properties" element={<Navigate to="/listings" replace />} />
-                <Route path="/properties/:slug" element={<Lazy.PropertyDetail />} />
                 <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
                 <Route path="/international" element={<Lazy.InternationalStudents />} />
                 <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />

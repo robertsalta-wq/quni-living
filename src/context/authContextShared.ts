@@ -15,3 +15,16 @@ export const AUTH_LOADING_DEFAULT: AuthState = {
   signOut: async () => {},
   refreshProfile: async () => {},
 }
+
+/** SSR / prerender: guest-ready so pages are not stuck on auth loading shells. */
+export const AUTH_GUEST_DEFAULT: AuthState = {
+  user: null,
+  session: null,
+  profile: null,
+  role: null,
+  loading: false,
+  awaitingSignInOnboardingRedirect: false,
+  clearAwaitingSignInOnboardingRedirect: () => {},
+  signOut: async () => {},
+  refreshProfile: async () => {},
+}

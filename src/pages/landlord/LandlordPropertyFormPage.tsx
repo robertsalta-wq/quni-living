@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
 import { generatePropertySlug } from '../../lib/generatePropertySlug'
@@ -2452,6 +2453,9 @@ export default function LandlordPropertyFormPage() {
           setAccuracyAttestedContentHash(accuracyAttestationPatch.accuracy_attested_content_hash)
           setAccuracyAgreed(false)
         }
+        if (existingListingStatus === 'active') {
+          requestSiteRebuild()
+        }
         if (isHubSectionMode) {
           navigate(hubReturnPath, { replace: true })
         } else if (existingListingStatus === 'draft') {
@@ -2481,6 +2485,7 @@ export default function LandlordPropertyFormPage() {
           .select('id, university_id, campus_id')
           .single()
         if (insErr) throw insErr
+        requestSiteRebuild()
         const insertedRow = inserted as { id: string; university_id: string | null; campus_id: string | null }
         const newId = insertedRow.id
         if (insertedRow.university_id !== resolvedUniversityId || insertedRow.campus_id !== resolvedCampusId) {
