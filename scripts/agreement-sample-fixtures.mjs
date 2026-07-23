@@ -193,6 +193,10 @@ function addendumFromAgreement(base, signingPackage) {
     utilitiesDescription:
       'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
     signingPackage,
+    serviceTier: 'managed',
+    allInclusive: true,
+    billsIncluded: true,
+    listingDisclosureLabels: ['Bills included', 'Water included in rent'],
     rentPaymentMethod: 'quni_platform',
     bankDetails: { ...SHARED_BANK },
     emergencyContact: 'Sam Renter - 0411333444',

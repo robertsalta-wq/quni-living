@@ -27,6 +27,7 @@ import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
 } from '../../pricing/index.js'
+import { buildAddendumUtilitiesFields } from '../../../../src/lib/documents/addendumUtilitiesFields.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
@@ -110,6 +111,7 @@ type LoadedVicForm1Context = {
   periodic: boolean
   endDate: string | null
   bondNum: number
+  serviceTier: 'managed' | 'listing'
   bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   rentPaymentMethodLine: string
   managedPricingCell: Awaited<ReturnType<typeof getActivePricingSnapshotForProperty>>
@@ -169,7 +171,13 @@ async function loadVicForm1Context(
         bond_weeks,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        water_usage_charged_separately,
+        electricity_embedded_network,
+        gas_embedded_network,
+        water_separately_metered_efficient_attested_at,
+        utilities_services,
+        property_features ( features ( name ) )
       )
     `,
     )
@@ -268,6 +276,7 @@ async function loadVicForm1Context(
   }
 
   const rentPaymentMethodLine = buildRtaRentPaymentMethodLine(bankDetails)
+  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const managedPricingCell = await getActivePricingSnapshotForProperty(booking.property_id, 'managed')
   const managedPricingDisplay = formatFeeForDisplay(managedPricingCell)
   const platformFeePercent =
@@ -331,6 +340,7 @@ async function loadVicForm1Context(
       periodic,
       endDate,
       bondNum,
+      serviceTier,
       bankDetails,
       rentPaymentMethodLine,
       managedPricingCell,
@@ -476,8 +486,12 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
   const emergencyContact =
     ecName && ecPhone ? `${ecName} - ${ecPhone}` : ecPhone || ecName || '-'
 
-  const rawCap = Number(ctx.managedPricingCell.utilities_cap_aud ?? 0)
-  const utilitiesCap = Number.isFinite(rawCap) && rawCap >= 0 ? rawCap : 0
+  const utilitiesFields = buildAddendumUtilitiesFields({
+    serviceTier: ctx.serviceTier,
+    prop,
+    managedUtilitiesCapAud:
+      ctx.serviceTier === 'managed' ? Number(ctx.managedPricingCell.utilities_cap_aud ?? 0) : null,
+  })
 
   const houseRulesFromProperty =
     typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''
@@ -492,8 +506,7 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
     term: sharedTerm,
     rent: sharedRent,
     bond: { amount: ctx.bondNum },
-    utilitiesDescription:
-      'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
+    ...utilitiesFields,
     signingPackage: 'residential_tenancy_vic' as const,
     rentPaymentMethod: ctx.rentPaymentPreference,
     bankDetails: {
@@ -506,7 +519,6 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
     rentEnquiriesEmail: ctx.rentEnquiriesEmail,
     generalEnquiriesEmail: ctx.generalEnquiriesEmail,
     houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
-    utilitiesCap,
     houseRules,
     landlordServiceFeeText: ctx.managedPricingDisplay.landlordFeeDisplay,
     cardSurchargeDomesticText: ctx.managedPricingDisplay.cardSurchargeDomestic,

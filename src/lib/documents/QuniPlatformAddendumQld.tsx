@@ -20,6 +20,7 @@ import {
   AddendumCoTenantSignatureBlock,
   coTenantNameFromAddendumProps,
 } from './addendumCoTenantExecution.js'
+import { AddendumSection5UtilitiesAndBills } from './addendumSection5.js'
 
 /** Asserted in PDF tests (extracted text via pdf-parse). */
 export const QLD_PLATFORM_ADDENDUM_PDF_MARKERS = [
@@ -265,47 +266,6 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
         negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant
         caused, the landlord may seek reimbursement in accordance with the Residential Tenancies and Rooming Accommodation Act
         2008 (Qld) and the general tenancy agreement (Form 18a), including via bond claim processes where applicable.
-      </Text>
-    </View>
-  )
-}
-
-/** Section 5 - Utilities & bills. */
-function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
-  return (
-    <View style={{ marginBottom: 10 }}>
-      <OccupancyMatchSectionHeading num={5} title="Utilities & bills" />
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Rent is calculated on an all-inclusive basis covering {props.utilitiesDescription.toLowerCase()}.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        A utilities allowance of {formatMoney(props.utilitiesCap)} per quarter applies. Usage within this allowance is
-        included in rent.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as
-        otherwise agreed in writing). This is the tenant&apos;s payment timing for excess-usage amounts invoiced through
-        the platform - it is separate from the landlord&apos;s obligation under the Residential Tenancies and Rooming
-        Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of relevant
-        supplier account documents within <Text style={{ fontFamily: 'Helvetica-Bold' }}>4 weeks</Text> of the property
-        manager/owner receiving them, where the tenant is required to pay for a utility service by reference to the
-        supplier&apos;s account.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        The tenant must not deliberately waste utilities or circumvent metering. Where excessive usage is clearly
-        tenant-caused, the landlord may request reimbursement in addition to any excess-usage amount, acting reasonably
-        and with supporting information where practicable.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Where internet is included, connection or resumption of service may depend on supplier processes. The tenant must
-        not reconfigure network equipment in a way that could impair other occupants or security devices. Personal
-        streaming, gaming, or study use within ordinary household norms is expected; commercial server hosting or resale
-        of bandwidth is not permitted unless agreed in writing.
       </Text>
     </View>
   )
@@ -860,7 +820,7 @@ export function QuniPlatformAddendumQld(props: QuniPlatformAddendumProps) {
           subtitle="Supplementary to the General Tenancy Agreement (Form 18a)"
         />
         <OccupancyMatchFooter documentId={documentId} generatedAt={generatedAt} variant="addendum" />
-        <Section5UtilitiesAndBills {...props} />
+        <AddendumSection5UtilitiesAndBills {...props} />
         <Section6HouseRules {...props} />
         <Section7MouldPrevention {...props} />
         <Section8ConditionReport {...props} />

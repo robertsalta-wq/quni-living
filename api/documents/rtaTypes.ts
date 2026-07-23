@@ -233,6 +233,17 @@ export type QuniPlatformAddendumProps = {
   rent: RtaRentPdf
   bond: RtaBondPdf
   utilitiesDescription: string
+  /**
+   * Booking service tier. Listing must never use Managed all-inclusive / quarterly-cap copy.
+   * Cap + excess paragraphs only when `managed` + `allInclusive` + `utilitiesCap > 0`.
+   */
+  serviceTier: 'listing' | 'managed'
+  /** From `propertyUtilitiesResolver` — bills included with no separate water charge. */
+  allInclusive: boolean
+  /** From `propertyUtilitiesResolver` — bills-included feature signal. */
+  billsIncluded: boolean
+  /** Optional listing-style disclosure lines from the resolver. */
+  listingDisclosureLabels?: string[]
   /** NSW FT6600 package vs QLD Form 18a vs VIC Form 1 + Quni addendum. */
   signingPackage: 'residential_tenancy' | 'residential_tenancy_qld' | 'residential_tenancy_vic'
   rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null
@@ -246,8 +257,11 @@ export type QuniPlatformAddendumProps = {
   rentEnquiriesEmail: string
   generalEnquiriesEmail: string
   houseCommunicationsChannel: string
-  /** Quarterly utilities cap (AUD), e.g. from `pricing_config` tier `t2`. */
-  utilitiesCap: number
+  /**
+   * Quarterly utilities cap (AUD) from Managed pricing snapshot.
+   * Always `null` for Listing tier; Managed may be 0 when unset.
+   */
+  utilitiesCap: number | null
   /** Property-specific rules text; may be platform default when property has none. */
   houseRules: string | null
   landlordServiceFeeText?: string

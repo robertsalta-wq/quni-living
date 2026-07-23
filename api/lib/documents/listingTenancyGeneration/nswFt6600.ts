@@ -47,6 +47,7 @@ import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
 } from '../../pricing/index.js'
+import { buildAddendumUtilitiesFields } from '../../../../src/lib/documents/addendumUtilitiesFields.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
@@ -223,6 +224,8 @@ async function loadNswFt6600Context(
         water_usage_charged_separately,
         electricity_embedded_network,
         gas_embedded_network,
+        water_separately_metered_efficient_attested_at,
+        utilities_services,
         strata_bylaws_applicable,
         property_features (
           features ( name )
@@ -561,8 +564,12 @@ function buildNswFt6600PdfProps(ctx: LoadedNswFt6600Context, documentId: string)
   const emergencyContact =
     ecName && ecPhone ? `${ecName} - ${ecPhone}` : ecPhone || ecName || '-'
 
-  const rawCap = Number(ctx.managedPricingCell.utilities_cap_aud ?? 0)
-  const utilitiesCap = Number.isFinite(rawCap) && rawCap >= 0 ? rawCap : 0
+  const utilitiesFields = buildAddendumUtilitiesFields({
+    serviceTier: ctx.serviceTier,
+    prop,
+    managedUtilitiesCapAud:
+      ctx.serviceTier === 'managed' ? Number(ctx.managedPricingCell.utilities_cap_aud ?? 0) : null,
+  })
 
   const houseRulesFromProperty =
     typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''
@@ -577,8 +584,7 @@ function buildNswFt6600PdfProps(ctx: LoadedNswFt6600Context, documentId: string)
     term: sharedTerm,
     rent: sharedRent,
     bond: { amount: ctx.bondNum },
-    utilitiesDescription:
-      'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
+    ...utilitiesFields,
     signingPackage: 'residential_tenancy' as const,
     rentPaymentMethod: ctx.rentPaymentMethod,
     bankDetails: {
@@ -591,7 +597,6 @@ function buildNswFt6600PdfProps(ctx: LoadedNswFt6600Context, documentId: string)
     rentEnquiriesEmail: ctx.rentEnquiriesEmail,
     generalEnquiriesEmail: ctx.generalEnquiriesEmail,
     houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
-    utilitiesCap,
     houseRules,
     landlordServiceFeeText: ctx.managedPricingDisplay.landlordFeeDisplay,
     cardSurchargeDomesticText: ctx.managedPricingDisplay.cardSurchargeDomestic,

@@ -47,6 +47,9 @@ function minimalProps(): QuniPlatformAddendumProps {
     bond: { amount: null },
     utilitiesDescription: 'Electricity, water, gas and Wi-Fi',
     signingPackage: 'residential_tenancy',
+    serviceTier: 'managed',
+    allInclusive: true,
+    billsIncluded: true,
     rentPaymentMethod: 'bank_transfer',
     bankDetails: {
       bsb: '123456',

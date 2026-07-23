@@ -50,6 +50,9 @@ function buildAddendumPropsFromRta(rtaProps) {
     utilitiesDescription:
       'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
     signingPackage: 'residential_tenancy',
+    serviceTier: 'managed',
+    allInclusive: true,
+    billsIncluded: true,
     rentPaymentMethod: 'bank_transfer',
     bankDetails: {
       bsb: '939200',
