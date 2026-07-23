@@ -130,15 +130,37 @@ export function isPasswordRecoveryCallbackHash(hash: string): boolean {
   return params.get('type') === 'recovery'
 }
 
+function hasImplicitAuthHash(hash: string): boolean {
+  const params = new URLSearchParams(hash.replace(/^#/, ''))
+  return Boolean(
+    params.get('access_token') ||
+      params.get('refresh_token') ||
+      params.get('error') ||
+      params.get('error_code') ||
+      params.get('error_description'),
+  )
+}
+
 /**
- * Supabase may substitute `.RedirectTo` with Site URL (no path) when `emailRedirectTo` is not
- * allow-listed — links then land on `/?token_hash=…`. Forward those to `/auth/callback`.
+ * Supabase may substitute `.RedirectTo` with Site URL (no path) when the redirect is not
+ * allow-listed — links then land on `/` with `?token_hash=…` (email) or `#access_token=…`
+ * (implicit OAuth). Forward those to `/auth/callback` so `detectSessionInUrl` can run.
  */
-export function apexAuthTokenRedirectPath(pathname: string, search: string): string | null {
+export function apexAuthTokenRedirectPath(
+  pathname: string,
+  search: string,
+  hash: string = '',
+): string | null {
   const path = pathname.replace(/\/$/, '') || '/'
   if (path !== '/') return null
-  if (!parseAuthTokenHashFromSearch(search)) return null
-  return `/auth/callback${search}`
+  const normalizedHash = !hash ? '' : hash.startsWith('#') ? hash : `#${hash}`
+  if (parseAuthTokenHashFromSearch(search)) {
+    return `/auth/callback${search}${normalizedHash}`
+  }
+  if (hasImplicitAuthHash(normalizedHash)) {
+    return `/auth/callback${search}${normalizedHash}`
+  }
+  return null
 }
 
 /** Remove one-time auth params so refresh does not retry verification. */

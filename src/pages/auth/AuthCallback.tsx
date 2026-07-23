@@ -170,9 +170,15 @@ export default function AuthCallback() {
 
       if (cancelled) return
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      // Implicit OAuth can finish detectSessionInUrl slightly after first getSession().
+      let session = (await supabase.auth.getSession()).data.session
+      if (!session && !tokenHashErr && !oauthErr && !sessionErr) {
+        for (let attempt = 0; attempt < 8 && !cancelled; attempt++) {
+          await new Promise((r) => setTimeout(r, 50))
+          session = (await supabase.auth.getSession()).data.session
+          if (session) break
+        }
+      }
       if (cancelled) return
 
       if (session) {

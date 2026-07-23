@@ -56,9 +56,19 @@ describe('apexAuthTokenRedirectPath', () => {
     )
   })
 
+  it('forwards implicit OAuth hash on Site URL `/` to /auth/callback', () => {
+    expect(apexAuthTokenRedirectPath('/', '', '#access_token=tok&refresh_token=r')).toBe(
+      '/auth/callback#access_token=tok&refresh_token=r',
+    )
+    expect(apexAuthTokenRedirectPath('/', '', 'access_token=tok')).toBe(
+      '/auth/callback#access_token=tok',
+    )
+  })
+
   it('ignores non-apex paths and unrelated query strings', () => {
     expect(apexAuthTokenRedirectPath('/listings', '?token_hash=abc&type=signup')).toBeNull()
     expect(apexAuthTokenRedirectPath('/', '?foo=bar')).toBeNull()
+    expect(apexAuthTokenRedirectPath('/', '', '#foo=bar')).toBeNull()
   })
 })
 

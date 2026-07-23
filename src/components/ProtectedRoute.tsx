@@ -2,9 +2,14 @@ import { Navigate, useLocation } from 'react-router-dom'
 import PageRouteFallback from './PageRouteFallback'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import { isRenterRole, type StudentProfileRow, type UserRole } from '../lib/authProfile'
+import {
+  getNavDashboardPath,
+  isRenterRole,
+  INCOMPLETE_RENTER_DESTINATION,
+  type StudentProfileRow,
+  type UserRole,
+} from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
-import { INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 type AllowedRole = Exclude<UserRole, null>
@@ -19,7 +24,7 @@ function isRoleAllowed(role: AllowedRole, allowedRoles: AllowedRole[]): boolean 
 
 type Props = {
   children: React.ReactNode
-  /** If set, user must have this resolved role or they are sent to `/`. */
+  /** If set, user must have this resolved role or they are sent to their dashboard (not marketing `/`). */
   allowedRoles?: AllowedRole[]
   /** When unauthenticated, send to `/signup?role=renter&redirect=…` instead of login. */
   redirectUnauthenticatedToStudentSignup?: boolean
@@ -67,7 +72,7 @@ export function ProtectedRoute({
 
   if (role === 'admin') {
     if (allowedRoles?.length && !allowedRoles.includes('admin')) {
-      return <Navigate to="/" replace />
+      return <Navigate to="/admin" replace />
     }
     return <>{children}</>
   }
@@ -77,7 +82,8 @@ export function ProtectedRoute({
   }
 
   if (allowedRoles?.length && !isRoleAllowed(role, allowedRoles)) {
-    return <Navigate to="/" replace />
+    // Wrong app surface (e.g. landlord hit a renter route) — never dump onto marketing home.
+    return <Navigate to={getNavDashboardPath(role, profile, user.id)} replace />
   }
 
   if (requireStudentListingActions && isRenterRole(role) && profile) {

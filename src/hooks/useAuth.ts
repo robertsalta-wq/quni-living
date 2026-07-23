@@ -14,6 +14,10 @@ import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { clearAuthSnapshot, readAuthSnapshot, writeAuthSnapshot } from '../lib/authSnapshotCache'
 import { isAuthCallbackRoute } from '../lib/authCallbackRoute'
+import {
+  authEventArmsPostLoginRedirect,
+  authEventClearsPostLoginRedirect,
+} from '../lib/postLoginRedirectFlag'
 import { subscribeAuthReconcile } from '../lib/authReconcileBridge'
 import { syncSentryUser } from '../lib/sentry'
 
@@ -143,10 +147,10 @@ export function useProvideAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
-      if (event === 'SIGNED_IN') {
+      if (authEventArmsPostLoginRedirect(event)) {
         setAwaitingSignInOnboardingRedirect(true)
       }
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+      if (authEventClearsPostLoginRedirect(event)) {
         setAwaitingSignInOnboardingRedirect(false)
       }
       if (event === 'SIGNED_OUT') {
