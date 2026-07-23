@@ -60,4 +60,28 @@ describe('admin privilege escalation via user_metadata', () => {
     expect(linkPlatformStaffUserIfNeeded).toHaveBeenCalledTimes(1)
     expect(result).toEqual({ role: 'admin', profile: null })
   })
+
+  it('resolves role=admin for platform_staff even with landlord marketplace metadata', async () => {
+    vi.mocked(fetchIsPlatformAdmin).mockResolvedValue(true)
+
+    const result = await fetchRoleAndProfile(
+      spoofAdminUser({ user_metadata: { role: 'landlord' } }),
+    )
+
+    expect(fetchIsPlatformAdmin).toHaveBeenCalledTimes(1)
+    expect(linkPlatformStaffUserIfNeeded).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ role: 'admin', profile: null })
+  })
+
+  it('resolves role=admin for platform_staff even with renter marketplace metadata', async () => {
+    vi.mocked(fetchIsPlatformAdmin).mockResolvedValue(true)
+
+    const result = await fetchRoleAndProfile(
+      spoofAdminUser({ user_metadata: { role: 'renter' } }),
+    )
+
+    expect(fetchIsPlatformAdmin).toHaveBeenCalledTimes(1)
+    expect(linkPlatformStaffUserIfNeeded).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ role: 'admin', profile: null })
+  })
 })
