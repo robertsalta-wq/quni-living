@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
@@ -25,6 +26,9 @@ import AccountAvatar, { ACCOUNT_AVATAR_FRAME_CLASS } from '../AccountAvatar'
 import ChromeHeaderShell from '../ChromeHeaderShell'
 import { DashboardBrandLockup } from '../SiteBrandLockup'
 
+/** Match marketing Header account menu width (w-52). */
+const ACCOUNT_MENU_WIDTH_PX = 208
+
 /** Match marketing Header main nav: text-sm + same gap scale. */
 function desktopTabClass(active: boolean): string {
   return [
@@ -45,7 +49,11 @@ type AccountMenuProps = {
   compact?: boolean
 }
 
-/** Shared account menu: Profile + Sign out. No Dashboard — already in the app shell. */
+/**
+ * Shared account menu: Profile + Sign out.
+ * Portaled to document.body — ChromeHeaderShell clips overflow (overflow-y-hidden),
+ * so an in-header absolute panel is invisible.
+ */
 function AccountMenu({
   displayName,
   initials,
@@ -55,30 +63,76 @@ function AccountMenu({
   compact = false,
 }: AccountMenuProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const firstName = displayName.split(/\s+/)[0] || 'Account'
+
+  function syncAnchor() {
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (rect) setAnchor(rect)
+  }
+
+  function close() {
+    setOpen(false)
+    setAnchor(null)
+  }
+
+  function toggle() {
+    if (open) {
+      close()
+      return
+    }
+    syncAnchor()
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) return
-    const onPointer = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    syncAnchor()
+    function onLayout() {
+      syncAnchor()
     }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onPointer)
-    document.addEventListener('keydown', onKey)
+    window.addEventListener('resize', onLayout)
+    window.addEventListener('scroll', onLayout, true)
     return () => {
+      window.removeEventListener('resize', onLayout)
+      window.removeEventListener('scroll', onLayout, true)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function onPointer(e: MouseEvent) {
+      const t = e.target as Node
+      if (buttonRef.current?.contains(t)) return
+      if (panelRef.current?.contains(t)) return
+      close()
+    }
+    const id = window.setTimeout(() => {
+      document.addEventListener('mousedown', onPointer)
+    }, 0)
+    return () => {
+      window.clearTimeout(id)
       document.removeEventListener('mousedown', onPointer)
-      document.removeEventListener('keydown', onKey)
     }
   }, [open])
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         className={
           compact
             ? `${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`
@@ -100,32 +154,40 @@ function AccountMenu({
           </>
         )}
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-[60] mt-2 w-44 overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-[var(--shadow-3)]"
-        >
-          <Link
-            to={profileHref}
-            role="menuitem"
-            className="block px-4 py-2 text-sm text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)]"
-            onClick={() => setOpen(false)}
-          >
-            Profile
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="w-full px-4 py-2 text-left text-sm text-[var(--quni-danger)] hover:bg-[var(--quni-surface-2)]"
-            onClick={() => {
-              setOpen(false)
-              onSignOut()
+      {open &&
+        anchor &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="menu"
+            className="fixed z-[200] w-52 overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-[var(--shadow-3)]"
+            style={{
+              top: anchor.bottom + 8,
+              left: Math.max(8, anchor.right - ACCOUNT_MENU_WIDTH_PX),
             }}
           >
-            Sign out
-          </button>
-        </div>
-      ) : null}
+            <Link
+              to={profileHref}
+              role="menuitem"
+              className="block px-4 py-2 text-sm text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)]"
+              onClick={close}
+            >
+              Profile
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              className="w-full px-4 py-2 text-left text-sm text-[var(--quni-danger)] hover:bg-[var(--quni-surface-2)]"
+              onClick={() => {
+                close()
+                onSignOut()
+              }}
+            >
+              Sign out
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
