@@ -88,6 +88,10 @@
     "api/sign/[token].ts": {
       "maxDuration": 30
     },
+    "api/sitemap.xml.ts": {
+      "maxDuration": 30,
+      "includeFiles": "content/guides/manifest.json"
+    },
     "api/dev/mint-sign-links.ts": {
       "maxDuration": 15
     }
@@ -120,6 +124,10 @@
     {
       "source": "/api/admin/regenerate-listing-bond-receipt",
       "destination": "/api/documents/regenerate-listing-bond-receipt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml"
     },
     {
       "source": "/((?!api/).+)",

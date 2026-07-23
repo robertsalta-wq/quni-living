@@ -5,14 +5,18 @@ User-agent: *
 Allow: /
 
 Disallow: /admin
+Disallow: /messages
 Disallow: /student-dashboard
 Disallow: /student-profile
 Disallow: /student/profile
 Disallow: /landlord/dashboard
 Disallow: /landlord-profile
+Disallow: /landlord/profile
 Disallow: /landlord/property
+Disallow: /landlord/bookings
 Disallow: /booking/
 Disallow: /onboarding
+Disallow: /sample-agreements
 Disallow: /auth/callback
 
-Sitemap: https://quni.com.au/api/sitemap.xml
+Sitemap: https://quni.com.au/sitemap.xml
