@@ -15,6 +15,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "resolveJsonModule": true,
 
     /* Linting */
     "strict": true,
@@ -24,7 +25,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "content/guides/**/*.ts"],
+  "include": ["src", "content/guides/**/*.ts", "content/campuses/**/*.json"],
   "exclude": [
     "src/scripts",
     "src/lib/documents/NswResidentialTenancyAgreement_legacy.tsx",
