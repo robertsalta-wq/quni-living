@@ -16,7 +16,13 @@ export default async function middleware(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const { pathname } = url
 
-  if (isStaticAssetPath(pathname)) {
+  // Never 404 infrastructure: API (also excluded by matcher), sitemap rewrite target path, robots.
+  if (
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    pathname.startsWith('/api/') ||
+    isStaticAssetPath(pathname)
+  ) {
     return next()
   }
 
