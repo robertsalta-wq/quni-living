@@ -12,6 +12,7 @@ import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
 import Home from './pages/Home'
+import AuthCallback from './pages/auth/AuthCallback'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
@@ -42,13 +43,17 @@ function App() {
   const navigate = useNavigate()
 
   useLayoutEffect(() => {
-    const authRedirect = apexAuthTokenRedirectPath(location.pathname, location.search)
+    const authRedirect = apexAuthTokenRedirectPath(
+      location.pathname,
+      location.search,
+      location.hash,
+    )
     if (authRedirect) {
       navigate(authRedirect, { replace: true })
       return
     }
     prefetchRouteChunks(location.pathname)
-  }, [location.pathname, location.search, navigate])
+  }, [location.pathname, location.search, location.hash, navigate])
 
   return (
     <BookingFlowChromeProvider>
@@ -277,7 +282,7 @@ function App() {
                   element={<Navigate to="/landlord/dashboard?tab=profile" replace />}
                 />
 
-                <Route path="/auth/callback" element={<Lazy.AuthCallback />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/login" element={<Lazy.Login />} />
                 <Route path="/forgot-password" element={<Lazy.ForgotPassword />} />
                 <Route path="/reset-password" element={<Lazy.ResetPassword />} />

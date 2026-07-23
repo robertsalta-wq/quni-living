@@ -23,6 +23,39 @@ import {
   stripAuthCallbackHashFragment,
 } from '../../lib/authCallbackParams'
 
+type TokenHashVerifyResult = { error: { message: string } | null }
+
+/**
+ * One-time token_hash verify is not safe to run twice (React Strict Mode remount).
+ * Share a single in-flight promise per token so the remount joins the same verify.
+ */
+const tokenHashVerifyInflight = new Map<string, Promise<TokenHashVerifyResult>>()
+
+function verifyTokenHashOnce(
+  tokenHash: string,
+  type: 'signup' | 'recovery',
+): Promise<TokenHashVerifyResult> {
+  const key = `${type}:${tokenHash}`
+  const existing = tokenHashVerifyInflight.get(key)
+  if (existing) return existing
+
+  const inflight = (async (): Promise<TokenHashVerifyResult> => {
+    // Remount after a successful verify: reuse the session; do not signOut + re-verify.
+    const current = (await supabase.auth.getSession()).data.session
+    if (current) return { error: null }
+
+    // Drop any unrelated session so a failed verify cannot continue as another user.
+    await supabase.auth.signOut()
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    return { error: error ? { message: error.message } : null }
+  })().finally(() => {
+    tokenHashVerifyInflight.delete(key)
+  })
+
+  tokenHashVerifyInflight.set(key, inflight)
+  return inflight
+}
+
 /**
  * Auth redirect handler (email confirm, magic link, OAuth).
  *
@@ -135,11 +168,7 @@ export default function AuthCallback() {
       let completedPasswordRecovery = false
 
       if (recoveryParams) {
-        await supabase.auth.signOut()
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: recoveryParams.token_hash,
-          type: 'recovery',
-        })
+        const { error } = await verifyTokenHashOnce(recoveryParams.token_hash, 'recovery')
         if (error) {
           tokenHashErr = error
         } else {
@@ -147,12 +176,7 @@ export default function AuthCallback() {
           stripSensitiveAuthCallbackQueryParams()
         }
       } else if (tokenParams) {
-        // Drop any unrelated session so a failed verify cannot continue as another user.
-        await supabase.auth.signOut()
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: tokenParams.token_hash,
-          type: 'signup',
-        })
+        const { error } = await verifyTokenHashOnce(tokenParams.token_hash, 'signup')
         if (error) {
           tokenHashErr = error
         } else {
@@ -170,9 +194,15 @@ export default function AuthCallback() {
 
       if (cancelled) return
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      // Implicit OAuth can finish detectSessionInUrl slightly after first getSession().
+      let session = (await supabase.auth.getSession()).data.session
+      if (!session && !tokenHashErr && !oauthErr && !sessionErr) {
+        for (let attempt = 0; attempt < 8 && !cancelled; attempt++) {
+          await new Promise((r) => setTimeout(r, 50))
+          session = (await supabase.auth.getSession()).data.session
+          if (session) break
+        }
+      }
       if (cancelled) return
 
       if (session) {

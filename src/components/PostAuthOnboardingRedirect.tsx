@@ -8,7 +8,10 @@ import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
 /**
  * One-shot redirect after a real sign-in (SIGNED_IN, not INITIAL_SESSION cold load):
  * incomplete onboarding → onboarding step; otherwise → stored return path or the user's dashboard.
- * Auth callback and other exempt routes own their own navigation — no double redirect.
+ *
+ * Exempt routes (`/login`, `/auth/callback`, …) may own navigation first — but we do **not** clear
+ * the one-shot there. If those handlers fail or bounce the user to marketing `/`, this safety net
+ * still runs. Flag clears only after we navigate (or admin / verify-email early exits).
  */
 export function PostAuthOnboardingRedirect() {
   const {
@@ -25,8 +28,8 @@ export function PostAuthOnboardingRedirect() {
   useEffect(() => {
     if (!awaitingSignInOnboardingRedirect || loading || !user) return
 
+    // Let Login / AuthCallback try first; keep the flag armed as a fallback.
     if (isOnboardingResumeExempt(location.pathname)) {
-      clearAwaitingSignInOnboardingRedirect()
       return
     }
 
