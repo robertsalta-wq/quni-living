@@ -20,7 +20,7 @@ vi.mock('./supabase', () => {
   }
 })
 
-function spoofAdminUser(): User {
+function spoofAdminUser(overrides: Partial<User> = {}): User {
   return {
     id: 'spoof-callback-user-1',
     email: 'spoof@example.com',
@@ -28,6 +28,7 @@ function spoofAdminUser(): User {
     user_metadata: { role: 'admin' },
     app_metadata: {},
     aud: 'authenticated',
+    ...overrides,
   } as User
 }
 
@@ -51,5 +52,22 @@ describe('auth callback admin privilege escalation via user_metadata', () => {
     expect(linkPlatformStaffUserIfNeeded).not.toHaveBeenCalled()
     expect(result.role).not.toBe('admin')
     expect(result).toEqual({ role: null, profile: null })
+  })
+
+  it('resolves role=admin for platform_staff even with landlord marketplace metadata', async () => {
+    vi.mocked(fetchIsPlatformAdmin).mockResolvedValue(true)
+
+    const result = await reconcileAuthCallbackProfile(
+      spoofAdminUser({ user_metadata: { role: 'landlord' } }),
+      {
+        afterSignupEmailConfirm: false,
+        urlRoute: null,
+        urlRole: null,
+      },
+    )
+
+    expect(fetchIsPlatformAdmin).toHaveBeenCalledTimes(1)
+    expect(linkPlatformStaffUserIfNeeded).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ role: 'admin', profile: null })
   })
 })
