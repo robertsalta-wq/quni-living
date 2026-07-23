@@ -20,6 +20,12 @@ export function OnboardingResumeBanner() {
   if (!needsOnboarding(role, profile, user.id)) return null
 
   const resumePath = getIncompleteOnboardingDestination(role, profile, user.id)
+  const resumeUrl = new URL(resumePath, 'http://local')
+  const onResumeDestination =
+    location.pathname === resumeUrl.pathname &&
+    (resumeUrl.searchParams.get('tab') !== 'profile' ||
+      new URLSearchParams(location.search).get('tab') === 'profile')
+  if (onResumeDestination) return null
 
   return (
     <div
