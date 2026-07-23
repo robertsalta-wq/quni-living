@@ -11,6 +11,11 @@ import { fetchPropertiesByIds, rpcPropertiesNearCampus } from '../../lib/propert
 import { absoluteUrl, SITE_URL } from '../../lib/site'
 import { campusUrlSlug } from '../../lib/slug'
 import {
+  getCampusSeoContent,
+  stripCampusMetaBrandSuffix,
+  type CampusSeoContent,
+} from '../../lib/campusSeo/registry'
+import {
   approxBoundingBoxKm,
   campusLatLonFromRow,
   fetchCampusesForUniversityId,
@@ -272,25 +277,47 @@ export default function CampusAccommodation() {
   const suburb = campus?.suburb?.trim() ?? 'this area'
   const state = campus?.state?.trim() || university?.state?.trim() || ''
 
-  const metaDescription =
+  /** Content keyed by route slugs — available before Supabase resolves (prerender-safe). */
+  const campusContentFromRoute =
+    uniSlugForQuery && campusSlug
+      ? getCampusSeoContent(uniSlugForQuery, campusSlug)
+      : null
+  const campusContent: CampusSeoContent | null =
+    campusContentFromRoute ??
+    (university && campus ? getCampusSeoContent(university.slug, campusUrlSlug(campus)) : null)
+
+  const fallbackMetaDescription =
     university && campus
       ? `Find student rooms and houses near ${campus.name} in ${suburb}. Verified listings for ${shortLabel} students${
           minRent != null ? ` from $${minRent}/week` : ''
         }.`
       : 'Campus accommodation guide on Quni Living.'
 
+  const seoTitle = campusContent
+    ? stripCampusMetaBrandSuffix(campusContent.metaTitle)
+    : university && campus
+      ? `Student Accommodation near ${shortLabel}, ${suburb}`
+      : 'Campus accommodation'
+
+  const seoDescription = campusContent?.metaDescription ?? fallbackMetaDescription
+  const heroHeading =
+    campusContent?.h1 ??
+    (university && campus ? `Student Accommodation near ${shortLabel}, ${suburb}` : null)
+
   const canonicalPath =
     university && campus
       ? `/student-accommodation/${university.slug}/${campusUrlSlug(campus)}`
-      : '/student-accommodation'
+      : uniSlugForQuery && campusSlug
+        ? `/student-accommodation/${uniSlugForQuery}/${campusSlug}`
+        : '/student-accommodation'
 
-  const jsonLd =
-    university && campus
+  const webPageJsonLd =
+    campusContent || (university && campus)
       ? {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
-          name: `Student Accommodation near ${campus.name}, ${shortLabel}`,
-          description: metaDescription,
+          name: seoTitle,
+          description: seoDescription,
           url: `${SITE_URL}${canonicalPath}`,
           breadcrumb: {
             '@type': 'BreadcrumbList',
@@ -302,24 +329,54 @@ export default function CampusAccommodation() {
                 name: 'Student Accommodation',
                 item: absoluteUrl('/student-accommodation'),
               },
+              ...(university
+                ? [
+                    {
+                      '@type': 'ListItem' as const,
+                      position: 3,
+                      name: university.name,
+                      item: absoluteUrl(`/student-accommodation/${university.slug}`),
+                    },
+                  ]
+                : []),
               {
                 '@type': 'ListItem',
-                position: 3,
-                name: university.name,
-                item: absoluteUrl(`/student-accommodation/${university.slug}`),
+                position: university ? 4 : 3,
+                name: campus?.name ?? campusSlug,
               },
-              { '@type': 'ListItem', position: 4, name: campus.name },
             ],
           },
         }
       : undefined
+
+  const faqJsonLd =
+    campusContent && campusContent.faqs.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: campusContent.faqs.map(({ question, answer }) => ({
+            '@type': 'Question',
+            name: question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: answer,
+            },
+          })),
+        }
+      : null
+
+  const jsonLd = webPageJsonLd
+    ? faqJsonLd
+      ? [webPageJsonLd, faqJsonLd]
+      : webPageJsonLd
+    : undefined
 
   const aboutCampusCount = siblingCampuses.length + 1
 
   if (!isSupabaseConfigured) {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-4 py-16">
-        <Seo title="Campus accommodation" description={metaDescription} canonicalPath={canonicalPath} noindex />
+        <Seo title="Campus accommodation" description={seoDescription} canonicalPath={canonicalPath} noindex />
         <p className="text-gray-600">Configure Supabase to view this guide.</p>
       </div>
     )
@@ -351,33 +408,35 @@ export default function CampusAccommodation() {
   }
 
   const listingsQueryAll = campus ? `/listings?campus_id=${encodeURIComponent(campus.id)}` : '/listings'
+  const showSeo = Boolean(campusContent || (university && campus))
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      {university && campus && (
+      {showSeo ? (
         <Seo
-          title={`Student Accommodation near ${campus.name}, ${shortLabel}`}
-          description={metaDescription}
+          title={seoTitle}
+          description={seoDescription}
           canonicalPath={canonicalPath}
           jsonLd={jsonLd}
         />
-      )}
+      ) : null}
 
       <PageHeroBand
         children={
-          loading ? (
+          loading && !campusContent ? (
             <>
               <div className="h-9 w-2/3 max-w-md bg-white/20 rounded-lg animate-pulse" />
               <div className="h-4 w-1/2 max-w-sm bg-white/15 rounded mt-3 animate-pulse" />
             </>
-          ) : university && campus ? (
+          ) : heroHeading ? (
             <>
               <h1 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                Student Accommodation near {campus.name}
+                {heroHeading}
               </h1>
               <p className="text-white/85 text-sm sm:text-base mt-2 max-w-2xl">
-                {suburb}
-                {state ? `, ${state}` : ''} - Properties for {shortLabel} students
+                {campus?.suburb?.trim() || suburb}
+                {campus?.state?.trim() || state ? `, ${campus?.state?.trim() || state}` : ''}
+                {shortLabel ? ` - Properties for ${shortLabel} students` : ''}
               </p>
             </>
           ) : null
@@ -395,6 +454,15 @@ export default function CampusAccommodation() {
                 { label: campus.name },
               ]}
             />
+
+            {campusContent ? (
+              <section aria-labelledby="campus-intro-heading" className="max-w-3xl">
+                <h2 id="campus-intro-heading" className="sr-only">
+                  About living near {shortLabel} in {suburb}
+                </h2>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{campusContent.intro}</p>
+              </section>
+            ) : null}
 
             <section aria-labelledby="campus-listings-heading">
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -442,17 +510,77 @@ export default function CampusAccommodation() {
               )}
             </section>
 
-            <section className="quni-card p-6 sm:p-8" aria-labelledby="about-campus-heading">
-              <h2 id="about-campus-heading" className="font-display text-xl font-bold text-gray-900">
-                About this campus
-              </h2>
-              <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
-                {campus.name} is located in {suburb}
-                {state ? `, ${state}` : ''} and is one of {university.name}&apos;s {aboutCampusCount} campus
-                {aboutCampusCount !== 1 ? 'es' : ''}. Students looking for accommodation near {campus.name}{' '}
-                typically search in {suburb} and surrounding areas.
-              </p>
-            </section>
+            {campusContent ? (
+              <>
+                <section className="quni-card p-6 sm:p-8" aria-labelledby="living-heading">
+                  <h2 id="living-heading" className="font-display text-xl font-bold text-gray-900">
+                    {campusContent.livingSection.heading}
+                  </h2>
+                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {campusContent.livingSection.body}
+                  </p>
+                </section>
+
+                <section className="quni-card p-6 sm:p-8" aria-labelledby="transport-heading">
+                  <h2 id="transport-heading" className="font-display text-xl font-bold text-gray-900">
+                    {campusContent.transportSection.heading}
+                  </h2>
+                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {campusContent.transportSection.body}
+                  </p>
+                </section>
+
+                <section className="quni-card p-6 sm:p-8" aria-labelledby="cost-heading">
+                  <h2 id="cost-heading" className="font-display text-xl font-bold text-gray-900">
+                    {campusContent.costSection.heading}
+                  </h2>
+                  <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {campusContent.costSection.body}
+                  </p>
+                </section>
+
+                <section className="quni-card p-6 sm:p-8" aria-labelledby="tips-heading">
+                  <h2 id="tips-heading" className="font-display text-xl font-bold text-gray-900">
+                    {campusContent.tipsSection.heading}
+                  </h2>
+                  <ul className="mt-4 list-disc pl-5 space-y-2 text-sm sm:text-base text-gray-600 leading-relaxed">
+                    {campusContent.tipsSection.tips.map((tip) => (
+                      <li key={tip.slice(0, 48)}>{tip}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                {campusContent.faqs.length > 0 ? (
+                  <section className="quni-card p-6 sm:p-8" aria-labelledby="campus-faq-heading">
+                    <h2 id="campus-faq-heading" className="font-display text-xl font-bold text-gray-900">
+                      Frequently asked questions
+                    </h2>
+                    <div className="mt-4 space-y-6">
+                      {campusContent.faqs.map((faq) => (
+                        <div key={faq.question}>
+                          <h3 className="text-base font-semibold text-gray-900">{faq.question}</h3>
+                          <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">{faq.answer}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                <p className="text-sm sm:text-base text-gray-700 font-medium max-w-3xl">{campusContent.ctaText}</p>
+              </>
+            ) : (
+              <section className="quni-card p-6 sm:p-8" aria-labelledby="about-campus-heading">
+                <h2 id="about-campus-heading" className="font-display text-xl font-bold text-gray-900">
+                  About this campus
+                </h2>
+                <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+                  {campus.name} is located in {suburb}
+                  {state ? `, ${state}` : ''} and is one of {university.name}&apos;s {aboutCampusCount} campus
+                  {aboutCampusCount !== 1 ? 'es' : ''}. Students looking for accommodation near {campus.name}{' '}
+                  typically search in {suburb} and surrounding areas.
+                </p>
+              </section>
+            )}
 
             {suburbsFromListings.length > 0 && (
               <section aria-labelledby="nearby-suburbs-heading">
