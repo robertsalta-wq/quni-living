@@ -3,7 +3,14 @@ import { useAuthContext } from '../context/AuthContext'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfileRouting'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+
+/** Inner row: dashboard column width + horizontal gutters only (no dashboard vertical pad). */
+const BANNER_CONTENT_TRACK_CLASS =
+  'max-w-site mx-auto w-full min-w-0 px-3.5 sm:px-4 lg:px-8'
+
+/** Landlord dashboard primary (same as profile saveBtnClass). */
+const RESUME_BTN_CLASS =
+  'inline-flex shrink-0 items-center justify-center rounded-admin-md bg-admin-coral px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover transition-colors'
 
 /**
  * Persistent nudge for incomplete renters/landlords browsing outside onboarding.
@@ -20,6 +27,12 @@ export function OnboardingResumeBanner() {
   if (!needsOnboarding(role, profile, user.id)) return null
 
   const resumePath = getIncompleteOnboardingDestination(role, profile, user.id)
+  const resumeUrl = new URL(resumePath, 'http://local')
+  const onResumeDestination =
+    location.pathname === resumeUrl.pathname &&
+    (resumeUrl.searchParams.get('tab') !== 'profile' ||
+      new URLSearchParams(location.search).get('tab') === 'profile')
+  if (onResumeDestination) return null
 
   return (
     <div
@@ -28,15 +41,12 @@ export function OnboardingResumeBanner() {
       role="status"
       aria-live="polite"
     >
-      <div className={`${SITE_CONTENT_MAX_CLASS} flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4`}>
+      <div className={`${BANNER_CONTENT_TRACK_CLASS} flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4`}>
         <p className="text-sm text-stone-800">
           <span className="font-semibold text-stone-900">Finish setting up your profile</span>
           <span className="text-stone-600"> — complete onboarding to book rooms and use your dashboard.</span>
         </p>
-        <Link
-          to={resumePath}
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
+        <Link to={resumePath} className={RESUME_BTN_CLASS}>
           Resume
         </Link>
       </div>
