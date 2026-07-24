@@ -3,6 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
+import {
+  DashboardEmpty,
+  DashboardErrorBanner,
+  DashboardFatalError,
+  DashboardWelcomeToast,
+} from '../components/dashboard/DashboardFeedback'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
@@ -1126,11 +1132,12 @@ export default function LandlordDashboard() {
 
   if (error || !profile) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-6 py-12 max-w-lg mx-auto">
-        <p className="text-red-700 text-sm">{error ?? 'Landlord profile not found.'}</p>
-        <Link to={landlordDashboardProfilePath()} className="mt-4 inline-block text-sm font-medium text-indigo-600">
-          Go to profile
-        </Link>
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)]">
+        <DashboardFatalError
+          message={error ?? 'Landlord profile not found.'}
+          actionHref={landlordDashboardProfilePath()}
+          actionLabel="Go to profile"
+        />
       </div>
     )
   }
@@ -1141,14 +1148,7 @@ export default function LandlordDashboard() {
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
-      {welcomeToast ? (
-        <div
-          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"
-          role="status"
-        >
-          <p className="text-sm font-semibold text-emerald-900">{welcomeToast}</p>
-        </div>
-      ) : null}
+      {welcomeToast ? <DashboardWelcomeToast message={welcomeToast} /> : null}
 
       <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : landlordDashboardPageInsetClass}>
         <LandlordDashboardPageHeader
@@ -1191,12 +1191,7 @@ export default function LandlordDashboard() {
 
             <div className="sm:hidden">
             {connectSetupError && (
-              <div
-                className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-                role="alert"
-              >
-                {connectSetupError}
-              </div>
+              <DashboardErrorBanner message={connectSetupError} tone="danger" className="mb-4" />
             )}
 
             <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
@@ -1581,7 +1576,7 @@ export default function LandlordDashboard() {
                   <div className="h-20 rounded-[var(--radius-lg)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] sm:border-0 sm:bg-[var(--quni-surface-3)]" />
                 </div>
               ) : otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
-                <p className="py-10 text-center text-sm text-gray-500 sm:p-10">No bookings yet.</p>
+                <DashboardEmpty title="No bookings yet" variant="plain" />
               ) : otherBookings.length === 0 ? (
                 <p className="py-6 text-center text-xs text-gray-500 sm:p-6">No other booking records.</p>
               ) : (

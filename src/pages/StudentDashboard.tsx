@@ -4,6 +4,13 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
+import {
+  DashboardEmpty,
+  DashboardErrorBanner,
+  DashboardFatalError,
+  DashboardWelcomeToast,
+} from '../components/dashboard/DashboardFeedback'
+import { dashboardPrimaryBtnClass } from '../lib/dashboardButtons'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { studentDisplayName } from '../lib/nameResolution'
@@ -431,8 +438,7 @@ export default function StudentDashboard() {
     return renterProfileStatCardCopy(profile, verificationComplete)
   }, [profile])
 
-  const primaryBtnClass =
-    'inline-flex items-center justify-center rounded-[10px] bg-admin-coral text-white text-sm font-semibold px-[18px] py-[11px] shadow-sm hover:bg-admin-coral-hover active:bg-admin-coral-active transition-colors focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2 w-full sm:w-auto'
+  const primaryBtnClass = dashboardPrimaryBtnClass
 
   if (!isSupabaseConfigured) {
     return (
@@ -452,45 +458,18 @@ export default function StudentDashboard() {
 
   if (error && !profile) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <div className={`${cardClass} text-center`}>
-          <p className="text-admin-ink-2">{error}</p>
-          <Link to="/student-profile" className={`${primaryBtnClass} mt-6`}>
-            Go to profile
-          </Link>
-        </div>
-      </div>
+      <DashboardFatalError message={error} actionHref="/student-profile" actionLabel="Go to profile" />
     )
   }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-admin-surface-2 max-sm:pb-0 pb-16 overflow-x-hidden">
-      {welcomeToast ? (
-        <div
-          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-admin-md border border-admin-line bg-white px-4 py-3 shadow-lg flex gap-3 items-start"
-          role="status"
-        >
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-success-bg text-admin-success-fg text-sm font-bold"
-            aria-hidden
-          >
-            ✓
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-admin-ink">{welcomeToast}</p>
-          </div>
-        </div>
-      ) : null}
+      {welcomeToast ? <DashboardWelcomeToast message={welcomeToast} /> : null}
 
       <div className={renterDashboardPageInsetClass}>
-        {error && profile && (
-          <div
-            className="mb-6 rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {error && profile ? (
+          <DashboardErrorBanner message={error} className="mb-6" />
+        ) : null}
 
         <RenterDashboardPageHeader
           activeTab={tab}
@@ -660,15 +639,15 @@ export default function StudentDashboard() {
               <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
             </div>
           ) : bookings.length === 0 ? (
-            <div className={`${cardClass} text-center py-12`}>
-              <p className="text-admin-ink-2 font-medium">No bookings yet</p>
-              <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
-                When you request a stay, it’ll show up here so you can track the status.
-              </p>
-              <Link to="/listings" className={`${primaryBtnClass} mt-6`}>
-                Browse listings
-              </Link>
-            </div>
+            <DashboardEmpty
+              title="No bookings yet"
+              description="When you request a stay, it’ll show up here so you can track the status."
+              action={
+                <Link to="/listings" className={primaryBtnClass}>
+                  Browse listings
+                </Link>
+              }
+            />
           ) : (
             <ul className="flex flex-col gap-3 sm:gap-4">
               {bookings.map((b) => {
@@ -785,22 +764,24 @@ export default function StudentDashboard() {
                 <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
               </div>
             ) : savedError ? (
-              <div className={`${cardClass} text-center py-12`}>
-                <p className="text-admin-ink-2 font-medium">{savedError}</p>
-                <button type="button" onClick={() => void loadSaved()} className={`${primaryBtnClass} mt-6`}>
-                  Try again
-                </button>
-              </div>
+              <DashboardEmpty
+                title={savedError}
+                action={
+                  <button type="button" onClick={() => void loadSaved()} className={primaryBtnClass}>
+                    Try again
+                  </button>
+                }
+              />
             ) : savedProperties.length === 0 ? (
-              <div className={`${cardClass} text-center py-12`}>
-                <p className="text-admin-ink-2 font-medium">No saved properties yet</p>
-                <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
-                  Tap the heart on a listing to save it — your favourites will show up here.
-                </p>
-                <Link to="/listings" className={`${primaryBtnClass} mt-6`}>
-                  Browse listings
-                </Link>
-              </div>
+              <DashboardEmpty
+                title="No saved properties yet"
+                description="Tap the heart on a listing to save it — your favourites will show up here."
+                action={
+                  <Link to="/listings" className={primaryBtnClass}>
+                    Browse listings
+                  </Link>
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                 {savedProperties.map((property) => (

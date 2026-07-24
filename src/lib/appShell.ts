@@ -166,8 +166,7 @@ export function appShellScrollSectionKey(pathname: string, search: string): stri
   }
 
   if (pathname === '/student-profile' || pathname === '/student/profile') {
-    const tab = new URLSearchParams(search).get('tab') || 'profile'
-    return `${pathname}?tab=${tab}`
+    return `${pathname}?tab=profile`
   }
 
   return pathname
