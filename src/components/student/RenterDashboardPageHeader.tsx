@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  dashboardPageInsetClass,
+  dashboardProfileMobilePadClass,
+  dashboardProfilePageInsetClass,
+} from '../../lib/dashboardPageInset'
 import { studentDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
 
 export type RenterDashboardTab = 'overview' | 'bookings' | 'saved'
@@ -9,8 +14,8 @@ type Props = {
   onTabSelect: (section: Exclude<UserDashboardSection, 'messages'>) => void
 }
 
-export const renterDashboardPageInsetClass =
-  'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-5 sm:pb-10'
+/** Alias of shared `dashboardPageInsetClass` (non-profile tabs). */
+export const renterDashboardPageInsetClass = dashboardPageInsetClass
 
 export default function RenterDashboardPageHeader({ activeTab: _activeTab, onTabSelect: _onTabSelect }: Props) {
   // Section strip lives in AppHeader (Map mode, desktop tabs); page keeps title only.
@@ -34,9 +39,10 @@ export function RenterDashboardTabShell({
   contentClassName = '',
 }: RenterDashboardTabShellProps) {
   const navigate = useNavigate()
+  const profileOwnsPadding = activeTab === 'profile'
   return (
     <div className={`flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] max-sm:pb-0 pb-16 ${contentClassName}`}>
-      <div className={renterDashboardPageInsetClass}>
+      <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : dashboardPageInsetClass}>
         <RenterDashboardPageHeader
           activeTab={activeTab}
           onTabSelect={(section) => {
@@ -45,7 +51,7 @@ export function RenterDashboardTabShell({
             }
           }}
         />
-        {children}
+        {profileOwnsPadding ? <div className={dashboardProfileMobilePadClass}>{children}</div> : children}
       </div>
     </div>
   )
