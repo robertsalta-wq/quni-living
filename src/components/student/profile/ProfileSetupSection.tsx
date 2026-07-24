@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import Section, { StatusPill } from '../../ui/Section'
 import type { SectionStatus } from '../../ui/sectionTypes'
 import { ChevronDown, ChevronUp, ProfileSectionIcon, type ProfileSectionIconKind } from './profileSectionIcons'
@@ -19,48 +19,48 @@ type SharedProps = {
   status: ProfileSectionStatus
   summary?: string
   note?: string
-  children: ReactNode
+  children?: ReactNode
 }
 
 type Props = SharedProps & {
   sectionNum?: string
-  /** When true, header is not clickable (e.g. locked placeholder). */
-  staticHeader?: boolean
+  subtitle?: string
+  expanded: boolean
+  onToggle: () => void
+  /** When false, header is not clickable (e.g. locked placeholder). */
+  collapsible?: boolean
 }
 
+/** Controlled wrapper around shared `Section` — open-state owned by RenterProfileSetup. */
 export function ProfileSetupSection({
   id,
   sectionNum,
   icon,
   title,
+  subtitle,
   status,
   summary,
   note,
   children,
-  staticHeader = false,
+  expanded,
+  onToggle,
+  collapsible = true,
 }: Props) {
-  const defaultOpen = status === 'todo'
-  const [open, setOpen] = useState(defaultOpen)
-
-  useEffect(() => {
-    if (status === 'done') setOpen(false)
-    if (status === 'todo') setOpen(true)
-  }, [status])
-
   return (
     <Section
       id={id}
       sectionNum={sectionNum}
       icon={<ProfileSectionIcon kind={icon} />}
       title={title}
+      subtitle={subtitle}
       status={status}
       summary={summary}
-      expanded={open}
-      onToggle={() => setOpen((v) => !v)}
-      collapsible={!staticHeader}
+      expanded={expanded}
+      onToggle={onToggle}
+      collapsible={collapsible}
       editLabel="Edit"
     >
-      {staticHeader ? null : (
+      {collapsible ? (
         <div>
           {children}
           {note ? (
@@ -69,12 +69,17 @@ export function ProfileSetupSection({
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
     </Section>
   )
 }
 
-/** Tighter nested block inside a route section (e.g. guarantor). Uses `stack` single-column grid. */
+type NestedProps = SharedProps & {
+  expanded: boolean
+  onToggle: () => void
+}
+
+/** Nested chrome inside a route section (guarantor). Not a second `Section` card. */
 export function ProfileNestedSection({
   id,
   icon,
@@ -82,15 +87,10 @@ export function ProfileNestedSection({
   status,
   note,
   children,
-}: SharedProps) {
-  const defaultOpen = status === 'todo'
-  const [open, setOpen] = useState(defaultOpen)
+  expanded,
+  onToggle,
+}: NestedProps) {
   const headingId = `${id}-heading`
-
-  useEffect(() => {
-    if (status === 'done') setOpen(false)
-    if (status === 'todo') setOpen(true)
-  }, [status])
 
   return (
     <div id={id} className={renterNestedSectionClass} aria-labelledby={headingId}>
@@ -98,9 +98,9 @@ export function ProfileNestedSection({
         type="button"
         id={headingId}
         className={renterNestedHeaderClass}
-        aria-expanded={open}
+        aria-expanded={expanded}
         aria-controls={`${id}-panel`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
       >
         <div className={renterIconWrapClass}>
           <ProfileSectionIcon kind={icon} />
@@ -112,10 +112,10 @@ export function ProfileNestedSection({
         </div>
         <StatusPill status={status} />
         <span className="shrink-0 text-[var(--quni-ink-5)]" aria-hidden>
-          {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </span>
       </button>
-      {open ? (
+      {expanded ? (
         <div id={`${id}-panel`} className={renterNestedBodyClass}>
           {children}
           {note ? (
