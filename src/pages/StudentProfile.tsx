@@ -12,6 +12,7 @@ import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAc
 import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { renterEditBtnClass, renterWriteErrorClass, dashboardDestructiveBtnClass } from '../lib/renterProfileFormClasses'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -64,6 +65,7 @@ type StudentTab = 'profile' | 'bookings'
 
 export default function StudentProfile() {
   const { user, profile: authProfile, role, signOut } = useAuthContext()
+  const isMobile = useIsMobile()
   const authStudent =
     isRenterRole(role) && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
   const [searchParams] = useSearchParams()
@@ -468,56 +470,66 @@ export default function StudentProfile() {
           displayEmail={user.email ?? profile.email ?? ''}
           onRefresh={refreshProfileData}
           onProfilePatch={(patch) => setProfile((prev) => (prev ? { ...prev, ...patch } : prev))}
+          variant={isMobile ? 'hub' : 'accordion'}
+          onSignOut={() => void signOut()}
+          onDeleteAccount={() => {
+            setDeleteAccountError(null)
+            setDeleteAccountOpen(true)
+          }}
         >
-          <button
-            type="button"
-            id="toggle-student-danger-zone"
-            aria-expanded={dangerZoneVisible}
-            aria-controls="student-profile-danger-zone"
-            onClick={() => {
-              setDangerZoneVisible((prev) => {
-                const next = !prev
-                if (next) {
-                  window.setTimeout(() => {
-                    dangerZoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-                  }, 0)
-                }
-                return next
-              })
-            }}
-            className={`${renterEditBtnClass} w-full justify-center`}
-          >
-            {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
-          </button>
-
-          {dangerZoneVisible ? (
-            <section
-              ref={dangerZoneRef}
-              id="student-profile-danger-zone"
-              className="quni-card overflow-hidden font-sans"
-              style={{ padding: '20px' }}
-              aria-labelledby="danger-zone-heading"
-            >
-              <h2
-                id="danger-zone-heading"
-                className="text-[var(--text-body-size)] font-semibold tracking-[-0.01em] text-[var(--quni-ink)]"
-              >
-                Danger zone
-              </h2>
-              <p style={{ marginTop: 8, fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
-                Permanently delete your student account and all verification documents stored for your profile.
-              </p>
+          {!isMobile ? (
+            <>
               <button
                 type="button"
+                id="toggle-student-danger-zone"
+                aria-expanded={dangerZoneVisible}
+                aria-controls="student-profile-danger-zone"
                 onClick={() => {
-                  setDeleteAccountError(null)
-                  setDeleteAccountOpen(true)
+                  setDangerZoneVisible((prev) => {
+                    const next = !prev
+                    if (next) {
+                      window.setTimeout(() => {
+                        dangerZoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                      }, 0)
+                    }
+                    return next
+                  })
                 }}
-                className={`${dashboardDestructiveBtnClass} mt-4 w-auto`}
+                className={`${renterEditBtnClass} w-full justify-center`}
               >
-                Delete account
+                {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
               </button>
-            </section>
+
+              {dangerZoneVisible ? (
+                <section
+                  ref={dangerZoneRef}
+                  id="student-profile-danger-zone"
+                  className="quni-card overflow-hidden font-sans"
+                  style={{ padding: '20px' }}
+                  aria-labelledby="danger-zone-heading"
+                >
+                  <h2
+                    id="danger-zone-heading"
+                    className="text-[var(--text-body-size)] font-semibold tracking-[-0.01em] text-[var(--quni-ink)]"
+                  >
+                    Danger zone
+                  </h2>
+                  <p style={{ marginTop: 8, fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
+                    Permanently delete your student account and all verification documents stored for your profile.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteAccountError(null)
+                      setDeleteAccountOpen(true)
+                    }}
+                    className={`${dashboardDestructiveBtnClass} mt-4 w-auto`}
+                  >
+                    Delete account
+                  </button>
+                </section>
+              ) : null}
+            </>
           ) : null}
         </RenterProfileSetup>
       ) : null}

@@ -9,6 +9,7 @@ import {
 import { isPersonalDetailsComplete } from './renterProfileSection'
 import { isRouteSectionComplete } from './renterRouteSection'
 import { incomeBandSuggestsGuarantor } from './renterIncomeBands'
+import { renterProfilePath } from './renterProfilePaths'
 import {
   docFromProfile,
   docStepComplete,
@@ -309,7 +310,7 @@ export function renterReadinessActionHref(readiness: RenterReadiness): string {
     return INCOMPLETE_RENTER_DESTINATION
   }
   if (!readiness.sections.emergency) return INCOMPLETE_RENTER_DESTINATION
-  if (!readiness.sections.verification) return '/student-profile#renter-section-verification'
+  if (!readiness.sections.verification) return renterProfilePath('verification')
   return INCOMPLETE_RENTER_DESTINATION
 }
 
@@ -350,7 +351,7 @@ export function buildRenterReadinessChecklistSteps(
       id: 'uni_email',
       label: 'Verify your university email',
       complete: readiness.sections.situationRoute && isStudentUniEmailVerified(p),
-      href: '/student-profile#renter-section-verification',
+      href: renterProfilePath('verification'),
       actionLabel: 'Verify →',
     })
     if (readiness.sections.situationRoute) {
@@ -358,7 +359,7 @@ export function buildRenterReadinessChecklistSteps(
         id: 'student_verify',
         label: 'Complete student verification (ID and enrolment)',
         complete: readiness.sections.verification,
-        href: '/student-profile#renter-section-verification',
+        href: renterProfilePath('verification'),
         actionLabel: 'Verify →',
       })
     }
@@ -367,7 +368,7 @@ export function buildRenterReadinessChecklistSteps(
       id: 'identity_verify',
       label: 'Verify your identity (photo ID + supporting document)',
       complete: readiness.sections.verification,
-      href: '/student-profile?tab=verification',
+      href: renterProfilePath('verification'),
       actionLabel: 'Verify →',
     })
   }

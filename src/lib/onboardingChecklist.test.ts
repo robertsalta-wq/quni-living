@@ -38,7 +38,7 @@ describe('non-student tenant onboarding', () => {
     expect(ids).not.toContain('uni_email')
     const identityStep = steps.find((s) => s.id === 'identity_verify')
     expect(identityStep?.complete).toBe(false)
-    expect(identityStep?.href).toBe('/student-profile?tab=verification')
+    expect(identityStep?.href).toBe('/student-profile?section=verification')
   })
 
   it('marks identity step complete when verification_type is identity', () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import { useRenterSituationSave } from '../../../hooks/useRenterSituationSave'
@@ -27,10 +27,11 @@ import {
 } from '../../../lib/renterProfileSection'
 import {
   parseRenterSectionHash,
+  renterProfilePath,
   type RenterProfileExpandKey,
 } from '../../../lib/renterProfilePaths'
 import { ProfileSetupSection, ProfileNestedSection } from './ProfileSetupSection'
-import { RenterSituationSection } from './RenterSituationPicker'
+import { RenterSituationSection, RenterSituationPickerBody } from './RenterSituationPicker'
 import { RenterProfilePersonalSection } from './RenterProfilePersonalSection'
 import { RenterUniversalVerificationSection } from './RenterUniversalVerificationSection'
 import { RenterStudentRouteSection } from './RenterStudentRouteSection'
@@ -43,6 +44,15 @@ import { RenterProfileAboutSection } from './RenterProfileAboutSection'
 import { RenterProfileLivingPreferencesSection } from './RenterProfileLivingPreferencesSection'
 import { RenterProfileReadinessDriver } from './RenterProfileReadinessDriver'
 import { RenterProfileLockedRouteSection, SwitchSituationDialog } from './RenterProfileShell'
+import RenterProfileHub from '../profileHub/RenterProfileHub'
+import RenterProfileDrillInShell from '../profileHub/RenterProfileDrillInShell'
+import {
+  buildRenterHubCompleteness,
+  isRenterProfileHubSectionId,
+  renterProfileHubIcon,
+  renterProfileHubTitle,
+  type RenterProfileHubSectionId,
+} from '../profileHub/renterProfileHubSections'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -102,10 +112,26 @@ type Props = {
   onRefresh: () => Promise<void>
   onProfilePatch?: (patch: Partial<StudentRow>) => void
   children?: ReactNode
+  /** Mobile hub + drill-in (landlord pattern). Desktop keeps accordion. */
+  variant?: 'accordion' | 'hub'
+  onSignOut?: () => void
+  onDeleteAccount?: () => void
 }
 
-export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, onProfilePatch, children }: Props) {
+export function RenterProfileSetup({
+  profile,
+  userId,
+  displayEmail,
+  onRefresh,
+  onProfilePatch,
+  children,
+  variant = 'accordion',
+  onSignOut,
+  onDeleteAccount,
+}: Props) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const situation = profile.renter_situation ?? null
   const readiness = computeRenterReadiness(profile)
   const [switchDialog, setSwitchDialog] = useState<{
@@ -195,6 +221,22 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
       profile.preferred_move_in_date,
   )
 
+  const completeness = useMemo(
+    () =>
+      buildRenterHubCompleteness({
+        profile,
+        situation,
+        verificationComplete,
+        showGuarantor,
+        guarantorComplete,
+      }),
+    [profile, situation, verificationComplete, showGuarantor, guarantorComplete],
+  )
+
+  const verificationSummaryText = situation
+    ? verificationSummary(profile, situation, docUpload)
+    : undefined
+
   const defaultExpanded = useMemo(
     () =>
       renterProfileDefaultExpandedSection({
@@ -232,15 +274,41 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
     setGuarantorOpen(!guarantorComplete)
   }, [showGuarantor, guarantorComplete, profile.user_id])
 
+  /** Legacy hash → ?section= (hub + shared deep links). */
   useEffect(() => {
     const parsed = parseRenterSectionHash(location.hash)
     if (!parsed) return
-    setExpanded(parsed.expand)
-    if (parsed.openGuarantor) setGuarantorOpen(true)
-    requestAnimationFrame(() => {
-      document.getElementById(parsed.scrollId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [location.hash, profile.user_id])
+    const next = parsed.openGuarantor
+      ? `${renterProfilePath(parsed.expand)}&guarantor=1`
+      : renterProfilePath(parsed.expand)
+    navigate(next, { replace: true })
+  }, [location.hash, navigate])
+
+  useEffect(() => {
+    if (variant === 'hub') return
+    const parsed = parseRenterSectionHash(location.hash)
+    if (parsed) {
+      setExpanded(parsed.expand)
+      if (parsed.openGuarantor) setGuarantorOpen(true)
+      requestAnimationFrame(() => {
+        document.getElementById(parsed.scrollId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+      return
+    }
+    const section = searchParams.get('section')
+    if (isRenterProfileHubSectionId(section)) {
+      setExpanded(section)
+      if (searchParams.get('guarantor') === '1') setGuarantorOpen(true)
+      requestAnimationFrame(() => {
+        document.getElementById(`renter-section-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
+  }, [location.hash, searchParams, profile.user_id, variant])
+
+  useEffect(() => {
+    if (variant !== 'hub') return
+    if (searchParams.get('guarantor') === '1') setGuarantorOpen(true)
+  }, [variant, searchParams])
 
   const toggleSection = (key: RenterProfileExpandKey) => {
     setExpanded((prev) => (prev === key ? defaultExpanded : key))
@@ -248,22 +316,153 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
 
   const situationExpanded = situation == null || expanded === 'situation'
 
+  const switchDialogNode = switchDialog ? (
+    <SwitchSituationDialog
+      fromSituation={switchDialog.from}
+      nextSituation={switchDialog.to}
+      onCancel={() => {
+        switchDialog.resolve(false)
+        setSwitchDialog(null)
+      }}
+      onConfirm={() => {
+        switchDialog.resolve(true)
+        setSwitchDialog(null)
+      }}
+    />
+  ) : null
+
+  const routeBody = situation ? (
+    <>
+      {situation === 'student' ? (
+        <RenterStudentRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} docUpload={docUpload} />
+      ) : null}
+      {situation === 'working' ? (
+        <RenterWorkingRouteSection profile={profile} userId={userId} onSaved={handleRefresh} />
+      ) : null}
+      {situation === 'working_holiday' || situation === 'backpacker' ? (
+        <RenterVisaRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} />
+      ) : null}
+      {situation === 'retired' ? (
+        <RenterGeneralRouteSection profile={profile} userId={userId} situation="retired" onSaved={handleRefresh} />
+      ) : null}
+      {situation === 'between_jobs' ? (
+        <RenterGeneralRouteSection profile={profile} userId={userId} situation="between_jobs" onSaved={handleRefresh} />
+      ) : null}
+
+      {showGuarantor ? (
+        <ProfileNestedSection
+          id="renter-section-guarantor"
+          icon="guarantor"
+          title="Guarantor"
+          status={guarantorComplete ? 'done' : 'todo'}
+          note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
+          expanded={guarantorOpen}
+          onToggle={() => setGuarantorOpen((v) => !v)}
+        >
+          <RenterGuarantorSection profile={profile} userId={userId} onSaved={handleRefresh} />
+        </ProfileNestedSection>
+      ) : null}
+    </>
+  ) : null
+
+  if (variant === 'hub') {
+    const sectionParam = searchParams.get('section')
+    const hubSection: RenterProfileHubSectionId | null = isRenterProfileHubSectionId(sectionParam)
+      ? sectionParam
+      : null
+
+    if (!hubSection) {
+      return (
+        <div className={renterStackClass}>
+          {switchDialogNode}
+          <RenterProfileHub
+            profile={profile}
+            readiness={readiness}
+            situation={situation}
+            verificationComplete={verificationComplete}
+            completeness={completeness}
+            verificationSummaryText={verificationSummaryText}
+            onSignOut={() => onSignOut?.()}
+            onDeleteAccount={() => onDeleteAccount?.()}
+          />
+        </div>
+      )
+    }
+
+    const drillTitle = renterProfileHubTitle(hubSection, situation)
+    const drillIcon = renterProfileHubIcon(hubSection, situation)
+
+    let drillBody: ReactNode = null
+    switch (hubSection) {
+      case 'situation':
+        drillBody = (
+          <RenterSituationPickerBody
+            currentSituation={situation}
+            onSelect={(s) => void saveSituation(s)}
+            busy={situationBusy}
+            error={situationError}
+          />
+        )
+        break
+      case 'personal':
+        drillBody = (
+          <RenterProfilePersonalSection
+            profile={profile}
+            userId={userId}
+            displayEmail={displayEmail}
+            onSaved={handleRefresh}
+          />
+        )
+        break
+      case 'verification':
+        drillBody = situation ? (
+          <RenterUniversalVerificationSection
+            profile={profile}
+            userId={userId}
+            situation={situation}
+            onRefresh={handleRefresh}
+            onProfilePatch={onProfilePatch}
+            docUpload={docUpload}
+          />
+        ) : (
+          <p style={{ fontSize: 13, color: 'var(--quni-ink-4)' }}>Choose your situation to see verification steps.</p>
+        )
+        break
+      case 'route':
+        drillBody = situation ? (
+          routeBody
+        ) : (
+          <p style={{ fontSize: 13, color: 'var(--quni-ink-4)' }}>
+            Choose your situation first to unlock route details.
+          </p>
+        )
+        break
+      case 'emergency':
+        drillBody = <RenterProfileEmergencySection profile={profile} userId={userId} onSaved={handleRefresh} />
+        break
+      case 'about':
+        drillBody = <RenterProfileAboutSection profile={profile} userId={userId} onSaved={handleRefresh} />
+        break
+      case 'prefs':
+        drillBody = (
+          <RenterProfileLivingPreferencesSection profile={profile} userId={userId} onSaved={handleRefresh} />
+        )
+        break
+    }
+
+    return (
+      <div className={renterStackClass}>
+        {switchDialogNode}
+        <RenterProfileDrillInShell title={drillTitle} icon={drillIcon}>
+          {drillBody}
+        </RenterProfileDrillInShell>
+      </div>
+    )
+  }
+
   return (
     <div className={renterStackClass}>
-      {switchDialog ? (
-        <SwitchSituationDialog
-          fromSituation={switchDialog.from}
-          nextSituation={switchDialog.to}
-          onCancel={() => {
-            switchDialog.resolve(false)
-            setSwitchDialog(null)
-          }}
-          onConfirm={() => {
-            switchDialog.resolve(true)
-            setSwitchDialog(null)
-          }}
-        />
-      ) : null}
+      {switchDialogNode}
 
       <RenterProfileReadinessDriver
         readiness={readiness}
@@ -338,35 +537,7 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
           expanded={expanded === 'route'}
           onToggle={() => toggleSection('route')}
         >
-          {situation === 'student' ? (
-            <RenterStudentRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} docUpload={docUpload} />
-          ) : null}
-          {situation === 'working' ? (
-            <RenterWorkingRouteSection profile={profile} userId={userId} onSaved={handleRefresh} />
-          ) : null}
-          {situation === 'working_holiday' || situation === 'backpacker' ? (
-            <RenterVisaRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} />
-          ) : null}
-          {situation === 'retired' ? (
-            <RenterGeneralRouteSection profile={profile} userId={userId} situation="retired" onSaved={handleRefresh} />
-          ) : null}
-          {situation === 'between_jobs' ? (
-            <RenterGeneralRouteSection profile={profile} userId={userId} situation="between_jobs" onSaved={handleRefresh} />
-          ) : null}
-
-          {showGuarantor ? (
-            <ProfileNestedSection
-              id="renter-section-guarantor"
-              icon="guarantor"
-              title="Guarantor"
-              status={guarantorComplete ? 'done' : 'todo'}
-              note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
-              expanded={guarantorOpen}
-              onToggle={() => setGuarantorOpen((v) => !v)}
-            >
-              <RenterGuarantorSection profile={profile} userId={userId} onSaved={handleRefresh} />
-            </ProfileNestedSection>
-          ) : null}
+          {routeBody}
         </ProfileSetupSection>
       ) : null}
 

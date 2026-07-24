@@ -1,4 +1,4 @@
-/** Renter profile deep-link helpers (hash targets already used in readiness hrefs). */
+/** Renter profile deep-link helpers — hub uses ?section=; hashes still redirect. */
 
 export type RenterProfileExpandKey =
   | 'situation'
@@ -31,10 +31,11 @@ const HASH_MAP: Record<string, ParsedRenterSectionHash> = {
   'renter-section-prefs': { expand: 'prefs', scrollId: 'renter-section-prefs' },
 }
 
+/** Hub / drill-in paths (landlord-style). Desktop accordion still honors hashes. */
 export function renterProfilePath(section?: RenterProfileExpandKey | 'guarantor'): string {
   if (!section) return '/student-profile'
-  if (section === 'guarantor') return '/student-profile#renter-section-guarantor'
-  return `/student-profile#renter-section-${section}`
+  if (section === 'guarantor') return '/student-profile?section=route&guarantor=1'
+  return `/student-profile?section=${section}`
 }
 
 export function parseRenterSectionHash(hash: string): ParsedRenterSectionHash | null {
