@@ -8,6 +8,7 @@ import type { Database } from '../../../lib/database.types'
 import { formatDisplayName } from '../../../lib/formatDisplayName'
 import { isValidAuPhone } from '../../../lib/studentOnboarding'
 import { prepareProfilePhotoForUpload } from '../../../lib/prepareProfilePhotoForUpload'
+import { reportProfilePhotoUploadFailure } from '../../../lib/reportProfilePhotoUploadFailure'
 import LanguagesSpokenSelector from '../../profile/LanguagesSpokenSelector'
 import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../../../lib/languagesSpoken'
 import {
@@ -392,7 +393,9 @@ export default function LandlordMobileProfileTab({
       await onRefresh()
       await refreshProfile()
     } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : 'Upload failed.')
+      setPhotoError(
+        reportProfilePhotoUploadFailure(err, { surface: 'landlord-profile-mobile', file }),
+      )
     } finally {
       setPhotoUploading(false)
     }

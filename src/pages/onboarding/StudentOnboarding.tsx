@@ -43,6 +43,7 @@ import { clearQuniAccommodationVerificationRoute } from '../../lib/quniAccommoda
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
+import { reportProfilePhotoUploadFailure } from '../../lib/reportProfilePhotoUploadFailure'
 import { useScrollToTopOnChange } from '../../hooks/useScrollToTopOnChange'
 import {
   LegalDocumentModal,
@@ -717,7 +718,10 @@ export default function StudentOnboarding() {
       setAvatarUrl(pub.publicUrl)
       await refreshProfile()
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed.'
+      const msg = reportProfilePhotoUploadFailure(err, {
+        surface: 'student-onboarding',
+        file,
+      })
       setPhotoError(
         msg.includes('Bucket not found') || msg.includes('not found')
           ? 'Photo storage is not set up yet. Create a public bucket named "student-avatars" and run supabase/storage_student_profile_photos.sql.'
