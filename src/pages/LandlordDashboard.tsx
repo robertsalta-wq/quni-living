@@ -39,6 +39,7 @@ import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import LandlordDashboardPageHeader, {
   landlordDashboardPageInsetClass,
 } from '../components/landlord/LandlordDashboardPageHeader'
+import { dashboardProfilePageInsetClass } from '../lib/dashboardPageInset'
 import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
 import {
   fetchLandlordListingBillingSnapshot,
@@ -1135,7 +1136,7 @@ export default function LandlordDashboard() {
   }
 
   // Profile hub/drill-in already own Listing-style padding — skip the shared inset on mobile
-  // so they aren't double-padded. Other tabs use landlordDashboardPageInsetClass.
+  // so they aren't double-padded. Other tabs use dashboardPageInsetClass.
   const profileOwnsPadding = tab === 'profile'
 
   return (
@@ -1149,13 +1150,7 @@ export default function LandlordDashboard() {
         </div>
       ) : null}
 
-      <div
-        className={
-          profileOwnsPadding
-            ? 'max-sm:contents max-w-site mx-auto w-full min-w-0 sm:px-4 sm:py-6 lg:px-8 lg:pb-14'
-            : landlordDashboardPageInsetClass
-        }
-      >
+      <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : landlordDashboardPageInsetClass}>
         <LandlordDashboardPageHeader
           profile={profile}
           activeTab={tab}

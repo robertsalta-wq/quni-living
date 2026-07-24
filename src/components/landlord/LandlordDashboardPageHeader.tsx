@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { dashboardPageInsetClass } from '../../lib/dashboardPageInset'
 import { landlordDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
 import type { LandlordProfileRow } from '../../lib/authProfile'
 
@@ -21,12 +22,8 @@ type Props = {
   onTabSelect: (section: Exclude<UserDashboardSection, 'messages' | 'saved'>) => void
 }
 
-/**
- * Page padding only — same track as Listing Health hub body (`px-3.5 py-3`).
- * No rounded panel, border, shadow, or alternate background (cards sit on page bg).
- */
-export const landlordDashboardPageInsetClass =
-  'mx-auto w-full min-w-0 max-w-site px-3.5 py-3 sm:px-4 sm:py-6 lg:px-8 lg:pb-14'
+/** Alias of shared `dashboardPageInsetClass` (non-profile tabs). */
+export const landlordDashboardPageInsetClass = dashboardPageInsetClass
 
 export function landlordDashboardTabSubtitle(tab: LandlordTab): string {
   return TAB_SUBTITLES[tab]
