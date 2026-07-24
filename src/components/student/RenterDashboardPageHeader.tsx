@@ -41,7 +41,7 @@ export function RenterDashboardTabShell({
   const navigate = useNavigate()
   const profileOwnsPadding = activeTab === 'profile'
   return (
-    <div className={`flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] max-sm:pb-0 pb-16 ${contentClassName}`}>
+    <div className={`flex-1 flex flex-col min-h-0 w-full bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16 ${contentClassName}`}>
       <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : dashboardPageInsetClass}>
         <RenterDashboardPageHeader
           activeTab={activeTab}
