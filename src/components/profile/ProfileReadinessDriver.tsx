@@ -99,9 +99,12 @@ export default function ProfileReadinessDriver({
   line,
   tone = 'default',
   stickyTop = 0,
+  complete,
+  completeSubtitle = 'Listing & bookings enabled',
 }: ProfileReadinessDriverProps) {
   const barWidth = Math.round(clampProgress(progress) * 100)
-  const allComplete = steps.length > 0 && steps.every((step) => step.state === 'done')
+  const allComplete =
+    complete ?? (steps.length > 0 && steps.every((step) => step.state === 'done'))
   const [expanded, setExpanded] = useState(false)
 
   const lineClass =
@@ -162,7 +165,7 @@ export default function ProfileReadinessDriver({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-semibold text-admin-success-fg">{title}</span>
-            <span className="mt-0.5 block text-[12.5px] text-admin-ink-4">Listing & bookings enabled</span>
+            <span className="mt-0.5 block text-[12.5px] text-admin-ink-4">{completeSubtitle}</span>
           </span>
           <ChevronGlyph expanded={expanded} />
         </button>
@@ -186,7 +189,7 @@ export default function ProfileReadinessDriver({
 
             {stepsBlock}
             {progressBlock}
-            <div className={lineClass}>{line}</div>
+            {line ? <div className={lineClass}>{line}</div> : null}
           </div>
         ) : null}
       </div>
@@ -194,7 +197,7 @@ export default function ProfileReadinessDriver({
   }
 
   return (
-    <div className={`${CARD_CLASS} px-[22px] py-5`} style={{ top: stickyTop }}>
+    <div className={`${CARD_CLASS} px-[22px] py-5`} style={{ top: stickyTop }} role="status">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
@@ -210,7 +213,7 @@ export default function ProfileReadinessDriver({
 
       {stepsBlock}
       {progressBlock}
-      <div className={lineClass}>{line}</div>
+      {line ? <div className={lineClass}>{line}</div> : null}
     </div>
   )
 }
