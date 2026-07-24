@@ -1,16 +1,48 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
-import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfileRouting'
-import { dashboardPrimaryBtnClass } from '../lib/dashboardButtons'
-import { isOnboardingResumeExempt } from '../lib/onboardingResume'
+import {
+  getIncompleteOnboardingDestination,
+  needsOnboarding,
+  type AuthProfile,
+  type UserRole,
+} from '../lib/authProfileRouting'
+import { isRenterRole } from '../lib/marketplaceRole'
+import {
+  computeLandlordReadiness,
+  landlordIncompleteSubtitle,
+} from '../lib/landlordProfileReadiness'
+import { isOnboardingResumeExempt, isOnboardingResumeDashboardPath } from '../lib/onboardingResume'
+import { computeRenterReadiness } from '../lib/renterReadiness'
+import type { Database } from '../lib/database.types'
+import {
+  PROFILE_INCOMPLETE_NUDGE_CARD_CLASS,
+  ProfileIncompleteNudge,
+  ProfileIncompleteNudgeArrow,
+} from './profile'
+
+type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
+type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
 /** Inner row: dashboard column width + horizontal gutters only (no dashboard vertical pad). */
 const BANNER_CONTENT_TRACK_CLASS =
   'max-w-site mx-auto w-full min-w-0 px-3.5 sm:px-4 lg:px-8'
 
+function resumeSubtitle(role: UserRole, profile: AuthProfile | null): string {
+  if (isRenterRole(role)) {
+    const readiness = computeRenterReadiness(profile as StudentProfileRow | null)
+    return readiness.blocksBooking[0] ?? 'Complete required sections'
+  }
+  if (role === 'landlord' && profile) {
+    return landlordIncompleteSubtitle(computeLandlordReadiness(profile as LandlordProfileRow))
+  }
+  return 'Complete required sections'
+}
+
 /**
  * Persistent nudge for incomplete renters/landlords browsing outside onboarding.
+ * Same visual language as ProfileReadinessDriver collapsed incomplete.
+ * Hidden on dashboards that already surface a profile nudge.
  * Reappears on every page load (no dismiss).
  */
 export function OnboardingResumeBanner() {
@@ -20,6 +52,7 @@ export function OnboardingResumeBanner() {
   if (loading || !user) return null
   if (role === 'admin') return null
   if (isOnboardingResumeExempt(location.pathname)) return null
+  if (isOnboardingResumeDashboardPath(location.pathname)) return null
   if (userNeedsEmailAddressVerification(user)) return null
   if (!needsOnboarding(role, profile, user.id)) return null
 
@@ -31,20 +64,16 @@ export function OnboardingResumeBanner() {
       new URLSearchParams(location.search).get('tab') === 'profile')
   if (onResumeDestination) return null
 
+  const subtitle = resumeSubtitle(role, profile)
+
   return (
-    <div
-      className="border-b border-amber-200 bg-[var(--quni-cream)] py-3"
-      style={{ borderLeftWidth: 4, borderLeftColor: 'var(--quni-coral)' }}
-      role="status"
-      aria-live="polite"
-    >
-      <div className={`${BANNER_CONTENT_TRACK_CLASS} flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4`}>
-        <p className="text-sm text-stone-800">
-          <span className="font-semibold text-stone-900">Finish setting up your profile</span>
-          <span className="text-stone-600"> — complete onboarding to book rooms and use your dashboard.</span>
-        </p>
-        <Link to={resumePath} className={`${dashboardPrimaryBtnClass} shrink-0`}>
-          Resume
+    <div className="border-b border-admin-line bg-admin-surface-2 py-3" role="status" aria-live="polite">
+      <div className={BANNER_CONTENT_TRACK_CLASS}>
+        <Link
+          to={resumePath}
+          className={`${PROFILE_INCOMPLETE_NUDGE_CARD_CLASS} block px-[22px] py-3.5 no-underline transition-opacity hover:opacity-95`}
+        >
+          <ProfileIncompleteNudge subtitle={subtitle} trailing={<ProfileIncompleteNudgeArrow />} />
         </Link>
       </div>
     </div>

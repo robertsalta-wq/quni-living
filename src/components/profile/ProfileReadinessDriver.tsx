@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import {
+  PROFILE_INCOMPLETE_NUDGE_CARD_CLASS,
+  ProfileIncompleteNudge,
+  ProfileIncompleteNudgeChevron,
+} from './ProfileIncompleteNudge'
 import ReadinessProgressBar from './ReadinessProgressBar'
 import type { ProfileReadinessDriverProps, ReadinessDriverStep } from './types'
 
@@ -13,8 +18,7 @@ const COMPLETE_CARD_CLASS = 'quni-card sticky z-[5] mb-4 border-admin-success/35
 const COMPLETE_CARD_COLLAPSED_CLASS =
   'quni-card sticky z-[5] mb-4 border-admin-success/35 bg-admin-success-bg'
 
-const INCOMPLETE_CARD_COLLAPSED_CLASS =
-  'quni-card sticky z-[5] mb-4 border-admin-warning/40 bg-admin-warning-bg'
+const INCOMPLETE_CARD_COLLAPSED_CLASS = `sticky z-[5] mb-4 ${PROFILE_INCOMPLETE_NUDGE_CARD_CLASS}`
 
 function clampProgress(progress: number): number {
   if (!Number.isFinite(progress)) return 0
@@ -73,31 +77,13 @@ function CheckGlyph({ className }: { className?: string }) {
   )
 }
 
-function LockGlyph({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.4}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </svg>
-  )
-}
-
 function ChevronGlyph({ expanded, tone }: { expanded: boolean; tone: 'success' | 'warning' }) {
-  const stroke = tone === 'success' ? 'stroke-admin-success-fg' : 'stroke-admin-warning-fg'
+  if (tone === 'warning') {
+    return <ProfileIncompleteNudgeChevron expanded={expanded} />
+  }
   return (
     <svg
-      className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${stroke} ${
+      className={`h-[18px] w-[18px] shrink-0 stroke-admin-success-fg transition-transform duration-200 ${
         expanded ? 'rotate-180' : ''
       }`}
       viewBox="0 0 24 24"
@@ -238,21 +224,18 @@ export default function ProfileReadinessDriver({
       <button
         type="button"
         className={[
-          'flex w-full cursor-pointer items-center gap-3 border-0 text-left',
+          'w-full cursor-pointer border-0 text-left',
           expanded ? 'bg-white px-[22px] py-3.5' : 'bg-transparent px-[22px] py-3.5',
         ].join(' ')}
         aria-expanded={expanded}
         aria-controls="profile-readiness-incomplete-panel"
         onClick={() => setExpanded((v) => !v)}
       >
-        <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-admin-warning text-white">
-          <LockGlyph />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold text-admin-warning-fg">{incompleteTitle}</span>
-          <span className="mt-0.5 block text-[12.5px] text-admin-warning-fg/85">{incompleteSubtitle}</span>
-        </span>
-        <ChevronGlyph expanded={expanded} tone="warning" />
+        <ProfileIncompleteNudge
+          title={incompleteTitle}
+          subtitle={incompleteSubtitle}
+          trailing={<ChevronGlyph expanded={expanded} tone="warning" />}
+        />
       </button>
 
       {expanded ? (

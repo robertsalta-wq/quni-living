@@ -18,6 +18,12 @@ import { formatDate } from './admin/adminUi'
 import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import {
+  PROFILE_INCOMPLETE_NUDGE_CARD_CLASS,
+  ProfileIncompleteNudge,
+  ProfileIncompleteNudgeArrow,
+} from '../components/profile'
+import {
+  computeRenterReadiness,
   isRenterUniversalVerificationComplete,
   renterProfileStatCardCopy,
 } from '../lib/renterReadiness'
@@ -107,8 +113,8 @@ function readStudentBookingsCache(userId: string | undefined): BookingWithProper
 const statCardClass =
   'quni-card flex h-full min-w-0 flex-col p-4 text-left transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:border-admin-coral-30 hover:shadow-md sm:p-5'
 
-const profileStatCardClass =
-  'flex h-full min-w-0 flex-col rounded-admin-lg border border-admin-coral-30 bg-admin-coral-tint p-4 shadow-sm sm:p-5 lg:min-h-[10rem]'
+const profileStatCardCompleteClass =
+  'flex h-full min-w-0 flex-col rounded-admin-lg border border-admin-success/35 bg-admin-success-bg p-4 shadow-sm sm:p-5 lg:min-h-[10rem]'
 
 const cardClass = 'quni-card p-5'
 
@@ -430,12 +436,22 @@ export default function StudentDashboard() {
   const currentBooking = useMemo(() => pickCurrentTenantBooking(bookings), [bookings])
   const profileStatCard = useMemo(() => {
     if (!profile) {
-      return { pct: 0, done: 0, total: 4, complete: false, showFinishSetup: true }
+      return {
+        pct: 0,
+        done: 0,
+        total: 4,
+        complete: false,
+        showFinishSetup: true,
+        subtitle: 'Complete required sections',
+      }
     }
     const situation = profile.renter_situation
     const verificationComplete =
       situation != null ? isRenterUniversalVerificationComplete(profile, situation) : false
-    return renterProfileStatCardCopy(profile, verificationComplete)
+    const copy = renterProfileStatCardCopy(profile, verificationComplete)
+    const subtitle =
+      computeRenterReadiness(profile).blocksBooking[0] ?? 'Complete required sections'
+    return { ...copy, subtitle }
   }, [profile])
 
   const primaryBtnClass = dashboardPrimaryBtnClass
@@ -511,61 +527,35 @@ export default function StudentDashboard() {
                 </p>
               </Link>
 
-              <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
-                {profileStatCard.complete ? (
-                  <>
-                    <p className="text-sm font-semibold text-admin-ink leading-snug">
-                      Profile {profileStatCard.pct}% Complete
-                    </p>
-                    <div className="h-1.5 rounded-full bg-admin-coral-tint-15 mt-3 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-admin-coral transition-all duration-300"
-                        style={{ width: `${profileStatCard.pct}%` }}
-                        role="progressbar"
-                        aria-valuenow={profileStatCard.pct}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`Profile completion ${profileStatCard.pct}%`}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between gap-3 sm:block">
-                      <p className="text-[11px] font-semibold text-admin-coral-active uppercase tracking-wide">Your profile</p>
-                      <Link
-                        to="/student-profile"
-                        className="text-[13px] font-semibold text-admin-coral hover:text-admin-coral-active hover:underline shrink-0 sm:hidden"
-                      >
-                        Finish setup →
-                      </Link>
-                    </div>
-                    <p className="mt-2 leading-none">
-                      <span className="text-[30px] sm:text-[34px] font-bold text-admin-ink tabular-nums">
-                        {profileStatCard.pct}%
-                      </span>
-                      <span className="text-[13px] text-admin-ink-5 ml-1.5">complete</span>
-                    </p>
-                    <div className="h-1.5 rounded-full bg-admin-coral-tint-15 mt-3 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-admin-coral transition-all duration-300"
-                        style={{ width: `${profileStatCard.pct}%` }}
-                        role="progressbar"
-                        aria-valuenow={profileStatCard.pct}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label={`Profile completion ${profileStatCard.pct}%`}
-                      />
-                    </div>
-                    <Link
-                      to="/student-profile"
-                      className="hidden sm:inline text-[13px] font-semibold text-admin-coral hover:text-admin-coral-active hover:underline mt-auto pt-3"
-                    >
-                      Finish setup →
-                    </Link>
-                  </>
-                )}
-              </div>
+              {profileStatCard.complete ? (
+                <div className={`${profileStatCardCompleteClass} col-span-2 lg:col-span-1`}>
+                  <p className="text-sm font-semibold text-admin-success-fg leading-snug">
+                    Profile {profileStatCard.pct}% complete
+                  </p>
+                  <p className="mt-1 text-[12.5px] text-admin-ink-4">Ready to apply</p>
+                  <div className="h-1.5 rounded-full bg-admin-success/20 mt-3 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-admin-success transition-all duration-300"
+                      style={{ width: `${profileStatCard.pct}%` }}
+                      role="progressbar"
+                      aria-valuenow={profileStatCard.pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Profile completion ${profileStatCard.pct}%`}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  to="/student-profile"
+                  className={`${PROFILE_INCOMPLETE_NUDGE_CARD_CLASS} col-span-2 flex h-full min-w-0 items-center px-[22px] py-3.5 no-underline transition-opacity hover:opacity-95 lg:col-span-1 lg:min-h-[10rem]`}
+                >
+                  <ProfileIncompleteNudge
+                    subtitle={profileStatCard.subtitle}
+                    trailing={<ProfileIncompleteNudgeArrow />}
+                  />
+                </Link>
+              )}
 
               <Link
                 to="/listings"
