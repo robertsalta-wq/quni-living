@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Section from '../../ui/Section'
 import { RENTER_SITUATION_OPTIONS, type RenterSituation } from '../../../lib/renterSituation'
 import { routeSectionTitle as routeTitleForSituation } from '../../../lib/renterProfileSection'
@@ -17,6 +16,8 @@ type Props = {
   onSelect: (situation: RenterSituation) => void
   busy?: boolean
   error?: string | null
+  expanded: boolean
+  onToggle: () => void
 }
 
 function situationSummary(situation: RenterSituation): string {
@@ -25,24 +26,31 @@ function situationSummary(situation: RenterSituation): string {
   return `${label} · ${route}`
 }
 
-export function RenterSituationSection({ currentSituation, onSelect, busy = false, error }: Props) {
-  const [editing, setEditing] = useState(currentSituation == null)
-  const expanded = currentSituation == null || editing
-  const status = currentSituation != null && !editing ? 'done' : 'todo'
+export function RenterSituationSection({
+  currentSituation,
+  onSelect,
+  busy = false,
+  error,
+  expanded,
+  onToggle,
+}: Props) {
+  const status = currentSituation != null && !expanded ? 'done' : 'todo'
+  const collapsible = currentSituation != null
 
   return (
     <Section
       id="renter-section-situation"
       icon={<ProfileSectionIcon kind="situation" />}
       title="Your situation"
+      subtitle="So we ask for the right details"
       status={status}
       summary={currentSituation != null ? situationSummary(currentSituation) : undefined}
       expanded={expanded}
       onToggle={() => {
-        if (busy || currentSituation == null) return
-        setEditing((v) => !v)
+        if (busy || !collapsible) return
+        onToggle()
       }}
-      collapsible={currentSituation != null}
+      collapsible={collapsible}
       editLabel="Edit"
     >
       {error ? (
@@ -64,10 +72,7 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
               key={opt.value}
               type="button"
               disabled={busy}
-              onClick={() => {
-                onSelect(opt.value)
-                if (currentSituation != null) setEditing(false)
-              }}
+              onClick={() => onSelect(opt.value)}
               className={`${renterSituationTileClass}${selected ? ` ${renterSituationTileSelectedClass}` : ''}`}
             >
               {selected ? (

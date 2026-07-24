@@ -1,5 +1,6 @@
 import type { RenterSituation } from './renterSituation'
 import type { StudentProfileRow } from './studentOnboarding'
+import type { RenterProfileExpandKey } from './renterProfilePaths'
 
 export type RouteSectionGroup = 'student' | 'working' | 'visa' | 'general'
 
@@ -65,6 +66,33 @@ export function emergencySummary(profile: StudentProfileRow): string {
     profile.emergency_contact_phone?.trim(),
   ].filter(Boolean)
   return parts.join(' · ') || 'Add an emergency contact'
+}
+
+/** First incomplete required section — mirrors landlordProfileDefaultExpandedSection. */
+export function renterProfileDefaultExpandedSection(args: {
+  situation: RenterSituation | null
+  personalComplete: boolean
+  verificationComplete: boolean
+  routeComplete: boolean
+  showGuarantor: boolean
+  guarantorComplete: boolean
+  emergencyComplete: boolean
+}): RenterProfileExpandKey | null {
+  const {
+    situation,
+    personalComplete,
+    verificationComplete,
+    routeComplete,
+    showGuarantor,
+    guarantorComplete,
+    emergencyComplete,
+  } = args
+  if (!situation) return 'situation'
+  if (!personalComplete) return 'personal'
+  if (!verificationComplete) return 'verification'
+  if (!routeComplete || (showGuarantor && !guarantorComplete)) return 'route'
+  if (!emergencyComplete) return 'emergency'
+  return null
 }
 
 function formatAuDate(iso: string): string {

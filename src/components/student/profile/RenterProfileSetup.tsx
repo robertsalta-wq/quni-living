@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import { useRenterSituationSave } from '../../../hooks/useRenterSituationSave'
@@ -20,9 +21,14 @@ import {
   emergencySummary,
   isPersonalDetailsComplete,
   personalDetailsSummary,
+  renterProfileDefaultExpandedSection,
   routeSectionNumber,
   routeSectionTitle,
 } from '../../../lib/renterProfileSection'
+import {
+  parseRenterSectionHash,
+  type RenterProfileExpandKey,
+} from '../../../lib/renterProfilePaths'
 import { ProfileSetupSection, ProfileNestedSection } from './ProfileSetupSection'
 import { RenterSituationSection } from './RenterSituationPicker'
 import { RenterProfilePersonalSection } from './RenterProfilePersonalSection'
@@ -44,6 +50,22 @@ function routeSectionIcon(situation: RenterSituation): 'study' | 'work' | 'verif
   if (situation === 'student') return 'study'
   if (situation === 'working') return 'work'
   return 'verify'
+}
+
+function routeSubtitle(situation: RenterSituation): string {
+  switch (situation) {
+    case 'student':
+      return 'Study details and how you’ll fund rent'
+    case 'working':
+      return 'Job and income details for your application'
+    case 'working_holiday':
+    case 'backpacker':
+      return 'Visa and funding details'
+    case 'retired':
+      return 'How you fund rent in retirement'
+    case 'between_jobs':
+      return 'How you fund rent between roles'
+  }
 }
 
 function verificationSummary(
@@ -83,6 +105,7 @@ type Props = {
 }
 
 export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, onProfilePatch, children }: Props) {
+  const location = useLocation()
   const situation = profile.renter_situation ?? null
   const readiness = computeRenterReadiness(profile)
   const [switchDialog, setSwitchDialog] = useState<{
@@ -172,6 +195,59 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
       profile.preferred_move_in_date,
   )
 
+  const defaultExpanded = useMemo(
+    () =>
+      renterProfileDefaultExpandedSection({
+        situation,
+        personalComplete,
+        verificationComplete,
+        routeComplete,
+        showGuarantor,
+        guarantorComplete,
+        emergencyComplete,
+      }),
+    [
+      situation,
+      personalComplete,
+      verificationComplete,
+      routeComplete,
+      showGuarantor,
+      guarantorComplete,
+      emergencyComplete,
+    ],
+  )
+
+  const [expanded, setExpanded] = useState<RenterProfileExpandKey | null>(defaultExpanded)
+  const [guarantorOpen, setGuarantorOpen] = useState(showGuarantor && !guarantorComplete)
+
+  useEffect(() => {
+    setExpanded(defaultExpanded)
+  }, [profile.user_id, defaultExpanded])
+
+  useEffect(() => {
+    if (!showGuarantor) {
+      setGuarantorOpen(false)
+      return
+    }
+    setGuarantorOpen(!guarantorComplete)
+  }, [showGuarantor, guarantorComplete, profile.user_id])
+
+  useEffect(() => {
+    const parsed = parseRenterSectionHash(location.hash)
+    if (!parsed) return
+    setExpanded(parsed.expand)
+    if (parsed.openGuarantor) setGuarantorOpen(true)
+    requestAnimationFrame(() => {
+      document.getElementById(parsed.scrollId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [location.hash, profile.user_id])
+
+  const toggleSection = (key: RenterProfileExpandKey) => {
+    setExpanded((prev) => (prev === key ? defaultExpanded : key))
+  }
+
+  const situationExpanded = situation == null || expanded === 'situation'
+
   return (
     <div className={renterStackClass}>
       {switchDialog ? (
@@ -201,6 +277,8 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         onSelect={(s) => void saveSituation(s)}
         busy={situationBusy}
         error={situationError}
+        expanded={situationExpanded}
+        onToggle={() => toggleSection('situation')}
       />
 
       <ProfileSetupSection
@@ -208,8 +286,11 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         sectionNum="01"
         icon="user"
         title="Personal details"
+        subtitle="Name, phone and basics"
         status={personalComplete ? 'done' : 'todo'}
         summary={personalDetailsSummary(profile)}
+        expanded={expanded === 'personal'}
+        onToggle={() => toggleSection('personal')}
       >
         <RenterProfilePersonalSection
           profile={profile}
@@ -224,8 +305,11 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         sectionNum="02"
         icon="verify"
         title="Verification"
+        subtitle="Photo ID and supporting document"
         status={verificationComplete ? 'done' : 'todo'}
         summary={situation ? verificationSummary(profile, situation, docUpload) : undefined}
+        expanded={expanded === 'verification'}
+        onToggle={() => toggleSection('verification')}
       >
         {situation ? (
           <RenterUniversalVerificationSection
@@ -244,43 +328,46 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
       {!situation ? <RenterProfileLockedRouteSection /> : null}
 
       {situation ? (
-        <>
-          <ProfileSetupSection
-            id="renter-section-route"
-            sectionNum={routeSectionNumber()}
-            icon={routeSectionIcon(situation)}
-            title={routeSectionTitle(situation)}
-            status={routeComplete && (!showGuarantor || guarantorComplete) ? 'done' : 'todo'}
-          >
-            {situation === 'student' ? (
-              <RenterStudentRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} docUpload={docUpload} />
-            ) : null}
-            {situation === 'working' ? (
-              <RenterWorkingRouteSection profile={profile} userId={userId} onSaved={handleRefresh} />
-            ) : null}
-            {situation === 'working_holiday' || situation === 'backpacker' ? (
-              <RenterVisaRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} />
-            ) : null}
-            {situation === 'retired' ? (
-              <RenterGeneralRouteSection profile={profile} userId={userId} situation="retired" onSaved={handleRefresh} />
-            ) : null}
-            {situation === 'between_jobs' ? (
-              <RenterGeneralRouteSection profile={profile} userId={userId} situation="between_jobs" onSaved={handleRefresh} />
-            ) : null}
+        <ProfileSetupSection
+          id="renter-section-route"
+          sectionNum={routeSectionNumber()}
+          icon={routeSectionIcon(situation)}
+          title={routeSectionTitle(situation)}
+          subtitle={routeSubtitle(situation)}
+          status={routeComplete && (!showGuarantor || guarantorComplete) ? 'done' : 'todo'}
+          expanded={expanded === 'route'}
+          onToggle={() => toggleSection('route')}
+        >
+          {situation === 'student' ? (
+            <RenterStudentRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} docUpload={docUpload} />
+          ) : null}
+          {situation === 'working' ? (
+            <RenterWorkingRouteSection profile={profile} userId={userId} onSaved={handleRefresh} />
+          ) : null}
+          {situation === 'working_holiday' || situation === 'backpacker' ? (
+            <RenterVisaRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} />
+          ) : null}
+          {situation === 'retired' ? (
+            <RenterGeneralRouteSection profile={profile} userId={userId} situation="retired" onSaved={handleRefresh} />
+          ) : null}
+          {situation === 'between_jobs' ? (
+            <RenterGeneralRouteSection profile={profile} userId={userId} situation="between_jobs" onSaved={handleRefresh} />
+          ) : null}
 
-            {showGuarantor ? (
-              <ProfileNestedSection
-                id="renter-section-guarantor"
-                icon="guarantor"
-                title="Guarantor"
-                status={guarantorComplete ? 'done' : 'todo'}
-                note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
-              >
-                <RenterGuarantorSection profile={profile} userId={userId} onSaved={handleRefresh} />
-              </ProfileNestedSection>
-            ) : null}
-          </ProfileSetupSection>
-        </>
+          {showGuarantor ? (
+            <ProfileNestedSection
+              id="renter-section-guarantor"
+              icon="guarantor"
+              title="Guarantor"
+              status={guarantorComplete ? 'done' : 'todo'}
+              note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
+              expanded={guarantorOpen}
+              onToggle={() => setGuarantorOpen((v) => !v)}
+            >
+              <RenterGuarantorSection profile={profile} userId={userId} onSaved={handleRefresh} />
+            </ProfileNestedSection>
+          ) : null}
+        </ProfileSetupSection>
       ) : null}
 
       <ProfileSetupSection
@@ -288,8 +375,11 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         sectionNum="04"
         icon="emergency"
         title="Emergency contact"
+        subtitle="Someone we can contact if needed"
         status={emergencyComplete ? 'done' : 'todo'}
         summary={emergencySummary(profile)}
+        expanded={expanded === 'emergency'}
+        onToggle={() => toggleSection('emergency')}
       >
         <RenterProfileEmergencySection profile={profile} userId={userId} onSaved={handleRefresh} />
       </ProfileSetupSection>
@@ -305,8 +395,11 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         sectionNum="05"
         icon="bio"
         title="About you"
+        subtitle="A short intro for landlords"
         status="optional"
         summary={aboutHasContent ? 'A short intro and the languages you speak' : undefined}
+        expanded={expanded === 'about'}
+        onToggle={() => toggleSection('about')}
       >
         <RenterProfileAboutSection profile={profile} userId={userId} onSaved={handleRefresh} />
       </ProfileSetupSection>
@@ -316,12 +409,15 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
         sectionNum="06"
         icon="prefs"
         title="Living preferences"
+        subtitle="Budget, room type, move-in"
         status="optional"
         summary={
           prefsHasContent
             ? 'Budget, room type, move-in and lifestyle'
             : 'Budget, room type, move-in & lifestyle — optional details'
         }
+        expanded={expanded === 'prefs'}
+        onToggle={() => toggleSection('prefs')}
       >
         <RenterProfileLivingPreferencesSection profile={profile} userId={userId} onSaved={handleRefresh} />
       </ProfileSetupSection>
