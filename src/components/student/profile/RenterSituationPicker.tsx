@@ -26,33 +26,22 @@ function situationSummary(situation: RenterSituation): string {
   return `${label} · ${route}`
 }
 
-export function RenterSituationSection({
+type PickerBodyProps = {
+  currentSituation: RenterSituation | null
+  onSelect: (situation: RenterSituation) => void
+  busy?: boolean
+  error?: string | null
+}
+
+/** Situation tiles only — used inside hub drill-in (no accordion chrome). */
+export function RenterSituationPickerBody({
   currentSituation,
   onSelect,
   busy = false,
   error,
-  expanded,
-  onToggle,
-}: Props) {
-  const status = currentSituation != null && !expanded ? 'done' : 'todo'
-  const collapsible = currentSituation != null
-
+}: PickerBodyProps) {
   return (
-    <Section
-      id="renter-section-situation"
-      icon={<ProfileSectionIcon kind="situation" />}
-      title="Your situation"
-      subtitle="So we ask for the right details"
-      status={status}
-      summary={currentSituation != null ? situationSummary(currentSituation) : undefined}
-      expanded={expanded}
-      onToggle={() => {
-        if (busy || !collapsible) return
-        onToggle()
-      }}
-      collapsible={collapsible}
-      editLabel="Edit"
-    >
+    <>
       {error ? (
         <p className={renterWriteErrorClass} role="alert">
           {error}
@@ -106,6 +95,43 @@ export function RenterSituationSection({
           Saving your choice…
         </p>
       ) : null}
+    </>
+  )
+}
+
+export function RenterSituationSection({
+  currentSituation,
+  onSelect,
+  busy = false,
+  error,
+  expanded,
+  onToggle,
+}: Props) {
+  const status = currentSituation != null && !expanded ? 'done' : 'todo'
+  const collapsible = currentSituation != null
+
+  return (
+    <Section
+      id="renter-section-situation"
+      icon={<ProfileSectionIcon kind="situation" />}
+      title="Your situation"
+      subtitle="So we ask for the right details"
+      status={status}
+      summary={currentSituation != null ? situationSummary(currentSituation) : undefined}
+      expanded={expanded}
+      onToggle={() => {
+        if (busy || !collapsible) return
+        onToggle()
+      }}
+      collapsible={collapsible}
+      editLabel="Edit"
+    >
+      <RenterSituationPickerBody
+        currentSituation={currentSituation}
+        onSelect={onSelect}
+        busy={busy}
+        error={error}
+      />
     </Section>
   )
 }
