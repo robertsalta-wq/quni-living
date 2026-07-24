@@ -58,7 +58,7 @@ describe('appShell membership', () => {
     )
     expect(appShellScrollSectionKey('/landlord/dashboard', '')).toBe('/landlord/dashboard?tab=overview')
     expect(appShellScrollSectionKey('/student-profile', '?tab=bookings')).toBe(
-      '/student-profile?tab=bookings',
+      '/student-profile?tab=profile',
     )
   })
 
