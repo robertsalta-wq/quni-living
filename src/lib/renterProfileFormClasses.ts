@@ -94,7 +94,7 @@ export const renterEmailActionsClass = 'flex flex-wrap items-center gap-3'
 
 /* ——— R4 page chrome ——— */
 
-export const renterStackClass = 'mx-auto flex max-w-[744px] flex-col gap-4'
+export const renterStackClass = 'mx-auto flex w-full max-w-[760px] flex-col gap-3'
 
 export const renterOptionalDividerClass =
   'mx-0.5 my-2 flex items-center gap-[13px] text-center text-[10.5px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]'
