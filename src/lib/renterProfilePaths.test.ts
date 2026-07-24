@@ -21,10 +21,10 @@ describe('parseRenterSectionHash', () => {
 })
 
 describe('renterProfilePath', () => {
-  it('builds student-profile hash paths', () => {
+  it('builds student-profile section query paths', () => {
     expect(renterProfilePath()).toBe('/student-profile')
-    expect(renterProfilePath('verification')).toBe('/student-profile#renter-section-verification')
-    expect(renterProfilePath('guarantor')).toBe('/student-profile#renter-section-guarantor')
+    expect(renterProfilePath('verification')).toBe('/student-profile?section=verification')
+    expect(renterProfilePath('guarantor')).toBe('/student-profile?section=route&guarantor=1')
   })
 })
 
