@@ -1,0 +1,41 @@
+---
+description: Done means on origin/main and Vercel Production — never treat Preview or a merged branch tip as shipped.
+alwaysApply: true
+---
+
+# Ship to main, not Preview
+
+## Done means
+
+A shipping task is **not done** until:
+
+1. The change is on `origin/main` (merged PR or intentional direct push to `main`), **and**
+2. Vercel shows a **Production** deploy for that merge/SHA (not only Preview Ready).
+
+`git push` to a feature branch + Preview Ready ≠ shipped.
+
+## Never
+
+- Commit or push follow-ups onto a branch whose PR is already **merged** (dead tip → Preview only; `main` does not move).
+- Stop after Preview green and call the task complete.
+- Assume an open PR absorbed a later commit without checking the PR commit list / `origin/main`.
+
+## After a merge
+
+- Delete or abandon the feature branch tip.
+- Next change: **new branch from current `main`** + new PR (or push `main` only when that is the explicit workflow for the task).
+
+## Close-the-loop check (before saying done)
+
+```text
+git fetch origin main
+git merge-base --is-ancestor <commit-or-fix> origin/main
+# and confirm Vercel Production for that main tip / merge
+```
+
+If the fix is only on `origin/<feature-branch>` and not on `origin/main`, open or update a PR into `main` — do not leave it on the branch tip.
+
+## Relation to other rules
+
+- Prefer PR → merge → Production over ad-hoc `git push origin main` when the task already uses a feature branch.
+- Still never `vercel promote` / redeploy Preview to Production — see `production-deploy-from-main-only.mdc`.
