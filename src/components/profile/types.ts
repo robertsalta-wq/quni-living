@@ -17,7 +17,8 @@ export type ReadinessDriverStep = {
 
 export type ProfileReadinessDriverProps = {
   eyebrow: string
-  title: string
+  /** Display title — string or node (e.g. renter coral %). */
+  title: ReactNode
   fraction: string
   fractionLabel: string
   steps: ReadinessDriverStep[]
@@ -25,6 +26,16 @@ export type ProfileReadinessDriverProps = {
   progress: number
   line: ReactNode
   tone?: 'default' | 'positive'
-  /** px offset for `position: sticky`; default 0. */
-  stickyTop?: number
+  /**
+   * Sticky `top` offset. Number = px; string allows CSS vars
+   * (renter: `var(--quni-fixed-header-offset, 0px)`). Default 0.
+   */
+  stickyTop?: number | string
+  /**
+   * When set, overrides step-derived completion (needed when `steps` is empty —
+   * e.g. renter S1 — so the collapse-when-complete row still works).
+   */
+  complete?: boolean
+  /** Collapsed-complete subtitle. Landlord default: listing copy. */
+  completeSubtitle?: string
 }
