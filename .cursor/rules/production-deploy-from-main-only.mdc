@@ -1,11 +1,39 @@
 ---
-description: Never promote/redeploy preview or branch builds to production; only main Git deploys. Report stuck main deploys and stop.
+description: Production from main only — done definition, branch hygiene, never promote Preview.
 alwaysApply: true
 ---
 
 # Production deploys from main only
 
 Git → Vercel production from `main` is the only allowed path. Do not work around a missing production deploy.
+
+## Definition of done + branch hygiene
+
+Canonical workflow: **PR → merge into `main` → Vercel Production**. Never direct-push to `main`.
+
+A change is **done** only when both are true:
+
+1. The PR is **merged** into `main` (not merely open or Preview-green).
+2. Vercel **Production** reflects the current `main` tip (aliases such as `quni.com.au`).
+
+Preview Ready is **not** shipped.
+
+### Branch hygiene
+
+- One change → one branch off the latest `origin/main` → one PR into `main`.
+- After a PR merges, its branch is **dead** — never add commits to it. New commits on a merged tip deploy to Preview only and never reach Production.
+- The next change always starts from a fresh branch off updated `origin/main` (`git fetch origin && git switch -c <new-branch> origin/main`).
+
+### Close-the-loop check (before calling a task done)
+
+Verify in a way that survives **squash merges**:
+
+1. Confirm the PR is merged (or `origin/main` contains the merge commit for that PR).
+2. Confirm Vercel Production’s commit SHA equals the current `origin/main` tip (or is that merge).
+
+Do **not** test ancestry of the feature-branch tip (`git merge-base --is-ancestor <branch-tip> origin/main` returns false after squash). If you check ancestry, run it against the **merge commit on `main`**, not the branch tip.
+
+If the fix exists only on a feature branch and has no merged PR into `main`, open or update a PR — do not leave it on the branch tip.
 
 ## Never
 

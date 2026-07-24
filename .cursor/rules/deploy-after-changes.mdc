@@ -1,18 +1,26 @@
 ---
-description: Ship to production via commit and push after code changes; do not run Vercel deploy from the agent.
+description: After shipping code changes, open/update a PR into main, merge, and confirm Production — never Vercel CLI deploy or direct-push main.
 alwaysApply: true
 ---
 
 # Deploy after changes
 
-When you **finish** a task that changes anything that ships to production (e.g. `src/`, `api/`, `public/`, `vercel.json`, `index.html`, `package.json` dependencies used at build time), **ship without waiting for the user to ask** (via `git push`, not a Vercel CLI deploy).
+When you **finish** a task that changes anything that ships to production (e.g. `src/`, `api/`, `public/`, `vercel.json`, `index.html`, `package.json` dependencies used at build time), **ship without waiting for the user to ask** (via PR → `main`, not a Vercel CLI deploy).
 
-1. From the project root `quni-living`:
+Definition of done, branch hygiene, and promote/redeploy bans: see `production-deploy-from-main-only.mdc`.
+
+1. From the project root `quni-living`, on a **feature branch** off current `origin/main`:
 
    ```text
    # Never run vercel deploy directly.
-   # Always: npx tsc -b --noEmit && git add -A &&
-   #         git commit -m "..." && git push origin main
+   # Never git push origin main.
+   # Always:
+   #   npx tsc -b --noEmit
+   #   git add … && git commit -m "…"
+   #   git push -u origin HEAD
+   #   open or update a PR into main
+   #   merge (or ask the user to merge if they said not to)
+   #   confirm Vercel Production reflects the new origin/main tip
    ```
 
 2. **Skip this workflow** when:
@@ -20,8 +28,10 @@ When you **finish** a task that changes anything that ships to production (e.g. 
    - Changes are limited to docs, comments-only, `.cursor/`, `supabase/*.sql` reference files, or other non-built artifacts that do not require a new deployment for the live site, or
    - You made no file changes in this turn.
 
-3. If `tsc`, commit, or push fails (not logged in to git, no network, conflicts), say what failed and what the user can do once. Do not block the rest of the answer on push success.
+   (If the user **explicitly asked** to land a docs/`.cursor` change, still use PR → merge; Production confirmation follows `production-deploy-from-main-only.mdc` when they want the close-the-loop.)
+
+3. If `tsc`, commit, push, or PR creation fails (not logged in to git, no network, conflicts), say what failed and what the user can do once. Do not block the rest of the answer on push success.
 
 4. Production updates via Vercel’s Git integration; do not run `npx vercel deploy` from the agent.
 
-5. Never `vercel promote` / `vercel redeploy` a preview or branch deployment to production. If a `main` merge did not produce a production deploy, report and stop — see `production-deploy-from-main-only.mdc`.
+5. If a `main` merge did not produce a Production deploy, report and stop — see `production-deploy-from-main-only.mdc`.
