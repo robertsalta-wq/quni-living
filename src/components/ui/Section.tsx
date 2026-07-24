@@ -1,4 +1,5 @@
 import type { SectionProps, SectionStatus, SectionTone } from './sectionTypes'
+import { dashboardEditBtnClass } from '../../lib/dashboardButtons'
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -190,7 +191,7 @@ export default function Section({
           <button
             type="button"
             onClick={onToggle}
-            className="ml-auto shrink-0 border-0 bg-transparent text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
+            className={`${dashboardEditBtnClass} ml-auto`}
           >
             {editLabel}
           </button>

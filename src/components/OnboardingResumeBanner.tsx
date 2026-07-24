@@ -2,15 +2,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { getIncompleteOnboardingDestination, needsOnboarding } from '../lib/authProfileRouting'
+import { dashboardPrimaryBtnClass } from '../lib/dashboardButtons'
 import { isOnboardingResumeExempt } from '../lib/onboardingResume'
 
 /** Inner row: dashboard column width + horizontal gutters only (no dashboard vertical pad). */
 const BANNER_CONTENT_TRACK_CLASS =
   'max-w-site mx-auto w-full min-w-0 px-3.5 sm:px-4 lg:px-8'
-
-/** Landlord dashboard primary (same as profile saveBtnClass). */
-const RESUME_BTN_CLASS =
-  'inline-flex shrink-0 items-center justify-center rounded-admin-md bg-admin-coral px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover transition-colors'
 
 /**
  * Persistent nudge for incomplete renters/landlords browsing outside onboarding.
@@ -46,7 +43,7 @@ export function OnboardingResumeBanner() {
           <span className="font-semibold text-stone-900">Finish setting up your profile</span>
           <span className="text-stone-600"> — complete onboarding to book rooms and use your dashboard.</span>
         </p>
-        <Link to={resumePath} className={RESUME_BTN_CLASS}>
+        <Link to={resumePath} className={`${dashboardPrimaryBtnClass} shrink-0`}>
           Resume
         </Link>
       </div>

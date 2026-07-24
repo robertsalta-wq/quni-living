@@ -14,6 +14,7 @@ import {
 } from '../profile'
 import LanguagesSpokenSelector from '../profile/LanguagesSpokenSelector'
 import { formatLanguagesSpoken, normalizeLanguagesSpoken, type SpokenLanguageCode } from '../../lib/languagesSpoken'
+import { dashboardPrimaryBtnClass } from '../../lib/dashboardButtons'
 import {
   buildLandlordReadinessDriverContent,
   computeLandlordReadiness,
@@ -67,8 +68,7 @@ const inputClass =
   'w-full rounded-admin-md border border-admin-line px-3 py-2.5 text-sm text-admin-ink bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:border-admin-coral'
 const labelClass = 'block text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5 mb-1.5'
 const errClass = 'text-red-600 text-xs mt-1'
-const saveBtnClass =
-  'inline-flex items-center justify-center rounded-admin-md bg-admin-coral px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:opacity-50 transition-colors'
+const saveBtnClass = dashboardPrimaryBtnClass
 
 const SAVE_WRITE_FAILURE = "Couldn't save — try again"
 

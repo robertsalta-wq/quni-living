@@ -1,3 +1,17 @@
+import {
+  dashboardDestructiveBtnClass,
+  dashboardEditBtnClass,
+  dashboardPrimaryBtnClass,
+  dashboardSecondaryBtnClass,
+} from './dashboardButtons'
+
+export {
+  dashboardDestructiveBtnClass,
+  dashboardEditBtnClass,
+  dashboardPrimaryBtnClass,
+  dashboardSecondaryBtnClass,
+}
+
 /** Shared Tailwind classes for renter profile (R3a–R4). */
 
 export const renterLabelClass =
@@ -35,8 +49,8 @@ export const renterFormActionsClass = 'col-span-full flex items-center gap-3'
 export const renterFormActionsColumnClass =
   'col-span-full flex flex-col items-stretch gap-3'
 
-export const renterSaveBtnClass =
-  'inline-flex items-center justify-center self-start whitespace-nowrap rounded-[var(--radius-md)] border-0 bg-[var(--quni-coral)] px-[18px] py-2.5 font-[inherit] text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-surface-1)] hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50'
+/** Alias of shared `dashboardPrimaryBtnClass` (+ form-row `self-start`). */
+export const renterSaveBtnClass = `${dashboardPrimaryBtnClass} self-start whitespace-nowrap`
 
 export const renterFieldGroupHeadingClass =
   'col-span-full m-0 mt-1.5 text-[length:var(--text-body-sm-size)] font-semibold leading-[1.35] tracking-[-0.01em] text-[var(--quni-ink)]'
@@ -80,8 +94,7 @@ export const renterPhotoPreviewClass =
   'h-24 w-24 shrink-0 overflow-hidden rounded-[var(--radius-pill)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]'
 
 /** Form-tied + Shell modal secondary. */
-export const renterSecondaryBtnClass =
-  'inline-flex items-center justify-center rounded-[11px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-3 font-[inherit] text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)] disabled:cursor-not-allowed disabled:opacity-50'
+export const renterSecondaryBtnClass = dashboardSecondaryBtnClass
 
 export const renterEmailBlockClass = 'flex flex-col gap-2'
 
@@ -107,8 +120,7 @@ export const renterIconWrapClass =
 export const renterIconWrapLgClass =
   'flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[var(--radius-md)]'
 
-export const renterEditBtnClass =
-  'inline-flex shrink-0 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-1 py-1.5 font-[inherit] text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)]'
+export const renterEditBtnClass = dashboardEditBtnClass
 
 export const renterVerifyPillClass =
   'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-pill)] px-[11px] py-1.5 text-[11px] font-semibold tracking-[0.01em]'
