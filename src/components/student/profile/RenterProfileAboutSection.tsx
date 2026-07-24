@@ -15,6 +15,7 @@ import {
   renterTextareaClass,
   renterWriteErrorClass,
 } from '../../../lib/renterProfileFormClasses'
+import type { RenterSectionChromeActionsProps } from './renterSectionChromeActions'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -22,7 +23,7 @@ type Props = {
   profile: StudentRow
   userId: string
   onSaved: () => Promise<void>
-}
+} & RenterSectionChromeActionsProps
 
 type AboutDraft = { bio: string; languagesSpoken: SpokenLanguageCode[] }
 
@@ -33,7 +34,13 @@ function fieldsFromProfile(prof: StudentRow): AboutDraft {
   }
 }
 
-export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
+export function RenterProfileAboutSection({
+  profile,
+  userId,
+  onSaved,
+  actionsInChrome = false,
+  onSaveAttemptEnd,
+}: Props) {
   const { restoreDraft, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, 'about')
   const [bio, setBio] = useState(profile.bio ?? '')
@@ -81,8 +88,10 @@ export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
       setBaseline(savedFields)
       setSavedFlash(true)
       await onSaved()
+      onSaveAttemptEnd?.(true)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Could not save.')
+      onSaveAttemptEnd?.(false)
     } finally {
       setSaving(false)
     }
@@ -123,9 +132,11 @@ export function RenterProfileAboutSection({ profile, userId, onSaved }: Props) {
         </p>
       ) : null}
       <div className={renterFormActionsColumnClass}>
-        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
-          {saving ? 'Saving…' : 'Save section'}
-        </button>
+        {!actionsInChrome ? (
+          <button type="submit" disabled={saving} className={renterSaveBtnClass}>
+            {saving ? 'Saving…' : 'Save section'}
+          </button>
+        ) : null}
       </div>
     </form>
   )

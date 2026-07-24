@@ -27,6 +27,7 @@ import {
   renterSelectClass,
   renterSuccessFlashClass,
 } from '../../../lib/renterProfileFormClasses'
+import type { RenterSectionChromeActionsProps } from './renterSectionChromeActions'
 
 const GENERAL_ROUTE_HINT_LABELS = {
   incomeBand: 'weekly income band',
@@ -56,7 +57,7 @@ type Props = {
   userId: string
   situation: Extract<RenterSituation, 'retired' | 'between_jobs'>
   onSaved: () => Promise<void>
-}
+} & RenterSectionChromeActionsProps
 
 type GeneralRouteDraft = { incomeBand: string; incomeSource: string }
 
@@ -71,7 +72,14 @@ function incomeSourceOptions(situation: Props['situation']) {
   return situation === 'retired' ? RETIRED_INCOME_SOURCE_OPTIONS : BETWEEN_JOBS_INCOME_SOURCE_OPTIONS
 }
 
-export function RenterGeneralRouteSection({ profile, userId, situation, onSaved }: Props) {
+export function RenterGeneralRouteSection({
+  profile,
+  userId,
+  situation,
+  onSaved,
+  actionsInChrome = false,
+  onSaveAttemptEnd,
+}: Props) {
   const draftKey = situation === 'retired' ? 'general-route-retired' : 'general-route-between'
   const { restoreDraft, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, draftKey)
@@ -116,6 +124,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
     const errors = generalRouteSectionFieldErrors({ incomeBand, incomeSource })
     if (Object.keys(errors).length > 0) {
       applyValidationErrors(errors)
+      onSaveAttemptEnd?.(false)
       return
     }
 
@@ -138,8 +147,10 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
       clearDraft()
       setBaseline(savedFields)
       await onSaved()
+      onSaveAttemptEnd?.(true)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
+      onSaveAttemptEnd?.(false)
     } finally {
       setSaving(false)
     }
@@ -203,9 +214,11 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
 
       <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
-          {saving ? 'Saving…' : 'Save section'}
-        </button>
+        {!actionsInChrome ? (
+          <button type="submit" disabled={saving} className={renterSaveBtnClass}>
+            {saving ? 'Saving…' : 'Save section'}
+          </button>
+        ) : null}
       </div>
 
       {routeComplete ? (

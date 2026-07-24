@@ -38,4 +38,8 @@ export type ProfileReadinessDriverProps = {
   complete?: boolean
   /** Collapsed-complete subtitle. Landlord default: listing copy. */
   completeSubtitle?: string
+  /** Collapsed-incomplete title. Default: Finish your profile. */
+  incompleteTitle?: string
+  /** Collapsed-incomplete subtitle — next required action. */
+  incompleteSubtitle?: string
 }

@@ -3,6 +3,7 @@ import { ProfileReadinessDriver } from '../../profile'
 import { landlordDashboardProfilePath } from '../../../lib/landlordDashboardProfilePaths'
 import {
   buildLandlordReadinessDriverContent,
+  landlordIncompleteSubtitle,
   type LandlordReadiness,
 } from '../../../lib/landlordProfileReadiness'
 import type { LandlordListingBillingSnapshot } from '../../../lib/landlordListingBilling'
@@ -99,6 +100,8 @@ export default function LandlordProfileHub({
               progress={driverContent.progress}
               tone={driverContent.tone}
               line={driverLine}
+              incompleteTitle="Finish your profile"
+              incompleteSubtitle={landlordIncompleteSubtitle(readiness)}
             />
           </div>
         )}

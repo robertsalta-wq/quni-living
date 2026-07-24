@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ReadinessProgressBar from './ReadinessProgressBar'
 import type { ProfileReadinessDriverProps, ReadinessDriverStep } from './types'
 
-/** Serif display line — Playfair via app `font-display` token. */
+/** Serif display line — Playfair via app `font-display` token (expanded incomplete only). */
 const DRIVER_TITLE_CLASS =
   'font-display text-[28px] font-bold leading-[1.12] tracking-[-0.02em] text-balance text-admin-ink'
 
@@ -12,6 +12,9 @@ const COMPLETE_CARD_CLASS = 'quni-card sticky z-[5] mb-4 border-admin-success/35
 
 const COMPLETE_CARD_COLLAPSED_CLASS =
   'quni-card sticky z-[5] mb-4 border-admin-success/35 bg-admin-success-bg'
+
+const INCOMPLETE_CARD_COLLAPSED_CLASS =
+  'quni-card sticky z-[5] mb-4 border-admin-warning/40 bg-admin-warning-bg'
 
 function clampProgress(progress: number): number {
   if (!Number.isFinite(progress)) return 0
@@ -70,10 +73,31 @@ function CheckGlyph({ className }: { className?: string }) {
   )
 }
 
-function ChevronGlyph({ expanded }: { expanded: boolean }) {
+function LockGlyph({ className }: { className?: string }) {
   return (
     <svg
-      className={`h-[18px] w-[18px] shrink-0 stroke-admin-success-fg transition-transform duration-200 ${
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
+}
+
+function ChevronGlyph({ expanded, tone }: { expanded: boolean; tone: 'success' | 'warning' }) {
+  const stroke = tone === 'success' ? 'stroke-admin-success-fg' : 'stroke-admin-warning-fg'
+  return (
+    <svg
+      className={`h-[18px] w-[18px] shrink-0 transition-transform duration-200 ${stroke} ${
         expanded ? 'rotate-180' : ''
       }`}
       viewBox="0 0 24 24"
@@ -101,6 +125,8 @@ export default function ProfileReadinessDriver({
   stickyTop = 0,
   complete,
   completeSubtitle = 'Listing & bookings enabled',
+  incompleteTitle = 'Finish your profile',
+  incompleteSubtitle = 'Complete required sections',
 }: ProfileReadinessDriverProps) {
   const barWidth = Math.round(clampProgress(progress) * 100)
   const allComplete =
@@ -142,6 +168,27 @@ export default function ProfileReadinessDriver({
 
   const progressBlock = <ReadinessProgressBar value={barWidth} className="my-3.5" />
 
+  const detailPanel = (
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+            {eyebrow}
+          </p>
+          {!allComplete ? <p className={`${DRIVER_TITLE_CLASS} mt-[5px] mb-0`}>{title}</p> : null}
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="m-0 text-[19px] font-bold tabular-nums text-admin-ink">{fraction}</p>
+          <p className="mt-0.5 max-w-[120px] text-[11px] text-admin-ink-5">{fractionLabel}</p>
+        </div>
+      </div>
+
+      {stepsBlock}
+      {progressBlock}
+      {line ? <div className={lineClass}>{line}</div> : null}
+    </>
+  )
+
   if (allComplete) {
     return (
       <div
@@ -167,7 +214,7 @@ export default function ProfileReadinessDriver({
             <span className="block text-[15px] font-semibold text-admin-success-fg">{title}</span>
             <span className="mt-0.5 block text-[12.5px] text-admin-ink-4">{completeSubtitle}</span>
           </span>
-          <ChevronGlyph expanded={expanded} />
+          <ChevronGlyph expanded={expanded} tone="success" />
         </button>
 
         {expanded ? (
@@ -175,21 +222,7 @@ export default function ProfileReadinessDriver({
             id="profile-readiness-complete-panel"
             className="border-t border-admin-success/25 px-[22px] pb-5 pt-4"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                  {eyebrow}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="m-0 text-[19px] font-bold tabular-nums text-admin-ink">{fraction}</p>
-                <p className="mt-0.5 max-w-[120px] text-[11px] text-admin-ink-5">{fractionLabel}</p>
-              </div>
-            </div>
-
-            {stepsBlock}
-            {progressBlock}
-            {line ? <div className={lineClass}>{line}</div> : null}
+            {detailPanel}
           </div>
         ) : null}
       </div>
@@ -197,23 +230,39 @@ export default function ProfileReadinessDriver({
   }
 
   return (
-    <div className={`${CARD_CLASS} px-[22px] py-5`} style={{ top: stickyTop }} role="status">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-            {eyebrow}
-          </p>
-          <p className={`${DRIVER_TITLE_CLASS} mt-[5px] mb-0`}>{title}</p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="m-0 text-[19px] font-bold tabular-nums text-admin-ink">{fraction}</p>
-          <p className="mt-0.5 max-w-[120px] text-[11px] text-admin-ink-5">{fractionLabel}</p>
-        </div>
-      </div>
+    <div
+      className={expanded ? CARD_CLASS : INCOMPLETE_CARD_COLLAPSED_CLASS}
+      style={{ top: stickyTop }}
+      role="status"
+    >
+      <button
+        type="button"
+        className={[
+          'flex w-full cursor-pointer items-center gap-3 border-0 text-left',
+          expanded ? 'bg-white px-[22px] py-3.5' : 'bg-transparent px-[22px] py-3.5',
+        ].join(' ')}
+        aria-expanded={expanded}
+        aria-controls="profile-readiness-incomplete-panel"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-admin-warning text-white">
+          <LockGlyph />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-admin-warning-fg">{incompleteTitle}</span>
+          <span className="mt-0.5 block text-[12.5px] text-admin-warning-fg/85">{incompleteSubtitle}</span>
+        </span>
+        <ChevronGlyph expanded={expanded} tone="warning" />
+      </button>
 
-      {stepsBlock}
-      {progressBlock}
-      {line ? <div className={lineClass}>{line}</div> : null}
+      {expanded ? (
+        <div
+          id="profile-readiness-incomplete-panel"
+          className="border-t border-admin-warning/25 px-[22px] pb-5 pt-4"
+        >
+          {detailPanel}
+        </div>
+      ) : null}
     </div>
   )
 }

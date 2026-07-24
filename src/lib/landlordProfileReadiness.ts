@@ -277,6 +277,19 @@ export function buildLandlordReadinessDriverContent(
   }
 }
 
+/** Compact incomplete banner subtitle — next required action. */
+export function landlordIncompleteSubtitle(readiness: LandlordReadiness): string {
+  if (!readiness.publish.complete) {
+    const key = readiness.publish.missing[0]
+    if (key) return `Add ${LANDLORD_PUBLISH_SECTION_LABELS[key].toLowerCase()}`
+    return 'Complete required sections'
+  }
+  if (!readiness.accept.complete) {
+    return 'Finish payouts & identity to accept bookings'
+  }
+  return 'Complete required sections'
+}
+
 export function landlordProfileDefaultExpandedSection(
   readiness: LandlordReadiness,
 ): LandlordPublishSectionKey | 'payouts' | null {

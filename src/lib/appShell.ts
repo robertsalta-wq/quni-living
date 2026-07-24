@@ -4,6 +4,7 @@
  */
 import type { UserRole } from './authProfile'
 import { isRenterRole } from './authProfile'
+import { isRenterProfileExpandKey } from './renterProfilePaths'
 import type { UserDashboardSection } from './userDashboardNav'
 
 /**
@@ -76,9 +77,18 @@ export function isLandlordProfileSectionEditPath(pathname: string, search = ''):
 }
 
 /**
+ * Mobile renter Profile section drill-in (`/student-profile?section=…`) → page-actions.
+ */
+export function isRenterProfileSectionEditPath(pathname: string, search = ''): boolean {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  if (p !== '/student-profile' && p !== '/student/profile') return false
+  return isRenterProfileExpandKey(new URLSearchParams(search).get('section'))
+}
+
+/**
  * Mobile action bar contents — independent of the header.
  * Landlord listing edit (hub + drill-ins) → page-actions.
- * Landlord Profile section drill-in → page-actions.
+ * Landlord / renter Profile section drill-in → page-actions.
  * Booking review stays `nav` this PR (inline actions unchanged).
  * Renter apply stays `nav` this PR.
  */
@@ -94,6 +104,9 @@ export function appChromeBarContents(
     return 'page-actions'
   }
   if ((role === 'landlord' || role === 'admin') && isLandlordProfileSectionEditPath(pathname, search)) {
+    return 'page-actions'
+  }
+  if (isRenterRole(role) && isRenterProfileSectionEditPath(pathname, search)) {
     return 'page-actions'
   }
   return 'nav'

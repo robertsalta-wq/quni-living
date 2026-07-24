@@ -17,6 +17,7 @@ import { formatLanguagesSpoken, normalizeLanguagesSpoken, type SpokenLanguageCod
 import { dashboardPrimaryBtnClass } from '../../lib/dashboardButtons'
 import {
   buildLandlordReadinessDriverContent,
+  landlordIncompleteSubtitle,
   computeLandlordReadiness,
   isLandlordAboutSectionComplete,
   isLandlordAddressSectionComplete,
@@ -735,6 +736,8 @@ function LandlordDesktopProfileTab({
         progress={driverContent.progress}
         tone={driverContent.tone}
         line={driverLine}
+        incompleteTitle="Finish your profile"
+        incompleteSubtitle={landlordIncompleteSubtitle(readiness)}
       />
 
       {sectionError ? (

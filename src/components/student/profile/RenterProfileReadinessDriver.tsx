@@ -44,6 +44,8 @@ export function RenterProfileReadinessDriver({
       progress={pct / 100}
       complete={complete}
       completeSubtitle="Ready to apply"
+      incompleteTitle="Finish your profile"
+      incompleteSubtitle={driverText}
       stickyTop={STICKY_TOP}
       tone={complete ? 'positive' : 'default'}
       line={
