@@ -18,12 +18,8 @@ type Props = {
 export const renterDashboardPageInsetClass = dashboardPageInsetClass
 
 export default function RenterDashboardPageHeader({ activeTab: _activeTab, onTabSelect: _onTabSelect }: Props) {
-  // Section strip lives in AppHeader (Map mode, desktop tabs); page keeps title only.
-  return (
-    <h1 className="mb-4 hidden text-[28px] font-bold leading-tight tracking-tight text-[var(--quni-ink)] sm:block">
-      Dashboard
-    </h1>
-  )
+  // Section strip + wordmark live in AppHeader; no body page title (matches landlord).
+  return null
 }
 
 type RenterDashboardTabShellProps = {
