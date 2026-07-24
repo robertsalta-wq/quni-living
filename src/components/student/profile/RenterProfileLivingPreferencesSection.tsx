@@ -26,6 +26,7 @@ import {
   renterSelectClass,
   renterSuccessFlashClass,
 } from '../../../lib/renterProfileFormClasses'
+import type { RenterSectionChromeActionsProps } from './renterSectionChromeActions'
 
 const LIVING_PREFS_HINT_LABELS = {
   budgetMin: 'budget minimum',
@@ -68,7 +69,7 @@ type Props = {
   profile: StudentRow
   userId: string
   onSaved: () => Promise<void>
-}
+} & RenterSectionChromeActionsProps
 
 type LivingPrefsDraft = {
   roomPref: string
@@ -102,7 +103,13 @@ function fieldsFromProfile(prof: StudentRow): LivingPrefsDraft {
   }
 }
 
-export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved }: Props) {
+export function RenterProfileLivingPreferencesSection({
+  profile,
+  userId,
+  onSaved,
+  actionsInChrome = false,
+  onSaveAttemptEnd,
+}: Props) {
   const { restoreDraft, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, 'living-prefs')
   const [roomPref, setRoomPref] = useState(profile.room_type_preference ?? '')
@@ -193,6 +200,7 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
     const errors = livingPreferencesSectionFieldErrors({ budgetMin, budgetMax })
     if (Object.keys(errors).length > 0) {
       applyValidationErrors(errors)
+      onSaveAttemptEnd?.(false)
       return
     }
 
@@ -241,8 +249,10 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
       setBaseline(savedFields)
       setSavedFlash(true)
       await onSaved()
+      onSaveAttemptEnd?.(true)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
+      onSaveAttemptEnd?.(false)
     } finally {
       setSaving(false)
     }
@@ -390,9 +400,11 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
       <RenterProfileWriteError message={saveError} />
       <div className={renterFormActionsColumnClass}>
         <RenterProfileSaveHint message={sectionSaveHint} />
-        <button type="submit" disabled={saving} className={renterSaveBtnClass}>
-          {saving ? 'Saving…' : 'Save section'}
-        </button>
+        {!actionsInChrome ? (
+          <button type="submit" disabled={saving} className={renterSaveBtnClass}>
+            {saving ? 'Saving…' : 'Save section'}
+          </button>
+        ) : null}
       </div>
     </form>
   )

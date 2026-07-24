@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import { useRenterSituationSave } from '../../../hooks/useRenterSituationSave'
@@ -30,6 +31,8 @@ import {
   renterProfilePath,
   type RenterProfileExpandKey,
 } from '../../../lib/renterProfilePaths'
+import { listingSectionDrillInActionBarItemSpecs } from '../../../lib/appChromeBarItems'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ProfileSetupSection, ProfileNestedSection } from './ProfileSetupSection'
 import { RenterSituationSection, RenterSituationPickerBody } from './RenterSituationPicker'
 import { RenterProfilePersonalSection } from './RenterProfilePersonalSection'
@@ -134,6 +137,40 @@ export function RenterProfileSetup({
   const [searchParams] = useSearchParams()
   const situation = profile.renter_situation ?? null
   const readiness = computeRenterReadiness(profile)
+
+  const sectionParam = searchParams.get('section')
+  const hubSection: RenterProfileHubSectionId | null =
+    variant === 'hub' && isRenterProfileHubSectionId(sectionParam) ? sectionParam : null
+  const drillRef = useRef<HTMLDivElement>(null)
+  const [chromeSaving, setChromeSaving] = useState(false)
+
+  const handleChromeSaveAttemptEnd = useCallback(
+    (ok: boolean) => {
+      setChromeSaving(false)
+      if (ok) navigate(renterProfilePath())
+    },
+    [navigate],
+  )
+
+  const handleDrillInBarSave = useCallback(() => {
+    if (!hubSection) return
+    if (hubSection === 'situation' || hubSection === 'verification') {
+      navigate(renterProfilePath())
+      return
+    }
+    const form = drillRef.current?.querySelector('form')
+    if (!form) {
+      navigate(renterProfilePath())
+      return
+    }
+    setChromeSaving(true)
+    form.requestSubmit()
+  }, [hubSection, navigate])
+
+  useEffect(() => {
+    setChromeSaving(false)
+  }, [hubSection])
+
   const [switchDialog, setSwitchDialog] = useState<{
     from: RenterSituation
     to: RenterSituation
@@ -170,6 +207,21 @@ export function RenterProfileSetup({
     onAfterSave: handleRefresh,
     onConfirmSwitch,
   })
+
+  const chromeActionItems: AppActionBarItem[] | null = useMemo(() => {
+    if (!hubSection) return null
+    return listingSectionDrillInActionBarItemSpecs({
+      saving: chromeSaving || situationBusy,
+    }).map((spec) => ({
+      ...spec,
+      icon: spec.primary ? Check : X,
+      ...(spec.id === 'cancel'
+        ? { to: renterProfilePath() }
+        : { onClick: () => void handleDrillInBarSave() }),
+    }))
+  }, [hubSection, chromeSaving, situationBusy, handleDrillInBarSave])
+
+  useSetAppChromeActions(chromeActionItems)
 
   useEffect(() => {
     const next = tierToSync(profile)
@@ -331,46 +383,83 @@ export function RenterProfileSetup({
     />
   ) : null
 
-  const routeBody = situation ? (
-    <>
-      {situation === 'student' ? (
-        <RenterStudentRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} docUpload={docUpload} />
-      ) : null}
-      {situation === 'working' ? (
-        <RenterWorkingRouteSection profile={profile} userId={userId} onSaved={handleRefresh} />
-      ) : null}
-      {situation === 'working_holiday' || situation === 'backpacker' ? (
-        <RenterVisaRouteSection profile={profile} userId={userId} onRefresh={handleRefresh} />
-      ) : null}
-      {situation === 'retired' ? (
-        <RenterGeneralRouteSection profile={profile} userId={userId} situation="retired" onSaved={handleRefresh} />
-      ) : null}
-      {situation === 'between_jobs' ? (
-        <RenterGeneralRouteSection profile={profile} userId={userId} situation="between_jobs" onSaved={handleRefresh} />
-      ) : null}
+  const buildRouteBody = (chrome: boolean) =>
+    situation ? (
+      <>
+        {situation === 'student' ? (
+          <RenterStudentRouteSection
+            profile={profile}
+            userId={userId}
+            onRefresh={handleRefresh}
+            docUpload={docUpload}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+          />
+        ) : null}
+        {situation === 'working' ? (
+          <RenterWorkingRouteSection
+            profile={profile}
+            userId={userId}
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+          />
+        ) : null}
+        {situation === 'working_holiday' || situation === 'backpacker' ? (
+          <RenterVisaRouteSection
+            profile={profile}
+            userId={userId}
+            onRefresh={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+          />
+        ) : null}
+        {situation === 'retired' ? (
+          <RenterGeneralRouteSection
+            profile={profile}
+            userId={userId}
+            situation="retired"
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+          />
+        ) : null}
+        {situation === 'between_jobs' ? (
+          <RenterGeneralRouteSection
+            profile={profile}
+            userId={userId}
+            situation="between_jobs"
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+          />
+        ) : null}
 
-      {showGuarantor ? (
-        <ProfileNestedSection
-          id="renter-section-guarantor"
-          icon="guarantor"
-          title="Guarantor"
-          status={guarantorComplete ? 'done' : 'todo'}
-          note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
-          expanded={guarantorOpen}
-          onToggle={() => setGuarantorOpen((v) => !v)}
-        >
-          <RenterGuarantorSection profile={profile} userId={userId} onSaved={handleRefresh} />
-        </ProfileNestedSection>
-      ) : null}
-    </>
-  ) : null
+        {showGuarantor ? (
+          <ProfileNestedSection
+            id="renter-section-guarantor"
+            icon="guarantor"
+            title="Guarantor"
+            status={guarantorComplete ? 'done' : 'todo'}
+            note="Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can't."
+            expanded={guarantorOpen}
+            onToggle={() => setGuarantorOpen((v) => !v)}
+          >
+            <RenterGuarantorSection
+              profile={profile}
+              userId={userId}
+              onSaved={handleRefresh}
+              actionsInChrome={chrome}
+              onSaveAttemptEnd={chrome ? handleChromeSaveAttemptEnd : undefined}
+            />
+          </ProfileNestedSection>
+        ) : null}
+      </>
+    ) : null
+
+  const routeBody = buildRouteBody(false)
 
   if (variant === 'hub') {
-    const sectionParam = searchParams.get('section')
-    const hubSection: RenterProfileHubSectionId | null = isRenterProfileHubSectionId(sectionParam)
-      ? sectionParam
-      : null
-
     if (!hubSection) {
       return (
         <div className={renterStackClass}>
@@ -391,6 +480,7 @@ export function RenterProfileSetup({
 
     const drillTitle = renterProfileHubTitle(hubSection, situation)
     const drillIcon = renterProfileHubIcon(hubSection, situation)
+    const chrome = true
 
     let drillBody: ReactNode = null
     switch (hubSection) {
@@ -411,6 +501,8 @@ export function RenterProfileSetup({
             userId={userId}
             displayEmail={displayEmail}
             onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={handleChromeSaveAttemptEnd}
           />
         )
         break
@@ -430,7 +522,7 @@ export function RenterProfileSetup({
         break
       case 'route':
         drillBody = situation ? (
-          routeBody
+          buildRouteBody(true)
         ) : (
           <p style={{ fontSize: 13, color: 'var(--quni-ink-4)' }}>
             Choose your situation first to unlock route details.
@@ -438,14 +530,36 @@ export function RenterProfileSetup({
         )
         break
       case 'emergency':
-        drillBody = <RenterProfileEmergencySection profile={profile} userId={userId} onSaved={handleRefresh} />
+        drillBody = (
+          <RenterProfileEmergencySection
+            profile={profile}
+            userId={userId}
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={handleChromeSaveAttemptEnd}
+          />
+        )
         break
       case 'about':
-        drillBody = <RenterProfileAboutSection profile={profile} userId={userId} onSaved={handleRefresh} />
+        drillBody = (
+          <RenterProfileAboutSection
+            profile={profile}
+            userId={userId}
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={handleChromeSaveAttemptEnd}
+          />
+        )
         break
       case 'prefs':
         drillBody = (
-          <RenterProfileLivingPreferencesSection profile={profile} userId={userId} onSaved={handleRefresh} />
+          <RenterProfileLivingPreferencesSection
+            profile={profile}
+            userId={userId}
+            onSaved={handleRefresh}
+            actionsInChrome={chrome}
+            onSaveAttemptEnd={handleChromeSaveAttemptEnd}
+          />
         )
         break
     }
@@ -453,9 +567,11 @@ export function RenterProfileSetup({
     return (
       <div className={renterStackClass}>
         {switchDialogNode}
-        <RenterProfileDrillInShell title={drillTitle} icon={drillIcon}>
-          {drillBody}
-        </RenterProfileDrillInShell>
+        <div ref={drillRef}>
+          <RenterProfileDrillInShell title={drillTitle} icon={drillIcon}>
+            {drillBody}
+          </RenterProfileDrillInShell>
+        </div>
       </div>
     )
   }

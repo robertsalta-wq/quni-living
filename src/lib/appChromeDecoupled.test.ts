@@ -44,6 +44,13 @@ describe('decoupled chrome — header vs bar are independent', () => {
     )
   })
 
+  it('renter profile hub: nav bar; section drill-in: page-actions', () => {
+    const path = '/student-profile'
+    expect(appChromeBarContents(path, 'renter', true)).toBe('nav')
+    expect(appChromeBarContents(path, 'renter', true, '?section=personal')).toBe('page-actions')
+    expect(appChromeBarContents(path, 'renter', false, '?section=personal')).toBe('none')
+  })
+
   it('landlord booking review: dashboard header + nav (deferred page-actions)', () => {
     const path = '/landlord/bookings/b1/review'
     expect(appChromeHeaderInner(path, 'landlord', true)).toBe('dashboard')

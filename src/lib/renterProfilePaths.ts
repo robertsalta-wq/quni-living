@@ -38,6 +38,17 @@ export function renterProfilePath(section?: RenterProfileExpandKey | 'guarantor'
   return `/student-profile?section=${section}`
 }
 
+export function isRenterProfileExpandKey(
+  value: string | null | undefined,
+): value is RenterProfileExpandKey {
+  return Boolean(
+    value &&
+      (['situation', 'personal', 'verification', 'route', 'emergency', 'about', 'prefs'] as const).includes(
+        value as RenterProfileExpandKey,
+      ),
+  )
+}
+
 export function parseRenterSectionHash(hash: string): ParsedRenterSectionHash | null {
   const h = hash.replace(/^#/, '').trim()
   return HASH_MAP[h] ?? null

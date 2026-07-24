@@ -37,6 +37,7 @@ import {
   renterSelectClass,
   renterSuccessFlashClass,
 } from '../../../lib/renterProfileFormClasses'
+import type { RenterSectionChromeActionsProps } from './renterSectionChromeActions'
 
 const WORKING_ROUTE_HINT_LABELS = {
   employmentStatus: 'employment status',
@@ -71,7 +72,7 @@ type Props = {
   profile: StudentRow
   userId: string
   onSaved: () => Promise<void>
-}
+} & RenterSectionChromeActionsProps
 
 type WorkingRouteDraft = {
   employmentStatus: string
@@ -101,7 +102,13 @@ function fieldsFromProfile(prof: StudentRow): WorkingRouteDraft {
   }
 }
 
-export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
+export function RenterWorkingRouteSection({
+  profile,
+  userId,
+  onSaved,
+  actionsInChrome = false,
+  onSaveAttemptEnd,
+}: Props) {
   const { restoreDraft, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, 'working-route')
   const [employmentStatus, setEmploymentStatus] = useState(profile.employment_status ?? '')
@@ -195,6 +202,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
     )
     if (Object.keys(errors).length > 0) {
       applyValidationErrors(errors)
+      onSaveAttemptEnd?.(false)
       return
     }
 
@@ -225,6 +233,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
         })
         if (queries.length === 0) {
           setSaveError('Enter a valid Australian suburb, state and postcode.')
+          onSaveAttemptEnd?.(false)
           return
         }
 
@@ -249,6 +258,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           } else {
             setSaveError(workplaceError.message)
           }
+          onSaveAttemptEnd?.(false)
           return
         }
 
@@ -274,8 +284,10 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
       clearDraft()
       setBaseline(savedFields)
       await onSaved()
+      onSaveAttemptEnd?.(true)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
+      onSaveAttemptEnd?.(false)
     } finally {
       setSaving(false)
     }
@@ -500,9 +512,11 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
 
         <div className={renterFormActionsColumnClass}>
           <RenterProfileSaveHint message={sectionSaveHint} />
-          <button type="submit" disabled={saving} className={renterSaveBtnClass}>
-            {saving ? 'Saving…' : 'Save section'}
-          </button>
+          {!actionsInChrome ? (
+            <button type="submit" disabled={saving} className={renterSaveBtnClass}>
+              {saving ? 'Saving…' : 'Save section'}
+            </button>
+          ) : null}
         </div>
       </form>
 
