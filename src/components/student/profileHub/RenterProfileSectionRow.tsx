@@ -23,11 +23,9 @@ export default function RenterProfileSectionRow({
 }: Props) {
   const multiLine = subtitleLines.length > 1
   const className = [
-    'flex w-full gap-2.5 rounded-[13px] border border-[var(--quni-line)] bg-white px-[11px] py-[7px] text-left shadow-[0_1px_2px_rgba(8,6,13,0.04)] transition-colors',
+    'flex w-full gap-2.5 rounded-[13px] border border-[var(--quni-line)] bg-white px-[11px] py-[7px] text-left shadow-[0_1px_2px_rgba(8,6,13,0.04)] transition-colors hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
     multiLine ? 'items-start' : 'items-center',
-    disabled
-      ? 'cursor-not-allowed opacity-60'
-      : 'hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
+    disabled ? 'pointer-events-none cursor-not-allowed opacity-60' : '',
   ].join(' ')
 
   const body = (
