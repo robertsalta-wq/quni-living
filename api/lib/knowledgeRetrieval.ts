@@ -18,7 +18,10 @@ function formatChunks(rows: MatchRow[]): string {
   const parts: string[] = []
   for (const row of rows) {
     const meta = [row.category, row.state ? row.state : 'national/platform'].filter(Boolean).join(' · ')
-    parts.push(`### ${row.title} (${meta})\n${row.content.trim()}`)
+    // knowledge_base has no source/citation column — surface that so the model cannot invent one.
+    const attribution =
+      'Attribution metadata: none (knowledge_base has no source URL, effective/last-checked date, or verified flag). Do not invent a citation from this row.'
+    parts.push(`### ${row.title} (${meta})\n${attribution}\n${row.content.trim()}`)
   }
   return parts.join('\n\n')
 }
