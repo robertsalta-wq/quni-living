@@ -20,6 +20,7 @@ export default async function middleware(request: Request): Promise<Response> {
   if (
     pathname === '/sitemap.xml' ||
     pathname === '/robots.txt' ||
+    pathname === '/llms.txt' ||
     pathname.startsWith('/api/') ||
     isStaticAssetPath(pathname)
   ) {

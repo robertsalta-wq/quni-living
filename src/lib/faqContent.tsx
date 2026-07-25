@@ -7,7 +7,13 @@ import {
   BOND_FAQ_NO_BOND_REQUIRED,
 } from './bondPublicCopy'
 
-export type FaqItem = { id: string; question: string; answer: ReactNode }
+export type FaqItem = {
+  id: string
+  question: string
+  answer: ReactNode
+  /** Plain text for FAQPage JSON-LD when `answer` is not a string. */
+  answerText?: string
+}
 export type FaqSection = { id: string; label: string; items: FaqItem[] }
 
 const pricingLink = (
@@ -110,6 +116,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'students-data-residency',
         question: 'Where is my data stored if I am studying in Australia from overseas?',
+        answerText:
+          'Your account, verification documents, and tenancy records are stored on Australian infrastructure. See /international for how Australian law applies.',
         answer: (
           <>
             Your account, verification documents, and tenancy records are stored on Australian infrastructure.
@@ -126,6 +134,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'verification-docs',
         question: 'What documents do I need to verify?',
+        answerText:
+          'It depends whether you are a student, working tenant, or landlord — see /verification for the full step-by-step list.',
         answer: (
           <>
             It depends whether you are a student, working tenant, or landlord — see our {verificationLink} for the
@@ -136,6 +146,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'verification-time',
         question: 'How long does verification take?',
+        answerText:
+          'Most verifications are reviewed within one to two business days. See /verification for what each path involves.',
         answer: (
           <>
             Most verifications are reviewed within one to two business days. See our {verificationLink} for what each
@@ -146,6 +158,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'verification-cost',
         question: 'What does verification cost?',
+        answerText:
+          'Verification is free for renters. See /verification for what landlords set up on Quni Listing.',
         answer: (
           <>
             Verification is free for renters. See our {verificationLink} for what landlords set up on Quni Listing.
@@ -155,6 +169,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'verification-listings',
         question: 'Which listings can I see after verifying?',
+        answerText:
+          'Student and non-student paths unlock different listings once verified. See /verification for how each path works.',
         answer: (
           <>
             Student and non-student paths unlock different listings once verified. See our {verificationLink} for how
@@ -171,6 +187,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'landlords-fees',
         question: 'How much does Quni charge landlords?',
+        answerText:
+          'Landlords choose Quni Listing (flat fee per accepted booking) or Quni Managed (percentage of weekly rent while active). There are no listing charges until a booking is accepted. Current amounts are on /pricing.',
         answer: (
           <>
             Landlords choose <strong>Quni Listing</strong> (flat fee per accepted booking) or <strong>Quni Managed</strong>{' '}
@@ -182,6 +200,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'landlords-list-first',
         question: 'How do I list my first property?',
+        answerText:
+          'Create a landlord account via landlord onboarding, then add your property from the landlord dashboard. See /how-it-works for the full flow.',
         answer: (
           <>
             Create a landlord account via{' '}
@@ -229,6 +249,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'landlords-portfolio',
         question: 'I have a portfolio or university partnership - where do I start?',
+        answerText:
+          'See /services/landlord-partnerships for bulk placements and managed portfolios, or use subject Partnership on our /contact form.',
         answer: (
           <>
             See {partnershipsLink} for bulk placements and managed portfolios, or use subject{' '}
@@ -251,6 +273,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'money-listing-fee',
         question: 'What does a landlord pay on Quni Listing?',
+        answerText:
+          'A flat acceptance fee per accepted booking (current amount on /pricing; fees may change with notice). Renters do not pay this fee.',
         answer: (
           <>
             A flat acceptance fee per accepted booking (current amount on {pricingLink}; fees may change with notice).
@@ -261,6 +285,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'money-managed-fee',
         question: 'What does a landlord pay on Quni Managed?',
+        answerText:
+          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts - see /pricing for the current Managed service fee.',
         answer: (
           <>
             A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent
@@ -311,6 +337,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'tier-availability',
         question: 'Where is each tier available?',
+        answerText:
+          'Quni Listing is available nationwide. Quni Managed is currently live in Queensland. See availability on /pricing for the latest state-by-state coverage and any property-type constraints.',
         answer: (
           <>
             Quni Listing is available nationwide. Quni Managed is currently live in Queensland. See availability on{' '}
@@ -333,6 +361,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'messaging-listing',
         question: 'How do I ask about a specific listing?',
+        answerText:
+          'Sign in and open Messages on the property page to chat with the landlord before you book. The general /contact form is for Quni-wide questions, not individual listings.',
         answer: (
           <>
             Sign in and open <strong>Messages</strong> on the property page to chat with the landlord before you book.
@@ -366,6 +396,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'support-tenancy',
         question: 'Something went wrong with my tenancy - can Quni decide bond disputes?',
+        answerText:
+          'Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may help with platform or payment administration where it handles funds; see /refunds for money Quni actually receives.',
         answer: (
           <>
             Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
@@ -377,6 +409,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'support-payments',
         question: 'Payments, deposits, or refunds?',
+        answerText:
+          'See /refunds for timelines on platform payments. For a booking in progress, sign in and open a support ticket from your dashboard, or email hello@quni.com.au.',
         answer: (
           <>
             See {refundsLink} for timelines on platform payments. For a booking in progress, sign in and open a support
@@ -387,6 +421,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'support-contact',
         question: 'Who do I contact?',
+        answerText:
+          'Email hello@quni.com.au or use our /contact form - we usually reply within 1 business day. Signed-in users can also use support from the student or landlord dashboard.',
         answer: (
           <>
             Email{' '}
@@ -409,3 +445,19 @@ export const FAQ_SECTIONS: FaqSection[] = [
 ]
 
 export const ALL_FAQ_ITEMS: FaqItem[] = FAQ_SECTIONS.flatMap((s) => s.items)
+
+export function faqItemToPlain(item: FaqItem): { question: string; answer: string } | null {
+  if (typeof item.answer === 'string') {
+    const answer = item.answer.trim()
+    return answer ? { question: item.question, answer } : null
+  }
+  const answer = item.answerText?.trim()
+  return answer ? { question: item.question, answer } : null
+}
+
+/** All FAQ pairs with machine-readable answers for schema.org FAQPage. */
+export function collectFaqPlainPairs(sections: FaqSection[] = FAQ_SECTIONS): { question: string; answer: string }[] {
+  return sections
+    .flatMap((s) => s.items.map(faqItemToPlain))
+    .filter((p): p is { question: string; answer: string } => p != null)
+}

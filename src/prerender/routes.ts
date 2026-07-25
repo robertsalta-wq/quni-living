@@ -3,7 +3,19 @@ import { listCampusSeoPaths } from '../lib/campusSeo/registry'
 import { listGuideSlugs } from '../lib/guides/registry'
 
 /** Marketing/static pages prerendered as pathname → dist/{segment}/index.html */
-export const STATIC_PRERENDER_PATHS = ['/', '/for-universities'] as const
+export const STATIC_PRERENDER_PATHS = [
+  '/',
+  '/for-universities',
+  '/listings',
+  '/pricing',
+  '/faq',
+  '/guides',
+  '/how-it-works',
+  '/verification',
+  '/contact',
+  '/services/landlord-partnerships',
+  '/landlords/ai',
+] as const
 
 export function listPrerenderPathnames(listingPaths: string[] = []): string[] {
   const guides = listGuideSlugs().map((slug) => `/guides/${slug}`)

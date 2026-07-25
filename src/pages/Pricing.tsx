@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
 import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED } from '../lib/bondPublicCopy'
+import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
@@ -55,8 +56,23 @@ function LineItem({
   )
 }
 
-type FaqItem = { id: string; question: string; answer: ReactNode }
+type FaqItem = { id: string; question: string; answer: ReactNode; answerText?: string }
 type FaqBucket = { id: string; label: string; items: FaqItem[] }
+
+function pricingFaqPlainPairs(buckets: FaqBucket[]): { question: string; answer: string }[] {
+  return buckets.flatMap((b) =>
+    b.items
+      .map((item) => {
+        if (typeof item.answer === 'string') {
+          const answer = item.answer.trim()
+          return answer ? { question: item.question, answer } : null
+        }
+        const answer = item.answerText?.trim()
+        return answer ? { question: item.question, answer } : null
+      })
+      .filter((p): p is { question: string; answer: string } => p != null),
+  )
+}
 
 const faqBuckets: FaqBucket[] = [
   {
@@ -161,10 +177,12 @@ const faqBuckets: FaqBucket[] = [
       {
         id: 'support-disputes-0',
         question: 'Something went wrong with my tenancy - can Quni decide bond disputes?',
+        answerText:
+          'Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may help with platform or payment administration where it handles funds; see /refunds for money Quni actually receives.',
         answer: (
           <>
             Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
-            help with platform or payment administration where it custodies funds; see our{' '}
+            help with platform or payment administration where it handles funds; see our{' '}
             <Link to="/refunds" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
               Refund Policy
             </Link>{' '}
@@ -214,12 +232,15 @@ export default function Pricing() {
   const ctaSecondary =
     'mt-4 flex w-full items-center justify-center rounded-[10px] border border-[var(--quni-rust)] bg-transparent px-3 py-3 text-sm font-medium text-[var(--quni-rust)] transition-colors hover:bg-[rgba(216,90,48,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-rust)]'
 
+  const faqJsonLd = useMemo(() => buildFaqPageJsonLd(pricingFaqPlainPairs(faqBuckets)), [])
+
   return (
     <>
       <Seo
         title="Pricing - Quni Living"
         description="Free for renters. Free to list for landlords. Choose Listing or Managed pricing."
         canonicalPath="/pricing"
+        jsonLd={faqJsonLd ? [faqJsonLd] : undefined}
       />
 
       <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[var(--quni-ink)] antialiased">

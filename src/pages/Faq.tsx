@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
-import { ALL_FAQ_ITEMS, FAQ_SECTIONS } from '../lib/faqContent'
+import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
+import { ALL_FAQ_ITEMS, collectFaqPlainPairs, FAQ_SECTIONS } from '../lib/faqContent'
 
 export default function Faq() {
   const [openFaqId, setOpenFaqId] = useState<string | null>(ALL_FAQ_ITEMS[0]?.id ?? null)
+  const faqJsonLd = useMemo(() => buildFaqPageJsonLd(collectFaqPlainPairs()), [])
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
@@ -14,6 +16,7 @@ export default function Faq() {
         title="FAQ"
         description="Answers about accommodation for renters and landlords, fees, verification, bookings, bond, and support on Quni Living."
         canonicalPath="/faq"
+        jsonLd={faqJsonLd ? [faqJsonLd] : undefined}
       />
       <PageHeroBand
         title="Frequently asked questions"

@@ -1,4 +1,5 @@
 import type { Property } from './listings'
+import { isRoomType, ROOM_TYPE_LABELS } from './listings'
 import { getListingRentDisplay } from './pricing/listingRentDisplay'
 import { normalizePropertyImages } from './propertyImages'
 import { absoluteUrl, LISTING_SEO_SUFFIX } from './site'
@@ -61,6 +62,14 @@ export function propertyListingJsonLd(
     }
   }
 
+  // Only emit when DB fields are present — never invent room counts.
+  if (typeof p.bedrooms === 'number' && Number.isFinite(p.bedrooms) && p.bedrooms > 0) {
+    accommodation.numberOfRooms = p.bedrooms
+  }
+  if (p.room_type && isRoomType(p.room_type)) {
+    accommodation.accommodationCategory = ROOM_TYPE_LABELS[p.room_type]
+  }
+
   accommodation.offers = {
     '@type': 'Offer',
     url,
@@ -72,6 +81,11 @@ export function propertyListingJsonLd(
       price: listingRent.primaryAmount,
       priceCurrency: 'AUD',
       unitText: 'WEEK',
+      referenceQuantity: {
+        '@type': 'QuantitativeValue',
+        value: 1,
+        unitCode: 'WEE',
+      },
     },
   }
 
