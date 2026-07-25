@@ -20,6 +20,7 @@ import { nonDiscriminationAcceptancePatch } from '../../lib/nonDiscriminationPol
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
+import { reportProfilePhotoUploadFailure } from '../../lib/reportProfilePhotoUploadFailure'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import {
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
@@ -507,7 +508,9 @@ export default function LandlordOnboarding() {
         contentType: prepared.contentType,
       })
       if (upErr) {
-        setPhotoError(upErr.message || 'Upload failed.')
+        setPhotoError(
+          reportProfilePhotoUploadFailure(upErr, { surface: 'landlord-onboarding-storage', file }),
+        )
         return
       }
 
@@ -519,13 +522,17 @@ export default function LandlordOnboarding() {
           .eq('user_id', user.id),
       )
       if (dbErr) {
-        setPhotoError(dbErr.message || 'Could not save photo URL.')
+        setPhotoError(
+          reportProfilePhotoUploadFailure(dbErr, { surface: 'landlord-onboarding-db', file }),
+        )
         return
       }
       setAvatarUrl(pub.publicUrl)
       await refreshProfile()
     } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : 'Upload failed.')
+      setPhotoError(
+        reportProfilePhotoUploadFailure(err, { surface: 'landlord-onboarding', file }),
+      )
     } finally {
       setPhotoUploading(false)
     }

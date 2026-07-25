@@ -11,6 +11,8 @@
  * and only reaches users who actually pick a HEIC/HEIF file.
  */
 
+const HEIC_BRANDS = new Set(['heic', 'heif', 'heix', 'hevc', 'mif1', 'msf1'])
+
 export function isHeicImage(file: File): boolean {
   const type = file.type.toLowerCase()
   if (
@@ -23,6 +25,21 @@ export function isHeicImage(file: File): boolean {
   }
   const name = file.name.toLowerCase()
   return name.endsWith('.heic') || name.endsWith('.heif')
+}
+
+/** ISO BMFF `ftyp` brand sniff — Android gallery often clears MIME and uses .jpg. */
+export async function fileLooksLikeHeic(file: File): Promise<boolean> {
+  if (isHeicImage(file)) return true
+  try {
+    const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+    if (buf.length < 12) return false
+    const ftyp = String.fromCharCode(buf[4], buf[5], buf[6], buf[7])
+    if (ftyp !== 'ftyp') return false
+    const brand = String.fromCharCode(buf[8], buf[9], buf[10], buf[11]).toLowerCase()
+    return HEIC_BRANDS.has(brand)
+  } catch {
+    return false
+  }
 }
 
 export async function convertHeicToJpeg(file: File, quality = 0.85): Promise<File> {
@@ -39,6 +56,13 @@ export async function convertHeicToJpeg(file: File, quality = 0.85): Promise<Fil
  * HEIC/HEIF input.
  */
 export async function ensureDisplayableImage(file: File): Promise<File> {
-  if (!isHeicImage(file)) return file
-  return convertHeicToJpeg(file)
+  const looksHeic = await fileLooksLikeHeic(file)
+  if (!looksHeic) return file
+  const typed =
+    file.type.startsWith('image/')
+      ? file
+      : new File([file], file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+          ? file.name
+          : `${file.name.replace(/\.[^.]+$/, '') || 'photo'}.heic`, { type: 'image/heic' })
+  return convertHeicToJpeg(typed)
 }

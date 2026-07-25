@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { withSentryMonitoring } from '../../../lib/supabaseErrorMonitor'
 import type { Database } from '../../../lib/database.types'
 import { prepareProfilePhotoForUpload } from '../../../lib/prepareProfilePhotoForUpload'
+import { reportProfilePhotoUploadFailure } from '../../../lib/reportProfilePhotoUploadFailure'
 import { cacheBustUrl } from '../../../lib/cacheBustUrl'
 import { AUDateField } from '../../AUDateField'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
@@ -251,7 +252,9 @@ export function RenterProfilePersonalSection({
         if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev)
         return null
       })
-      setPhotoError(err instanceof Error ? err.message : 'Upload failed.')
+      setPhotoError(
+        reportProfilePhotoUploadFailure(err, { surface: 'renter-personal-section', file }),
+      )
     } finally {
       setUploadingPhoto(false)
     }

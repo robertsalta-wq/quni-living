@@ -5,6 +5,26 @@ function safeExtFromFilename(name: string): string {
   return ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
 }
 
+/** Android gallery picks often arrive with an empty MIME type. */
+function normalizeImageMime(file: File): File {
+  if (file.type.startsWith('image/')) return file
+  const ext = safeExtFromFilename(file.name)
+  const mime =
+    ext === 'png'
+      ? 'image/png'
+      : ext === 'webp'
+        ? 'image/webp'
+        : ext === 'gif'
+          ? 'image/gif'
+          : ext === 'heic' || ext === 'heif'
+            ? 'image/heic'
+            : ext === 'jpg' || ext === 'jpeg' || ext === 'jpe'
+              ? 'image/jpeg'
+              : ''
+  if (!mime) return file
+  return new File([file], file.name, { type: mime })
+}
+
 async function loadImageBitmapFromFile(file: File): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(file)
@@ -82,10 +102,13 @@ export async function prepareProfilePhotoForUpload(
 ): Promise<{ blob: Blob; contentType: string; ext: string }> {
   // Convert HEIC/HEIF up front: browsers can't decode it to compress OR display,
   // so a raw HEIC photo would just show as a broken image.
-  const file = await ensureDisplayableImage(fileInput)
+  const displayable = await ensureDisplayableImage(fileInput)
+  const file = normalizeImageMime(displayable)
   if (!file.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }
+  // Under the client cap, upload bytes as picked — same idea as verification docs.
+  // Avoids decode/resize passes that fail on some Android gallery picks.
   if (file.size <= maxBytes) {
     return {
       blob: file,
