@@ -16,7 +16,7 @@ export default function PapersBlock() {
 
   return (
     <div
-      className="desk-settle mt-3.5 rounded-[var(--radius-lg)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-6 py-4 shadow-[var(--shadow-1)] [animation-delay:680ms]"
+      className="quni-card desk-settle mt-3.5 px-6 py-4 [animation-delay:680ms]"
       style={{
         borderTop: '3px double var(--quni-cream-border)',
         background: 'linear-gradient(160deg, var(--quni-surface-1), var(--quni-cream))',
