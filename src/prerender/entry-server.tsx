@@ -104,9 +104,11 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
 
   for (const pathname of pathnames) {
     const { body, head } = renderAppAt(pathname)
-    if (body.includes('Loading page.') || body.includes('Switched to client rendering')) {
+    // PageRouteFallback uses an ellipsis (…). Nested lazy islands may emit
+    // "Switched to client rendering" without failing the page — only reject the route shell.
+    if (body.includes('Loading page…')) {
       throw new Error(
-        `prerender-routes: ${pathname} rendered Suspense/client fallback — make the route eager in App.tsx`,
+        `prerender-routes: ${pathname} rendered Suspense route fallback — make the route eager in App.tsx`,
       )
     }
     const outDir = pathnameToDistDir(distDir, pathname)
