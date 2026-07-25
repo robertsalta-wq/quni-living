@@ -35,7 +35,7 @@ function FactHeadline({ text }: { text: string }) {
   }, [text])
 
   return (
-    <p className="m-0 font-[family-name:var(--font-serif)] text-[18px] font-bold leading-[1.2] tracking-[-0.01em] text-[var(--quni-ink)] sm:text-[20px]">
+    <p className="m-0 min-w-0 font-[family-name:var(--font-serif)] text-[14px] font-bold leading-snug tracking-[-0.01em] text-[var(--quni-ink)] sm:text-[15px]">
       {parts.map((p) => (
         <span key={p.key} className={p.coral ? 'text-[var(--quni-coral)]' : undefined}>
           {p.t}
@@ -153,14 +153,14 @@ export default function SearchDesk({
           compact ? 'gap-2.5 overflow-y-auto p-3.5' : 'gap-2 p-4',
         ].join(' ')}
       >
-        <div className={['flex shrink-0 flex-col gap-1.5', compact ? '' : 'pr-[76px]'].filter(Boolean).join(' ')}>
-          <div className="flex min-w-0 items-center gap-3">
-            <QuniLogoHomeLink />
-            <div className="min-w-0 flex-1">
-              <FactHeadline
-                text={compact ? headline.replace(' — every listing checked', '') : headline}
-              />
+        <div className={['flex shrink-0 flex-col gap-1.5', compact ? '' : 'pr-[80px]'].filter(Boolean).join(' ')}>
+          <div className="flex min-w-0 flex-row flex-nowrap items-center gap-3">
+            <div className="shrink-0">
+              <QuniLogoHomeLink />
             </div>
+            <FactHeadline
+              text={compact ? headline.replace(' — every listing checked', '') : headline}
+            />
           </div>
           {compact ? (
             <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[rgba(29,158,117,0.5)] bg-[var(--quni-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-success-strong)]">
