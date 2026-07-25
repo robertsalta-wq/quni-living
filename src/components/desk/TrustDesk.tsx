@@ -1,10 +1,11 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DeskNameplate from './DeskNameplate'
 
 /** Face lines — only claims that match shipped behaviour (no rent/bond custody claim). */
 const TRUST_LINES = [
   'ID-verified renters & landlords',
-  'RTA-compliant agreements',
+  'State-compliant agreements',
   'Every listing reviewed before it goes live',
 ] as const
 
@@ -41,9 +42,7 @@ export default function TrustDesk({
 
   const face = (
     <>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-success-strong)]">
-        Trust & safety
-      </span>
+      {!mobileRail ? <DeskNameplate>TRUST & SAFETY</DeskNameplate> : null}
       <div className="flex flex-col gap-1">
         {TRUST_LINES.map((t) => (
           <div key={t} className="flex items-center gap-1.5">
@@ -122,9 +121,9 @@ export default function TrustDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-success-strong)]">
-            Trust & safety
-          </span>
+          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+            TRUST & SAFETY
+          </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink-2)]">
             Verification & fairness
           </span>

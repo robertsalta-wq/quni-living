@@ -30,7 +30,6 @@ export default function HomeV2() {
   const [listings, setListings] = useState<Property[]>([])
   const [listingCount, setListingCount] = useState<number | null>(null)
   const [uniCoverage, setUniCoverage] = useState<{ label: string; homes: number }[]>([])
-  const [campusCount, setCampusCount] = useState(0)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -65,13 +64,10 @@ export default function HomeV2() {
         listingIsoDateUtc(),
       ).eq('status', 'active')
 
-      const campusRes = await supabase.from('campuses').select('id', { count: 'exact', head: true })
-
       if (cancelled) return
 
       if (!countRes.error) setListingCount(countRes.count ?? 0)
       if (!listRes.error) setListings((listRes.data ?? []) as Property[])
-      if (!campusRes.error) setCampusCount(campusRes.count ?? 0)
 
       if (!coverRes.error && coverRes.data) {
         const tallies = new Map<string, number>()
@@ -164,7 +160,6 @@ export default function HomeV2() {
             </div>
             <div style={{ gridArea: 'uni' }} className="flex min-h-0 flex-col self-stretch">
               <UniversitiesDesk
-                campusCount={campusCount}
                 chips={uniCoverage}
                 trayOpen={openTray === 'uni'}
                 onTrayOpenChange={(open) => setTray('uni', open)}
@@ -225,7 +220,6 @@ export default function HomeV2() {
             onRailExpandChange={(open) => setOpenRail(open ? 'landlord' : null)}
           />
           <UniversitiesDesk
-            campusCount={campusCount}
             chips={uniCoverage}
             mobileRail
             railExpanded={openRail === 'uni'}

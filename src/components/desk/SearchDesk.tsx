@@ -133,27 +133,13 @@ export default function SearchDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      {!compact ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-10 right-4 z-[4] flex h-[72px] w-[72px] rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-success)] bg-[var(--quni-success-bg)] text-center shadow-[var(--shadow-1)]"
-        >
-          <span className="font-[family-name:var(--font-serif)] text-[15px] font-bold leading-none tracking-[0.02em] text-[var(--quni-success-strong)]">
-            FREE
-          </span>
-          <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-[var(--quni-success)]">
-            for renters
-          </span>
-        </div>
-      ) : null}
-
       <div
         className={[
           'flex min-h-0 flex-1 flex-col',
           compact ? 'gap-2.5 overflow-y-auto p-3.5' : 'gap-2 p-4',
         ].join(' ')}
       >
-        <div className={['flex shrink-0 flex-col gap-1.5', compact ? '' : 'pr-[80px]'].filter(Boolean).join(' ')}>
+        <div className="flex shrink-0 flex-col gap-1.5">
           <div className="flex min-w-0 flex-row flex-nowrap items-center gap-3">
             <div className="shrink-0">
               <QuniLogoHomeLink />
@@ -161,6 +147,19 @@ export default function SearchDesk({
             <FactHeadline
               text={compact ? headline.replace(' — every listing checked', '') : headline}
             />
+            {!compact ? (
+              <div
+                aria-hidden
+                className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-success)] bg-[var(--quni-success-bg)] text-center shadow-[var(--shadow-1)]"
+              >
+                <span className="font-[family-name:var(--font-serif)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-success-strong)]">
+                  FREE
+                </span>
+                <span className="text-[6.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-success)]">
+                  for renters
+                </span>
+              </div>
+            ) : null}
           </div>
           {compact ? (
             <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[rgba(29,158,117,0.5)] bg-[var(--quni-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-success-strong)]">
@@ -169,7 +168,7 @@ export default function SearchDesk({
           ) : null}
         </div>
 
-        <form onSubmit={onSubmit} className="flex shrink-0 flex-col gap-1.5">
+        <form onSubmit={onSubmit} className="relative z-[1] flex shrink-0 flex-col gap-1.5">
           <div className="flex gap-2">
             <input
               value={query}

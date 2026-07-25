@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
+import DeskNameplate from './DeskNameplate'
 
 type AccountDeskProps = {
   className?: string
@@ -86,11 +87,11 @@ export default function AccountDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
-            Account
-          </span>
+          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+            FOR RENTERS & LANDLORDS
+          </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
-            {loggedIn ? `Hi, ${name}` : 'Renters & landlords'}
+            {loggedIn ? `Hi, ${name}` : 'Your account'}
           </span>
           <span aria-hidden>{railExpanded ? '⊖' : '⊕'}</span>
         </button>
@@ -111,9 +112,7 @@ export default function AccountDesk({
         .join(' ')}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
-          Account — renters & landlords
-        </span>
+        <DeskNameplate>FOR RENTERS & LANDLORDS</DeskNameplate>
         {body}
         <button
           type="button"
