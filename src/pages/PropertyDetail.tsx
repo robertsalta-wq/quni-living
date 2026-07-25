@@ -1410,6 +1410,14 @@ export default function PropertyDetail() {
             </button>
           </>
         )}
+        {/* Desktop keeps Save in the sticky booking card; mobile needs it on the gallery. */}
+        <div className="md:hidden">
+          <SavePropertyButton
+            propertyId={property.id}
+            listingPath={`/properties/${property.slug}`}
+            variant="card"
+          />
+        </div>
         </div>
         {mainImageCaption ? (
           <p className="mt-2 text-sm text-stone-700 leading-snug px-0.5">{mainImageCaption}</p>
@@ -1967,33 +1975,41 @@ export default function PropertyDetail() {
             ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             <span className="text-sm font-semibold text-stone-500 font-sans"> / week</span>
           </p>
-          {isRenterRole(role) && !studentListingActionsOk ? (
-            <Link
-              to={renterReadinessCtaHref}
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shrink-0"
-            >
-              Complete profile
-            </Link>
-          ) : bookingClosed ? (
-            <span className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-2.5 shrink-0 max-w-[55%] text-center leading-snug">
-              Unavailable
-            </span>
-          ) : showActiveBookingLink ? (
-            <Link
-              to="/student-dashboard?tab=bookings"
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
-            >
-              Your booking →
-            </Link>
-          ) : (
-            <Link
-              to={bookHref}
-              state={bookState}
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
-            >
-              Apply →
-            </Link>
-          )}
+          <div className="flex items-center gap-2 shrink-0 min-w-0">
+            <SavePropertyButton
+              propertyId={property.id}
+              listingPath={`/properties/${property.slug}`}
+              variant="icon"
+              className="border border-stone-200 bg-white shadow-none"
+            />
+            {isRenterRole(role) && !studentListingActionsOk ? (
+              <Link
+                to={renterReadinessCtaHref}
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shrink-0"
+              >
+                Complete profile
+              </Link>
+            ) : bookingClosed ? (
+              <span className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-2.5 shrink-0 max-w-[55%] text-center leading-snug">
+                Unavailable
+              </span>
+            ) : showActiveBookingLink ? (
+              <Link
+                to="/student-dashboard?tab=bookings"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
+              >
+                Your booking →
+              </Link>
+            ) : (
+              <Link
+                to={bookHref}
+                state={bookState}
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
+              >
+                Apply →
+              </Link>
+            )}
+          </div>
         </div>
       )}
 

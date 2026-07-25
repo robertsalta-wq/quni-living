@@ -5,7 +5,7 @@ import { useSavedProperties } from '../context/SavedPropertiesContext'
 import { setPendingSavePropertyId } from '../lib/savedPropertiesPending'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 
-type Variant = 'card' | 'detail'
+type Variant = 'card' | 'detail' | 'icon'
 
 type Props = {
   propertyId: string
@@ -63,17 +63,33 @@ export function SavePropertyButton({
     )
   }
 
+  const iconClass = [
+    'inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm transition-colors hover:text-[var(--quni-coral)]',
+    saved ? 'text-[var(--quni-coral)]' : '',
+    className,
+  ].join(' ')
+
+  if (variant === 'icon') {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={saved}
+        aria-label={label}
+        className={['relative z-20 shrink-0', iconClass].join(' ')}
+      >
+        <Heart className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} strokeWidth={2} aria-hidden />
+      </button>
+    )
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={saved}
       aria-label={label}
-      className={[
-        'absolute top-3 right-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm transition-colors hover:text-[var(--quni-coral)]',
-        saved ? 'text-[var(--quni-coral)]' : '',
-        className,
-      ].join(' ')}
+      className={['absolute top-3 right-3 z-20', iconClass].join(' ')}
     >
       <Heart className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} strokeWidth={2} aria-hidden />
     </button>
