@@ -124,10 +124,10 @@ export default function SearchDesk({
   return (
     <article
       className={[
-        'desk-shell desk-settle relative flex h-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-lg)]',
+        'desk-shell desk-settle relative flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
         'border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-2)]',
-        '[contain:layout_paint] [animation-delay:50ms]',
+        '[animation-delay:50ms]',
         className,
       ]
         .filter(Boolean)
@@ -211,7 +211,15 @@ export default function SearchDesk({
           <button type="button" className={furnishedChip} onClick={() => setFurnished((v) => !v)}>
             Furnished
           </button>
-          <button type="button" className={filtersChip} onClick={() => setFiltersOpen((v) => !v)}>
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            className={filtersChip}
+            onClick={() => {
+              setFiltersOpen((v) => !v)
+              if (!filtersOpen) setMarketOpen(false)
+            }}
+          >
             {filtersOpen ? '⊖ Fewer filters' : '⊕ All filters'}
           </button>
         </div>
@@ -355,7 +363,11 @@ export default function SearchDesk({
           {!compact ? (
             <button
               type="button"
-              onClick={() => setMarketOpen((v) => !v)}
+              aria-expanded={marketOpen}
+              onClick={() => {
+                setMarketOpen((v) => !v)
+                if (!marketOpen) setFiltersOpen(false)
+              }}
               className="rounded-full border border-[var(--quni-line)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               {marketOpen ? '⊖ Close' : '⊕ Live market'}

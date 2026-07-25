@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
@@ -8,6 +8,8 @@ type AccountDeskProps = {
   mobileRail?: boolean
   railExpanded?: boolean
   onRailExpandChange?: (open: boolean) => void
+  trayOpen?: boolean
+  onTrayOpenChange?: (open: boolean) => void
 }
 
 export default function AccountDesk({
@@ -15,9 +17,17 @@ export default function AccountDesk({
   mobileRail = false,
   railExpanded = false,
   onRailExpandChange,
+  trayOpen,
+  onTrayOpenChange,
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const panelId = useId()
+  const open = trayOpen ?? uncontrolledOpen
+  const setOpen = (next: boolean) => {
+    if (onTrayOpenChange) onTrayOpenChange(next)
+    else setUncontrolledOpen(next)
+  }
   const loggedIn = Boolean(user)
   const rawName =
     profile && 'full_name' in profile && typeof profile.full_name === 'string'
@@ -64,7 +74,7 @@ export default function AccountDesk({
     return (
       <article
         className={[
-          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)] [contain:layout_paint]',
+          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)]',
           className,
         ]
           .filter(Boolean)
@@ -92,28 +102,30 @@ export default function AccountDesk({
   return (
     <article
       className={[
-        'desk-shell desk-settle flex h-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-lg)]',
+        'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
         'border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)]',
-        'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [contain:layout_paint] [animation-delay:450ms]',
+        'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:450ms]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-1.5 p-3.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
         <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
           Account — renters & landlords
         </span>
         {body}
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen(!open)}
           className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
         >
           {open ? '⊖ Close' : '⊕ When you’re signed in'}
         </button>
         {open ? (
-          <div className="mt-0.5 border-t border-[var(--quni-line)] pt-2">
+          <div id={panelId} className="mt-0.5 border-t border-[var(--quni-line)] pt-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               {loggedIn ? 'Your next step' : 'What you’ll find'}
             </span>

@@ -16,6 +16,7 @@ import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import '../components/desk/desk.css'
 
 type RailId = 'landlord' | 'uni' | 'account' | 'trust' | null
+type BottomTray = 'uni' | 'account' | 'trust' | null
 
 /**
  * Full desk-shell home — layout/behaviour from the Claude bento mockup;
@@ -24,6 +25,8 @@ type RailId = 'landlord' | 'uni' | 'account' | 'trust' | null
 export default function HomeV2() {
   const [landlordDrawerOpen, setLandlordDrawerOpen] = useState(false)
   const [openRail, setOpenRail] = useState<RailId>(null)
+  /** Desktop bottom row — one ⊕ tray at a time so the row stays even. */
+  const [openTray, setOpenTray] = useState<BottomTray>(null)
   const [listings, setListings] = useState<Property[]>([])
   const [listingCount, setListingCount] = useState<number | null>(null)
   const [uniCoverage, setUniCoverage] = useState<{ label: string; homes: number }[]>([])
@@ -100,10 +103,15 @@ export default function HomeV2() {
   }, [listingCount, listings])
 
   const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
-  // Initial load fills ~one viewport; min-content lets desks grow and the page scroll.
-  const gridRows = landlordDrawerOpen
-    ? 'auto auto auto'
-    : 'minmax(min-content, 1.2fr) minmax(min-content, 1fr) minmax(min-content, 0.72fr)'
+  // Initial load fills ~one viewport; trays/drawers grow the track and the page scrolls.
+  const gridRows =
+    landlordDrawerOpen || openTray
+      ? 'minmax(min-content, 1.2fr) minmax(min-content, 1fr) auto'
+      : 'minmax(min-content, 1.2fr) minmax(min-content, 1fr) minmax(min-content, 0.72fr)'
+
+  function setTray(id: BottomTray, open: boolean) {
+    setOpenTray(open ? id : null)
+  }
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
@@ -128,7 +136,7 @@ export default function HomeV2() {
           style={{ maxWidth: 1200 }}
         >
           <div
-            className="grid flex-1 gap-2.5"
+            className="grid flex-1 items-stretch gap-2.5"
             style={{
               minHeight: 'calc(100dvh - 4.75rem)',
               gridTemplateAreas: `'search search landlord' 'search search landlord' 'uni account trust'`,
@@ -139,26 +147,43 @@ export default function HomeV2() {
                 : 'grid-template-columns 320ms var(--ease-standard), grid-template-rows 320ms var(--ease-standard)',
             }}
           >
-            <div style={{ gridArea: 'search' }} className="min-h-0">
+            <div style={{ gridArea: 'search' }} className="flex min-h-0 flex-col self-stretch">
               <SearchDesk
                 listings={listings}
                 listingCount={listingCount}
                 activityLine={activityLine}
                 uniCoverage={uniCoverage}
-                className="h-full"
+                className="min-h-full flex-1"
               />
             </div>
-            <div style={{ gridArea: 'landlord' }} className="min-h-0">
-              <LandlordDesk onDrawerOpenChange={setLandlordDrawerOpen} className="h-full" />
+            <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
+              <LandlordDesk
+                onDrawerOpenChange={setLandlordDrawerOpen}
+                className="min-h-full flex-1"
+              />
             </div>
-            <div style={{ gridArea: 'uni' }} className="min-h-0">
-              <UniversitiesDesk campusCount={campusCount} chips={uniCoverage} className="h-full" />
+            <div style={{ gridArea: 'uni' }} className="flex min-h-0 flex-col self-stretch">
+              <UniversitiesDesk
+                campusCount={campusCount}
+                chips={uniCoverage}
+                trayOpen={openTray === 'uni'}
+                onTrayOpenChange={(open) => setTray('uni', open)}
+                className="min-h-full flex-1"
+              />
             </div>
-            <div style={{ gridArea: 'account' }} className="min-h-0">
-              <AccountDesk className="h-full" />
+            <div style={{ gridArea: 'account' }} className="flex min-h-0 flex-col self-stretch">
+              <AccountDesk
+                trayOpen={openTray === 'account'}
+                onTrayOpenChange={(open) => setTray('account', open)}
+                className="min-h-full flex-1"
+              />
             </div>
-            <div style={{ gridArea: 'trust' }} className="min-h-0">
-              <TrustDesk className="h-full" />
+            <div style={{ gridArea: 'trust' }} className="flex min-h-0 flex-col self-stretch">
+              <TrustDesk
+                trayOpen={openTray === 'trust'}
+                onTrayOpenChange={(open) => setTray('trust', open)}
+                className="min-h-full flex-1"
+              />
             </div>
           </div>
 

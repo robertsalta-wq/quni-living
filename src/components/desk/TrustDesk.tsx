@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 /** Face lines — only claims that match shipped behaviour (no rent/bond custody claim). */
@@ -19,6 +19,8 @@ type TrustDeskProps = {
   mobileRail?: boolean
   railExpanded?: boolean
   onRailExpandChange?: (open: boolean) => void
+  trayOpen?: boolean
+  onTrayOpenChange?: (open: boolean) => void
 }
 
 export default function TrustDesk({
@@ -26,8 +28,16 @@ export default function TrustDesk({
   mobileRail = false,
   railExpanded = false,
   onRailExpandChange,
+  trayOpen,
+  onTrayOpenChange,
 }: TrustDeskProps) {
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const panelId = useId()
+  const open = trayOpen ?? uncontrolledOpen
+  const setOpen = (next: boolean) => {
+    if (onTrayOpenChange) onTrayOpenChange(next)
+    else setUncontrolledOpen(next)
+  }
 
   const face = (
     <>
@@ -57,7 +67,9 @@ export default function TrustDesk({
         {!mobileRail ? (
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={() => setOpen(!open)}
             className="rounded-full border border-[rgba(29,158,117,0.22)] bg-white/60 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-success-strong)] hover:bg-[rgba(29,158,117,0.1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-success)]"
           >
             {open ? '⊖ Close' : '⊕ What verified means'}
@@ -65,7 +77,10 @@ export default function TrustDesk({
         ) : null}
       </div>
       {(open || (mobileRail && railExpanded)) && (
-        <div className="mt-0.5 flex flex-col gap-2 border-t border-[rgba(29,158,117,0.22)] pt-3">
+        <div
+          id={mobileRail ? undefined : panelId}
+          className="mt-0.5 flex flex-col gap-2 border-t border-[rgba(29,158,117,0.22)] pt-3"
+        >
           <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
             What verified means
           </span>
@@ -95,7 +110,7 @@ export default function TrustDesk({
     return (
       <article
         className={[
-          'desk-settle overflow-hidden rounded-[14px] border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)] [contain:layout_paint]',
+          'desk-settle overflow-hidden rounded-[14px] border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
           className,
         ]
           .filter(Boolean)
@@ -125,15 +140,15 @@ export default function TrustDesk({
   return (
     <article
       className={[
-        'desk-shell desk-settle flex h-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-lg)]',
+        'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
         'border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
-        'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [contain:layout_paint] [animation-delay:550ms]',
+        'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:550ms]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-1.5 p-3.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
         {face}
         <span className="mt-auto" />
       </div>
