@@ -104,6 +104,11 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
 
   for (const pathname of pathnames) {
     const { body, head } = renderAppAt(pathname)
+    if (body.includes('Loading page.') || body.includes('Switched to client rendering')) {
+      throw new Error(
+        `prerender-routes: ${pathname} rendered Suspense/client fallback — make the route eager in App.tsx`,
+      )
+    }
     const outDir = pathnameToDistDir(distDir, pathname)
     mkdirSync(outDir, { recursive: true })
     writeFileSync(path.join(outDir, 'index.html'), injectPrerender(template, body, head), 'utf8')

@@ -31,7 +31,8 @@ function assertPrerenderedPage(relPath, { bodySnippet, titleSnippet } = {}) {
   assert(/<meta\s+name="description"\s+content="[^"]+"/i.test(html), `${relPath}: missing meta description`)
   assert(/<link\s+rel="canonical"\s+href="[^"]+"/i.test(html), `${relPath}: missing canonical link`)
   assert(html.includes('data-beasties-container') || html.includes('application/ld+json'), `${relPath}: looks like SPA shell (no beasties/ld+json)`)
-  assert(!/<div id="root"><\/div>\s*<script/i.test(html) || html.includes('data-beasties-container'), `${relPath}: empty #root SPA shell`)
+  assert(!html.includes('Loading page.'), `${relPath}: Suspense fallback — route must be eager for prerender`)
+  assert(!html.includes('Switched to client rendering'), `${relPath}: SSR aborted to client rendering`)
   if (bodySnippet) {
     assert(html.includes(bodySnippet), `${relPath}: missing body text "${bodySnippet}"`)
   }
