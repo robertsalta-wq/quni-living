@@ -1,3 +1,4 @@
+import { buildFaqPageJsonLd } from '../buildFaqPageJsonLd'
 import { absoluteUrl, DEFAULT_OG_IMAGE, ORGANIZATION_EMAIL, SITE_NAME, SITE_URL } from '../site'
 import type { GuideSeoConfig } from './types'
 
@@ -43,19 +44,7 @@ export function buildGuideBlogPostingJsonLd(
 
 export function buildGuideFaqPageJsonLd(seo: GuideSeoConfig): Record<string, unknown> | null {
   if (!seo.faqs?.length) return null
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: seo.faqs.map(({ question, answer }) => ({
-      '@type': 'Question',
-      name: question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: answer,
-      },
-    })),
-  }
+  return buildFaqPageJsonLd(seo.faqs)
 }
 
 export function buildGuidePageJsonLd(

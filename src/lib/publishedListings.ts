@@ -64,8 +64,12 @@ export async function fetchPublishedListingDetails(): Promise<Property[]> {
 }
 
 export function listingPrerenderPaths(slugs: string[]): string[] {
-  return slugs
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((s) => `/listings/${s}`)
+  const paths: string[] = []
+  for (const raw of slugs) {
+    const s = raw.trim()
+    if (!s) continue
+    // Both route aliases — trailing-slash variants are normalized by Vercel trailingSlash:false.
+    paths.push(`/listings/${s}`, `/properties/${s}`)
+  }
+  return paths
 }

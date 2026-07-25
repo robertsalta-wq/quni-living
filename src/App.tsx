@@ -20,6 +20,14 @@ import CampusAccommodation from './pages/seo/CampusAccommodation'
 import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import PropertyDetail from './pages/PropertyDetail'
 import NotFoundPage from './pages/NotFoundPage'
+import Pricing from './pages/Pricing'
+import Faq from './pages/Faq'
+import Listings from './pages/Listings'
+import HowItWorks from './pages/HowItWorks'
+import Verification from './pages/Verification'
+import Contact from './pages/Contact'
+import LandlordPartnerships from './pages/services/LandlordPartnerships'
+import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -176,15 +184,8 @@ function App() {
               />
             </Route>
 
-            {/* AI landing — no marketing header */}
-            <Route
-              path="/landlords/ai"
-              element={
-                <Suspense fallback={<PageRouteFallback />}>
-                  <Lazy.LandlordAIFeaturePage />
-                </Suspense>
-              }
-            />
+            {/* AI landing — no marketing header; eager for prerender SEO */}
+            <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
 
             {/* Admin — own layout */}
             <Route
@@ -226,11 +227,18 @@ function App() {
 
             {/* Marketing / auth — public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
-              {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS on `/`). */}
+              {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS / empty shells). */}
               <Route path="/" element={<Home />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideArticlePage />} />
               <Route path="/for-universities" element={<ForUniversities />} />
+              <Route path="/listings" element={<Listings />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/faq" element={<Faq />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/verification" element={<Verification />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/services/landlord-partnerships" element={<LandlordPartnerships />} />
               {/* Eager: campus/uni SEO must mount during renderToString prerender. */}
               <Route
                 path="/student-accommodation/:universitySlug/:campusSlug"
@@ -244,7 +252,6 @@ function App() {
               <Route path="/listings/:slug" element={<PropertyDetail />} />
               <Route path="/properties/:slug" element={<PropertyDetail />} />
               <Route element={<LazyOutlet />}>
-                <Route path="/listings" element={<Lazy.Listings />} />
                 <Route path="/search" element={<Navigate to="/listings" replace />} />
                 <Route path="/properties" element={<Navigate to="/listings" replace />} />
                 <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
@@ -255,12 +262,7 @@ function App() {
                 <Route path="/non-discrimination" element={<Lazy.NonDiscrimination />} />
                 <Route path="/landlord-service-agreement" element={<Lazy.LandlordServiceAgreement />} />
                 <Route path="/about" element={<Lazy.About />} />
-                <Route path="/how-it-works" element={<Lazy.HowItWorks />} />
                 <Route path="/refunds" element={<Lazy.Refunds />} />
-                <Route path="/pricing" element={<Lazy.Pricing />} />
-                <Route path="/contact" element={<Lazy.Contact />} />
-                <Route path="/faq" element={<Lazy.Faq />} />
-                <Route path="/verification" element={<Lazy.Verification />} />
                 <Route path="/services" element={<Lazy.Services />} />
                 <Route
                   path="/services/student-accommodation"
@@ -269,10 +271,6 @@ function App() {
                 <Route
                   path="/services/property-management"
                   element={<Lazy.ServicePropertyManagement />}
-                />
-                <Route
-                  path="/services/landlord-partnerships"
-                  element={<Lazy.ServiceLandlordPartnerships />}
                 />
                 <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
                 <Route

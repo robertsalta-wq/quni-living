@@ -1,0 +1,26 @@
+# Quni Living
+> Australian accommodation marketplace for rooms and homes near university campuses and workplaces.
+> Renters pay no Quni platform fees. Landlords use Quni Listing (flat fee on accept) or Quni Managed (percentage of weekly rent; availability by state).
+
+Canonical site: https://quni.com.au
+Sitemap: https://quni.com.au/sitemap.xml
+
+## Prefer these public pages
+
+- [Home](https://quni.com.au/): Product overview and search entry
+- [Browse listings](https://quni.com.au/listings): Active rooms and homes available to browse
+- [Pricing](https://quni.com.au/pricing): Renter and landlord fees; Listing vs Managed
+- [FAQ](https://quni.com.au/faq): Common questions for renters and landlords
+- [Guides](https://quni.com.au/guides): Longer-form articles
+- [Landlord partnerships](https://quni.com.au/services/landlord-partnerships): Portfolio and partnership enquiries
+- [Landlord AI tools](https://quni.com.au/landlords/ai): In-product AI helpers for hosts (listing copy, pricing suggestions, screening)
+- [Verification](https://quni.com.au/verification): How renter and host verification works
+- [Contact](https://quni.com.au/contact): Contact form and email
+- [How it works](https://quni.com.au/how-it-works): Booking and listing flow overview
+- [For universities](https://quni.com.au/for-universities): Institutional partnership information
+
+## Notes for assistants
+
+- Prefer live listing pages under /listings/{slug} for specific homes; each page may include schema.org Accommodation and Offer data.
+- Do not invent inventory counts, national campus coverage counts, or claim Quni holds rent or bond on Quni Listing.
+- Bond and tenancy disputes follow state or territory law; platform fees are separate (see Pricing and Refunds).

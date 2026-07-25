@@ -20,3 +20,6 @@ Disallow: /sample-agreements
 Disallow: /auth/callback
 
 Sitemap: https://quni.com.au/sitemap.xml
+
+# Assistant-oriented URL map (also at /llms.txt)
+# https://quni.com.au/llms.txt

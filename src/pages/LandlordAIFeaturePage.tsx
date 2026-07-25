@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import SiteBrandLockup from '../components/SiteBrandLockup'
 import AiSparkleIcon from '../components/AiSparkleIcon'
 import LegalFooter from '../components/LegalFooter'
+import Seo from '../components/Seo'
 
 type FeatureRowProps = {
   number: string
@@ -68,6 +69,11 @@ export default function LandlordAIFeaturePage() {
 
   return (
     <div className="w-full min-h-screen bg-[var(--quni-ai-dark)] text-stone-100">
+      <Seo
+        title="Landlord AI tools"
+        description="In-product AI helpers for Quni landlords: listing copy, pricing suggestions, and applicant screening."
+        canonicalPath="/landlords/ai"
+      />
       <style>{`
         .ai-reveal {
           opacity: 0;
