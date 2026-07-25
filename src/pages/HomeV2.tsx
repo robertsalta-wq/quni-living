@@ -1,35 +1,110 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import LegalFooter from '../components/LegalFooter'
 import Seo from '../components/Seo'
-import SiteSocialLinks from '../components/SiteSocialLinks'
 import {
-  Desk,
-  DeskLetterhead,
-  DeskNameplate,
-  DeskPen,
+  AccountDesk,
   LandlordDesk,
+  PapersBlock,
+  SearchDesk,
+  TrustDesk,
+  UniversitiesDesk,
 } from '../components/desk'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
+import type { Property } from '../lib/listings'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import '../components/desk/desk.css'
 
-type RailId = 'listings' | 'landlord' | 'universities' | 'account' | 'trust' | null
+type RailId = 'landlord' | 'uni' | 'account' | 'trust' | null
 
 /**
- * Menu-less desk-shell home prototype.
- * Phase 1: Landlord Desk is fully built; sibling desks are lightweight placeholders
- * so the grand desk sits in situ. Social + legal live on the papers signature block
- * (absent from the Claude mock — added so trust links stay reachable without a mega-footer).
+ * Full desk-shell home — layout/behaviour from the Claude bento mockup;
+ * tokens + live lookups from the production app. No invented inventory.
  */
 export default function HomeV2() {
   const [landlordDrawerOpen, setLandlordDrawerOpen] = useState(false)
   const [openRail, setOpenRail] = useState<RailId>(null)
+  const [listings, setListings] = useState<Property[]>([])
+  const [listingCount, setListingCount] = useState<number | null>(null)
+  const [uniCoverage, setUniCoverage] = useState<{ label: string; homes: number }[]>([])
+  const [campusCount, setCampusCount] = useState(0)
 
-  function toggleRail(id: Exclude<RailId, null>) {
-    setOpenRail((prev) => (prev === id ? null : id))
-  }
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    let cancelled = false
+    void (async () => {
+      const { supabase } = await import('../lib/supabase')
+      if (cancelled) return
+
+      const countRes = await applyPropertyListingDateWindow(
+        supabase.from('properties').select('id', { count: 'exact', head: true }),
+        listingIsoDateUtc(),
+      ).eq('status', 'active')
+
+      const listRes = await applyPropertyListingDateWindow(
+        supabase.from('properties').select(
+          `
+          *,
+          landlord_profiles ( id, full_name, avatar_url, verified ),
+          universities ( id, name, slug ),
+          campuses ( id, name, slug )
+        `,
+        ),
+        listingIsoDateUtc(),
+      )
+        .eq('status', 'active')
+        .order('featured', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(6)
+
+      const coverRes = await applyPropertyListingDateWindow(
+        supabase.from('properties').select('universities ( name, slug )'),
+        listingIsoDateUtc(),
+      ).eq('status', 'active')
+
+      const campusRes = await supabase.from('campuses').select('id', { count: 'exact', head: true })
+
+      if (cancelled) return
+
+      if (!countRes.error) setListingCount(countRes.count ?? 0)
+      if (!listRes.error) setListings((listRes.data ?? []) as Property[])
+      if (!campusRes.error) setCampusCount(campusRes.count ?? 0)
+
+      if (!coverRes.error && coverRes.data) {
+        const tallies = new Map<string, number>()
+        for (const row of coverRes.data as { universities: { name: string; slug: string } | null }[]) {
+          const name = row.universities?.name?.trim()
+          if (!name) continue
+          tallies.set(name, (tallies.get(name) ?? 0) + 1)
+        }
+        setUniCoverage(
+          [...tallies.entries()]
+            .map(([label, homes]) => ({ label, homes }))
+            .sort((a, b) => b.homes - a.homes),
+        )
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const activityLine = useMemo(() => {
+    if (listingCount == null) return 'Loading live listings…'
+    if (listingCount === 0) return 'Listings go live as they are verified'
+    const first = listings[0]
+    if (first?.suburb) {
+      return `${listingCount} live · including ${first.suburb}`
+    }
+    return `${listingCount} live listing${listingCount === 1 ? '' : 's'} near campus`
+  }, [listingCount, listings])
+
+  const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
+  const gridRows = landlordDrawerOpen ? 'auto auto auto' : 'minmax(280px,1.2fr) minmax(200px,1fr) auto'
+  const gridMinH = landlordDrawerOpen ? 'auto' : '640px'
 
   return (
-    <div className="min-h-full w-full bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
+    <div className="flex min-h-full w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (desk prototype)"
         description="Quni Living desk-shell home prototype — not for search indexing."
@@ -37,278 +112,112 @@ export default function HomeV2() {
         noindex
       />
 
-      <div className={`${SITE_CONTENT_MAX_CLASS} py-6 md:py-10`}>
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4 md:mb-8">
-          <div>
-            <Link
-              to="/"
-              className="inline-flex rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            >
-              <img
-                src="/quni-logo.png"
-                srcSet="/quni-logo.png 1x, /quni-logo@2x.png 2x"
-                alt="Quni"
-                width={96}
-                height={32}
-                className="h-8 w-auto"
-              />
-            </Link>
-            <p className="mt-2 max-w-md font-[family-name:var(--font-serif)] text-lg text-[var(--quni-ink-2)] md:text-xl">
-              Verified rooms near campus — paperwork done.
-            </p>
-          </div>
-          <p className="rounded-md bg-[var(--quni-cream)] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--quni-ink-4)]">
-            Prototype · not live home
-          </p>
-        </header>
-
-        {/* Desktop bento */}
-        <div
-          className={[
-            'hidden md:grid md:gap-4',
-            landlordDrawerOpen
-              ? 'md:grid-cols-[0.7fr_0.7fr_1.85fr] md:grid-rows-[auto_auto_auto]'
-              : 'md:grid-cols-3 md:grid-rows-[minmax(200px,1fr)_minmax(160px,auto)_auto]',
-          ].join(' ')}
-          style={{
-            transition: landlordDrawerOpen
-              ? 'grid-template-columns 320ms var(--ease-standard)'
-              : undefined,
-          }}
+      {/* Desktop bento */}
+      <div className="relative hidden flex-1 flex-col px-4 py-4 md:flex lg:px-[18px]">
+        <Link
+          to="/login"
+          className="absolute top-[30px] right-9 z-[15] rounded-full border border-[var(--quni-line)] bg-white px-[18px] py-2 text-[13px] font-semibold text-[var(--quni-ink)] shadow-[var(--shadow-1)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
         >
-          <div className="md:col-span-2 md:row-span-1">
-            <PlaceholderDesk
-              nameplate="FOR RENTERS"
-              letterhead="Browse verified rooms near campus."
-              penLabel="Find a place →"
-              penTo="/listings"
-              tone="paper"
-            />
-          </div>
+          Log in
+        </Link>
 
+        <div
+          className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex flex-1 flex-col`}
+          style={{ maxWidth: 1200 }}
+        >
           <div
-            className="md:col-start-3 md:row-span-2"
-            style={{ gridArea: landlordDrawerOpen ? undefined : undefined }}
+            className="grid flex-1 gap-3.5"
+            style={{
+              minHeight: gridMinH,
+              gridTemplateAreas: `'search search landlord' 'search search landlord' 'uni account trust'`,
+              gridTemplateColumns: gridCols,
+              gridTemplateRows: gridRows,
+              transition: landlordDrawerOpen
+                ? 'grid-template-columns 320ms var(--ease-standard)'
+                : 'grid-template-columns 320ms var(--ease-standard), grid-template-rows 320ms var(--ease-standard)',
+            }}
           >
-            <LandlordDesk onDrawerOpenChange={setLandlordDrawerOpen} />
+            <div style={{ gridArea: 'search' }} className="min-h-0">
+              <SearchDesk
+                listings={listings}
+                listingCount={listingCount}
+                activityLine={activityLine}
+                uniCoverage={uniCoverage}
+                className="h-full min-h-[480px]"
+              />
+            </div>
+            <div style={{ gridArea: 'landlord' }} className="min-h-0">
+              <LandlordDesk onDrawerOpenChange={setLandlordDrawerOpen} className="h-full" />
+            </div>
+            <div style={{ gridArea: 'uni' }} className="min-h-0">
+              <UniversitiesDesk campusCount={campusCount} chips={uniCoverage} className="h-full" />
+            </div>
+            <div style={{ gridArea: 'account' }} className="min-h-0">
+              <AccountDesk className="h-full" />
+            </div>
+            <div style={{ gridArea: 'trust' }} className="min-h-0">
+              <TrustDesk className="h-full" />
+            </div>
           </div>
 
-          <div className="md:col-start-1 md:row-start-2">
-            <PlaceholderDesk
-              nameplate="UNIVERSITIES"
-              letterhead="Partner with Quni for your students."
-              penLabel="For universities →"
-              penTo="/for-universities"
-              tone="cream"
-              quietPen
-            />
-          </div>
+          <PapersBlock />
+        </div>
+      </div>
 
-          <div className="md:col-start-2 md:row-start-2">
-            <PlaceholderDesk
-              nameplate="YOUR ACCOUNT"
-              letterhead="Log in to messages and bookings."
-              penLabel="Log in →"
-              penTo="/login"
-              tone="paper"
-              quietPen
-            />
-          </div>
-
-          <div className="md:col-span-3 md:row-start-3">
-            <PlaceholderDesk
-              nameplate="TRUST & SAFETY"
-              letterhead="Verification, fairness, and how we work."
-              penLabel="See verification →"
-              penTo="/verification"
-              tone="cream"
-              quietPen
-            />
-          </div>
+      {/* Mobile: search stage + expandable rails */}
+      <div className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-6 md:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <img
+            src="/quni-logo.png"
+            srcSet="/quni-logo.png 1x, /quni-logo@2x.png 2x"
+            alt="Quni"
+            width={72}
+            height={24}
+            className="h-6 w-auto"
+          />
+          <Link
+            to="/login"
+            className="rounded-full border border-[var(--quni-line)] bg-white px-3.5 py-1.5 text-xs font-semibold text-[var(--quni-ink)] shadow-[var(--shadow-1)]"
+          >
+            Log in
+          </Link>
         </div>
 
-        {/* Mobile rails */}
-        <div className="flex flex-col gap-3 md:hidden">
-          <MobilePlaceholderRail
-            nameplate="FOR RENTERS"
-            letterhead="Verified rooms near campus"
-            expanded={openRail === 'listings'}
-            onToggle={() => toggleRail('listings')}
-            penLabel="Find a place →"
-            penTo="/listings"
-          />
+        <SearchDesk
+          listings={listings}
+          listingCount={listingCount}
+          activityLine={activityLine}
+          uniCoverage={uniCoverage}
+          compact
+        />
+
+        <div className="flex flex-col gap-2">
           <LandlordDesk
             mobileRail
             railExpanded={openRail === 'landlord'}
             onRailExpandChange={(open) => setOpenRail(open ? 'landlord' : null)}
           />
-          <MobilePlaceholderRail
-            nameplate="UNIVERSITIES"
-            letterhead="Partner with Quni"
-            expanded={openRail === 'universities'}
-            onToggle={() => toggleRail('universities')}
-            penLabel="For universities →"
-            penTo="/for-universities"
+          <UniversitiesDesk
+            campusCount={campusCount}
+            chips={uniCoverage}
+            mobileRail
+            railExpanded={openRail === 'uni'}
+            onRailExpandChange={(open) => setOpenRail(open ? 'uni' : null)}
           />
-          <MobilePlaceholderRail
-            nameplate="YOUR ACCOUNT"
-            letterhead="Log in to continue"
-            expanded={openRail === 'account'}
-            onToggle={() => toggleRail('account')}
-            penLabel="Log in →"
-            penTo="/login"
+          <AccountDesk
+            mobileRail
+            railExpanded={openRail === 'account'}
+            onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
           />
-          <MobilePlaceholderRail
-            nameplate="TRUST & SAFETY"
-            letterhead="Verification & fairness"
-            expanded={openRail === 'trust'}
-            onToggle={() => toggleRail('trust')}
-            penLabel="See verification →"
-            penTo="/verification"
+          <TrustDesk
+            mobileRail
+            railExpanded={openRail === 'trust'}
+            onRailExpandChange={(open) => setOpenRail(open ? 'trust' : null)}
           />
         </div>
 
-        {/* Papers signature block — legal entity lookup + social (not in Claude mock) */}
-        <footer className="mt-8 border-t border-[var(--quni-line)] pt-6 md:mt-10">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-xl space-y-2">
-              <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--quni-ink-5)]">
-                Papers
-              </p>
-              <LegalFooter className="!text-[11px] !opacity-90 text-[var(--quni-ink-4)]" />
-              <nav
-                aria-label="Company links"
-                className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[var(--quni-ink-3)]"
-              >
-                <Link className={papersLinkClass} to="/about">
-                  About
-                </Link>
-                <Link className={papersLinkClass} to="/faq">
-                  FAQ
-                </Link>
-                <Link className={papersLinkClass} to="/contact">
-                  Contact
-                </Link>
-                <Link className={papersLinkClass} to="/guides">
-                  Guides
-                </Link>
-                <Link className={papersLinkClass} to="/pricing">
-                  Pricing
-                </Link>
-                <Link className={papersLinkClass} to="/terms">
-                  Terms
-                </Link>
-                <Link className={papersLinkClass} to="/privacy">
-                  Privacy
-                </Link>
-              </nav>
-            </div>
-            <div>
-              <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--quni-ink-5)]">
-                Follow Quni
-              </p>
-              <SiteSocialLinks variant="drawer" />
-            </div>
-          </div>
-          <p className="mt-5 text-[11px] text-[var(--quni-ink-5)]">
-            Live home remains at{' '}
-            <Link to="/" className={papersLinkClass}>
-              quni.com.au
-            </Link>
-            . This page is a Preview prototype.
-          </p>
-        </footer>
+        <PapersBlock />
       </div>
     </div>
-  )
-}
-
-const papersLinkClass =
-  'underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
-
-function PlaceholderDesk({
-  nameplate,
-  letterhead,
-  penLabel,
-  penTo,
-  tone,
-  quietPen = false,
-}: {
-  nameplate: string
-  letterhead: string
-  penLabel: string
-  penTo: string
-  tone: 'paper' | 'cream'
-  quietPen?: boolean
-}) {
-  return (
-    <Desk
-      tone={tone}
-      className="min-h-[160px]"
-      nameplate={<DeskNameplate>{nameplate}</DeskNameplate>}
-      letterhead={
-        <DeskLetterhead className="!max-w-none !text-[var(--quni-ink)] !text-[20px]">
-          {letterhead}
-        </DeskLetterhead>
-      }
-      pen={
-        quietPen ? (
-          <Link
-            to={penTo}
-            className="inline-flex w-fit items-center text-[14px] font-semibold text-[var(--quni-ink-2)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-          >
-            {penLabel}
-          </Link>
-        ) : (
-          <DeskPen to={penTo} emphasis>
-            {penLabel}
-          </DeskPen>
-        )
-      }
-    />
-  )
-}
-
-function MobilePlaceholderRail({
-  nameplate,
-  letterhead,
-  expanded,
-  onToggle,
-  penLabel,
-  penTo,
-}: {
-  nameplate: string
-  letterhead: string
-  expanded: boolean
-  onToggle: () => void
-  penLabel: string
-  penTo: string
-}) {
-  return (
-    <article className="desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)] [contain:layout_paint]">
-      <button
-        type="button"
-        aria-expanded={expanded}
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]"
-      >
-        <DeskNameplate className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
-          {nameplate}
-        </DeskNameplate>
-        <span className="min-w-0 flex-1 font-[family-name:var(--font-serif)] text-[14.5px] text-[var(--quni-ink)]">
-          {letterhead}
-        </span>
-        <span aria-hidden className="text-[14px] text-[var(--quni-coral)]">
-          {expanded ? '⊖' : '⊕'}
-        </span>
-      </button>
-      {expanded ? (
-        <div className="px-4 pb-4">
-          <DeskPen to={penTo} emphasis={nameplate === 'FOR RENTERS'}>
-            {penLabel}
-          </DeskPen>
-        </div>
-      ) : null}
-    </article>
   )
 }
