@@ -75,21 +75,21 @@ export default function UniversitiesDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-2.5 overflow-y-auto p-[22px]">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-navy)]">
+      <div className="flex h-full flex-col gap-1.5 overflow-hidden p-3.5">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-navy)]">
           Universities
         </span>
-        <p className="m-0 text-[15px] leading-snug font-semibold text-[var(--quni-navy)]">{letterhead}</p>
+        <p className="m-0 text-[13px] leading-snug font-semibold text-[var(--quni-navy)]">{letterhead}</p>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-fit rounded-full border border-[rgba(31,42,68,0.14)] bg-white/50 px-3 py-1.5 text-[12px] font-semibold text-[var(--quni-navy)] hover:bg-[rgba(31,42,68,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
+          className="w-fit rounded-full border border-[rgba(31,42,68,0.14)] bg-white/50 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-navy)] hover:bg-[rgba(31,42,68,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
         >
           {open ? '⊖ Close' : '⊕ Coverage'}
         </button>
         {open ? (
-          <div className="mt-0.5 flex flex-col gap-2 border-t border-[rgba(31,42,68,0.14)] pt-3">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
+          <div className="mt-0.5 min-h-0 flex-1 overflow-y-auto border-t border-[rgba(31,42,68,0.14)] pt-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               Coverage by campus
             </span>
             <ChipRow chips={chips} />
@@ -97,7 +97,7 @@ export default function UniversitiesDesk({
         ) : null}
         <Link
           to="/for-universities"
-          className="mt-auto pt-2 text-[13px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
+          className="mt-auto pt-1 text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
         >
           Partner with Quni →
         </Link>

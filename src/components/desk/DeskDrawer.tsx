@@ -22,15 +22,15 @@ export default function DeskDrawer({
   const panelId = useId()
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => onOpenChange(!open)}
         className={[
-          'inline-flex w-fit items-center gap-2 rounded-[var(--radius-pill)] border border-white/18',
-          'bg-white/[0.06] px-3.5 py-2 text-left text-[12px] font-semibold text-white/72',
+          'inline-flex w-fit items-center gap-1.5 rounded-[var(--radius-pill)] border border-white/18',
+          'bg-white/[0.06] px-3 py-1.5 text-left text-[11.5px] font-semibold text-white/72',
           'transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
           'hover:bg-white/12 group-hover:bg-white/12',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-on-navy)]',

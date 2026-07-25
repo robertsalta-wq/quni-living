@@ -19,7 +19,7 @@ export default function DeskPen({
   onClick,
 }: DeskPenProps) {
   const base =
-    'desk-pen inline-flex w-full items-center justify-center rounded-[var(--radius-md)] px-7 py-3.5 text-[16.5px] font-bold transition-[transform,box-shadow,background-color] duration-[120ms] ease-[var(--ease-standard)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+    'desk-pen inline-flex w-full items-center justify-center rounded-[var(--radius-md)] px-5 py-2.5 text-[14.5px] font-bold transition-[transform,box-shadow,background-color] duration-[120ms] ease-[var(--ease-standard)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
 
   const coral = [
     'bg-[var(--quni-coral)] text-white',

@@ -49,7 +49,7 @@ export default function Desk({
   return (
     <article
       className={[
-        'desk-shell desk-settle group flex h-full min-h-0 flex-col gap-4 overflow-hidden rounded-[var(--radius-lg)] p-6',
+        'desk-shell desk-settle group flex h-full min-h-0 flex-col gap-2.5 overflow-hidden rounded-[var(--radius-lg)] p-4',
         'shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-standard)]',
         'hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]',
         '[contain:layout_paint]',
@@ -62,7 +62,7 @@ export default function Desk({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {nameplate}
         {letterhead}
       </div>

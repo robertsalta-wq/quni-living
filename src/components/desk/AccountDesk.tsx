@@ -31,7 +31,7 @@ export default function AccountDesk({
 
   const body = loggedIn ? (
     <>
-      <p className="m-0 text-[17px] font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
+      <p className="m-0 text-[15px] font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
       <Link
         to={dashboardTo}
         className="w-fit text-[13px] font-semibold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
@@ -41,19 +41,19 @@ export default function AccountDesk({
     </>
   ) : (
     <>
-      <div className="flex flex-col gap-1">
-        <p className="m-0 text-sm text-[var(--quni-ink-3)]">
+      <div className="flex flex-col gap-0.5">
+        <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
           <span className="font-semibold text-[var(--quni-ink)]">Renters</span> — saved places,
           enquiries & bookings.
         </p>
-        <p className="m-0 text-sm text-[var(--quni-ink-3)]">
+        <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
           <span className="font-semibold text-[var(--quni-ink)]">Landlords</span> — your listings &
           payouts.
         </p>
       </div>
       <Link
         to="/login"
-        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-white px-5 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-white px-4 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Log in
       </Link>
@@ -100,31 +100,31 @@ export default function AccountDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-2.5 overflow-y-auto p-[22px]">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
+      <div className="flex h-full flex-col gap-1.5 overflow-hidden p-3.5">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
           Account — renters & landlords
         </span>
         {body}
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+          className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
         >
           {open ? '⊖ Close' : '⊕ When you’re signed in'}
         </button>
         {open ? (
-          <div className="mt-0.5 flex flex-col gap-2 border-t border-[var(--quni-line)] pt-3">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
+          <div className="mt-0.5 min-h-0 flex-1 overflow-y-auto border-t border-[var(--quni-line)] pt-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               {loggedIn ? 'Your next step' : 'What you’ll find'}
             </span>
-            <p className="m-0 text-sm leading-relaxed text-[var(--quni-ink-3)]">
+            <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
               {loggedIn
                 ? 'Messages, bookings, and profile live in your dashboard — same account on every device.'
                 : 'Sign in to save places, enquire, and manage bookings or listings. Sign up is free for renters.'}
             </p>
             <Link
               to={loggedIn ? dashboardTo : '/signup'}
-              className="text-[13px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              className="text-[12px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
             >
               {loggedIn ? 'Open dashboard →' : 'Create an account →'}
             </Link>

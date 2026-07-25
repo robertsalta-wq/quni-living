@@ -139,7 +139,7 @@ export default function LandlordDesk({
   const letterhead = (
     <DeskLetterhead>
       Your spare room could be{' '}
-      <span className="text-[30px] font-bold text-[var(--quni-coral-on-navy)]">
+      <span className="text-[22px] font-bold text-[var(--quni-coral-on-navy)]">
         {formatRentFigure(rent)}
       </span>{' '}
       a week — verified student, paperwork done.
@@ -155,7 +155,7 @@ export default function LandlordDesk({
   )
 
   const waxSeal = (
-    <p className="font-[family-name:var(--font-serif)] text-[12px] italic text-white/45">
+    <p className="font-[family-name:var(--font-serif)] text-[10px] italic leading-snug text-white/45">
       The wax seal waits for the day you accept a tenant.
     </p>
   )
