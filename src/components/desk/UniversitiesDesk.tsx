@@ -75,7 +75,7 @@ export default function UniversitiesDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-1.5 overflow-hidden p-3.5">
+      <div className="flex h-full flex-col gap-1.5 p-3.5">
         <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-navy)]">
           Universities
         </span>
@@ -88,7 +88,7 @@ export default function UniversitiesDesk({
           {open ? '⊖ Close' : '⊕ Coverage'}
         </button>
         {open ? (
-          <div className="mt-0.5 min-h-0 flex-1 overflow-y-auto border-t border-[rgba(31,42,68,0.14)] pt-2">
+          <div className="mt-0.5 border-t border-[rgba(31,42,68,0.14)] pt-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               Coverage by campus
             </span>

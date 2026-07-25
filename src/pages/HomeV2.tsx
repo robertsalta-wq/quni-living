@@ -100,12 +100,13 @@ export default function HomeV2() {
   }, [listingCount, listings])
 
   const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
+  // Initial load fills ~one viewport; min-content lets desks grow and the page scroll.
   const gridRows = landlordDrawerOpen
     ? 'auto auto auto'
-    : 'minmax(0,1.2fr) minmax(0,1fr) minmax(0,0.72fr)'
+    : 'minmax(min-content, 1.2fr) minmax(min-content, 1fr) minmax(min-content, 0.72fr)'
 
   return (
-    <div className="flex min-h-full w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)] md:h-dvh md:max-h-dvh md:overflow-hidden">
+    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (desk prototype)"
         description="Quni Living desk-shell home prototype — not for search indexing."
@@ -113,13 +114,8 @@ export default function HomeV2() {
         noindex
       />
 
-      {/* Desktop bento — locked to one viewport; drawer open may scroll */}
-      <div
-        className={[
-          'desk-office relative hidden min-h-0 flex-1 flex-col px-3 py-2.5 md:flex lg:px-3.5',
-          landlordDrawerOpen ? 'overflow-y-auto' : 'overflow-hidden',
-        ].join(' ')}
-      >
+      {/* Desktop bento — sized for one screen on load; desks may expand and scroll */}
+      <div className="desk-office relative hidden flex-1 flex-col px-3 py-2.5 md:flex lg:px-3.5">
         <Link
           to="/login"
           className="absolute top-3 right-5 z-[15] rounded-full border border-[var(--quni-line)] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink)] shadow-[var(--shadow-1)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
@@ -128,12 +124,13 @@ export default function HomeV2() {
         </Link>
 
         <div
-          className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex min-h-0 flex-1 flex-col`}
+          className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex flex-1 flex-col`}
           style={{ maxWidth: 1200 }}
         >
           <div
-            className="grid min-h-0 flex-1 gap-2.5"
+            className="grid flex-1 gap-2.5"
             style={{
+              minHeight: 'calc(100dvh - 4.75rem)',
               gridTemplateAreas: `'search search landlord' 'search search landlord' 'uni account trust'`,
               gridTemplateColumns: gridCols,
               gridTemplateRows: gridRows,

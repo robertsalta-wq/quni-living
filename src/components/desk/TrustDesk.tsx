@@ -133,7 +133,7 @@ export default function TrustDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-1.5 overflow-hidden p-3.5">
+      <div className="flex h-full flex-col gap-1.5 p-3.5">
         {face}
         <span className="mt-auto" />
       </div>

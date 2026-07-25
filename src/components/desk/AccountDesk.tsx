@@ -100,7 +100,7 @@ export default function AccountDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex h-full flex-col gap-1.5 overflow-hidden p-3.5">
+      <div className="flex h-full flex-col gap-1.5 p-3.5">
         <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
           Account — renters & landlords
         </span>
@@ -113,7 +113,7 @@ export default function AccountDesk({
           {open ? '⊖ Close' : '⊕ When you’re signed in'}
         </button>
         {open ? (
-          <div className="mt-0.5 min-h-0 flex-1 overflow-y-auto border-t border-[var(--quni-line)] pt-2">
+          <div className="mt-0.5 border-t border-[var(--quni-line)] pt-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               {loggedIn ? 'Your next step' : 'What you’ll find'}
             </span>

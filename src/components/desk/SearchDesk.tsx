@@ -149,7 +149,7 @@ export default function SearchDesk({
 
       <div
         className={[
-          'flex min-h-0 flex-1 flex-col overflow-hidden',
+          'flex min-h-0 flex-1 flex-col',
           compact ? 'gap-2.5 overflow-y-auto p-3.5' : 'gap-2 p-4',
         ].join(' ')}
       >
@@ -217,7 +217,7 @@ export default function SearchDesk({
         </div>
 
         {filtersOpen ? (
-          <div className="grid min-h-0 flex-1 gap-2 overflow-y-auto sm:grid-cols-2">
+          <div className="grid min-h-0 flex-1 gap-2 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
                 Room type
