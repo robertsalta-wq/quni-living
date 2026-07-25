@@ -22,6 +22,13 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string
   /** Vercel Git commit SHA at build time (for stale-bundle debugging in Sentry) */
   readonly VITE_VERCEL_GIT_COMMIT_SHA?: string
+  /** Vercel environment at build time: production | preview | development */
+  readonly VITE_VERCEL_ENV?: string
+  /**
+   * Desk-shell experiment (`/home-v2`, flag-scoped `/pricing` chrome).
+   * When unset: ON in Preview, OFF in Production.
+   */
+  readonly VITE_DESK_SHELL_ENABLED?: string
   /** AES key for encrypting vendor credentials in admin (Apps modal) before Supabase update */
   readonly VITE_CREDENTIALS_ENC_KEY?: string
 }

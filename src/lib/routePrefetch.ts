@@ -50,6 +50,7 @@ const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/services/landlord-partnerships': [routeImports.serviceLandlordPartnerships],
   '/services/fully-furnished': [routeImports.serviceFullyFurnished],
   '/landlords/ai': [routeImports.landlordAIFeaturePage],
+  '/home-v2': [routeImports.homeV2],
   '/auth/callback': [routeImports.authCallback],
   '/forgot-password': [routeImports.forgotPassword],
   '/reset-password': [routeImports.resetPassword],
