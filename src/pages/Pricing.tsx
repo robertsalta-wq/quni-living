@@ -10,6 +10,7 @@ import {
   MANAGED_COMING_SOON_HEADLINE,
   MANAGED_COMING_SOON_SUBLINE,
 } from '../lib/managedComingSoonCopy'
+import { isDeskShellEnabled } from '../lib/deskShell'
 
 type LineTone = 'default' | 'muted'
 type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
@@ -187,6 +188,8 @@ export default function Pricing() {
   const [openFaqId, setOpenFaqId] = useState<string | null>('money-fees-0')
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
+  // Desk-shell experiment: keep Production indexable when flag is off; noindex when shell is on.
+  const deskShellNoindex = isDeskShellEnabled()
 
   useEffect(() => {
     let cancelled = false
@@ -220,6 +223,7 @@ export default function Pricing() {
         title="Pricing - Quni Living"
         description="Free for renters. Free to list for landlords. Choose Listing or Managed pricing."
         canonicalPath="/pricing"
+        noindex={deskShellNoindex}
       />
 
       <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[var(--quni-ink)] antialiased">

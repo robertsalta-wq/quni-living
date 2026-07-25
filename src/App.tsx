@@ -24,6 +24,7 @@ import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
 import MarketingChromeLayout from './components/appShell/MarketingChromeLayout'
+import ExperimentChromeLayout from './components/appShell/ExperimentChromeLayout'
 
 function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -186,6 +187,28 @@ function App() {
               }
             />
 
+            {/* Desk-shell home prototype — no marketing header/footer; always noindex */}
+            <Route
+              path="/home-v2"
+              element={
+                <Suspense fallback={<PageRouteFallback />}>
+                  <Lazy.HomeV2 />
+                </Suspense>
+              }
+            />
+
+            {/* Experiment routes: chrome gated by desk_shell_enabled (Preview ON / Production OFF) */}
+            <Route element={<ExperimentChromeLayout />}>
+              <Route
+                path="/pricing"
+                element={
+                  <Suspense fallback={<PageRouteFallback />}>
+                    <Lazy.Pricing />
+                  </Suspense>
+                }
+              />
+            </Route>
+
             {/* Admin — own layout */}
             <Route
               path="/admin"
@@ -257,7 +280,6 @@ function App() {
                 <Route path="/about" element={<Lazy.About />} />
                 <Route path="/how-it-works" element={<Lazy.HowItWorks />} />
                 <Route path="/refunds" element={<Lazy.Refunds />} />
-                <Route path="/pricing" element={<Lazy.Pricing />} />
                 <Route path="/contact" element={<Lazy.Contact />} />
                 <Route path="/faq" element={<Lazy.Faq />} />
                 <Route path="/verification" element={<Lazy.Verification />} />
