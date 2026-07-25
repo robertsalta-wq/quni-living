@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
+import CssCollapseAccordion from '../components/CssCollapseAccordion'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
-import { collectFaqPlainPairs, FAQ_SECTIONS } from '../lib/faqContent'
+import { ALL_FAQ_ITEMS, collectFaqPlainPairs, FAQ_SECTIONS } from '../lib/faqContent'
 
 export default function Faq() {
   const faqJsonLd = useMemo(() => buildFaqPageJsonLd(collectFaqPlainPairs()), [])
@@ -46,29 +47,16 @@ export default function Faq() {
           {FAQ_SECTIONS.map((section) => (
             <section key={section.id} id={`faq-${section.id}`} className="scroll-mt-32 md:scroll-mt-36">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">{section.label}</h2>
-              {/*
-                Native <details> keeps every answer in the HTML source for crawlers/plain-text
-                extractors. Accordion-null rendering only exposed the open item.
-              */}
-              <div className="quni-card mt-4 divide-y divide-gray-100">
-                {section.items.map((item) => (
-                  <details key={item.id} className="group" name={`faq-${section.id}`}>
-                    <summary className="flex w-full cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium text-gray-900 hover:bg-gray-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-admin-coral/40 sm:px-6 sm:text-base [&::-webkit-details-marker]:hidden">
-                      <span className="min-w-0 pr-2">{item.question}</span>
-                      <svg
-                        className="h-5 w-5 shrink-0 text-gray-400 transition-transform group-open:rotate-180"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                        aria-hidden
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
-                      </svg>
-                    </summary>
-                    <div className="px-5 pb-4 text-sm leading-relaxed text-gray-600 sm:px-6">{item.answer}</div>
-                  </details>
-                ))}
+              <div className="quni-card mt-4">
+                <CssCollapseAccordion
+                  variant="faq"
+                  defaultOpenId={section.id === FAQ_SECTIONS[0]?.id ? ALL_FAQ_ITEMS[0]?.id ?? null : null}
+                  items={section.items.map((item) => ({
+                    id: item.id,
+                    question: item.question,
+                    answer: item.answer,
+                  }))}
+                />
               </div>
             </section>
           ))}

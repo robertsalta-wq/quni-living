@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import CssCollapseAccordion from '../components/CssCollapseAccordion'
 import Seo from '../components/Seo'
 import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
 import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED } from '../lib/bondPublicCopy'
@@ -679,26 +680,15 @@ export default function Pricing() {
                 <h3 className="border-b border-stone-100 pb-2 font-display text-lg font-bold text-[var(--quni-trust)]">
                   {bucket.label}
                 </h3>
-                <div className="mt-3 divide-y divide-stone-100 rounded-xl border border-stone-100">
-                  {bucket.items.map((item) => (
-                    <details key={item.id} className="group" name={`pricing-faq-${bucket.id}`}>
-                      <summary className="flex w-full cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-stone-50/70 sm:px-5 [&::-webkit-details-marker]:hidden">
-                        <span className="font-semibold text-gray-900">{item.question}</span>
-                        <svg
-                          className="h-5 w-5 shrink-0 text-[var(--quni-coral)] transition-transform group-open:rotate-180"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          aria-hidden
-                        >
-                          <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </summary>
-                      <div className="px-4 pb-4 text-sm leading-relaxed text-gray-600 sm:px-5">{item.answer}</div>
-                    </details>
-                  ))}
-                </div>
+                <CssCollapseAccordion
+                  variant="pricing"
+                  defaultOpenId={bucket.id === 'money-fees' ? bucket.items[0]?.id ?? null : null}
+                  items={bucket.items.map((item) => ({
+                    id: item.id,
+                    question: item.question,
+                    answer: item.answer,
+                  }))}
+                />
               </div>
             ))}
           </div>
