@@ -202,7 +202,6 @@ const faqBuckets: FaqBucket[] = [
 export default function Pricing() {
   const { managedTierEnabled } = usePlatformFeatures()
   const serviceTierOptions = useServiceTierResolverOptions()
-  const [openFaqId, setOpenFaqId] = useState<string | null>('money-fees-0')
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
 
@@ -681,34 +680,24 @@ export default function Pricing() {
                   {bucket.label}
                 </h3>
                 <div className="mt-3 divide-y divide-stone-100 rounded-xl border border-stone-100">
-                  {bucket.items.map((item) => {
-                    const isOpen = openFaqId === item.id
-                    return (
-                      <div key={item.id}>
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-stone-50/70 sm:px-5"
-                          onClick={() => setOpenFaqId(isOpen ? null : item.id)}
-                          aria-expanded={isOpen}
+                  {bucket.items.map((item) => (
+                    <details key={item.id} className="group" name={`pricing-faq-${bucket.id}`}>
+                      <summary className="flex w-full cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-stone-50/70 sm:px-5 [&::-webkit-details-marker]:hidden">
+                        <span className="font-semibold text-gray-900">{item.question}</span>
+                        <svg
+                          className="h-5 w-5 shrink-0 text-[var(--quni-coral)] transition-transform group-open:rotate-180"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          aria-hidden
                         >
-                          <span className="font-semibold text-gray-900">{item.question}</span>
-                          <svg
-                            className={`h-5 w-5 shrink-0 text-[var(--quni-coral)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                            viewBox="0 0 20 20"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            aria-hidden
-                          >
-                            <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                        {isOpen ? (
-                          <p className="px-4 pb-4 text-sm leading-relaxed text-gray-600 sm:px-5">{item.answer}</p>
-                        ) : null}
-                      </div>
-                    )
-                  })}
+                          <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </summary>
+                      <div className="px-4 pb-4 text-sm leading-relaxed text-gray-600 sm:px-5">{item.answer}</div>
+                    </details>
+                  ))}
                 </div>
               </div>
             ))}
