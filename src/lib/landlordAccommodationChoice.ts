@@ -21,8 +21,8 @@ export const ACCOMMODATION_UI_OPTIONS: {
   },
   {
     value: 'entire_apartment',
-    title: 'Whole apartment or unit',
-    description: 'The tenant rents the entire apartment or unit.',
+    title: 'Whole apartment, unit or granny flat',
+    description: 'The tenant rents the entire apartment, unit, or granny flat.',
   },
   {
     value: 'entire_studio',
