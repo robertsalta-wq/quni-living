@@ -88,23 +88,23 @@ export default function HomeDeskHero() {
     listingCount,
     activityLine,
     uniCoverage,
-    className: 'min-h-0 h-full flex-1',
+    className: 'min-h-0',
   } as const
 
   return (
     <section
-      className="border-b border-[var(--quni-cream-border)] bg-[var(--quni-surface-2)]"
+      className="overflow-hidden border-b border-[var(--quni-cream-border)] bg-[var(--quni-surface-2)]"
       aria-label="Listings and Ask Quni"
     >
       <div className="mx-auto max-w-site px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Desktop: Listings 2/3 · Reception over Landlord 1/3 */}
-        <div className="hidden items-stretch gap-2.5 md:grid md:grid-cols-3">
-          <div className="flex min-h-0 flex-col md:col-span-2">
+        {/* Desktop: Listings 2/3 · Reception over Landlord 1/3 (content-height, no stretch bleed) */}
+        <div className="hidden items-start gap-2.5 md:grid md:grid-cols-3">
+          <div className="min-w-0 md:col-span-2">
             <SearchDesk {...searchProps} />
           </div>
-          <div className="flex min-h-0 flex-col gap-2.5">
-            <ReceptionDesk className="min-h-[280px] flex-1" />
-            <LandlordDesk className="w-full shrink-0" />
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <ReceptionDesk className="min-h-[320px]" />
+            <LandlordDesk className="w-full min-h-0" />
           </div>
         </div>
 
@@ -112,7 +112,7 @@ export default function HomeDeskHero() {
         <div className="flex flex-col gap-4 md:hidden">
           <SearchDesk {...searchProps} />
           <ReceptionDesk mobileRail />
-          <LandlordDesk className="w-full" />
+          <LandlordDesk className="w-full min-h-0" />
         </div>
       </div>
     </section>

@@ -212,7 +212,9 @@ export default function LandlordDesk({
   return (
     <Desk
       tone="navy"
-      className={['min-h-full', className].filter(Boolean).join(' ')}
+      className={[!/\bmin-h-/.test(className) ? 'min-h-full' : null, className]
+        .filter(Boolean)
+        .join(' ')}
       nameplate={<DeskNameplate>FOR HOMEOWNERS & LANDLORDS</DeskNameplate>}
       letterhead={letterhead}
       inTray={
