@@ -10,8 +10,8 @@ import { isSupabaseConfigured } from '../../lib/supabaseConfigured'
 import '../desk/desk.css'
 
 /**
- * Preview-only home hero: Listings + Reception (½ + ½), optional Landlord row below.
- * Replaces only the coral hero — rest of Home.tsx stays untouched.
+ * Preview-only home hero: Listings (~67%) | Reception over Landlord (~33%).
+ * Matches /home-v2 desk ratio (2 of 3 cols). Replaces only the coral hero.
  */
 export default function HomeDeskHero() {
   const [listings, setListings] = useState<Property[]>([])
@@ -83,31 +83,35 @@ export default function HomeDeskHero() {
     return `${listingCount} live listing${listingCount === 1 ? '' : 's'} near campus`
   }, [listingCount, listings])
 
+  const searchProps = {
+    listings,
+    listingCount,
+    activityLine,
+    uniCoverage,
+    className: 'min-h-0 h-full flex-1',
+  } as const
+
   return (
     <section
       className="border-b border-[var(--quni-cream-border)] bg-[var(--quni-surface-2)]"
       aria-label="Listings and Ask Quni"
     >
       <div className="mx-auto max-w-site px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {/* Two balanced columns — Reception never full-bleed */}
-        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5">
-          <SearchDesk
-            listings={listings}
-            listingCount={listingCount}
-            activityLine={activityLine}
-            uniCoverage={uniCoverage}
-            className="min-h-0"
-          />
-          <div className="hidden min-h-0 md:block">
-            <ReceptionDesk className="h-full min-h-[420px]" />
+        {/* Desktop: Listings 2/3 · Reception over Landlord 1/3 */}
+        <div className="hidden items-stretch gap-2.5 md:grid md:grid-cols-3">
+          <div className="flex min-h-0 flex-col md:col-span-2">
+            <SearchDesk {...searchProps} />
           </div>
-          <div className="md:hidden">
-            <ReceptionDesk mobileRail />
+          <div className="flex min-h-0 flex-col gap-2.5">
+            <ReceptionDesk className="min-h-[280px] flex-1" />
+            <LandlordDesk className="w-full shrink-0" />
           </div>
         </div>
 
-        {/* Optional landlord row — full width under the pair */}
-        <div className="mt-4 md:mt-5">
+        {/* Mobile: Listings → Reception → Landlord */}
+        <div className="flex flex-col gap-4 md:hidden">
+          <SearchDesk {...searchProps} />
+          <ReceptionDesk mobileRail />
           <LandlordDesk className="w-full" />
         </div>
       </div>
