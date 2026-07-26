@@ -187,12 +187,20 @@ function App() {
               }
             />
 
-            {/* Desk-shell home prototype — no marketing header/footer; always noindex */}
+            {/* Desk-shell home prototypes — no marketing header/footer; always noindex */}
             <Route
               path="/home-v2"
               element={
                 <Suspense fallback={<PageRouteFallback />}>
                   <Lazy.HomeV2 />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/home-v3"
+              element={
+                <Suspense fallback={<PageRouteFallback />}>
+                  <Lazy.HomeV3 />
                 </Suspense>
               }
             />

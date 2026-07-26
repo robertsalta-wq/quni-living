@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quni — home v2 with the Reception desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FEF9E4;--cream-border:#E8E0CC;--coral:#FF6F61;--coral-dark:#E8574A;
+    --ink:#2A2540;--muted:#6B6375;
+    --display:'Playfair Display',Georgia,serif;
+    --land-bg:linear-gradient(168deg,#252236 0%,#1b1826 55%,#171422 100%);
+    --parch:#E7DFC8;--parch-bright:#F4ECD6;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --shadow:0 1px 2px rgba(42,37,64,.05),0 8px 26px rgba(42,37,64,.08);
+    --lift:0 2px 8px rgba(42,37,64,.10),0 20px 44px rgba(42,37,64,.15);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);color:var(--ink);
+    background:radial-gradient(1100px 600px at 74% -10%,#FFF7E0,#F3EDDE 58%,#EDE6D5);-webkit-font-smoothing:antialiased;}
+  .note{max-width:1200px;margin:0 auto;padding:14px 22px 0;font-size:12px;color:#5c5566;line-height:1.5;}
+  .note b{color:var(--ink);}
+  .note .try{color:#8a5145;}
+  .page{max-width:1200px;margin:0 auto;padding:12px 22px 30px;}
+
+  .bento{display:grid;gap:11px;grid-template-columns:1fr 1fr 1fr;align-items:start;}
+  .span2{grid-column:span 2;}
+  .full{grid-column:1 / -1;}
+
+  .desk{position:relative;border-radius:17px;box-shadow:var(--shadow);border:1px solid rgba(42,37,64,.06);
+    display:flex;flex-direction:column;padding:16px 18px 15px;transition:transform .18s,box-shadow .18s;}
+  .desk:hover{transform:translateY(-2px);box-shadow:var(--lift);}
+  @keyframes settle{from{opacity:0;transform:translateY(13px);}to{opacity:1;transform:none;}}
+  .desk{animation:settle .5s cubic-bezier(.22,.8,.3,1) backwards;}
+  .d1{animation-delay:.04s;}.d2{animation-delay:.14s;}.d3{animation-delay:.24s;}
+  .d4{animation-delay:.32s;}.d5{animation-delay:.4s;}.d6{animation-delay:.48s;}.d7{animation-delay:.58s;}
+  @media (prefers-reduced-motion: reduce){.desk{animation:none;}}
+
+  .nameplate{display:inline-block;align-self:flex-start;border-radius:4px;padding:4px 11px;
+    font-size:9px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
+    background:linear-gradient(165deg,#EBDCB2 0%,#CDB77B 55%,#B9A264 100%);color:#4a3d1e;
+    text-shadow:0 1px 0 rgba(255,255,255,.45);border:1px solid rgba(74,61,30,.35);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.5),inset 0 -1px 1px rgba(74,61,30,.3),0 1px 3px rgba(0,0,0,.18);}
+  body.noplate .nameplate.recep{display:none;}
+  .letterhead{font-family:var(--display);line-height:1.26;margin-top:9px;font-size:17px;}
+  .pen{margin-top:auto;padding-top:11px;}
+  .pen a{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:11.5px;text-decoration:none;}
+  .desk:hover .arw{transform:translateX(3px);}
+  .arw{transition:transform .2s;display:inline-block;}
+  .pweight{position:absolute;top:13px;right:14px;display:inline-flex;align-items:center;gap:4px;
+    border:1.3px solid rgba(29,125,77,.45);color:#1d7d4d;border-radius:4px;background:rgba(255,255,255,.72);
+    font-size:7.5px;font-weight:800;letter-spacing:.1em;padding:3px 6px;transform:rotate(-5deg);}
+
+  /* ===== RECEPTION (top-left, span 2) ===== */
+  .reception{grid-column:span 2;background:linear-gradient(150deg,#FEF9E4 0%,#FFF1E4 62%,#FFE8DC 100%);
+    padding:17px 20px 16px;overflow:visible;z-index:20;}
+  .rectop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .wordmark{font-family:var(--display);font-weight:700;font-size:33px;letter-spacing:-.015em;line-height:1;}
+  .wordmark .q{color:var(--coral);}
+  .reclh{font-family:var(--display);font-size:17px;line-height:1.35;margin-top:10px;color:#4a4457;max-width:640px;}
+  .reclh b{color:var(--coral-dark);font-weight:700;}
+
+  .fieldwrap{position:relative;margin-top:12px;}
+  .field{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid #eccdbd;border-radius:12px;
+    padding:0 6px 0 15px;box-shadow:0 3px 10px rgba(42,37,64,.06);}
+  .field .mag{color:var(--coral);font-weight:800;font-size:15px;}
+  .field input{flex:1;min-width:0;border:0;outline:none;font-family:var(--font);font-size:14px;color:var(--ink);
+    background:transparent;padding:13px 0;}
+  .askbtn{border:0;cursor:pointer;font-family:var(--font);font-weight:800;border-radius:9px;background:var(--coral);
+    color:#fff;padding:9px 17px;font-size:13px;box-shadow:0 4px 12px rgba(255,111,97,.3);}
+
+  /* the suggestion tray */
+  .tray{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid #eadfc8;
+    border-radius:12px;box-shadow:0 18px 40px rgba(42,37,64,.18);padding:8px 0;display:none;z-index:40;}
+  .tray.on{display:block;}
+  .trhead{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#b3a68f;padding:7px 15px 4px;}
+  .tritem{display:flex;align-items:center;gap:10px;padding:8px 15px;cursor:pointer;font-size:13px;}
+  .tritem:hover{background:#fff6ec;}
+  .tritem .ic{width:19px;height:19px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;flex:none;}
+  .tritem .ic.pl{background:#ffe7dc;color:#c2452f;}
+  .tritem .ic.qu{background:#e6f2ea;color:#1d7d4d;}
+  .tritem .sub{color:#9a8f80;font-size:11px;margin-left:auto;font-weight:600;}
+  .trnote{padding:7px 15px 4px;font-size:10.5px;color:#9a8f80;font-style:italic;font-family:var(--display);border-top:1px dotted #eadfc8;margin-top:5px;}
+
+  /* answer-in-desk highlight */
+  .answer{display:none;margin-top:10px;border-top:1px dotted rgba(42,37,64,.18);padding-top:9px;}
+  .desk.answered .answer{display:block;}
+  .desk.answered{box-shadow:0 0 0 2px rgba(255,111,97,.5),var(--lift);}
+  .answer .atxt{font-size:12.5px;line-height:1.5;color:#3c3650;}
+  .desk.landlord .answer .atxt{color:#DDD7EC;}
+  .srcstamp{display:inline-flex;align-items:center;gap:5px;margin-top:7px;border:1.2px solid rgba(29,125,77,.5);
+    color:#1d7d4d;background:rgba(255,255,255,.75);border-radius:4px;font-size:8px;font-weight:800;
+    letter-spacing:.09em;padding:3px 7px;transform:rotate(-2deg);}
+  .desk.landlord .srcstamp{border-color:rgba(143,214,166,.55);color:#8FD6A6;background:rgba(255,255,255,.06);}
+
+  /* ===== LISTINGS ===== */
+  .listings{grid-column:span 2;background:linear-gradient(160deg,#FFFDF6 0%,#FBF3E4 100%);padding:15px 18px 14px;}
+  .listlh{font-family:var(--display);font-size:19px;color:#3d3320;line-height:1.25;}
+  .quickrow{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .quickrow select{font-family:var(--font);font-weight:700;font-size:11.5px;color:var(--ink);background:#fff;
+    border:1px solid var(--cream-border);border-radius:999px;padding:6px 11px;outline:none;}
+  .chip{border:1px solid var(--cream-border);background:#fff;border-radius:999px;font-weight:700;color:var(--muted);
+    font-size:11px;padding:6px 12px;cursor:pointer;}
+  .chip.on{background:#fff0e7;border-color:#f0c6b3;color:#c2452f;}
+  .openctl{border:1.5px dashed #d9c6b2;background:rgba(255,255,255,.6);border-radius:999px;font-weight:800;
+    color:#8a5145;font-size:10.5px;padding:6px 12px;cursor:pointer;display:inline-flex;gap:6px;}
+  .cards{display:flex;gap:10px;margin-top:12px;}
+  .lcard{flex:1;background:#fff;border:1px solid #f0e2d2;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);min-width:0;}
+  .lcard .ph{height:88px;position:relative;}
+  .lcard .ph svg{position:absolute;inset:0;width:100%;height:100%;}
+  .vstamp{position:absolute;right:6px;bottom:6px;border:1.4px solid rgba(29,125,77,.6);color:#1d7d4d;border-radius:4px;
+    font-size:7.5px;font-weight:800;letter-spacing:.09em;padding:2px 5px;transform:rotate(-6deg);background:rgba(255,255,255,.85);}
+  .lcard .bd{padding:8px 10px 9px;display:flex;align-items:baseline;gap:7px;}
+  .lcard .p{font-family:var(--display);font-weight:700;font-size:16px;}
+  .lcard .p small{font-family:var(--font);font-weight:600;color:var(--muted);font-size:9.5px;}
+  .lcard .s{color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tickrow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;}
+  .ticker{font-size:10.5px;font-weight:700;color:#8a5145;}
+
+  /* ===== LANDLORD ===== */
+  .landlord{background:var(--land-bg);color:#F3F1FA;grid-row:span 2;padding:17px 19px 16px;}
+  .landlord::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:radial-gradient(rgba(255,255,255,.03) 1px,transparent 1px);background-size:3px 3px;}
+  .landlord>*{position:relative;z-index:2;}
+  .landlord .letterhead{font-size:20px;color:#F5F3FB;}
+  .landlord .letterhead b{color:#FFB199;font-size:23px;}
+  .calc{margin-top:13px;border-top:1px solid rgba(255,255,255,.11);border-bottom:1px solid rgba(255,255,255,.11);padding:11px 0 12px;}
+  .cap{font-family:var(--display);font-style:italic;font-size:11.5px;color:#A79EC2;}
+  .cap b{color:var(--parch);font-style:normal;}
+  .srow{display:flex;align-items:center;gap:10px;margin-top:8px;}
+  .srow .val{font-family:var(--display);font-weight:700;font-size:18px;color:var(--parch-bright);min-width:88px;white-space:nowrap;}
+  .srow .val small{font-family:var(--font);font-size:9.5px;font-weight:700;color:#8d84a8;}
+  .srow input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;
+    background:linear-gradient(90deg,#8d84a8,#E7DFC8);outline:none;cursor:pointer;}
+  .srow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:17px;height:17px;border-radius:50%;
+    background:linear-gradient(160deg,#F4ECD6,#CDB77B);border:1.5px solid #4a3d1e;box-shadow:0 2px 6px rgba(0,0,0,.45);}
+  .steprow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;}
+  .steplab{font-size:10.5px;font-weight:700;color:#C7C1DA;}
+  .stepper{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.17);border-radius:999px;overflow:hidden;}
+  .stepper button{border:0;cursor:pointer;background:rgba(255,255,255,.07);color:#E7DFC8;font-weight:800;font-size:14px;width:28px;height:26px;font-family:var(--font);}
+  .stepper .n{min-width:58px;text-align:center;font-family:var(--display);font-weight:700;font-size:13px;color:var(--parch-bright);}
+  .stepper .n small{font-family:var(--font);font-size:9px;font-weight:700;color:#8d84a8;}
+  .ytot{display:flex;align-items:baseline;justify-content:space-between;margin-top:9px;gap:8px;}
+  .ytot .lab{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#B9B0D2;}
+  .ytot .amt{font-family:var(--display);font-weight:700;font-size:23px;color:#fff;}
+  .disc{font-size:8.5px;color:#8d84a8;font-weight:600;margin-top:4px;}
+  .lcta{display:inline-flex;align-self:flex-start;margin-top:12px;background:var(--coral);color:#fff;font-weight:800;
+    font-size:13px;border-radius:999px;padding:11px 20px;border:0;cursor:pointer;box-shadow:0 7px 18px rgba(255,111,97,.32);}
+  .ldraw{margin-top:10px;align-self:flex-start;border:1.4px dashed #4a4462;background:rgba(255,255,255,.05);
+    color:#c3b9df;border-radius:999px;font-weight:800;font-size:10px;padding:6px 12px;cursor:pointer;display:inline-flex;gap:6px;}
+
+  /* ===== windows ===== */
+  .win{padding:14px 16px 13px;min-height:132px;}
+  .win .letterhead{font-size:14.5px;}
+  .uni{background:linear-gradient(160deg,#EEF0FF 0%,#E4E6FB 100%);}
+  .uni .letterhead{color:#332a52;} .uni .pen a{color:#5b5bd6;}
+  .acct{background:linear-gradient(160deg,#F7F5FA 0%,#EFECF5 100%);}
+  .acct .letterhead{color:#3a3450;} .acct .pen a{color:var(--ink);}
+  .trust{background:linear-gradient(160deg,#F4FAF6 0%,#E7F3EC 100%);}
+  .trust .letterhead{color:#22402f;} .trust .pen a{color:#1d7d4d;}
+  .ticks{display:flex;flex-direction:column;gap:3px;margin-top:8px;}
+  .tk{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#2f5a42;}
+  .tk .m{display:inline-flex;width:13px;height:13px;border:1.2px solid #1d9d55;border-radius:3px;color:#1d9d55;
+    font-size:8px;font-weight:900;align-items:center;justify-content:center;transform:rotate(-4deg);background:rgba(255,255,255,.7);}
+
+  /* ===== papers ===== */
+  .papers{grid-column:1 / -1;background:linear-gradient(160deg,#FFFEF9 0%,#FBF6EA 100%);flex-direction:row;
+    align-items:center;gap:22px;padding:11px 18px;border-top:3px double #d9cbb0;}
+  .papers:hover{transform:none;box-shadow:var(--shadow);}
+  .pbrand{font-family:var(--display);font-weight:700;font-size:14px;}
+  .pbrand .q{color:var(--coral);}
+  .plegal{font-size:9px;font-weight:600;color:#9a8f80;letter-spacing:.04em;}
+  .pclabel{font-size:7.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#b3a68f;}
+  .plinks{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;}
+  .plinks a{font-size:10px;font-weight:600;color:#6b6375;text-decoration:none;border-bottom:1px dotted #d8cdb8;font-variant:small-caps;}
+  .pright{margin-left:auto;text-align:right;}
+  .pver{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:#1d7d4d;}
+  .pver .m{display:inline-flex;width:14px;height:14px;border:1.3px solid #1d9d55;border-radius:3px;font-size:9px;
+    font-weight:900;align-items:center;justify-content:center;transform:rotate(-5deg);}
+
+  .toggle{position:fixed;right:16px;bottom:16px;z-index:60;background:#fffdf4;border:1.5px solid #d9c6b2;color:#8a5145;
+    font-family:var(--font);font-weight:800;font-size:11px;border-radius:999px;padding:9px 15px;cursor:pointer;
+    box-shadow:0 6px 18px rgba(42,37,64,.18);}
+</style>
+</head>
+<body>
+  <div class="note"><b>home v2 + the Reception desk.</b> Wordmark now lives in Reception; the search field moved out of Listings, which keeps its quick filters. <span class="try">Try typing <b>ryde</b> · <b>bond</b> · <b>is it free</b> — then click a suggestion and watch the answer appear in the desk that owns it.</span></div>
+
+  <div class="page">
+    <div class="bento">
+
+      <!-- 1 · RECEPTION -->
+      <div class="desk reception d1" id="d-recep">
+        <div class="rectop">
+          <div class="wordmark"><span class="q">Q</span>uni</div>
+          <span class="nameplate recep">Reception</span>
+        </div>
+        <div class="reclh">Renting a room, or letting one? <b>Ask us anything</b> — a straight answer, with the source, or we'll point you to who knows.</div>
+        <div class="fieldwrap">
+          <div class="field">
+            <span class="mag">⌕</span>
+            <input id="q" autocomplete="off" placeholder="Search a suburb — or ask us anything…"/>
+            <button class="askbtn">Ask</button>
+          </div>
+          <div class="tray" id="tray"></div>
+        </div>
+        <div class="answer"><div class="atxt" id="recans"></div><span class="srcstamp">✓ SOURCE · QUNI FAQ</span></div>
+      </div>
+
+      <!-- 2 · LANDLORD (right, spans two rows) -->
+      <div class="desk landlord d2" id="d-land">
+        <span class="nameplate">For homeowners &amp; landlords</span>
+        <div class="letterhead">Your spare room could be <b>$350</b> a week — verified student, paperwork done.</div>
+        <div class="calc">
+          <div class="cap">Slide to <b>your room's rent</b>:</div>
+          <div class="srow">
+            <span class="val" id="rval">$350 <small>/wk</small></span>
+            <input type="range" id="rent" min="150" max="700" step="10" value="350" aria-label="Weekly rent per room"/>
+          </div>
+          <div class="steprow">
+            <span class="steplab">Rooms to let</span>
+            <div class="stepper">
+              <button id="minus">−</button><span class="n" id="rooms">1 <small>room</small></span><button id="plus">+</button>
+            </div>
+          </div>
+          <div class="ytot"><span class="lab">Your figure, a year</span><span class="amt" id="year">$18,200</span></div>
+          <div class="disc">Your own figures, before costs. Not a Quni estimate.</div>
+        </div>
+        <button class="lcta">List my room →</button>
+        <span class="ldraw">⊕ How it works — &amp; every fee</span>
+        <div class="answer"><div class="atxt" id="landans"></div><span class="srcstamp">✓ SOURCE · QUNI PRICING</span></div>
+      </div>
+
+      <!-- 3 · LISTINGS -->
+      <div class="desk listings d3">
+        <span class="nameplate">Rooms &amp; homes</span>
+        <div class="listlh">6 verified homes near campus — every listing checked.</div>
+        <div class="quickrow">
+          <select><option>All universities</option><option>University of Sydney</option><option>UNSW Sydney</option><option>UTS</option><option>Macquarie University</option></select>
+          <span class="chip">Furnished</span>
+          <span class="chip">Single</span>
+          <span class="chip">Studio</span>
+          <span class="openctl">⊕ All filters</span>
+        </div>
+        <div class="cards">
+          <div class="lcard"><div class="ph">
+            <svg viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice"><rect width="200" height="130" fill="#F7E9D9"/><rect y="96" width="200" height="34" fill="#E9D6BE"/><rect x="118" y="14" width="62" height="52" rx="4" fill="#CBE3F2" stroke="#FFFDF6" stroke-width="5"/><circle cx="136" cy="30" r="9" fill="#FFD98A"/><rect x="14" y="70" width="86" height="30" rx="6" fill="#FF8A7A"/><rect x="14" y="60" width="86" height="16" rx="6" fill="#FFF4E6"/></svg>
+            <span class="vstamp">✓ VERIFIED</span></div>
+            <div class="bd"><span class="p">$450<small> /wk</small></span><span class="s">Auchenflower · UQ</span></div></div>
+          <div class="lcard"><div class="ph">
+            <svg viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice"><rect width="200" height="130" fill="#F2ECE0"/><rect y="98" width="200" height="32" fill="#DECDB4"/><rect x="22" y="16" width="56" height="48" rx="4" fill="#C6E0EE" stroke="#FFFDF6" stroke-width="5"/><rect x="104" y="66" width="84" height="10" rx="3" fill="#B98C5F"/><rect x="20" y="78" width="62" height="22" rx="5" fill="#FF8A7A"/></svg>
+            <span class="vstamp">✓ VERIFIED</span></div>
+            <div class="bd"><span class="p">$415<small> /wk</small></span><span class="s">Buderim · USC</span></div></div>
+          <div class="lcard"><div class="ph">
+            <svg viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice"><rect width="200" height="130" fill="#EAEFEA"/><rect y="100" width="200" height="30" fill="#D6DCD2"/><rect x="128" y="12" width="58" height="56" rx="4" fill="#BFDCEC" stroke="#FBFDFB" stroke-width="5"/><rect x="14" y="66" width="92" height="34" rx="8" fill="#7A8FB3"/><rect x="34" y="104" width="70" height="9" rx="4" fill="#FF9A8C"/></svg>
+            <span class="vstamp">✓ VERIFIED</span></div>
+            <div class="bd"><span class="p">$400<small> /wk</small></span><span class="s">Ryde · Macquarie</span></div></div>
+        </div>
+        <div class="tickrow">
+          <span class="ticker">⚡ Newly verified in Ryde · this week</span>
+          <span class="openctl">Browse all listings →</span>
+        </div>
+        <div class="answer"><div class="atxt" id="listans"></div><span class="srcstamp">✓ SOURCE · LIVE LISTINGS</span></div>
+      </div>
+
+      <!-- windows -->
+      <div class="desk win uni d4">
+        <span class="nameplate">Universities</span>
+        <div class="letterhead">Verified housing for your students.</div>
+        <div class="pen"><a href="#">Partner with Quni <span class="arw">→</span></a></div>
+      </div>
+      <div class="desk win acct d5">
+        <span class="nameplate">Account</span>
+        <div class="letterhead">Your saved places, enquiries &amp; listings.</div>
+        <div class="pen"><a href="#">Log in <span class="arw">→</span></a></div>
+      </div>
+      <div class="desk win trust d6" id="d-trust">
+        <span class="pweight">✓ Verified</span>
+        <span class="nameplate">Trust &amp; safety</span>
+        <div class="ticks">
+          <span class="tk"><span class="m">✓</span> ID-verified renters &amp; landlords</span>
+          <span class="tk"><span class="m">✓</span> State-compliant agreements</span>
+          <span class="tk"><span class="m">✓</span> Every listing reviewed</span>
+        </div>
+        <div class="pen"><a href="#">How verification works <span class="arw">→</span></a></div>
+        <div class="answer"><div class="atxt" id="trustans"></div><span class="srcstamp">✓ SOURCE · VERIFICATION POLICY</span></div>
+      </div>
+
+      <!-- papers -->
+      <div class="desk papers d7">
+        <div>
+          <div class="pbrand"><span class="q">Q</span>uni Living</div>
+          <div class="plegal">ABN 65 675 990 968 · PARRAMATTA, NSW</div>
+        </div>
+        <div><span class="pclabel">The rules</span>
+          <div class="plinks"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Refunds</a><a href="#">Non-Discrimination</a></div></div>
+        <div><span class="pclabel">Reach a human</span>
+          <div class="plinks"><a href="#">Contact</a><a href="#">FAQ</a><a href="#">About</a></div></div>
+        <div class="pright"><div class="pver"><span class="m">✓</span> Verified marketplace →</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="toggle" id="tg">Hide “Reception” nameplate</button>
+
+<script>
+  /* ---------- data: places + questions (local, no AI in routing) ---------- */
+  const PLACES=[
+    {n:"Ryde, NSW 2112",s:"12 rooms nearby"},{n:"North Ryde, NSW 2113",s:"Macquarie"},
+    {n:"Macquarie University — Ryde",s:"campus"},{n:"Bondi Junction, NSW 2022",s:"—"},
+    {n:"Camperdown, NSW 2050",s:"USYD"},{n:"Kensington, NSW 2033",s:"UNSW"},
+    {n:"Chippendale, NSW 2008",s:"UTS"},{n:"Auchenflower, QLD 4066",s:"UQ"},
+    {n:"Buderim, QLD 4556",s:"USC"}
+  ];
+  const QS=[
+    {q:"Is Quni free for renters?",d:"recep",a:"Yes. Renters pay no booking, platform or service fees — from search through to a signed lease. A booking deposit may apply and is held securely, not kept by Quni."},
+    {q:"What does it cost to list a room?",d:"land",a:"Listing is free. You pay $99 once, on the day you accept a tenant. Rent is paid to you directly — Quni is never in the rent chain."},
+    {q:"Who holds the bond?",d:"land",a:"Never Quni. Bond is lodged under the rules of your state — in NSW some hosted-room arrangements are held by the landlord; in Queensland it is lodged with the authority."},
+    {q:"When is bond lodged?",d:"land",a:"It depends on the agreement type and the state. Quni never holds bond money at any point."},
+    {q:"What does verified mean?",d:"trust",a:"Renters complete ID and enrolment checks. Landlords complete Stripe identity verification before they can accept a booking. Every listing is reviewed before it goes live."},
+    {q:"How do I book a room?",d:"list",a:"Message the landlord from any listing, then apply. Your contact details stay private until the landlord accepts."},
+    {q:"Which states is Quni in?",d:"recep",a:"New South Wales and Queensland."}
+  ];
+
+  const q=document.getElementById('q'), tray=document.getElementById('tray');
+  const deskOf={recep:'d-recep',land:'d-land',list:null,trust:'d-trust'};
+  const ansOf={recep:'recans',land:'landans',list:'listans',trust:'trustans'};
+
+  function clearAnswers(){document.querySelectorAll('.desk').forEach(d=>d.classList.remove('answered'));}
+
+  function render(){
+    const v=q.value.trim().toLowerCase();
+    if(!v){tray.classList.remove('on');tray.innerHTML='';return;}
+    const pl=PLACES.filter(p=>p.n.toLowerCase().includes(v)).slice(0,3);
+    const qu=QS.filter(x=>x.q.toLowerCase().includes(v)||v.split(' ').some(w=>w.length>2&&x.q.toLowerCase().includes(w))).slice(0,3);
+    let h='';
+    if(pl.length){h+='<div class="trhead">Places</div>'+pl.map(p=>
+      `<div class="tritem" data-t="place"><span class="ic pl">⌕</span><span>${p.n}</span><span class="sub">${p.s}</span></div>`).join('');}
+    if(qu.length){h+='<div class="trhead">Questions</div>'+qu.map((x,i)=>
+      `<div class="tritem" data-t="q" data-i="${QS.indexOf(x)}"><span class="ic qu">?</span><span>${x.q}</span></div>`).join('');}
+    if(!pl.length&&!qu.length){h='<div class="trnote">No match yet — press Ask and Reception will answer, or say so and point you to the source.</div>';}
+    else{h+='<div class="trnote">Pick a place to search, or a question to be answered.</div>';}
+    tray.innerHTML=h;tray.classList.add('on');
+  }
+  q.addEventListener('input',render);
+  q.addEventListener('focus',render);
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.fieldwrap')) tray.classList.remove('on');
+    const it=e.target.closest('.tritem'); if(!it) return;
+    clearAnswers(); tray.classList.remove('on');
+    if(it.dataset.t==='place'){
+      q.value=it.querySelector('span:nth-child(2)').textContent;
+      document.getElementById('listans').textContent='Showing verified rooms in '+q.value+'. Filters below narrow it further.';
+      document.querySelector('.listings').classList.add('answered');
+      document.querySelector('.listings').scrollIntoView({behavior:'smooth',block:'nearest'});
+    }else{
+      const item=QS[+it.dataset.i]; q.value=item.q;
+      document.getElementById(ansOf[item.d]).textContent=item.a;
+      const target = item.d==='list' ? document.querySelector('.listings') : document.getElementById(deskOf[item.d]);
+      target.classList.add('answered');
+      target.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  });
+
+  /* calculator */
+  const fmt=n=>'$'+n.toLocaleString('en-AU'); let rooms=1;
+  const rent=document.getElementById('rent');
+  function calc(){const r=+rent.value,wk=r*rooms;
+    document.getElementById('rval').innerHTML=fmt(r)+' <small>/wk</small>';
+    document.getElementById('rooms').innerHTML=rooms+' <small>'+(rooms>1?'rooms':'room')+'</small>';
+    document.getElementById('year').textContent=fmt(wk*52);}
+  rent.addEventListener('input',calc);
+  document.getElementById('minus').addEventListener('click',()=>{rooms=Math.max(1,rooms-1);calc();});
+  document.getElementById('plus').addEventListener('click',()=>{rooms=Math.min(4,rooms+1);calc();});
+  calc();
+
+  /* nameplate toggle */
+  document.getElementById('tg').addEventListener('click',e=>{
+    const off=document.body.classList.toggle('noplate');
+    e.currentTarget.textContent=off?'Show “Reception” nameplate':'Hide “Reception” nameplate';
+  });
+</script>
+</body>
+</html>

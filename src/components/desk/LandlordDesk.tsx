@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../../lib/pricing'
 import Desk from './Desk'
+import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskDrawer from './DeskDrawer'
 import DeskInTray from './DeskInTray'
 import DeskLetterhead from './DeskLetterhead'
@@ -25,6 +26,8 @@ type LandlordDeskProps = {
   railExpanded?: boolean
   onRailExpandChange?: (expanded: boolean) => void
   className?: string
+  /** Optional FAQ answer shown in-desk (questions owned by Landlord). */
+  deskAnswer?: { text: string; source: string } | null
 }
 
 function formatRentFigure(rent: number): string {
@@ -104,6 +107,7 @@ export default function LandlordDesk({
   railExpanded = false,
   onRailExpandChange,
   className = '',
+  deskAnswer = null,
 }: LandlordDeskProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rent, setRent] = useState(RENT_DEFAULT)
@@ -160,12 +164,15 @@ export default function LandlordDesk({
     </p>
   )
 
+  const answered = Boolean(deskAnswer?.text)
+
   if (mobileRail) {
     return (
       <article
         className={[
           'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-navy)] text-white/78',
           'shadow-[var(--shadow-1)] [contain:layout_paint]',
+          answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
         ]
           .filter(Boolean)
@@ -202,6 +209,12 @@ export default function LandlordDesk({
                 managedFeeDisplay={managedFeeDisplay}
               />
             </DeskDrawer>
+            <DeskAnswerPanel
+              open={answered}
+              answer={deskAnswer?.text ?? ''}
+              source={deskAnswer?.source ?? 'QUNI PRICING'}
+              tone="navy"
+            />
             {waxSeal}
           </div>
         ) : null}
@@ -212,7 +225,13 @@ export default function LandlordDesk({
   return (
     <Desk
       tone="navy"
-      className={['min-h-full', className].filter(Boolean).join(' ')}
+      className={[
+        'min-h-full',
+        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       nameplate={<DeskNameplate>FOR HOMEOWNERS & LANDLORDS</DeskNameplate>}
       letterhead={letterhead}
       inTray={
@@ -226,7 +245,17 @@ export default function LandlordDesk({
           <DrawerBody listingFeeDisplay={listingFeeDisplay} managedFeeDisplay={managedFeeDisplay} />
         </DeskDrawer>
       }
-      foot={waxSeal}
+      foot={
+        <>
+          <DeskAnswerPanel
+            open={answered}
+            answer={deskAnswer?.text ?? ''}
+            source={deskAnswer?.source ?? 'QUNI PRICING'}
+            tone="navy"
+          />
+          {waxSeal}
+        </>
+      }
     />
   )
 }

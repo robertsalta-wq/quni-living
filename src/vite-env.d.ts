@@ -29,6 +29,10 @@ interface ImportMetaEnv {
    * When unset: ON in Preview, OFF in Production.
    */
   readonly VITE_DESK_SHELL_ENABLED?: string
+  /**
+   * `/home-v3` Reception tier-4 assistant stub. Default off — never call chat when unset.
+   */
+  readonly VITE_DESK_RECEPTION_ASSISTANT?: string
   /** AES key for encrypting vendor credentials in admin (Apps modal) before Supabase update */
   readonly VITE_CREDENTIALS_ENC_KEY?: string
 }

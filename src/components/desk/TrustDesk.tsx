@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskNameplate from './DeskNameplate'
 
 /** Face lines — only claims that match shipped behaviour (no rent/bond custody claim). */
@@ -22,6 +23,8 @@ type TrustDeskProps = {
   onRailExpandChange?: (open: boolean) => void
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
+  /** Optional FAQ answer shown in-desk (questions owned by Trust). */
+  deskAnswer?: { text: string; source: string } | null
 }
 
 export default function TrustDesk({
@@ -31,6 +34,7 @@ export default function TrustDesk({
   onRailExpandChange,
   trayOpen,
   onTrayOpenChange,
+  deskAnswer = null,
 }: TrustDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -39,6 +43,7 @@ export default function TrustDesk({
     if (onTrayOpenChange) onTrayOpenChange(next)
     else setUncontrolledOpen(next)
   }
+  const answered = Boolean(deskAnswer?.text)
 
   const face = (
     <>
@@ -102,6 +107,12 @@ export default function TrustDesk({
           ))}
         </div>
       )}
+      <DeskAnswerPanel
+        open={answered}
+        answer={deskAnswer?.text ?? ''}
+        source={deskAnswer?.source ?? 'VERIFICATION POLICY'}
+        tone="trust"
+      />
     </>
   )
 
@@ -110,6 +121,7 @@ export default function TrustDesk({
       <article
         className={[
           'desk-settle overflow-hidden rounded-[14px] border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
+          answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
         ]
           .filter(Boolean)
@@ -142,6 +154,7 @@ export default function TrustDesk({
         'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
         'border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:550ms]',
+        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)

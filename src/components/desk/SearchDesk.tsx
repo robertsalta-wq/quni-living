@@ -4,6 +4,8 @@ import { QuniLogoHomeLink } from '../SiteBrandLockup'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { deskIntentToPath, parseDeskIntent } from '../../lib/deskIntent'
 import { ROOM_TYPE_SHORT_LABELS, isRoomType, type Property } from '../../lib/listings'
+import DeskAnswerPanel from './DeskAnswerPanel'
+import DeskNameplate from './DeskNameplate'
 
 const UNI_OPTIONS = [
   { value: 'all', label: 'All universities' },
@@ -23,6 +25,13 @@ type SearchDeskProps = {
   uniCoverage: { label: string; homes: number }[]
   className?: string
   compact?: boolean
+  /**
+   * `/home-v3` listings mode: no wordmark, no search field; brass nameplate + quiet FREE mark.
+   * Default preserves `/home-v2` behaviour.
+   */
+  listingsOnly?: boolean
+  /** Optional FAQ answer shown in-desk (questions owned by Listings). */
+  deskAnswer?: { text: string; source: string } | null
 }
 
 function FactHeadline({ text }: { text: string }) {
@@ -59,6 +68,8 @@ export default function SearchDesk({
   uniCoverage,
   className = '',
   compact = false,
+  listingsOnly = false,
+  deskAnswer = null,
 }: SearchDeskProps) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -121,6 +132,8 @@ export default function SearchDesk({
     ? `${chipBase} border border-dashed border-[var(--quni-coral-border)] bg-[var(--quni-coral-tint)] text-[var(--quni-coral-active)]`
     : `${chipBase} border border-dashed border-[var(--quni-ink-5)] bg-transparent text-[var(--quni-ink-4)]`
 
+  const answered = Boolean(deskAnswer?.text)
+
   return (
     <article
       className={[
@@ -128,6 +141,7 @@ export default function SearchDesk({
         'border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-2)]',
         '[animation-delay:50ms]',
+        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)
@@ -139,60 +153,76 @@ export default function SearchDesk({
           compact ? 'gap-2.5 overflow-y-auto p-3.5' : 'gap-2 p-4',
         ].join(' ')}
       >
-        <div className="flex shrink-0 flex-col gap-1.5">
-          <div className="flex min-w-0 flex-row flex-nowrap items-center gap-3">
-            <div className="shrink-0">
-              <QuniLogoHomeLink />
+        {listingsOnly ? (
+          <div className="flex shrink-0 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <DeskNameplate>Rooms & homes</DeskNameplate>
+              <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[var(--quni-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-success-strong)]">
+                FREE for renters
+              </span>
             </div>
             <FactHeadline
               text={compact ? headline.replace(' — every listing checked', '') : headline}
             />
-            {!compact ? (
-              <div
-                aria-hidden
-                className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-success)] bg-[var(--quni-success-bg)] text-center shadow-[var(--shadow-1)]"
-              >
-                <span className="font-[family-name:var(--font-serif)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-success-strong)]">
-                  FREE
-                </span>
-                <span className="text-[6.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-success)]">
-                  for renters
-                </span>
+          </div>
+        ) : (
+          <div className="flex shrink-0 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-row flex-nowrap items-center gap-3">
+              <div className="shrink-0">
+                <QuniLogoHomeLink />
               </div>
+              <FactHeadline
+                text={compact ? headline.replace(' — every listing checked', '') : headline}
+              />
+              {!compact ? (
+                <div
+                  aria-hidden
+                  className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-success)] bg-[var(--quni-success-bg)] text-center shadow-[var(--shadow-1)]"
+                >
+                  <span className="font-[family-name:var(--font-serif)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-success-strong)]">
+                    FREE
+                  </span>
+                  <span className="text-[6.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-success)]">
+                    for renters
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            {compact ? (
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[rgba(29,158,117,0.5)] bg-[var(--quni-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-success-strong)]">
+                FREE for renters — search → lease
+              </span>
             ) : null}
           </div>
-          {compact ? (
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[rgba(29,158,117,0.5)] bg-[var(--quni-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-success-strong)]">
-              FREE for renters — search → lease
-            </span>
-          ) : null}
-        </div>
+        )}
 
-        <form onSubmit={onSubmit} className="relative z-[1] flex shrink-0 flex-col gap-1.5">
-          <div className="flex gap-2">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Suburb — or just tell Quni what you need…"
-              aria-label="Search intent"
-              className={[
-                'min-w-0 flex-1 border border-[var(--quni-line)] bg-white px-3.5 py-2 text-[14px] text-[var(--quni-ink)] outline-none',
-                'focus:border-[var(--quni-coral)] focus:shadow-[var(--shadow-focus)]',
-                compact ? 'rounded-full py-2.5 text-[13px]' : 'rounded-[10px]',
-              ].join(' ')}
-            />
-            <button
-              type="submit"
-              className={[
-                'inline-flex items-center gap-2 bg-[var(--quni-coral)] px-4 py-2 text-[14px] font-semibold text-white transition-colors duration-[120ms] hover:bg-[var(--quni-coral-hover)]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
-                compact ? 'rounded-full px-4 py-2.5 text-[13px] font-bold' : 'rounded-[10px]',
-              ].join(' ')}
-            >
-              Search
-            </button>
-          </div>
-        </form>
+        {!listingsOnly ? (
+          <form onSubmit={onSubmit} className="relative z-[1] flex shrink-0 flex-col gap-1.5">
+            <div className="flex gap-2">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Suburb — or just tell Quni what you need…"
+                aria-label="Search intent"
+                className={[
+                  'min-w-0 flex-1 border border-[var(--quni-line)] bg-white px-3.5 py-2 text-[14px] text-[var(--quni-ink)] outline-none',
+                  'focus:border-[var(--quni-coral)] focus:shadow-[var(--shadow-focus)]',
+                  compact ? 'rounded-full py-2.5 text-[13px]' : 'rounded-[10px]',
+                ].join(' ')}
+              />
+              <button
+                type="submit"
+                className={[
+                  'inline-flex items-center gap-2 bg-[var(--quni-coral)] px-4 py-2 text-[14px] font-semibold text-white transition-colors duration-[120ms] hover:bg-[var(--quni-coral-hover)]',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
+                  compact ? 'rounded-full px-4 py-2.5 text-[13px] font-bold' : 'rounded-[10px]',
+                ].join(' ')}
+              >
+                Search
+              </button>
+            </div>
+          </form>
+        ) : null}
 
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
           <select
@@ -408,6 +438,13 @@ export default function SearchDesk({
             )}
           </div>
         ) : null}
+
+        <DeskAnswerPanel
+          open={answered}
+          answer={deskAnswer?.text ?? ''}
+          source={deskAnswer?.source ?? 'LIVE LISTINGS'}
+          tone="cream"
+        />
       </div>
     </article>
   )
