@@ -44,7 +44,7 @@ export default function HomeDeskHero() {
         .eq('status', 'active')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(6)
+        .limit(18)
 
       const coverRes = await applyPropertyListingDateWindow(
         supabase.from('properties').select('universities ( name, slug )'),

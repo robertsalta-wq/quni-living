@@ -77,7 +77,8 @@ export default function SearchDesk({
       ? `${listingCount} verified home${listingCount === 1 ? '' : 's'} near campus — every listing checked`
       : 'Verified rooms near campus — paperwork done'
 
-  const preview = listings.slice(0, compact ? 2 : 3)
+  /** Desktop: 3 cols × 6 rows; mobile compact: 2 cards. */
+  const preview = listings.slice(0, compact ? 2 : 18)
 
   function buildListingsPath(): string {
     const intent = parseDeskIntent(query)
