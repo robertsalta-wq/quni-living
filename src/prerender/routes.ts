@@ -15,6 +15,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/contact',
   '/services/landlord-partnerships',
   '/landlords/ai',
+  '/for-landlords',
 ] as const
 
 export function listPrerenderPathnames(listingPaths: string[] = []): string[] {

@@ -28,6 +28,7 @@ import Verification from './pages/Verification'
 import Contact from './pages/Contact'
 import LandlordPartnerships from './pages/services/LandlordPartnerships'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
+import ForLandlords from './pages/ForLandlords'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -187,6 +188,9 @@ function App() {
             {/* AI landing — no marketing header; eager for prerender SEO */}
             <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
 
+            {/* Landlord desk front door — no marketing header; live desk anatomy; eager for prerender */}
+            <Route path="/for-landlords" element={<ForLandlords />} />
+
             {/* Admin — own layout */}
             <Route
               path="/admin"
@@ -273,10 +277,6 @@ function App() {
                   element={<Lazy.ServicePropertyManagement />}
                 />
                 <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
-                <Route
-                  path="/for-landlords"
-                  element={<Navigate to="/services/landlord-partnerships" replace />}
-                />
                 <Route
                   path="/landlord/onboarding"
                   element={<Navigate to="/landlord/dashboard?tab=profile" replace />}
