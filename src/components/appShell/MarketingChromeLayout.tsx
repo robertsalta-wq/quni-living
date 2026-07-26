@@ -5,12 +5,19 @@ import Footer from '../Footer'
 import FocusFormLegalStrip from '../FocusFormLegalStrip'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
 import PageRouteFallback from '../PageRouteFallback'
+import AskQuniMobileDock from '../aiChat/AskQuniMobileDock'
+import { isDeskShellEnabled } from '../../lib/deskShell'
 import { isFocusFormFlowPath } from '../../lib/site'
 
 /** Public / marketing chrome (Header + Footer). App shell routes do not use this. */
 export default function MarketingChromeLayout() {
   const location = useLocation()
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
+  const deskHome =
+    isDeskShellEnabled() && (location.pathname === '/' || location.pathname === '')
+  /** Desk home keeps Header; PapersBlock replaces mega-footer. */
+  const hideFooter = hideFooterForFormFlow || deskHome
+  const showAskQuniDock = isDeskShellEnabled() && !hideFooterForFormFlow
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -21,7 +28,8 @@ export default function MarketingChromeLayout() {
           <Outlet />
         </Suspense>
       </main>
-      {!hideFooterForFormFlow ? <Footer /> : <FocusFormLegalStrip />}
+      {!hideFooter ? <Footer /> : hideFooterForFormFlow ? <FocusFormLegalStrip /> : null}
+      {showAskQuniDock ? <AskQuniMobileDock /> : null}
     </div>
   )
 }

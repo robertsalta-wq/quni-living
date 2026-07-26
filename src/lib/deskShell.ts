@@ -4,7 +4,8 @@
  * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
  * Override: `VITE_DESK_SHELL_ENABLED=true|false`
  *
- * Currently gates `/for-landlords` (desk page vs 302 → partnerships).
+ * Gates: Preview desk home at `/`, `/for-landlords` desk page, Ask Quni nav/dock.
+ * Production keeps classic `/` home and 302s `/for-landlords` → partnerships.
  */
 
 export {

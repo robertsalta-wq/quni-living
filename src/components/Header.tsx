@@ -26,10 +26,12 @@ import AccountAvatar, {
 import SiteBrandLockup, { QuniLogoHomeLink } from './SiteBrandLockup'
 import ChromeHeaderShell from './ChromeHeaderShell'
 import AiSparkleIcon from './AiSparkleIcon'
+import AskQuniNavPill from './aiChat/AskQuniNavPill'
 import SiteSocialLinks from './SiteSocialLinks'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
+import { isDeskShellEnabled } from '../lib/deskShell'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
@@ -442,6 +444,7 @@ export default function Header({ embedded = false }: HeaderProps) {
         </div>
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+          {isDeskShellEnabled() ? <AskQuniNavPill hideOnNarrow /> : null}
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (

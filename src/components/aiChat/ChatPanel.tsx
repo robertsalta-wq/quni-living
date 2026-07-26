@@ -9,13 +9,17 @@ import { useVisitorSessionId } from '../../hooks/aiChat/useVisitorSessionId'
 import AiSparkleIcon from '../AiSparkleIcon'
 import { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './chatAiLabels'
 import ChatMessageBubble from './ChatMessageBubble'
-import ChatPromptChips from './ChatPromptChips'
+import ChatPromptChips, { type AudienceMode } from './ChatPromptChips'
 import TurnstileGate from './TurnstileGate'
 
 type Props = {
-  variant: 'widget' | 'embed' | 'listings'
+  variant: 'widget' | 'embed' | 'listings' | 'reception'
   listingContext?: ListingContext
   onClose?: () => void
+  /** Reception desk renter ↔ homeowner suggested questions. */
+  audienceMode?: AudienceMode
+  /** Prefill composer when opened from a chip / dock. */
+  initialDraft?: string
 }
 
 function generateConversationId(): string {
@@ -50,7 +54,13 @@ function useIsMobileBreakpoint(maxWidthPx: number): boolean {
   return isMobile
 }
 
-export default function ChatPanel({ variant, listingContext, onClose }: Props) {
+export default function ChatPanel({
+  variant,
+  listingContext,
+  onClose,
+  audienceMode,
+  initialDraft,
+}: Props) {
   const { session } = useAuthContext()
   const { personaKey, firstName } = usePersona()
   const visitorSessionId = useVisitorSessionId()
@@ -62,10 +72,17 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   const MAX_MESSAGES = 20
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [draft, setDraft] = useState<string>('')
+  const [draft, setDraft] = useState<string>(() => initialDraft?.trim() ?? '')
   const [localError, setLocalError] = useState<string | null>(null)
+  const [hasEverFocused, setHasEverFocused] = useState(() => Boolean(initialDraft?.trim()))
 
-  const [hasEverFocused, setHasEverFocused] = useState(false)
+  useEffect(() => {
+    if (initialDraft == null) return
+    const next = initialDraft.trim()
+    if (!next) return
+    setDraft(next)
+    setHasEverFocused(true)
+  }, [initialDraft])
 
   const pendingAssistantCommitRef = useRef<boolean>(false)
 
@@ -76,11 +93,17 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   const isStreaming = chatStream.state === 'streaming'
 
   const isListingsInline = variant === 'listings'
-  /** Listings page uses `listings`; property embed uses `embed` - same compact chrome. */
-  const isCompactInline = variant === 'embed' || variant === 'listings'
+  const isReception = variant === 'reception'
+  /** Listings / property embed / reception desk — compact chrome (no floating card header). */
+  const isCompactInline = variant === 'embed' || variant === 'listings' || isReception
   /** Inline compact UIs shrink to content; embed on mobile is fullscreen and keeps a scrollable message column. */
-  const useCompactAutoLayout = isCompactInline && !(variant === 'embed' && isMobile)
-  const inputId = isListingsInline ? 'quni-chat-input-listings' : 'quni-chat-input'
+  const useCompactAutoLayout =
+    isCompactInline && !(variant === 'embed' && isMobile) && !isReception
+  const inputId = isListingsInline
+    ? 'quni-chat-input-listings'
+    : isReception
+      ? 'quni-chat-input-reception'
+      : 'quni-chat-input'
 
   const hasScrollableConversation = messages.length > 0 || isStreaming
 
@@ -275,8 +298,8 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
 
   const commonPanelClass = variant === 'widget' ? 'fixed bottom-6 right-6 z-[1000]' : 'w-full'
 
-  const panelCardClass = isListingsInline
-    ? 'w-full'
+  const panelCardClass = isListingsInline || isReception
+    ? 'w-full min-h-0 flex flex-col flex-1'
     : isMobile
       ? 'fixed inset-0 z-[1000] bg-white'
       : commonPanelClass
@@ -284,8 +307,9 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   const desktopFloatingCardClass =
     'flex flex-col min-h-0 max-h-[min(600px,calc(100vh-100px))] w-[420px] max-w-[calc(100%-2rem)] rounded-2xl border border-gray-100 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)]'
 
-  const cardInnerClass =
-    variant === 'listings'
+  const cardInnerClass = isReception
+    ? 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[var(--quni-cream-border)] bg-white/90'
+    : variant === 'listings'
       ? 'flex flex-col h-auto w-full rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden'
       : isMobile
         ? 'flex flex-col h-full'
@@ -360,7 +384,12 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
 
             {messages.length === 0 && !isCompactInline ? (
               <div className="pt-2">
-                <ChatPromptChips personaKey={personaKey} onPick={onPickChip} disabled={isStreaming} />
+                <ChatPromptChips
+                  personaKey={personaKey}
+                  audienceMode={audienceMode}
+                  onPick={onPickChip}
+                  disabled={isStreaming}
+                />
               </div>
             ) : null}
           </div>
@@ -381,7 +410,12 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
           >
             {isCompactInline && messages.length === 0 ? (
               <div className="mb-2">
-                <ChatPromptChips personaKey={personaKey} onPick={onPickChip} disabled={isStreaming} />
+                <ChatPromptChips
+                  personaKey={personaKey}
+                  audienceMode={audienceMode}
+                  onPick={onPickChip}
+                  disabled={isStreaming}
+                />
               </div>
             ) : null}
             <form
