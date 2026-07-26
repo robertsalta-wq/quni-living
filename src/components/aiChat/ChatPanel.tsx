@@ -97,8 +97,7 @@ export default function ChatPanel({
   /** Listings / property embed / reception desk — compact chrome (no floating card header). */
   const isCompactInline = variant === 'embed' || variant === 'listings' || isReception
   /** Inline compact UIs shrink to content; embed on mobile is fullscreen and keeps a scrollable message column. */
-  const useCompactAutoLayout =
-    isCompactInline && !(variant === 'embed' && isMobile) && !isReception
+  const useCompactAutoLayout = isCompactInline && !(variant === 'embed' && isMobile)
   const inputId = isListingsInline
     ? 'quni-chat-input-listings'
     : isReception
@@ -126,6 +125,7 @@ export default function ChatPanel({
   }, [personaKey])
 
   const placeholder = useMemo(() => {
+    if (isReception) return 'Ask anything…'
     if (isCompactInline && personaKey === 'student_renter') {
       return 'Ask about these listings…'
     }
@@ -133,7 +133,7 @@ export default function ChatPanel({
     if (personaKey === 'landlord') return 'Ask for help drafting…'
     if (personaKey === 'student_renter') return 'Ask about listings, suburbs, or fit…'
     return 'Ask a question about Quni…'
-  }, [isCompactInline, personaKey])
+  }, [isCompactInline, isReception, personaKey])
 
   const scrollToBottom = useCallback(() => {
     const el = listRef.current
@@ -298,17 +298,19 @@ export default function ChatPanel({
 
   const commonPanelClass = variant === 'widget' ? 'fixed bottom-6 right-6 z-[1000]' : 'w-full'
 
-  const panelCardClass = isListingsInline || isReception
-    ? 'w-full min-h-0 flex flex-col flex-1'
-    : isMobile
-      ? 'fixed inset-0 z-[1000] bg-white'
-      : commonPanelClass
+  const panelCardClass = isReception
+    ? 'w-full flex flex-col'
+    : isListingsInline
+      ? 'w-full min-h-0 flex flex-col flex-1'
+      : isMobile
+        ? 'fixed inset-0 z-[1000] bg-white'
+        : commonPanelClass
 
   const desktopFloatingCardClass =
     'flex flex-col min-h-0 max-h-[min(600px,calc(100vh-100px))] w-[420px] max-w-[calc(100%-2rem)] rounded-2xl border border-gray-100 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)]'
 
   const cardInnerClass = isReception
-    ? 'flex min-h-0 flex-1 flex-col overflow-visible rounded-xl border border-[var(--quni-cream-border)] bg-white/90'
+    ? 'flex h-auto flex-col overflow-visible rounded-xl border border-[var(--quni-cream-border)] bg-white/90'
     : variant === 'listings'
       ? 'flex flex-col h-auto w-full rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden'
       : isMobile

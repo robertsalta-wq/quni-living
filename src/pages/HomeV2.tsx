@@ -15,13 +15,14 @@ import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import '../components/desk/desk.css'
 
-type RailId = 'landlord' | 'uni' | 'account' | 'trust' | 'reception' | null
+type RailId = 'landlord' | 'uni' | 'account' | 'trust' | null
 type BottomTray = 'landlord' | 'uni' | 'account' | 'trust' | null
 
 /**
  * Desk-system home (preview candidate).
  * Header stays in MarketingChromeLayout; PapersBlock replaces the mega-footer.
- * Reception desk co-anchors with listings (SearchDesk keeps verified-home images).
+ * Reception is a compact full-width band above Listings + Landlord (the two grand desks).
+ * Mobile: docked Reception bar → full-screen chat (no inline band).
  */
 export default function HomeV2() {
   const [landlordDrawerOpen, setLandlordDrawerOpen] = useState(false)
@@ -98,12 +99,12 @@ export default function HomeV2() {
     return `${listingCount} live listing${listingCount === 1 ? '' : 's'} near campus`
   }, [listingCount, listings])
 
-  // Listings + reception co-anchor the top; windows share the bottom row.
+  // Reception band on top; Listings + Landlord co-anchor; windows on the bottom row.
   const gridCols = landlordDrawerOpen ? '0.85fr 0.85fr 1.3fr' : '1.15fr 0.95fr 0.9fr'
   const gridRows =
     landlordDrawerOpen || openTray
-      ? 'minmax(min-content, 1.15fr) minmax(min-content, 1fr) auto'
-      : 'minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(min-content, 0.78fr)'
+      ? 'auto minmax(min-content, 1.15fr) minmax(min-content, 1fr) auto'
+      : 'auto minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(min-content, 0.78fr)'
 
   function setTray(id: BottomTray, open: boolean) {
     setOpenTray(open ? id : null)
@@ -113,7 +114,7 @@ export default function HomeV2() {
     <div className="flex w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)] pb-[4.5rem] sm:pb-0">
       <Seo
         title="Quni Living — verified student & professional housing"
-        description="Desk-system home prototype — Ask Quni reception, verified listings, and landlord desks. Preview experiment; not for search indexing."
+        description="Verified rooms near campus — ask Reception, browse listings, and list a spare room. Preview experiment; not for search indexing."
         canonicalPath="/"
         noindex
       />
@@ -128,7 +129,7 @@ export default function HomeV2() {
             className="grid flex-1 items-stretch gap-2.5"
             style={{
               minHeight: 'calc(100dvh - 7.5rem)',
-              gridTemplateAreas: `'search reception reception' 'search landlord uni' 'search account trust'`,
+              gridTemplateAreas: `'reception reception reception' 'search search landlord' 'search search landlord' 'uni account trust'`,
               gridTemplateColumns: gridCols,
               gridTemplateRows: gridRows,
               transition: landlordDrawerOpen
@@ -136,6 +137,9 @@ export default function HomeV2() {
                 : 'grid-template-columns 320ms var(--ease-standard), grid-template-rows 320ms var(--ease-standard)',
             }}
           >
+            <div style={{ gridArea: 'reception' }} className="flex min-h-0 flex-col self-start">
+              <ReceptionDesk className="w-full" />
+            </div>
             <div style={{ gridArea: 'search' }} className="flex min-h-0 flex-col self-stretch">
               <SearchDesk
                 listings={listings}
@@ -144,9 +148,6 @@ export default function HomeV2() {
                 uniCoverage={uniCoverage}
                 className="min-h-full flex-1"
               />
-            </div>
-            <div style={{ gridArea: 'reception' }} className="flex min-h-0 flex-col self-stretch">
-              <ReceptionDesk className="min-h-full flex-1" />
             </div>
             <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
               <LandlordDesk
@@ -182,7 +183,7 @@ export default function HomeV2() {
         </div>
       </div>
 
-      {/* Mobile: listings stage + reception + expandable rails; dock opens full-screen helper */}
+      {/* Mobile: listings + rails; Reception is the docked bar → full-screen helper */}
       <div className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-6 md:hidden">
         <SearchDesk
           listings={listings}
@@ -191,8 +192,6 @@ export default function HomeV2() {
           uniCoverage={uniCoverage}
           compact
         />
-
-        <ReceptionDesk mobileRail />
 
         <div className="flex flex-col gap-2">
           <LandlordDesk

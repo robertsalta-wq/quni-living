@@ -3,8 +3,8 @@ import AiSparkleIcon from '../AiSparkleIcon'
 import { ASK_QUNI_PILL_LABEL } from './chatAiLabels'
 
 /**
- * Slim docked Ask Quni bar (marketing / non–app-shell mobile).
- * Opens the existing ChatPanel (fullscreen on narrow viewports). Patient — never auto-opens.
+ * Slim docked Reception bar (marketing / non–app-shell mobile).
+ * Opens the existing ChatPanel fullscreen on narrow viewports. Patient — never auto-opens.
  */
 export default function AskQuniMobileDock() {
   const openChat = useOpenAiChat()

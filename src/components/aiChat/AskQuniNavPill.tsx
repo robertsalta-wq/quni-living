@@ -11,7 +11,10 @@ type Props = {
   hideOnNarrow?: boolean
 }
 
-/** Desktop/header pill — opens the existing chat panel (never auto-opens). */
+/**
+ * Desktop/header pill — opens the existing chat panel (never auto-opens).
+ * Label: ✦ Reception (desk-shell Preview surfaces).
+ */
 export default function AskQuniNavPill({ className = '', hideOnNarrow = false }: Props) {
   const openChat = useOpenAiChat()
   return (

@@ -37,16 +37,14 @@ const CHIPS: Record<PersonaKey, string[]> = {
 /** Suggested questions for the reception desk audience toggle. */
 export const AUDIENCE_CHIPS: Record<AudienceMode, string[]> = {
   renter: [
-    'How does Quni work for renters?',
-    'How are landlords verified?',
+    'Rooms near UTS',
+    'How does verification work?',
     'What do I pay when I book?',
-    'How does renter verification work?',
   ],
   homeowner: [
-    'What does it cost to list a room?',
-    'Listing vs Managed — what’s the difference?',
-    'How are renters verified before I accept?',
-    'Can I list a spare room in NSW?',
+    'Can I rent out my spare room in NSW?',
+    'Who holds the bond?',
+    'Is my lodger a tenant?',
   ],
 }
 

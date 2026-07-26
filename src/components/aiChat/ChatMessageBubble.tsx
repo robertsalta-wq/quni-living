@@ -59,19 +59,25 @@ export default function ChatMessageBubble({ role, text, isStreaming }: Props) {
           <span>{text}</span>
           {!isUser && isStreaming ? streamingDots() : null}
         </div>
-        {sources.length > 0 ? (
+        {!isUser && !isStreaming ? (
           <div className="flex flex-wrap gap-1.5 px-1">
-            {sources.map((url) => (
-              <a
-                key={url}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-sm border border-[var(--quni-brass)]/40 bg-[var(--quni-cream)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--quni-brass-ink)] hover:border-[var(--quni-brass)]"
-              >
-                Source · {sourceHostLabel(url)}
-              </a>
-            ))}
+            {sources.length > 0 ? (
+              sources.map((url) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center rounded-sm border border-[var(--quni-brass)]/40 bg-[var(--quni-cream)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--quni-brass-ink)] hover:border-[var(--quni-brass)]"
+                >
+                  Source · {sourceHostLabel(url)}
+                </a>
+              ))
+            ) : (
+              <span className="inline-flex items-center rounded-sm border border-[var(--quni-brass)]/40 bg-[var(--quni-cream)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--quni-brass-ink)]">
+                Source · Quni policy
+              </span>
+            )}
           </div>
         ) : null}
       </div>

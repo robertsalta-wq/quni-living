@@ -4,8 +4,8 @@
  * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
  * Override: `VITE_DESK_SHELL_ENABLED=true|false`
  *
- * Gates: Preview home hero desks (Listings + Reception), `/for-landlords` desk page,
- * Ask Quni nav/dock. Production keeps classic coral hero and 302s `/for-landlords`.
+ * Gates: Preview desk-system home (Reception band + Listings/Landlord), `/for-landlords`
+ * desk page, Reception nav/dock. Production keeps classic coral hero and 302s `/for-landlords`.
  */
 
 export {

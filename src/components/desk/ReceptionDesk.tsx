@@ -10,12 +10,18 @@ import './desk.css'
 
 type ReceptionDeskProps = {
   className?: string
-  /** Mobile home stack: compact face that opens the full-screen helper. */
+  /**
+   * @deprecated Prefer the docked Reception bar → full-screen chat on mobile.
+   * Kept for HomeDeskHero / transitional call sites.
+   */
   mobileRail?: boolean
 }
 
+const LETTERHEAD =
+  'Renting a room, or letting one? Ask us anything — a straight answer, with the source, or we\'ll point you to who knows.'
+
 /**
- * Reception / Ask Quni desk — always-on helper on desktop (patient: never auto-opens).
+ * Reception band — compact full-width Ask Quni desk (patient: never auto-opens).
  * Reuses ChatPanel + /api/chat; renter ↔ homeowner only changes suggested questions.
  */
 export default function ReceptionDesk({ className = '', mobileRail = false }: ReceptionDeskProps) {
@@ -24,7 +30,7 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
 
   const toggle = (
     <div
-      className="inline-flex rounded-full border border-[var(--quni-line)] bg-white/80 p-0.5 text-[11px] font-semibold"
+      className="inline-flex shrink-0 rounded-full border border-[var(--quni-line)] bg-white/80 p-0.5 text-[11px] font-semibold"
       role="group"
       aria-label="Who are you asking as"
     >
@@ -67,11 +73,11 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
       >
         <div className="flex flex-col gap-2.5 px-3.5 py-3">
           <div className="flex items-center justify-between gap-2">
-            <DeskNameplate>Ask Quni</DeskNameplate>
+            <DeskNameplate>Reception</DeskNameplate>
             {toggle}
           </div>
           <p className="m-0 font-display text-[15px] font-bold leading-snug text-[var(--quni-ink)]">
-            Your front desk — fees, verification, or a careful tenancy pointer.
+            {LETTERHEAD}
           </p>
           <ChatPromptChips
             audienceMode={audience}
@@ -83,7 +89,7 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
             onClick={() => openChat({ audienceMode: audience })}
             className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 py-2.5 text-[13px] font-bold text-white shadow-[var(--shadow-1)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
           >
-            Open Ask Quni →
+            Open Reception →
           </button>
         </div>
       </article>
@@ -94,8 +100,8 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
     <Desk
       tone="cream"
       className={[
-        'desk-settle min-h-0 flex-1 !gap-2 border border-[var(--quni-cream-border)] contain-none',
-        '[animation-delay:90ms]',
+        'desk-settle !gap-1.5 !p-3 border border-[var(--quni-cream-border)] contain-none',
+        '[animation-delay:40ms]',
         className,
       ]
         .filter(Boolean)
@@ -105,17 +111,17 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
       }}
       nameplate={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
-          <DeskNameplate>Ask Quni</DeskNameplate>
+          <DeskNameplate>Reception</DeskNameplate>
           {toggle}
         </div>
       }
       letterhead={
-        <DeskLetterhead className="text-[17px] text-[var(--quni-ink)] sm:text-[18px]">
-          Ask anything — product answers freely; tenancy only from verified sources.
+        <DeskLetterhead className="max-w-none text-[15px] leading-snug text-[var(--quni-ink)] sm:text-[16px]">
+          {LETTERHEAD}
         </DeskLetterhead>
       }
       inTray={
-        <DeskInTray className="mt-0.5 min-h-0 flex-1 overflow-visible">
+        <DeskInTray className="mt-0.5 min-h-0 overflow-visible">
           <ChatPanel variant="reception" audienceMode={audience} />
         </DeskInTray>
       }
