@@ -12,7 +12,6 @@ Sitemap: https://quni.com.au/sitemap.xml
 - [Pricing](https://quni.com.au/pricing): Renter and landlord fees; Listing vs Managed
 - [FAQ](https://quni.com.au/faq): Common questions for renters and landlords
 - [Guides](https://quni.com.au/guides): Longer-form articles
-- [For landlords](https://quni.com.au/for-landlords): List a room in NSW or QLD — free to list, $99 once on accept; verified applicants and state-compliant agreements
 - [Landlord partnerships](https://quni.com.au/services/landlord-partnerships): Portfolio and partnership enquiries
 - [Landlord AI tools](https://quni.com.au/landlords/ai): In-product AI helpers for hosts (listing copy, pricing suggestions, screening)
 - [Verification](https://quni.com.au/verification): How renter and host verification works

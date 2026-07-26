@@ -1,0 +1,27 @@
+---
+description: Never ship user-visible changes to production without explicit go
+alwaysApply: true
+---
+
+# Preview or flag before production
+
+Nothing **user-visible** reaches `quni.com.au` Production until Rob has seen it and said **go**.
+
+## Default
+
+- Ship behind **Preview** and/or an explicit **feature flag** (e.g. `desk_shell_enabled`).
+- Do this **every time**, even when a brief says “ship live” / “not behind a flag”.
+- If a brief asks for a live Production cutover, treat that as a **question for Rob**, not an instruction. Confirm before merging anything that changes what visitors see on Production.
+
+## What counts as user-visible
+
+Anything a visitor can see or hit without being an admin: marketing pages, routes, redirects, nav copy, public HTML/SEO (`sitemap`, `llms.txt`, prerender, robots), public product UI.
+
+## What this does not block
+
+- Non-visible internals (tests, prompt-only AI guardrails, admin-only tools, docs/`.cursor` rules) may still follow the normal PR → `main` path unless Rob says otherwise.
+- Flag/Preview scaffolding that keeps Production byte-identical (or redirect-identical) for visitors is allowed.
+
+## Redirects
+
+Prefer **302** (temporary) for experiment/off switches. Never use **301** for a URL you may later reclaim — browsers cache permanent redirects and poison the real path.
