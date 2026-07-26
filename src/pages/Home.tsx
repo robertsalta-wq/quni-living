@@ -24,6 +24,8 @@ import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
+import HomeDeskHero from '../components/home/HomeDeskHero'
+import { isDeskShellEnabled } from '../lib/deskShell'
 
 /** First-party LCP hero (same Unsplash photo-1571260899304…, 4:3). See public/hero/. */
 const HERO_COLLAGE_TOP_FALLBACK = '/hero/hero-top-800.webp'
@@ -395,7 +397,10 @@ export default function Home() {
         image={homeOgImage}
         jsonLd={homeJsonLd}
       />
-      {/* Hero - coral band; collage + badges reference Wix trial */}
+      {/* Hero: Preview desk pair (Listings + Reception) or classic coral band */}
+      {isDeskShellEnabled() ? (
+        <HomeDeskHero />
+      ) : (
       <section className="bg-[var(--quni-coral)] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
@@ -550,6 +555,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       <section className="border-b border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] py-5 sm:py-6">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">

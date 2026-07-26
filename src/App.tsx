@@ -12,7 +12,6 @@ import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
 import Home from './pages/Home'
-import HomeV2 from './pages/HomeV2'
 import AuthCallback from './pages/auth/AuthCallback'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
@@ -247,7 +246,7 @@ function App() {
             {/* Marketing / auth — public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
               {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS / empty shells). */}
-              <Route path="/" element={isDeskShellEnabled() ? <HomeV2 /> : <Home />} />
+              <Route path="/" element={<Home />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideArticlePage />} />
               <Route path="/for-universities" element={<ForUniversities />} />

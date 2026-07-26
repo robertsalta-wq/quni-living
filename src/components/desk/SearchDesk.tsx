@@ -318,12 +318,18 @@ export default function SearchDesk({
                   <Link
                     key={p.id}
                     to={to}
-                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                    className="group flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   >
-                    <div
-                      className="relative min-h-[120px] flex-1 bg-[var(--quni-surface-3)] bg-cover bg-center"
-                      style={img ? { backgroundImage: `url(${img})` } : undefined}
-                    >
+                    <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-[var(--quni-surface-3)]">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : null}
                       <span className="absolute right-1.5 bottom-1.5 rotate-[-7deg] rounded border-[1.5px] border-[rgba(15,110,86,0.6)] bg-white/85 px-1.5 py-0.5 text-[8px] font-extrabold tracking-[0.1em] text-[var(--quni-success-strong)]">
                         ✓ VERIFIED
                       </span>

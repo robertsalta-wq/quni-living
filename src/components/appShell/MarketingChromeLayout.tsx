@@ -13,10 +13,6 @@ import { isFocusFormFlowPath } from '../../lib/site'
 export default function MarketingChromeLayout() {
   const location = useLocation()
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
-  const deskHome =
-    isDeskShellEnabled() && (location.pathname === '/' || location.pathname === '')
-  /** Desk home keeps Header; PapersBlock replaces mega-footer. */
-  const hideFooter = hideFooterForFormFlow || deskHome
   const showAskQuniDock = isDeskShellEnabled() && !hideFooterForFormFlow
 
   return (
@@ -28,7 +24,7 @@ export default function MarketingChromeLayout() {
           <Outlet />
         </Suspense>
       </main>
-      {!hideFooter ? <Footer /> : hideFooterForFormFlow ? <FocusFormLegalStrip /> : null}
+      {!hideFooterForFormFlow ? <Footer /> : <FocusFormLegalStrip />}
       {showAskQuniDock ? <AskQuniMobileDock /> : null}
     </div>
   )

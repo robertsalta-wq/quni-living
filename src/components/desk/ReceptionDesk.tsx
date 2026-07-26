@@ -94,7 +94,7 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
     <Desk
       tone="cream"
       className={[
-        'desk-settle min-h-0 flex-1 !gap-2 border border-[var(--quni-cream-border)]',
+        'desk-settle min-h-0 flex-1 !gap-2 border border-[var(--quni-cream-border)] contain-none',
         '[animation-delay:90ms]',
         className,
       ]
@@ -115,7 +115,7 @@ export default function ReceptionDesk({ className = '', mobileRail = false }: Re
         </DeskLetterhead>
       }
       inTray={
-        <DeskInTray className="mt-0.5 min-h-0 flex-1">
+        <DeskInTray className="mt-0.5 min-h-0 flex-1 overflow-visible">
           <ChatPanel variant="reception" audienceMode={audience} />
         </DeskInTray>
       }

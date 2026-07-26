@@ -308,7 +308,7 @@ export default function ChatPanel({
     'flex flex-col min-h-0 max-h-[min(600px,calc(100vh-100px))] w-[420px] max-w-[calc(100%-2rem)] rounded-2xl border border-gray-100 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)]'
 
   const cardInnerClass = isReception
-    ? 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[var(--quni-cream-border)] bg-white/90'
+    ? 'flex min-h-0 flex-1 flex-col overflow-visible rounded-xl border border-[var(--quni-cream-border)] bg-white/90'
     : variant === 'listings'
       ? 'flex flex-col h-auto w-full rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden'
       : isMobile
