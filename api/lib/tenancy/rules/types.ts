@@ -1,5 +1,9 @@
 /**
  * Typed tenancy regulatory facts (bond first). Lives under api/lib for Vercel bundles.
+ *
+ * Rule-map rows (`RuleMapRow`) are the upstream source-of-truth shape for the eight
+ * landlord authority questions. Product `TenancyRules` remain the consumer bond slice:
+ * Q3 rows carry `bondByTier` so `{ bond: row.bondByTier[tier] }` is a `TenancyRules`.
  */
 
 /** Bond rules when the statutory lodgement scheme does not apply (e.g. NSW T1 boarder/lodger). */
@@ -42,4 +46,56 @@ export type TenancyBondRules = TenancyBondRulesSchemeOff | TenancyBondRulesSchem
 /** Future: tribunal, terminology, notices, minStandards - add when a consumer exists. */
 export interface TenancyRules {
   bond: TenancyBondRules
+}
+
+/** Confidence progression for landlord rule-map rows. Only `verified` may be served. */
+export const RULE_MAP_CONFIDENCE_VALUES = [
+  'empty',
+  'sourced-unverified',
+  'verified',
+  'needs-solicitor',
+] as const
+
+export type RuleMapConfidence = (typeof RULE_MAP_CONFIDENCE_VALUES)[number]
+
+export type RuleMapSourceType = 'primary-official' | 'product' | null
+
+export type RuleMapState = 'NSW' | 'QLD'
+
+/**
+ * Product bond facts on Q3 rows, keyed by property tier.
+ * Each value is `TenancyRules['bond']` — so existing `TenancyRules` is expressible as
+ * `{ bond: row.bondByTier[tier] }`. Authority labels live here (not duplicated as URLs).
+ */
+export type RuleMapBondByTier = {
+  T1: TenancyBondRules
+  T2: TenancyBondRules
+}
+
+/**
+ * One landlord authority question × state. Upstream map shape.
+ * `sourceUrl` is the citation gate (was `authorityUrl` on bond scheme-on rules).
+ */
+export interface RuleMapRow {
+  id: string
+  question: string
+  state: RuleMapState
+  productRegime: string | null
+  legalRegime: string | null
+  provision: string | null
+  /** Plain-sentence rule — null until sourced. Source-gated: requires `sourceUrl`. */
+  rule: string | null
+  /** Official or product citation URL (bond `authorityUrl` maps here). */
+  sourceUrl: string | null
+  sourceType: RuleMapSourceType
+  dateChecked: string | null
+  reviewDate: string | null
+  confidence: RuleMapConfidence
+  needsSolicitor: boolean
+  notes: string
+  /**
+   * Q3 only: structured product bond slice copied from shipped `nsw.ts` / `qld.ts`.
+   * Not external law. Generator emits `TenancyRules` from this.
+   */
+  bondByTier?: RuleMapBondByTier
 }
