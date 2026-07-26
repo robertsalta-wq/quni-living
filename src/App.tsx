@@ -29,6 +29,7 @@ import Contact from './pages/Contact'
 import LandlordPartnerships from './pages/services/LandlordPartnerships'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import ForLandlords from './pages/ForLandlords'
+import { isDeskShellEnabled } from './lib/deskShell'
 import * as Lazy from './lazyPages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
@@ -188,8 +189,21 @@ function App() {
             {/* AI landing — no marketing header; eager for prerender SEO */}
             <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
 
-            {/* Landlord desk front door — no marketing header; live desk anatomy; eager for prerender */}
-            <Route path="/for-landlords" element={<ForLandlords />} />
+            {/*
+              Landlord desk — same URL in Preview (desk_shell_enabled) and Production.
+              Production: Edge middleware issues HTTP 302 → partnerships; client Navigate matches.
+              Never 301 — permanent redirect caches poison the real URL.
+            */}
+            <Route
+              path="/for-landlords"
+              element={
+                isDeskShellEnabled() ? (
+                  <ForLandlords />
+                ) : (
+                  <Navigate to="/services/landlord-partnerships" replace />
+                )
+              }
+            />
 
             {/* Admin — own layout */}
             <Route

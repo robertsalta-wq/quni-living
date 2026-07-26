@@ -337,7 +337,7 @@ Per listing:
 
 - Landlord partnerships + lead form → `landlord_leads`
 - Landlord AI page (`/landlords/ai`); pricing CTAs with tier; Landlord Service Agreement
-- `/for-landlords` → `/services/landlord-partnerships`
+- `/for-landlords` — desk page behind `desk_shell_enabled` (Preview); Production HTTP 302 → `/services/landlord-partnerships`
 
 ---
 

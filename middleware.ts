@@ -1,6 +1,7 @@
 import { next, rewrite } from '@vercel/functions'
 import { isSocialCrawler } from './api/lib/socialCrawler.js'
 import { isKnownAppPath, isStaticAssetPath } from './src/lib/knownRoutes.js'
+import { isDeskShellGatedPath, resolveDeskShellEnabled } from './src/lib/deskShellCore.js'
 
 export const config = {
   matcher: [
@@ -10,6 +11,17 @@ export const config = {
      */
     '/((?!api/|assets/).*)',
   ],
+}
+
+function isDeskShellEnabledOnEdge(): boolean {
+  // Prefer non-VITE name so Edge can read it without relying on Vite inlining.
+  const override =
+    process.env.DESK_SHELL_ENABLED ?? process.env.VITE_DESK_SHELL_ENABLED ?? ''
+  return resolveDeskShellEnabled({
+    override,
+    vercelEnv: process.env.VERCEL_ENV,
+    treatUnknownAsEnabled: false,
+  })
 }
 
 export default async function middleware(request: Request): Promise<Response> {
@@ -25,6 +37,19 @@ export default async function middleware(request: Request): Promise<Response> {
     isStaticAssetPath(pathname)
   ) {
     return next()
+  }
+
+  // Desk-shell gated routes: Production → temporary redirect (302, never 301).
+  // Preview (flag ON) falls through to the desk page at the same URL.
+  if (isDeskShellGatedPath(pathname) && !isDeskShellEnabledOnEdge()) {
+    const dest = new URL('/services/landlord-partnerships', url.origin)
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: dest.toString(),
+        'Cache-Control': 'private, no-store',
+      },
+    })
   }
 
   // Social OG shell for listing/property detail URLs only (Googlebot excluded in isSocialCrawler).

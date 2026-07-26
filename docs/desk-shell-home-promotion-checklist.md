@@ -2,6 +2,8 @@
 
 `/home-v2` is an experiment route. It carries an explicit **`noindex`** so Preview/production crawlers and assistants do not treat the prototype as the canonical home. That is intentional for the experiment.
 
+`/for-landlords` uses the same **`desk_shell_enabled`** flag: Preview serves the desk page at that URL; Production issues an HTTP **302** to `/services/landlord-partnerships` (never 301). While gated, keep it out of `sitemap.xml` / `llms.txt` and keep page `noindex`. On promote: remove the 302, re-add sitemap/`llms.txt`, drop `noindex`.
+
 When the desk shell **replaces** marketing home (`/`), that `noindex` must be removed — or you ship a new homepage that search engines and assistants will not index.
 
 Do **not** remove `noindex` from `/home-v2` while it remains a parallel experiment path.

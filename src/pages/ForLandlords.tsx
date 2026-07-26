@@ -70,6 +70,7 @@ export default function ForLandlords() {
         description={FOR_LANDLORDS_DESCRIPTION}
         canonicalPath={FOR_LANDLORDS_PATH}
         jsonLd={jsonLd}
+        noindex
       />
 
       <main className={`${SITE_CONTENT_MAX_CLASS} flex flex-1 flex-col py-3 sm:py-4`}>

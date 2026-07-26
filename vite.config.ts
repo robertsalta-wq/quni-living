@@ -28,6 +28,13 @@ export default defineConfig(({ mode }) => {
     define['import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA'] = JSON.stringify(vercelCommitSha)
   }
 
+  // Vercel sets VERCEL_ENV at build time (production | preview | development).
+  // Used by desk_shell_enabled defaults (Preview ON, Production OFF).
+  const vercelEnv = process.env.VERCEL_ENV?.trim()
+  if (vercelEnv) {
+    define['import.meta.env.VITE_VERCEL_ENV'] = JSON.stringify(vercelEnv)
+  }
+
   const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim() ?? ''
   const uploadSourceMaps = sentryAuthToken.length > 0
 
