@@ -30,17 +30,15 @@ const TENANCY_LAW_DISCLAIMER_LINE =
   'This is general information, not legal advice — check the official source for your situation.'
 
 /**
- * Prompt-layer guardrail: do not state uncited tenancy/landlord-law rules as fact.
+ * Prompt-layer guardrail (recite-or-refer): cite attributed rules; do not guess interpretive ones.
  * Product/marketing answers (fees, how Quni works) are carved out.
  */
-const TENANCY_LAW_GUARDRAIL_RULE = `- Tenancy / landlord-law claims (mandatory): Claims about bond amounts, who holds or lodges bond, lodgement windows, entry/notice periods, repairs and safety obligations, occupancy or boarding-house limits, form/agreement requirements, house-rule legality, strata/by-laws, or tax on room income are legal information — not Quni product policy.
+const TENANCY_LAW_GUARDRAIL_RULE = `- Tenancy / landlord-law claims (mandatory — recite or refer): Bond amounts, who holds or lodges bond, lodgement windows, entry/notice periods, repairs and safety obligations, occupancy or boarding-house limits, form/agreement requirements, house-rule legality, strata/by-laws, tax on room income, and whether someone is a lodger vs a tenant are legal information — not Quni product policy.
   - Product carve-out: Fees, Listing vs Managed, booking/verification/document routing on Quni, and "what does it cost to list" stay normal product answers. Do not add a legal disclaimer for pure product questions.
-  - Attribute or decline: State a specific legal rule only when the retrieved RELEVANT KNOWLEDGE BASE context (or this system message) attributes that rule to a primary official source. knowledge_base rows have no citation URL column — an uncited paraphrase in a chunk is not enough. Never invent a citation, Act, or section number.
-  - Bond attribution: When you can state a bond rule with attribution, prefer these official authority URLs from Quni's typed tenancy bond rules: NSW Fair Trading ${NSW_FAIR_TRADING_BOND_URL}; Queensland Residential Tenancies Authority (RTA) ${QLD_RTA_BOND_URL}.
-  - If you cannot attribute the specific rule: say you cannot confirm that exact rule, point gracefully to the official source (NSW Fair Trading for NSW; the RTA for Queensland, with the URLs above), and do not paraphrase an uncited rule as fact. Never reply with a blunt "I can't help."
-  - Disclaimer: Any answer that makes a tenancy/landlord-law claim must include this line: "${TENANCY_LAW_DISCLAIMER_LINE}"
-  - Conservative default: If unclear whether something is legal information vs product information, treat it as legal information, include the disclaimer, and do not overstate the rule.
-  - Known conflict — do not settle: Do not state as settled whether a Queensland hosted-room (boarder/lodger) bond must be lodged with the RTA or may be held by the landlord. Our internal sources conflict on this point. Decline the specific rule and point the user to the RTA (${QLD_RTA_BOND_URL}).`
+  - Branch 1 — attributable source present (recite): When the retrieved RELEVANT KNOWLEDGE BASE context or this system message attributes a specific legal rule to a primary official source, state that rule plainly and confidently and cite the source. Include this line: "${TENANCY_LAW_DISCLAIMER_LINE}" Never invent a citation, Act, or section number. knowledge_base rows have no citation URL column — an uncited paraphrase in a chunk is not enough.
+  - Bond attribution (when Branch 1 applies): Prefer these official authority URLs from Quni's typed tenancy bond rules: NSW Fair Trading ${NSW_FAIR_TRADING_BOND_URL}; Queensland Residential Tenancies Authority (RTA) ${QLD_RTA_BOND_URL}.
+  - Branch 2 — no attributable source, or interpretive / circumstance-dependent (refer): If you cannot attribute a specific rule, or the question turns on applying the law to their situation (e.g. lodger vs tenant, the 4-vs-5 boarding-house line, which house-rule terms are void, other open boundaries), do NOT state a rule, do NOT guess, and do NOT settle the boundary. Say the answer depends on their specific circumstances, recommend they seek legal advice, and point them to NSW Fair Trading (${NSW_FAIR_TRADING_BOND_URL}) or the QLD RTA (${QLD_RTA_BOND_URL}) as appropriate. Keep the tone helpful — e.g. "This one depends on your specific situation — worth getting legal advice, and NSW Fair Trading / the RTA can help" — never a blunt refusal.
+  - Conservative default: If unclear whether something is legal information vs product information, or whether Branch 1 or Branch 2 applies, use Branch 2 (refer).`
 
 export const AI_SENTINEL_VALUES = {
   nationality: 'ZZ_NAT',
