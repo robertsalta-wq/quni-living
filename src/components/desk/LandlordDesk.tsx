@@ -190,7 +190,11 @@ export default function LandlordDesk({
         >
           <DeskNameplate
             variant={nameplateVariant}
-            onDark={nameplateVariant === 'bronze' || nameplateVariant === 'darkPlate'}
+            onDark={
+              nameplateVariant === 'bronze' ||
+              nameplateVariant === 'darkPlate' ||
+              nameplateVariant === 'letterpress'
+            }
             className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
           >
             HOMEOWNERS & LANDLORDS
@@ -243,7 +247,11 @@ export default function LandlordDesk({
       nameplate={
         <DeskNameplate
           variant={nameplateVariant}
-          onDark={nameplateVariant === 'bronze' || nameplateVariant === 'darkPlate'}
+          onDark={
+            nameplateVariant === 'bronze' ||
+            nameplateVariant === 'darkPlate' ||
+            nameplateVariant === 'letterpress'
+          }
         >
           FOR HOMEOWNERS & LANDLORDS
         </DeskNameplate>

@@ -8,8 +8,8 @@ type DeskNameplateProps = {
   /** Visual treatment — default `brass` preserves `/home-v2` control. */
   variant?: DeskNameplateVariant
   /**
-   * Light-on-dark alloy for navy surfaces (landlord tower).
-   * Only affects `bronze` and `darkPlate`; other variants ignore it.
+   * Surface context. For `letterpress`: slightly brighter parchment on navy
+   * (still a paper card — never inverted). For `bronze` / `darkPlate`: dark-surface alloys.
    */
   onDark?: boolean
 }
@@ -53,13 +53,17 @@ export default function DeskNameplate({
   }
 
   if (variant === 'letterpress') {
+    /* D · letterpress card — parchment pressed in; thicker bottom edge; no float shadow. */
     return (
       <div
         className={[
-          'inline-flex max-w-full items-center rounded-[3px] px-[12px] py-[5px]',
-          'border border-[var(--quni-cream-border)] border-b-[2.5px] border-b-[var(--quni-ink-4)]',
-          'bg-[color-mix(in_srgb,var(--quni-cream)_70%,var(--quni-cream-border))]',
-          'shadow-[inset_0_1px_2px_rgba(42,37,64,0.12)]',
+          'inline-flex max-w-full items-center rounded-[2px] px-[12px] py-[5px]',
+          'border border-[var(--quni-cream-border)]',
+          'border-b-[2.5px] border-b-[color-mix(in_srgb,var(--quni-cream-border)_50%,var(--quni-ink-4))]',
+          onDark
+            ? 'bg-[color-mix(in_srgb,var(--quni-cream)_82%,white)]'
+            : 'bg-[color-mix(in_srgb,var(--quni-cream)_55%,var(--quni-cream-border))]',
+          'shadow-[inset_0_1px_2px_color-mix(in_srgb,var(--quni-ink)_12%,transparent)]',
           className,
         ]
           .filter(Boolean)

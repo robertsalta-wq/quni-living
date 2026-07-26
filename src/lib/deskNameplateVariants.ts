@@ -19,14 +19,14 @@ export type DeskNameplateKey =
   | 'trust'
 
 /**
- * Recommended defaults for the nameplate lab (not permanent).
- * Landlord uses `bronze` with on-dark alloy (see DeskNameplate `onDark`).
+ * Variant D · letterpress card — paper pressed into the desk (not metal).
+ * Flip any desk back to brass/bronze/engraved here for A/B.
  */
 export const DESK_NAMEPLATE_VARIANTS: Record<DeskNameplateKey, DeskNameplateVariant> = {
-  reception: 'bronze',
-  listings: 'bronze',
-  landlord: 'bronze',
-  universities: 'engraved',
-  account: 'engraved',
-  trust: 'engraved',
+  reception: 'letterpress',
+  listings: 'letterpress',
+  landlord: 'letterpress',
+  universities: 'letterpress',
+  account: 'letterpress',
+  trust: 'letterpress',
 }
