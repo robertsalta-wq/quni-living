@@ -13,6 +13,8 @@ type AccountDeskProps = {
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
   nameplateVariant?: DeskNameplateVariant
+  /** `/home-v3` — tighter padding, no stretch filler. */
+  dense?: boolean
 }
 
 export default function AccountDesk({
@@ -23,6 +25,7 @@ export default function AccountDesk({
   trayOpen,
   onTrayOpenChange,
   nameplateVariant = 'brass',
+  dense = false,
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
@@ -117,7 +120,12 @@ export default function AccountDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
+      <div
+        className={[
+          'flex min-h-0 flex-col',
+          dense ? 'gap-1 p-2.5' : 'flex-1 gap-1.5 p-3.5',
+        ].join(' ')}
+      >
         <DeskNameplate variant={nameplateVariant}>FOR RENTERS & LANDLORDS</DeskNameplate>
         {body}
         <button
@@ -147,7 +155,7 @@ export default function AccountDesk({
             </Link>
           </div>
         ) : null}
-        <span className="mt-auto" />
+        {dense ? null : <span className="mt-auto" />}
       </div>
     </article>
   )

@@ -27,6 +27,8 @@ type TrustDeskProps = {
   /** Optional FAQ answer shown in-desk (questions owned by Trust). */
   deskAnswer?: { text: string; source: string } | null
   nameplateVariant?: DeskNameplateVariant
+  /** `/home-v3` — tighter padding, no stretch filler. */
+  dense?: boolean
 }
 
 export default function TrustDesk({
@@ -38,6 +40,7 @@ export default function TrustDesk({
   onTrayOpenChange,
   deskAnswer = null,
   nameplateVariant = 'brass',
+  dense = false,
 }: TrustDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -53,7 +56,7 @@ export default function TrustDesk({
       {!mobileRail ? (
         <DeskNameplate variant={nameplateVariant}>TRUST & SAFETY</DeskNameplate>
       ) : null}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         {TRUST_LINES.map((t) => (
           <div key={t} className="flex items-center gap-1.5">
             <span
@@ -62,7 +65,14 @@ export default function TrustDesk({
             >
               ✓
             </span>
-            <span className="text-[12px] font-medium leading-snug text-[var(--quni-ink-2)]">{t}</span>
+            <span
+              className={[
+                'font-medium leading-snug text-[var(--quni-ink-2)]',
+                dense ? 'text-[11.5px]' : 'text-[12px]',
+              ].join(' ')}
+            >
+              {t}
+            </span>
           </div>
         ))}
       </div>
@@ -168,9 +178,14 @@ export default function TrustDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
+      <div
+        className={[
+          'flex min-h-0 flex-col',
+          dense ? 'gap-1 p-2.5' : 'flex-1 gap-1.5 p-3.5',
+        ].join(' ')}
+      >
         {face}
-        <span className="mt-auto" />
+        {dense ? null : <span className="mt-auto" />}
       </div>
     </article>
   )

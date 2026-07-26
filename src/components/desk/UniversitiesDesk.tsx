@@ -13,6 +13,8 @@ type UniversitiesDeskProps = {
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
   nameplateVariant?: DeskNameplateVariant
+  /** `/home-v3` — tighter padding, no stretch filler. */
+  dense?: boolean
 }
 
 export default function UniversitiesDesk({
@@ -24,6 +26,7 @@ export default function UniversitiesDesk({
   trayOpen,
   onTrayOpenChange,
   nameplateVariant = 'brass',
+  dense = false,
 }: UniversitiesDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -92,9 +95,21 @@ export default function UniversitiesDesk({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
+      <div
+        className={[
+          'flex min-h-0 flex-col',
+          dense ? 'gap-1 p-2.5' : 'min-h-0 flex-1 gap-1.5 p-3.5',
+        ].join(' ')}
+      >
         <DeskNameplate variant={nameplateVariant}>FOR UNIVERSITIES</DeskNameplate>
-        <p className="m-0 text-[13px] leading-snug font-semibold text-[var(--quni-navy)]">{letterhead}</p>
+        <p
+          className={[
+            'm-0 font-semibold text-[var(--quni-navy)]',
+            dense ? 'text-[12px] leading-snug' : 'text-[13px] leading-snug',
+          ].join(' ')}
+        >
+          {letterhead}
+        </p>
         <button
           type="button"
           aria-expanded={open}
@@ -114,7 +129,10 @@ export default function UniversitiesDesk({
         ) : null}
         <Link
           to="/for-universities"
-          className="mt-auto pt-1 text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
+          className={[
+            'text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]',
+            dense ? 'pt-0.5' : 'mt-auto pt-1',
+          ].join(' ')}
         >
           Partner with Quni →
         </Link>
