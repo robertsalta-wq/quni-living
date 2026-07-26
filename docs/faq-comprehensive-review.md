@@ -117,7 +117,7 @@ Property enquiry forms are retired. Use Messages to chat with the landlord on-pl
 ## Hosted rooms vs private rentals
 
 ### What's the difference between a hosted room and a private room?
-Hosted rooms are typically where the owner lives on-site (a boarder/lodger-style arrangement) and you sign an occupancy-style agreement; bond (if any) is usually held directly by the landlord. Private rooms are standard residential tenancies where you sign a tenancy agreement and bond (if required) is lodged with your state's bond authority under the relevant rules.
+Hosted rooms are typically where the owner lives on-site (a boarder/lodger-style arrangement) and you sign an occupancy-style agreement. Bond custody is state-specific (general information, not legal advice): in NSW, bond for a hosted room (if any) may be held by the landlord — lodgement with Fair Trading is not required by law (NSW DCJ boarders and lodgers factsheet). In Queensland, a bond is not required for a boarder/lodger arrangement, but if one is taken it must be lodged with the RTA within 10 days and is not landlord-held (RTA boarders/lodgers: https://www.rta.qld.gov.au/before-renting/types-of-tenancy-agreements/boarderslodgers; rental bond: https://www.rta.qld.gov.au/starting-a-tenancy/rental-bond). Private rooms are standard residential tenancies where you sign a tenancy agreement and bond (if required) is lodged with your state's bond authority under the relevant rules.
 
 ## Support & Disputes
 

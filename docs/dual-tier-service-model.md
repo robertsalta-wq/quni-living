@@ -93,7 +93,7 @@ When a landlord chooses Listing tier during onboarding, they see an explicit non
 > **What Quni Listing does NOT include**
 > Once your tenant is signed, you run the rest:
 > - **Rent collection** - your tenant pays you directly. Quni never touches the money.
-> - **Bond** - you lodge it yourself (NSW Fair Trading for private rooms; held by you for hosted rooms).
+> - **Bond** - you handle lodgement yourself (general information, not legal advice). NSW private rooms: lodge with NSW Fair Trading. NSW hosted rooms (boarder/lodger): you may hold the bond; lodgement with Fair Trading is not required by law (voluntary lodgement encouraged). Queensland hosted rooms (boarder/lodger): a bond is not required, but if one is taken it must be lodged with the RTA within 10 days and is not landlord-held (RTA: https://www.rta.qld.gov.au/before-renting/types-of-tenancy-agreements/boarderslodgers; rental bond lodgement: https://www.rta.qld.gov.au/starting-a-tenancy/rental-bond).
 > - **Disputes** - we don't mediate between you and your tenant.
 > - **Late rent or arrears** - chasing payment is on you.
 > - **Maintenance and repairs** - your tenant contacts you, not Quni.
