@@ -166,7 +166,7 @@ export default function ForLandlords() {
             paperweight={<DeskPaperweight>✓ Verified</DeskPaperweight>}
             inTray={
               <DeskInTray>
-                <div className="relative mt-1 rounded-[10px] border border-[var(--quni-success)]/25 bg-white px-2.5 py-2 shadow-[0_2px_8px_rgba(29,125,77,0.07)]">
+                <div className="quni-card relative mt-1 border-[var(--quni-success)]/25 px-2.5 py-2">
                   <span className="absolute top-2 right-1.5 rotate-[-7deg] rounded-[3px] border border-[var(--quni-line)] px-1 py-0.5 text-[7px] font-black tracking-[0.14em] text-[var(--quni-ink-5)]">
                     SPECIMEN
                   </span>
@@ -222,7 +222,7 @@ export default function ForLandlords() {
             paperweight={<DeskPaperweight>✓ State-compliant</DeskPaperweight>}
             inTray={
               <DeskInTray>
-                <div className="mt-1 rounded-[9px] border border-[var(--quni-cream-border)] bg-white px-2.5 py-2.5 shadow-[0_2px_8px_rgba(138,81,69,0.07)]">
+                <div className="quni-card mt-1 border-[var(--quni-cream-border)] px-2.5 py-2.5">
                   <p className="m-0 font-display text-[11px] font-bold text-[var(--quni-ink-2)]">
                     Residential tenancy — room
                   </p>
