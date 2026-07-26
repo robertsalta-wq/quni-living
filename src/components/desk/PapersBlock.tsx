@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SiteSocialLinks from '../SiteSocialLinks'
+import { QuniLogoHomeLink } from '../SiteBrandLockup'
 import { useLegalEntity } from '../../lib/useLegalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
 
@@ -34,14 +35,9 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
     >
       <div className={['flex flex-wrap items-center', compact ? 'gap-x-6 gap-y-2' : 'gap-8'].join(' ')}>
         <div className="flex flex-col gap-0.5">
-          <span
-            className={[
-              'font-[family-name:var(--font-serif)] font-bold text-[var(--quni-ink)]',
-              compact ? 'text-[13px]' : 'text-base',
-            ].join(' ')}
-          >
-            <span className="text-[var(--quni-coral)]">Q</span>uni Living
-          </span>
+          <QuniLogoHomeLink
+            className={compact ? '[&_img]:h-5 [&_img]:sm:h-6' : '[&_img]:h-6 [&_img]:sm:h-7'}
+          />
           <span
             className={[
               'font-semibold uppercase text-[var(--quni-ink-5)]',
