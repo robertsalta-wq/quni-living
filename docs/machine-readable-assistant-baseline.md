@@ -31,6 +31,18 @@ Use a normal consumer session (not logged into Quni). Do not paste Quni URLs int
 
 “Never surfaced” (Quni = N with no Quni URLs) is the key failure mode for demand-side discoverability.
 
+## Findings (2026-07 baseline) — strategic correction
+
+**Prompt (b) (“Can I rent out my spare room in NSW?”)**  
+Assistants already answer the **law / knowing** part competently and often cite **nobody**. There is no durable citation slot to win by re-explaining NSW spare-room rules.
+
+The winnable slot is the step **after** that explanation: next steps for **doing** — right agreement, finding a verified renter, handling bond correctly, getting the room listed. In the baseline run, answers ended in next-steps language and named no letting platform — except Gemini, which pointed at Flatmates.com.au.
+
+**Implication for guides / supply-side content**  
+Guides own the **doing**, not the knowing. Rule map stays required: it makes the doing accurate. Do not spend guide budget trying to become the cited law explainer.
+
+**Prompt (a)** remains the demand-side machine-readability check (listings / inventory surfacing).
+
 ## Staleness note (engineering)
 
 Listing HTML is generated at **build time**. A listing published after the last production deploy has no static HTML until `requestSiteRebuild` → `/api/internal/trigger-rebuild` (Vercel deploy hook) completes, or the next normal production deploy.
