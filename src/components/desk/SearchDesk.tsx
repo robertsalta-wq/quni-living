@@ -4,6 +4,7 @@ import { QuniLogoHomeLink } from '../SiteBrandLockup'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { deskIntentToPath, parseDeskIntent } from '../../lib/deskIntent'
 import { ROOM_TYPE_SHORT_LABELS, isRoomType, type Property } from '../../lib/listings'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskNameplate from './DeskNameplate'
 
@@ -32,6 +33,8 @@ type SearchDeskProps = {
   listingsOnly?: boolean
   /** Optional FAQ answer shown in-desk (questions owned by Listings). */
   deskAnswer?: { text: string; source: string } | null
+  /** Nameplate treatment — default brass keeps `/home-v2` control. */
+  nameplateVariant?: DeskNameplateVariant
 }
 
 function FactHeadline({ text }: { text: string }) {
@@ -70,6 +73,7 @@ export default function SearchDesk({
   compact = false,
   listingsOnly = false,
   deskAnswer = null,
+  nameplateVariant = 'brass',
 }: SearchDeskProps) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -156,7 +160,7 @@ export default function SearchDesk({
         {listingsOnly ? (
           <div className="flex shrink-0 flex-col gap-1.5">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <DeskNameplate>Rooms & homes</DeskNameplate>
+              <DeskNameplate variant={nameplateVariant}>Rooms & homes</DeskNameplate>
               <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[var(--quni-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-success-strong)]">
                 FREE for renters
               </span>

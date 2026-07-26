@@ -72,8 +72,30 @@ export const DESK_FAQ_INDEX: readonly DeskFaqItem[] = [
     ownerDesk: 'reception',
     source: 'QUNI FAQ',
   },
+  {
+    id: 'spare-room',
+    question: 'Can I rent out a spare room?',
+    answer:
+      'Yes. Listing is free. You pay $99 once, on the day you accept a tenant. Rent is paid to you directly — Quni is never in the rent chain.',
+    ownerDesk: 'landlord',
+    source: 'QUNI PRICING',
+  },
 ] as const
 
+/**
+ * Suggested question chips under the Reception field — labels may shorten the
+ * full FAQ question; `faqId` resolves against DESK_FAQ_INDEX (not /faq).
+ */
+export const DESK_RECEPTION_SUGGESTED_CHIPS: readonly { faqId: string; label: string }[] = [
+  { faqId: 'free-renters', label: 'Is it free?' },
+  { faqId: 'who-holds-bond', label: 'Who holds the bond?' },
+  { faqId: 'what-verified', label: 'What does verified mean?' },
+  { faqId: 'spare-room', label: 'Can I rent out a spare room?' },
+] as const
+
+export function deskFaqById(id: string): DeskFaqItem | undefined {
+  return DESK_FAQ_INDEX.find((item) => item.id === id)
+}
 /**
  * Tier 4 (assistant) for unmatched questions — named no-op, default off.
  * Override: `VITE_DESK_RECEPTION_ASSISTANT=true`

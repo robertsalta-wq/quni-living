@@ -33,3 +33,24 @@ export function placeListingsPath(place: DeskPlace): string {
   params.set('q', place.query)
   return `/listings?${params.toString()}`
 }
+
+/** Submit button label — Search for places / empty; Ask for questions or sentences. */
+export function deskReceptionSubmitLabel(
+  raw: string,
+  matches: DeskReceptionMatches,
+): 'Search' | 'Ask' {
+  const q = raw.trim()
+  if (!q) return 'Search'
+
+  const looksLikeQuestion =
+    /\?/.test(q) ||
+    /^(is|who|what|when|where|can|how|does|do|are|will|should)\b/i.test(q) ||
+    /\b(free|bond|verified|rent out|spare room)\b/i.test(q)
+
+  if (matches.places.length > 0 && matches.questions.length === 0) return 'Search'
+  if (matches.questions.length > 0 && matches.places.length === 0) return 'Ask'
+  if (matches.places.length > 0 && matches.questions.length > 0) {
+    return looksLikeQuestion ? 'Ask' : 'Search'
+  }
+  return looksLikeQuestion ? 'Ask' : 'Search'
+}

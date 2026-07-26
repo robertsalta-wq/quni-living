@@ -1,9 +1,17 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { DeskFaqItem } from '../../lib/deskFaqIndex'
-import { isDeskReceptionAssistantEnabled } from '../../lib/deskFaqIndex'
+import {
+  DESK_RECEPTION_SUGGESTED_CHIPS,
+  deskFaqById,
+  isDeskReceptionAssistantEnabled,
+  type DeskFaqItem,
+} from '../../lib/deskFaqIndex'
 import type { DeskPlace } from '../../lib/deskPlacesFixture'
-import { matchDeskReceptionQuery, placeListingsPath } from '../../lib/deskReceptionMatch'
+import {
+  deskReceptionSubmitLabel,
+  matchDeskReceptionQuery,
+  placeListingsPath,
+} from '../../lib/deskReceptionMatch'
 
 export type ReceptionFieldSelectQuestion = (item: DeskFaqItem) => void
 
@@ -38,6 +46,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
   ]
   const hasQuery = query.trim().length > 0
   const showTray = trayOpen && hasQuery
+  const submitLabel = deskReceptionSubmitLabel(query, matches)
 
   useEffect(() => {
     setActiveIndex(-1)
@@ -73,6 +82,12 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
     else selectQuestion(opt.item)
   }
 
+  function onChip(faqId: string) {
+    const item = deskFaqById(faqId)
+    if (!item) return
+    selectQuestion(item)
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (activeIndex >= 0 && flat[activeIndex]) {
@@ -86,9 +101,8 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
     if (flat.length === 0 && hasQuery) {
       setNoMatchNote(true)
       setTrayOpen(true)
-      // Tier 4 stub: flag default off — never call /api/chat.
       if (isDeskReceptionAssistantEnabled()) {
-        // Named no-op for this PR; assistant wiring is out of scope.
+        // Tier 4 named no-op for this PR.
       }
     }
   }
@@ -115,45 +129,64 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
 
   return (
     <div ref={wrapRef} className={['relative z-20', className].filter(Boolean).join(' ')}>
-      <form onSubmit={onSubmit} className="flex items-center gap-2 rounded-[12px] border-[1.5px] border-[var(--quni-coral-border)] bg-white py-0 pl-3.5 pr-1.5 shadow-[var(--shadow-1)]">
-        <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral)]">
-          ⌕
-        </span>
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setTrayOpen(true)
-          }}
-          onFocus={() => setTrayOpen(true)}
-          onKeyDown={onKeyDown}
-          placeholder="Search a suburb — or ask us anything…"
-          aria-label="Search a place or ask a question"
-          aria-autocomplete="list"
-          aria-controls={listId}
-          aria-expanded={showTray}
-          aria-activedescendant={
-            activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
-          }
-          role="combobox"
-          autoComplete="off"
-          className="min-w-0 flex-1 border-0 bg-transparent py-3 text-[14px] text-[var(--quni-ink)] outline-none"
-        />
-        <button
-          type="submit"
-          className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-4 py-2 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      <div className="overflow-hidden rounded-[12px] border-[1.5px] border-[var(--quni-coral-border)] bg-white shadow-[var(--shadow-1)]">
+        <form onSubmit={onSubmit} className="flex items-center gap-2 py-0 pl-3.5 pr-1.5">
+          <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral)]">
+            ⌕
+          </span>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setTrayOpen(true)
+            }}
+            onFocus={() => setTrayOpen(true)}
+            onKeyDown={onKeyDown}
+            placeholder="Search a suburb — or ask us anything…"
+            aria-label="Search a place or ask a question"
+            aria-autocomplete="list"
+            aria-controls={listId}
+            aria-expanded={showTray}
+            aria-activedescendant={
+              activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
+            }
+            role="combobox"
+            autoComplete="off"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-[14px] text-[var(--quni-ink)] outline-none"
+          />
+          <button
+            type="submit"
+            className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-3.5 py-1.5 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+          >
+            {submitLabel}
+          </button>
+        </form>
+
+        <div
+          className="flex flex-wrap gap-1.5 border-t border-[var(--quni-cream-border)] bg-[color-mix(in_srgb,var(--quni-cream)_55%,white)] px-2.5 py-2"
+          role="group"
+          aria-label="Suggested questions"
         >
-          Ask
-        </button>
-      </form>
+          {DESK_RECEPTION_SUGGESTED_CHIPS.map((chip) => (
+            <button
+              key={chip.faqId}
+              type="button"
+              onClick={() => onChip(chip.faqId)}
+              className="rounded-full border border-[var(--quni-cream-border)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] transition-colors hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {showTray ? (
         <div
           id={listId}
           role="listbox"
           aria-label="Places and questions"
-          className="absolute top-[calc(100%+6px)] right-0 left-0 z-40 max-h-[min(280px,42vh)] overflow-y-auto rounded-[12px] border border-[var(--quni-cream-border)] bg-white py-2 shadow-[0_18px_40px_rgba(42,37,64,0.18)]"
+          className="absolute top-[calc(100%+6px)] right-0 left-0 z-40 max-h-[min(220px,36vh)] overflow-y-auto rounded-[12px] border border-[var(--quni-cream-border)] bg-white py-2 shadow-[0_18px_40px_rgba(42,37,64,0.18)]"
         >
           {matches.places.length > 0 ? (
             <>

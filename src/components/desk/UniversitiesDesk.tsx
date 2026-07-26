@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import DeskNameplate from './DeskNameplate'
 
 type UniversitiesDeskProps = {
@@ -11,6 +12,7 @@ type UniversitiesDeskProps = {
   /** Desktop controlled ⊕ Coverage tray (parent keeps the bottom row even). */
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
+  nameplateVariant?: DeskNameplateVariant
 }
 
 export default function UniversitiesDesk({
@@ -21,6 +23,7 @@ export default function UniversitiesDesk({
   onRailExpandChange,
   trayOpen,
   onTrayOpenChange,
+  nameplateVariant = 'brass',
 }: UniversitiesDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -49,7 +52,10 @@ export default function UniversitiesDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-navy)]"
         >
-          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+          <DeskNameplate
+            variant={nameplateVariant}
+            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+          >
             FOR UNIVERSITIES
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-navy)]">
@@ -87,7 +93,7 @@ export default function UniversitiesDesk({
         .join(' ')}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
-        <DeskNameplate>FOR UNIVERSITIES</DeskNameplate>
+        <DeskNameplate variant={nameplateVariant}>FOR UNIVERSITIES</DeskNameplate>
         <p className="m-0 text-[13px] leading-snug font-semibold text-[var(--quni-navy)]">{letterhead}</p>
         <button
           type="button"

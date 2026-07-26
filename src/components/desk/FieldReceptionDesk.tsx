@@ -1,16 +1,16 @@
 import Desk from './Desk'
 import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskInTray from './DeskInTray'
-import DeskLetterhead from './DeskLetterhead'
 import DeskNameplate from './DeskNameplate'
 import ReceptionField, { type ReceptionFieldSelectQuestion } from './ReceptionField'
+import { DESK_NAMEPLATE_VARIANTS } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
-/** Toggle Reception brass nameplate — set false to preview without it. */
+/** Toggle Reception nameplate — set false to preview without it. */
 export const SHOW_RECEPTION_NAMEPLATE = true
 
-const LETTERHEAD =
-  "Renting a room, or letting one? Ask us anything — a straight answer, with the source, or we'll point you to who knows."
+/** ≤12 words — copy law. */
+const LETTERHEAD = 'Ask us anything — a straight answer, with the source.'
 
 export type FieldReceptionAnswer = {
   text: string
@@ -25,8 +25,8 @@ type FieldReceptionDeskProps = {
 }
 
 /**
- * `/home-v3` Reception — wordmark + Places/Questions field.
- * Not the AI ChatPanel Reception (that lives on other experiments). New composition only.
+ * `/home-v3` Reception — condensed wordmark · letterhead · nameplate row + Places/Questions field.
+ * Not the AI ChatPanel Reception. New composition only.
  */
 export default function FieldReceptionDesk({
   onSelectQuestion,
@@ -35,16 +35,15 @@ export default function FieldReceptionDesk({
   className = '',
 }: FieldReceptionDeskProps) {
   const answered = Boolean(answer?.text)
+  const plateVariant = DESK_NAMEPLATE_VARIANTS.reception
 
   return (
     <Desk
       tone="cream"
       className={[
-        'desk-settle !gap-2 border border-[var(--quni-cream-border)] contain-none',
+        'desk-settle !gap-1.5 !p-3 border border-[var(--quni-cream-border)] contain-none',
         '[animation-delay:40ms]',
-        answered
-          ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]'
-          : '',
+        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)
@@ -53,20 +52,23 @@ export default function FieldReceptionDesk({
         background: 'linear-gradient(150deg, var(--quni-cream) 0%, #FFF1E4 62%, #FFE8DC 100%)',
       }}
       nameplate={
-        <div className="flex w-full flex-wrap items-start justify-between gap-3">
-          <p className="m-0 font-[family-name:var(--font-serif)] text-[33px] leading-none font-bold tracking-[-0.015em] text-[var(--quni-ink)]">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+          <p className="m-0 shrink-0 font-[family-name:var(--font-serif)] text-[26px] leading-none font-bold tracking-[-0.015em] text-[var(--quni-ink)] sm:text-[28px]">
             <span className="text-[var(--quni-coral)]">Q</span>uni
           </p>
-          {showNameplate ? <DeskNameplate>Reception</DeskNameplate> : <span />}
+          <p className="m-0 min-w-0 flex-1 font-[family-name:var(--font-serif)] text-[14px] leading-snug text-[var(--quni-ink-3)] sm:text-[15px]">
+            {LETTERHEAD}
+          </p>
+          {showNameplate ? (
+            <div className="ml-auto shrink-0">
+              <DeskNameplate variant={plateVariant}>Reception</DeskNameplate>
+            </div>
+          ) : null}
         </div>
       }
-      letterhead={
-        <DeskLetterhead className="!max-w-[640px] !text-[17px] !leading-snug !text-[var(--quni-ink-3)]">
-          {LETTERHEAD}
-        </DeskLetterhead>
-      }
+      letterhead={<span className="sr-only">{LETTERHEAD}</span>}
       inTray={
-        <DeskInTray className="mt-0.5 overflow-visible">
+        <DeskInTray className="mt-0 overflow-visible">
           <ReceptionField onSelectQuestion={onSelectQuestion} />
           <DeskAnswerPanel
             open={answered}

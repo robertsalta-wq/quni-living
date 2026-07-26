@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import DeskNameplate from './DeskNameplate'
 
 type AccountDeskProps = {
@@ -11,6 +12,7 @@ type AccountDeskProps = {
   onRailExpandChange?: (open: boolean) => void
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
+  nameplateVariant?: DeskNameplateVariant
 }
 
 export default function AccountDesk({
@@ -20,6 +22,7 @@ export default function AccountDesk({
   onRailExpandChange,
   trayOpen,
   onTrayOpenChange,
+  nameplateVariant = 'brass',
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
@@ -87,7 +90,10 @@ export default function AccountDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
         >
-          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+          <DeskNameplate
+            variant={nameplateVariant}
+            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+          >
             FOR RENTERS & LANDLORDS
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
@@ -112,7 +118,7 @@ export default function AccountDesk({
         .join(' ')}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
-        <DeskNameplate>FOR RENTERS & LANDLORDS</DeskNameplate>
+        <DeskNameplate variant={nameplateVariant}>FOR RENTERS & LANDLORDS</DeskNameplate>
         {body}
         <button
           type="button"

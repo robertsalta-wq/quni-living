@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskNameplate from './DeskNameplate'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 
 /** Face lines — only claims that match shipped behaviour (no rent/bond custody claim). */
 const TRUST_LINES = [
@@ -25,6 +26,7 @@ type TrustDeskProps = {
   onTrayOpenChange?: (open: boolean) => void
   /** Optional FAQ answer shown in-desk (questions owned by Trust). */
   deskAnswer?: { text: string; source: string } | null
+  nameplateVariant?: DeskNameplateVariant
 }
 
 export default function TrustDesk({
@@ -35,6 +37,7 @@ export default function TrustDesk({
   trayOpen,
   onTrayOpenChange,
   deskAnswer = null,
+  nameplateVariant = 'brass',
 }: TrustDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -47,7 +50,9 @@ export default function TrustDesk({
 
   const face = (
     <>
-      {!mobileRail ? <DeskNameplate>TRUST & SAFETY</DeskNameplate> : null}
+      {!mobileRail ? (
+        <DeskNameplate variant={nameplateVariant}>TRUST & SAFETY</DeskNameplate>
+      ) : null}
       <div className="flex flex-col gap-1">
         {TRUST_LINES.map((t) => (
           <div key={t} className="flex items-center gap-1.5">
@@ -133,7 +138,10 @@ export default function TrustDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
         >
-          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+          <DeskNameplate
+            variant={nameplateVariant}
+            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+          >
             TRUST & SAFETY
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink-2)]">

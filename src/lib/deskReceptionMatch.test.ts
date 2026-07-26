@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchDeskReceptionQuery, placeListingsPath } from './deskReceptionMatch'
+import { deskReceptionSubmitLabel, matchDeskReceptionQuery, placeListingsPath } from './deskReceptionMatch'
 import { DESK_PLACES_FIXTURE } from './deskPlacesFixture'
 
 describe('matchDeskReceptionQuery', () => {
@@ -30,5 +30,21 @@ describe('placeListingsPath', () => {
   it('navigates with q= from fixture query', () => {
     const ryde = DESK_PLACES_FIXTURE[0]
     expect(placeListingsPath(ryde)).toBe('/listings?q=Ryde')
+  })
+})
+
+describe('deskReceptionSubmitLabel', () => {
+  it('defaults to Search when empty', () => {
+    expect(deskReceptionSubmitLabel('', { places: [], questions: [] })).toBe('Search')
+  })
+
+  it('Search for place-only match', () => {
+    const m = matchDeskReceptionQuery('ryde')
+    expect(deskReceptionSubmitLabel('ryde', m)).toBe('Search')
+  })
+
+  it('Ask for question-only match', () => {
+    const m = matchDeskReceptionQuery('is it free')
+    expect(deskReceptionSubmitLabel('is it free', m)).toBe('Ask')
   })
 })

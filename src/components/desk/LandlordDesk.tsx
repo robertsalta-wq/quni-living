@@ -9,6 +9,7 @@ import DeskLetterhead from './DeskLetterhead'
 import DeskNameplate from './DeskNameplate'
 import DeskPen from './DeskPen'
 import LedgerCalculator, { RENT_DEFAULT } from './LedgerCalculator'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
 const HOW_IT_WORKS = [
@@ -28,6 +29,8 @@ type LandlordDeskProps = {
   className?: string
   /** Optional FAQ answer shown in-desk (questions owned by Landlord). */
   deskAnswer?: { text: string; source: string } | null
+  /** Nameplate treatment — default brass keeps `/home-v2` control. */
+  nameplateVariant?: DeskNameplateVariant
 }
 
 function formatRentFigure(rent: number): string {
@@ -108,6 +111,7 @@ export default function LandlordDesk({
   onRailExpandChange,
   className = '',
   deskAnswer = null,
+  nameplateVariant = 'brass',
 }: LandlordDeskProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rent, setRent] = useState(RENT_DEFAULT)
@@ -184,7 +188,11 @@ export default function LandlordDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral-on-navy)]"
         >
-          <DeskNameplate className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+          <DeskNameplate
+            variant={nameplateVariant}
+            onDark={nameplateVariant === 'bronze' || nameplateVariant === 'darkPlate'}
+            className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+          >
             HOMEOWNERS & LANDLORDS
           </DeskNameplate>
           <div className="min-w-0 flex-1">{letterheadMobile}</div>
@@ -232,7 +240,14 @@ export default function LandlordDesk({
       ]
         .filter(Boolean)
         .join(' ')}
-      nameplate={<DeskNameplate>FOR HOMEOWNERS & LANDLORDS</DeskNameplate>}
+      nameplate={
+        <DeskNameplate
+          variant={nameplateVariant}
+          onDark={nameplateVariant === 'bronze' || nameplateVariant === 'darkPlate'}
+        >
+          FOR HOMEOWNERS & LANDLORDS
+        </DeskNameplate>
+      }
       letterhead={letterhead}
       inTray={
         <DeskInTray>

@@ -11,6 +11,7 @@ import {
   UniversitiesDesk,
 } from '../components/desk'
 import type { DeskFaqItem, DeskFaqOwner } from '../lib/deskFaqIndex'
+import { DESK_NAMEPLATE_VARIANTS } from '../lib/deskNameplateVariants'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import type { Property } from '../lib/listings'
 import { isSupabaseConfigured } from '../lib/supabaseConfigured'
@@ -109,8 +110,10 @@ export default function HomeV3() {
   const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
   const gridRows =
     landlordDrawerOpen || openTray || activeAnswer
-      ? 'auto minmax(min-content, 1.15fr) minmax(min-content, 1fr) auto'
-      : 'auto minmax(min-content, 1.15fr) minmax(min-content, 1fr) minmax(min-content, 0.72fr)'
+      ? 'auto minmax(0, 1.1fr) minmax(0, 0.85fr) auto'
+      : 'auto minmax(0, 1.1fr) minmax(0, 0.7fr)'
+
+  const plates = DESK_NAMEPLATE_VARIANTS
 
   function setTray(id: BottomTray, open: boolean) {
     setOpenTray(open ? id : null)
@@ -154,7 +157,7 @@ export default function HomeV3() {
           <div
             className="grid flex-1 items-stretch gap-2.5"
             style={{
-              minHeight: 'calc(100dvh - 4.75rem)',
+              minHeight: 'calc(100dvh - 3.5rem)',
               gridTemplateAreas: `'reception reception landlord' 'search search landlord' 'uni account trust'`,
               gridTemplateColumns: gridCols,
               gridTemplateRows: gridRows,
@@ -177,6 +180,7 @@ export default function HomeV3() {
                 activityLine={activityLine}
                 uniCoverage={uniCoverage}
                 listingsOnly
+                nameplateVariant={plates.listings}
                 deskAnswer={answerFor('listings')}
                 className="min-h-full flex-1"
               />
@@ -184,6 +188,7 @@ export default function HomeV3() {
             <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
               <LandlordDesk
                 onDrawerOpenChange={setLandlordDrawerOpen}
+                nameplateVariant={plates.landlord}
                 deskAnswer={answerFor('landlord')}
                 className="min-h-full flex-1"
               />
@@ -193,6 +198,7 @@ export default function HomeV3() {
                 chips={uniCoverage}
                 trayOpen={openTray === 'uni'}
                 onTrayOpenChange={(open) => setTray('uni', open)}
+                nameplateVariant={plates.universities}
                 className="min-h-full flex-1"
               />
             </div>
@@ -200,6 +206,7 @@ export default function HomeV3() {
               <AccountDesk
                 trayOpen={openTray === 'account'}
                 onTrayOpenChange={(open) => setTray('account', open)}
+                nameplateVariant={plates.account}
                 className="min-h-full flex-1"
               />
             </div>
@@ -207,6 +214,7 @@ export default function HomeV3() {
               <TrustDesk
                 trayOpen={openTray === 'trust'}
                 onTrayOpenChange={(open) => setTray('trust', open)}
+                nameplateVariant={plates.trust}
                 deskAnswer={answerFor('trust')}
                 className="min-h-full flex-1"
               />
@@ -240,6 +248,7 @@ export default function HomeV3() {
           uniCoverage={uniCoverage}
           listingsOnly
           compact
+          nameplateVariant={plates.listings}
           deskAnswer={answerFor('listings')}
         />
 
@@ -248,6 +257,7 @@ export default function HomeV3() {
             mobileRail
             railExpanded={openRail === 'landlord'}
             onRailExpandChange={(open) => setOpenRail(open ? 'landlord' : null)}
+            nameplateVariant={plates.landlord}
             deskAnswer={answerFor('landlord')}
           />
           <UniversitiesDesk
@@ -255,16 +265,19 @@ export default function HomeV3() {
             mobileRail
             railExpanded={openRail === 'uni'}
             onRailExpandChange={(open) => setOpenRail(open ? 'uni' : null)}
+            nameplateVariant={plates.universities}
           />
           <AccountDesk
             mobileRail
             railExpanded={openRail === 'account'}
             onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
+            nameplateVariant={plates.account}
           />
           <TrustDesk
             mobileRail
             railExpanded={openRail === 'trust'}
             onRailExpandChange={(open) => setOpenRail(open ? 'trust' : null)}
+            nameplateVariant={plates.trust}
             deskAnswer={answerFor('trust')}
           />
         </div>
