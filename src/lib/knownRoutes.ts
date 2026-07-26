@@ -5,7 +5,7 @@
  */
 
 const STATIC_FILE_EXT =
-  /\.(?:js|css|map|json|ico|png|jpe?g|gif|webp|svg|woff2?|ttf|eot|txt|xml|webmanifest|pdf|mp4|webm|html)$/i
+  /\.(?:js|css|map|json|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|eot|txt|xml|webmanifest|pdf|mp4|webm|html)$/i
 
 /** Exact pathnames (no trailing slash except `/`). */
 const EXACT = new Set([

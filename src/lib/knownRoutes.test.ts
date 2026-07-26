@@ -6,6 +6,8 @@ describe('knownRoutes', () => {
     expect(isStaticAssetPath('/assets/index-abc.js')).toBe(true)
     expect(isStaticAssetPath('/favicon.ico')).toBe(true)
     expect(isStaticAssetPath('/api/sitemap.xml')).toBe(true)
+    expect(isStaticAssetPath('/hero/hero-top-800.avif')).toBe(true)
+    expect(isStaticAssetPath('/hero/hero-top-800.webp')).toBe(true)
   })
 
   it('recognises marketing and listing shapes', () => {

@@ -510,15 +510,6 @@ export default function Home() {
               >
                 $ All Inclusive
               </div>
-              <div
-                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[var(--quni-coral-active)] bg-[var(--quni-coral)] px-2.5 py-2 text-white shadow-lg"
-                aria-hidden
-              >
-                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-[11px] font-semibold leading-tight">Fast Wifi</span>
-              </div>
 
               {/* Top image - right (LCP; first-party AVIF/WebP) */}
               <div className="relative z-10 flex justify-end pr-1">
