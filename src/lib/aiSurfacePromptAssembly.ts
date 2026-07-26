@@ -16,8 +16,31 @@ import {
   formatLandlordAssessmentUserMessage,
 } from '../../api/lib/aiMatchingAudit.js'
 import type { BookingFitPropertyInput } from '../../api/lib/bookingFitForAssessment.js'
+import { nswTenancyRules, qldTenancyRules } from '../../api/lib/tenancy/rules/index.js'
 
 const NO_EM_DASH_RULE = `- Punctuation: never use em dashes. Use commas, full stops, colons, or a simple hyphen with spaces instead.`
+
+/** Official bond-authority URLs from typed TenancyRules (scheme-on T2 entries). */
+const NSW_T2_BOND = nswTenancyRules('T2').bond
+const QLD_T2_BOND = qldTenancyRules('T2').bond
+const NSW_FAIR_TRADING_BOND_URL = NSW_T2_BOND.schemeApplies ? NSW_T2_BOND.authorityUrl : ''
+const QLD_RTA_BOND_URL = QLD_T2_BOND.schemeApplies ? QLD_T2_BOND.authorityUrl : ''
+
+const TENANCY_LAW_DISCLAIMER_LINE =
+  'This is general information, not legal advice — check the official source for your situation.'
+
+/**
+ * Prompt-layer guardrail: do not state uncited tenancy/landlord-law rules as fact.
+ * Product/marketing answers (fees, how Quni works) are carved out.
+ */
+const TENANCY_LAW_GUARDRAIL_RULE = `- Tenancy / landlord-law claims (mandatory): Claims about bond amounts, who holds or lodges bond, lodgement windows, entry/notice periods, repairs and safety obligations, occupancy or boarding-house limits, form/agreement requirements, house-rule legality, strata/by-laws, or tax on room income are legal information — not Quni product policy.
+  - Product carve-out: Fees, Listing vs Managed, booking/verification/document routing on Quni, and "what does it cost to list" stay normal product answers. Do not add a legal disclaimer for pure product questions.
+  - Attribute or decline: State a specific legal rule only when the retrieved RELEVANT KNOWLEDGE BASE context (or this system message) attributes that rule to a primary official source. knowledge_base rows have no citation URL column — an uncited paraphrase in a chunk is not enough. Never invent a citation, Act, or section number.
+  - Bond attribution: When you can state a bond rule with attribution, prefer these official authority URLs from Quni's typed tenancy bond rules: NSW Fair Trading ${NSW_FAIR_TRADING_BOND_URL}; Queensland Residential Tenancies Authority (RTA) ${QLD_RTA_BOND_URL}.
+  - If you cannot attribute the specific rule: say you cannot confirm that exact rule, point gracefully to the official source (NSW Fair Trading for NSW; the RTA for Queensland, with the URLs above), and do not paraphrase an uncited rule as fact. Never reply with a blunt "I can't help."
+  - Disclaimer: Any answer that makes a tenancy/landlord-law claim must include this line: "${TENANCY_LAW_DISCLAIMER_LINE}"
+  - Conservative default: If unclear whether something is legal information vs product information, treat it as legal information, include the disclaimer, and do not overstate the rule.
+  - Known conflict — do not settle: Do not state as settled whether a Queensland hosted-room (boarder/lodger) bond must be lodged with the RTA or may be held by the landlord. Our internal sources conflict on this point. Decline the specific rule and point the user to the RTA (${QLD_RTA_BOND_URL}).`
 
 export const AI_SENTINEL_VALUES = {
   nationality: 'ZZ_NAT',
@@ -130,6 +153,7 @@ ${VERIFICATION_HONESTY_RULE}
 ${TRUST_STRIPE_PAYMENTS_RULE}
 ${PRODUCT_INVENTORY_RULE}
 ${SAMPLE_AGREEMENTS_RULE}
+${TENANCY_LAW_GUARDRAIL_RULE}
 ${NON_DISCRIMINATION_AI_RULE}
 
 No listing context block is available for visitors. Landlords and students must sign in to use /sample-agreements for watermarked PDF previews.`,
@@ -154,6 +178,7 @@ You MUST follow these rules:
 12) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
 13) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
 14) ${NO_EM_DASH_RULE.replace(/^- /, '')}
+15) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
@@ -161,7 +186,7 @@ LISTING CONTEXT (FACTS ONLY):
 TENANT PREFERENCE CONTEXT (allowlisted profile fields only):
 {{TENANT_PREFERENCE_BLOCK}}
 
-Respond to the user’s latest question using only the provided facts.`,
+Respond to the user’s latest question using only the provided facts for listing fit. For tenancy/landlord-law questions, also follow the tenancy-law guardrail above (attribute or decline; do not invent legal rules from listing context).`,
 
   landlord: `You are a helpful assistant on Quni Living, assisting landlords who host students, graduates, and professional renters.
 
@@ -181,8 +206,9 @@ Rules:
 13) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 14) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
-16) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
-17) ${NO_EM_DASH_RULE.replace(/^- /, '')}`,
+16) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
+17) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
+18) ${NO_EM_DASH_RULE.replace(/^- /, '')}`,
 } as const
 
 export function buildStudentListingContextBlock(props: Array<Record<string, unknown>>): string {
