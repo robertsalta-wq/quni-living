@@ -3,6 +3,7 @@ import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskInTray from './DeskInTray'
 import DeskNameplate from './DeskNameplate'
 import ReceptionField, { type ReceptionFieldSelectQuestion } from './ReceptionField'
+import { QuniLogoHomeLink } from '../SiteBrandLockup'
 import { DESK_NAMEPLATE_VARIANTS } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
@@ -25,7 +26,7 @@ type FieldReceptionDeskProps = {
 }
 
 /**
- * `/home-v3` Reception — condensed wordmark · letterhead · nameplate row + Places/Questions field.
+ * `/home-v3` Reception — condensed logo · letterhead · nameplate row + Places/Questions field.
  * Not the AI ChatPanel Reception. New composition only.
  */
 export default function FieldReceptionDesk({
@@ -53,9 +54,9 @@ export default function FieldReceptionDesk({
       }}
       nameplate={
         <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-          <p className="m-0 shrink-0 font-[family-name:var(--font-serif)] text-[26px] leading-none font-bold tracking-[-0.015em] text-[var(--quni-ink)] sm:text-[28px]">
-            <span className="text-[var(--quni-coral)]">Q</span>uni
-          </p>
+          <div className="shrink-0 [&_img]:h-7 [&_img]:sm:h-8">
+            <QuniLogoHomeLink />
+          </div>
           <p className="m-0 min-w-0 flex-1 font-[family-name:var(--font-serif)] text-[14px] leading-snug text-[var(--quni-ink-3)] sm:text-[15px]">
             {LETTERHEAD}
           </p>

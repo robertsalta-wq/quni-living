@@ -158,16 +158,16 @@ export default function SearchDesk({
         ].join(' ')}
       >
         {listingsOnly ? (
-          <div className="flex shrink-0 flex-col gap-1.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <DeskNameplate variant={nameplateVariant}>Rooms & homes</DeskNameplate>
-              <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[var(--quni-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-success-strong)]">
-                FREE for renters
-              </span>
+          <div className="flex min-w-0 shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+            <DeskNameplate variant={nameplateVariant}>Rooms & homes</DeskNameplate>
+            <div className="min-w-0 flex-1">
+              <FactHeadline
+                text={compact ? headline.replace(' — every listing checked', '') : headline}
+              />
             </div>
-            <FactHeadline
-              text={compact ? headline.replace(' — every listing checked', '') : headline}
-            />
+            <span className="inline-flex shrink-0 items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[var(--quni-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-success-strong)]">
+              FREE for renters
+            </span>
           </div>
         ) : (
           <div className="flex shrink-0 flex-col gap-1.5">
