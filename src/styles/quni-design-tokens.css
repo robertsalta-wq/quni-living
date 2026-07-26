@@ -28,6 +28,11 @@
   --quni-navy-hover:      #161E33;
   --quni-navy-tint:       rgba(31, 42, 68, 0.08);
 
+  /* Desk shell — brass nameplate + coral lifted for AA on navy */
+  --quni-brass:           #B39355;
+  --quni-brass-ink:       #372B10;
+  --quni-coral-on-navy:   #FF8D7F;
+
   /* AI accent — reserved exclusively for AI/Sparkle moments
      (SiteBrandLockup AI entry, AI-generated content callouts). */
   --quni-ai:              #AA3BFF;
