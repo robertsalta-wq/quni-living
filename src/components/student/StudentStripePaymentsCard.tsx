@@ -76,18 +76,18 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
     <div className="quni-card scroll-mt-24 p-5 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">Rent billing</h2>
-          <p className="text-sm text-gray-500 mt-1 max-w-xl">
+          <h2 className="text-sm font-semibold text-admin-ink">Rent billing</h2>
+          <p className="text-sm text-admin-ink-5 mt-1 max-w-xl">
             Save a card securely with Stripe for when you pay rent through Quni. You can update it anytime;
             we don&apos;t store card numbers on our servers.
           </p>
           {hasCustomer && (
-            <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mt-2 inline-block">
+            <p className="text-xs text-admin-success-fg bg-admin-success-bg border border-admin-success/20 rounded-lg px-3 py-2 mt-2 inline-block">
               Stripe billing profile saved - add or replace your card below when you&apos;re ready.
             </p>
           )}
           {error && (
-            <p className="text-sm text-red-600 mt-2" role="alert">
+            <p className="text-sm text-admin-danger mt-2" role="alert">
               {error}
             </p>
           )}
@@ -96,7 +96,7 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
           type="button"
           disabled={loading}
           onClick={() => void startSetup()}
-          className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] shadow-sm disabled:opacity-50 w-full sm:w-auto"
+          className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-admin-coral text-white px-5 py-2.5 text-sm font-semibold hover:bg-admin-coral-hover active:bg-admin-coral-active shadow-sm disabled:opacity-50 w-full sm:w-auto"
         >
           {loading ? 'Opening Stripe…' : hasCustomer ? 'Add or update card' : 'Save a card for rent'}
         </button>

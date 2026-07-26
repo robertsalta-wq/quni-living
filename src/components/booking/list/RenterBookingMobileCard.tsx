@@ -1,21 +1,10 @@
 import { Link } from 'react-router-dom'
-import { formatBookingListWeeklyRent, bookingListStatusPillClass } from '../../../lib/bookingListMobileDisplay'
+import { formatBookingListWeeklyRent } from '../../../lib/bookingListMobileDisplay'
 import { tenantBookingStatusLabel } from '../../../lib/tenantBookingStatus'
 import type { TenantBookingStatus } from '../../../lib/tenantCurrentBooking'
 import BookingListDetailStrip from './BookingListDetailStrip'
 import BookingListStatusPill from './BookingListStatusPill'
 import { bookingListMobileCardClass } from './LandlordBookingMobileCard'
-
-function renterStatusPillClass(status: TenantBookingStatus): string {
-  const base = 'inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
-  if (status === 'confirmed' || status === 'active' || status === 'bond_pending') {
-    return bookingListStatusPillClass('confirmed')
-  }
-  if (status === 'expired' || status === 'declined' || status === 'payment_failed' || status === 'cancelled') {
-    return bookingListStatusPillClass('expired')
-  }
-  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
-}
 
 type Props = {
   propertyTitle: string
@@ -53,11 +42,7 @@ export default function RenterBookingMobileCard({
         ) : (
           <p className="min-w-0 text-[15px] font-semibold text-[var(--quni-navy)]">{propertyTitle}</p>
         )}
-        <BookingListStatusPill
-          status={status}
-          label={tenantBookingStatusLabel(status)}
-          className={renterStatusPillClass(status)}
-        />
+        <BookingListStatusPill status={status} label={tenantBookingStatusLabel(status)} />
       </div>
 
       {suburbLine ? <p className="mt-2 text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p> : null}

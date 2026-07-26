@@ -16,13 +16,19 @@ export function bookingListStatusLabel(status: string): string {
 
 export function bookingListStatusPillClass(status: string): string {
   const base = 'inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
-  if (status === 'confirmed' || status === 'active') {
-    return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
+  // Includes tenant statuses (bond_pending → success; cancelled → danger) so both roles share one map.
+  if (status === 'confirmed' || status === 'active' || status === 'bond_pending') {
+    return `${base} bg-admin-success-bg text-admin-success-fg`
   }
-  if (status === 'expired' || status === 'declined' || status === 'payment_failed') {
-    return `${base} bg-[var(--quni-danger-bg)] text-[var(--quni-danger-strong)]`
+  if (
+    status === 'expired' ||
+    status === 'declined' ||
+    status === 'payment_failed' ||
+    status === 'cancelled'
+  ) {
+    return `${base} bg-admin-danger-bg text-admin-danger-strong`
   }
-  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
+  return `${base} bg-admin-surface-3 text-admin-ink-4`
 }
 
 export function formatBookingListWeeklyRent(weeklyRent: number | null | undefined): string {
