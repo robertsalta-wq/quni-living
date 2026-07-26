@@ -87,7 +87,7 @@ export type PropertyListingType =
   | 'shared_room'
 
 export const PROPERTY_LISTING_TYPE_LABELS: Record<PropertyListingType, string> = {
-  entire_property: 'Entire property - House, apartment or unit (landlord does not live on site)',
+  entire_property: 'Entire property - House, apartment, unit or granny flat (landlord does not live on site)',
   private_room_landlord_off_site: 'Private room - landlord not on site - Room in a property, landlord lives elsewhere',
   private_room_landlord_on_site:
     'Private room - landlord lives on site - Room in landlord\'s own home (boarder/lodger arrangement)',
