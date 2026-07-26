@@ -16,6 +16,7 @@ import {
 } from '../src/lib/aiMatchingCriteria.js'
 import { CHAT_SYSTEM_PROMPTS, buildStudentListingContextBlock } from '../src/lib/aiSurfacePromptAssembly.js'
 import { formatServedRuleMapBlock } from './lib/tenancy/rules/servedRuleMapBlock.js'
+import { getTurnstileSecretKey } from './lib/turnstileEnv.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -73,7 +74,7 @@ function safeParseJsonFromEnvInt(name: string, fallback: number): number {
 const SYSTEM_PROMPTS = CHAT_SYSTEM_PROMPTS
 
 async function verifyTurnstileOrThrow(token: string): Promise<void> {
-  const secret = (process.env.TURNSTILE_SECRET_KEY || '').trim()
+  const secret = getTurnstileSecretKey()
   if (!secret) {
     // Server misconfiguration.
     throw new Error('Captcha verification is not configured on the server.')

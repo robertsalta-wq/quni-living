@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { Turnstile } from '@marsidev/react-turnstile'
-
-const siteKey = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
+import { getTurnstileSiteKey, useTurnstileTestKeys } from '../lib/turnstileSiteKey'
 
 type TurnstileSize = 'normal' | 'compact' | 'flexible'
 
@@ -16,7 +15,7 @@ type Props = {
   showLabel?: boolean
   /** Prefer `compact` in narrow desks — never CSS-scale the iframe (breaks Cloudflare). */
   size?: TurnstileSize
-  /** Surface Cloudflare widget failures (e.g. hostname not allowlisted on Preview). */
+  /** Surface Cloudflare widget failures. */
   onWidgetError?: (message: string) => void
 }
 
@@ -30,6 +29,8 @@ function TurnstileCaptcha({
   onWidgetError,
 }: Props) {
   const [widgetError, setWidgetError] = useState<string | null>(null)
+  const siteKey = useMemo(() => getTurnstileSiteKey(), [])
+  const usingTestKey = useMemo(() => useTurnstileTestKeys(), [])
 
   const onSuccess = useCallback(
     (t: string) => {
@@ -41,11 +42,12 @@ function TurnstileCaptcha({
   const onExpire = useCallback(() => onTokenChange(null), [onTokenChange])
   const onError = useCallback(() => {
     onTokenChange(null)
-    const msg =
-      'Cloudflare could not connect. On Preview, add *.vercel.app (or this hostname) to the Turnstile widget’s allowed hostnames, then reload.'
+    const msg = usingTestKey
+      ? 'Cloudflare Turnstile could not load. Reload and try again.'
+      : 'Cloudflare could not connect. Check the Turnstile widget hostname allowlist, then reload.'
     setWidgetError(msg)
     onWidgetError?.(msg)
-  }, [onTokenChange, onWidgetError])
+  }, [onTokenChange, onWidgetError, usingTestKey])
 
   const options = useMemo(() => ({ theme: 'light' as const, size }), [size])
 
