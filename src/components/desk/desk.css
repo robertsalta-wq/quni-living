@@ -95,4 +95,58 @@
   .desk-shell {
     transition: none !important;
   }
+
+  .home-v4-top {
+    transition: none !important;
+  }
+}
+
+/* `/home-v4` — thin landlord at rest; unfolds out + down; bottom windows grow up */
+.home-v4-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: calc(100dvh - 6.5rem);
+}
+
+.home-v4-top {
+  display: grid;
+  flex: 1;
+  align-items: stretch;
+  gap: 0.5rem;
+  grid-template-areas:
+    'reception reception landlord'
+    'search search landlord';
+  /* Thin landlord column at rest (renter yields when open). */
+  grid-template-columns: 1.15fr 1.15fr 0.7fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  transition: grid-template-columns var(--dur-base) var(--ease-standard);
+}
+
+.home-v4-top.is-ll-open {
+  grid-template-columns: 0.75fr 0.75fr 1.5fr;
+}
+
+.home-v4-top.is-grown {
+  grid-template-rows: minmax(min-content, auto) minmax(min-content, 1fr);
+}
+
+.home-v4-area-reception {
+  grid-area: reception;
+}
+
+.home-v4-area-search {
+  grid-area: search;
+}
+
+.home-v4-area-landlord {
+  grid-area: landlord;
+}
+
+.home-v4-bot {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: end;
 }

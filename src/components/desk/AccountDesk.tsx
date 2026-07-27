@@ -15,6 +15,11 @@ type AccountDeskProps = {
   nameplateVariant?: DeskNameplateVariant
   /** `/home-v3` — tighter padding; still stretches to equal row height. */
   dense?: boolean
+  /**
+   * `/home-v4` members door — quiet Sign in / Welcome back.
+   * Default preserves `/home-v3` renter·landlord blurb.
+   */
+  memberDoor?: boolean
 }
 
 export default function AccountDesk({
@@ -26,6 +31,7 @@ export default function AccountDesk({
   onTrayOpenChange,
   nameplateVariant = 'brass',
   dense = false,
+  memberDoor = false,
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
@@ -46,7 +52,23 @@ export default function AccountDesk({
       ? landlordDashboardProfilePath()
       : '/student-dashboard'
 
-  const body = loggedIn ? (
+  const body = memberDoor ? (
+    loggedIn ? (
+      <Link
+        to={dashboardTo}
+        className="w-fit text-[15px] font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      >
+        Welcome back, {name} → your desk.
+      </Link>
+    ) : (
+      <Link
+        to="/login"
+        className="w-fit text-[15px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      >
+        Sign in.
+      </Link>
+    )
+  ) : loggedIn ? (
     <>
       <p className="m-0 text-[15px] font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
       <Link
@@ -100,7 +122,13 @@ export default function AccountDesk({
             FOR RENTERS & LANDLORDS
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
-            {loggedIn ? `Hi, ${name}` : 'Your account'}
+            {memberDoor
+              ? loggedIn
+                ? `Welcome back, ${name}`
+                : 'Sign in.'
+              : loggedIn
+                ? `Hi, ${name}`
+                : 'Your account'}
           </span>
           <span aria-hidden>{railExpanded ? '⊖' : '⊕'}</span>
         </button>

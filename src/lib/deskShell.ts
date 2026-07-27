@@ -1,12 +1,12 @@
 /**
- * Desk-shell marketing experiment (`/home-v2`, `/home-v3`, flag-scoped `/pricing`).
+ * Desk-shell marketing experiment (`/home-v2`, `/home-v3`, `/home-v4`, flag-scoped `/pricing`).
  *
  * Flag name: desk_shell_enabled
  * Defaults: ON in Vercel Preview, OFF in Production.
  * Override: VITE_DESK_SHELL_ENABLED=true|false
  */
 
-export const DESK_SHELL_EXPERIMENT_ROUTES = ['/home-v2', '/home-v3', '/pricing'] as const
+export const DESK_SHELL_EXPERIMENT_ROUTES = ['/home-v2', '/home-v3', '/home-v4', '/pricing'] as const
 
 export type DeskShellExperimentRoute = (typeof DESK_SHELL_EXPERIMENT_ROUTES)[number]
 

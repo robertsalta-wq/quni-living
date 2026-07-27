@@ -204,6 +204,14 @@ function App() {
                 </Suspense>
               }
             />
+            <Route
+              path="/home-v4"
+              element={
+                <Suspense fallback={<PageRouteFallback />}>
+                  <Lazy.HomeV4 />
+                </Suspense>
+              }
+            />
 
             {/* Experiment routes: chrome gated by desk_shell_enabled (Preview ON / Production OFF) */}
             <Route element={<ExperimentChromeLayout />}>

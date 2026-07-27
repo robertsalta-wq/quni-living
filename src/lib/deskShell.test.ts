@@ -31,6 +31,7 @@ describe('deskShell', () => {
     const { isDeskShellExperimentPath } = await import('./deskShell')
     expect(isDeskShellExperimentPath('/home-v2')).toBe(true)
     expect(isDeskShellExperimentPath('/home-v3')).toBe(true)
+    expect(isDeskShellExperimentPath('/home-v4')).toBe(true)
     expect(isDeskShellExperimentPath('/pricing')).toBe(true)
     expect(isDeskShellExperimentPath('/listings')).toBe(false)
   })
