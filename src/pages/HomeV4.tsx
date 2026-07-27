@@ -126,7 +126,7 @@ export default function HomeV4() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
+    <div className="home-v4-page bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (thin desk prototype)"
         description="Quni Living /home-v4 desk prototype — thin landlord, directional expand; not for search indexing."
@@ -134,9 +134,9 @@ export default function HomeV4() {
         noindex
       />
 
-      {/* Desktop — v3 layout + thin landlord / bottom grow-up */}
-      <div className="desk-office relative hidden flex-1 flex-col px-3 py-2 md:flex lg:px-3.5">
-        <div className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex flex-1 flex-col`}>
+      {/* Desktop — v3 layout + thin landlord / bottom grow-up; one-screen at rest */}
+      <div className="home-v4-office desk-office relative hidden flex-1 flex-col px-3 py-2 md:flex lg:px-3.5">
+        <div className={`home-v4-frame ${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')}`}>
           <div className="home-v4-shell">
             <div
               className={[
@@ -190,16 +190,6 @@ export default function HomeV4() {
                 />
               </div>
               <div className="flex min-h-0 flex-col self-stretch">
-                <AccountDesk
-                  trayOpen={openTray === 'account'}
-                  onTrayOpenChange={(open) => setTray('account', open)}
-                  nameplateVariant={plates.account}
-                  dense
-                  memberDoor
-                  className="h-full min-h-full flex-1"
-                />
-              </div>
-              <div className="flex min-h-0 flex-col self-stretch">
                 <TrustDesk
                   trayOpen={openTray === 'trust'}
                   onTrayOpenChange={(open) => setTray('trust', open)}
@@ -209,15 +199,28 @@ export default function HomeV4() {
                   className="h-full min-h-full flex-1"
                 />
               </div>
+              <div className="flex min-h-0 flex-col self-stretch">
+                <AccountDesk
+                  trayOpen={openTray === 'account'}
+                  onTrayOpenChange={(open) => setTray('account', open)}
+                  nameplateVariant={plates.account}
+                  dense
+                  memberDoor
+                  nameplateLabel="Simple account management"
+                  className="h-full min-h-full flex-1"
+                />
+              </div>
             </div>
           </div>
 
-          <PapersBlock compact />
+          <div className="home-v4-papers">
+            <PapersBlock compact />
+          </div>
         </div>
       </div>
 
       {/* Mobile: same stack as v3; Account is members door; no top pill */}
-      <div className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-6 md:hidden">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 pb-6 md:hidden">
         <FieldReceptionDesk
           onSelectQuestion={onSelectQuestion}
           answer={answerFor('reception')}
@@ -249,19 +252,20 @@ export default function HomeV4() {
             onRailExpandChange={(open) => setOpenRail(open ? 'uni' : null)}
             nameplateVariant={plates.universities}
           />
-          <AccountDesk
-            mobileRail
-            railExpanded={openRail === 'account'}
-            onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
-            nameplateVariant={plates.account}
-            memberDoor
-          />
           <TrustDesk
             mobileRail
             railExpanded={openRail === 'trust'}
             onRailExpandChange={(open) => setOpenRail(open ? 'trust' : null)}
             nameplateVariant={plates.trust}
             deskAnswer={answerFor('trust')}
+          />
+          <AccountDesk
+            mobileRail
+            railExpanded={openRail === 'account'}
+            onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
+            nameplateVariant={plates.account}
+            memberDoor
+            nameplateLabel="Simple account management"
           />
         </div>
 

@@ -20,6 +20,8 @@ type AccountDeskProps = {
    * Default preserves `/home-v3` renter·landlord blurb.
    */
   memberDoor?: boolean
+  /** Override nameplate label (e.g. home-v4 “Simple account management”). */
+  nameplateLabel?: string
 }
 
 export default function AccountDesk({
@@ -32,6 +34,7 @@ export default function AccountDesk({
   nameplateVariant = 'brass',
   dense = false,
   memberDoor = false,
+  nameplateLabel,
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
@@ -51,6 +54,7 @@ export default function AccountDesk({
     role === 'landlord' || role === 'admin'
       ? landlordDashboardProfilePath()
       : '/student-dashboard'
+  const plateLabel = nameplateLabel ?? 'FOR RENTERS & LANDLORDS'
 
   const body = memberDoor ? (
     loggedIn ? (
@@ -119,7 +123,7 @@ export default function AccountDesk({
             variant={nameplateVariant}
             className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
           >
-            FOR RENTERS & LANDLORDS
+            {plateLabel}
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
             {memberDoor
@@ -154,7 +158,7 @@ export default function AccountDesk({
           dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
         ].join(' ')}
       >
-        <DeskNameplate variant={nameplateVariant}>FOR RENTERS & LANDLORDS</DeskNameplate>
+        <DeskNameplate variant={nameplateVariant}>{plateLabel}</DeskNameplate>
         {body}
         <button
           type="button"
