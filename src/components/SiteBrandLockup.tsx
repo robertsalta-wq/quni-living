@@ -4,6 +4,9 @@ import AiSparkleIcon from './AiSparkleIcon'
 const LOGO = {
   default: { src: '/quni-logo.png', srcSet: '/quni-logo.png 1x, /quni-logo@2x.png 2x' },
   ai: { src: '/quni-logo-ai-purple.png', srcSet: '/quni-logo-ai-purple.png 1x, /quni-logo-ai-purple@2x.png 2x' },
+  white: { src: '/quni-logo-white.png', srcSet: '/quni-logo-white.png 1x, /quni-logo-white@2x.png 2x' },
+  /** Cream wordmark for coral surfaces (`--quni-cream`). */
+  cream: { src: '/quni-logo-cream.svg' },
 } as const
 
 type LogoVariant = keyof typeof LOGO
@@ -21,11 +24,11 @@ export const quniDashboardLabelClassName =
   'font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)] sm:text-2xl'
 
 export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) {
-  const { src, srcSet } = LOGO[variant]
+  const entry = LOGO[variant]
   return (
     <img
-      src={src}
-      srcSet={srcSet}
+      src={entry.src}
+      {...('srcSet' in entry && entry.srcSet ? { srcSet: entry.srcSet } : {})}
       alt="Quni"
       width={120}
       height={40}
@@ -38,14 +41,20 @@ export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) 
  * Brand logo → marketing home `/`.
  * Established rule: logo is the Home control; no separate Home nav item.
  */
-export function QuniLogoHomeLink({ className = '' }: { className?: string }) {
+export function QuniLogoHomeLink({
+  className = '',
+  variant = 'default',
+}: {
+  className?: string
+  variant?: LogoVariant
+}) {
   return (
     <Link
       to="/"
       className={[quniLogoHomeLinkClassName, className].filter(Boolean).join(' ')}
       aria-label="Quni home"
     >
-      <QuniLogoImg />
+      <QuniLogoImg variant={variant} />
     </Link>
   )
 }

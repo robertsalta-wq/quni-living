@@ -5,14 +5,14 @@ import { useLegalEntity } from '../../lib/useLegalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
 
 const linkClass =
-  'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-ink-3)] no-underline [font-variant:small-caps] border-b border-dotted border-[var(--quni-cream-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
+  'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-cream)] no-underline [font-variant:small-caps] border-b border-dotted border-[color-mix(in_srgb,var(--quni-cream)_55%,transparent)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-cream)]'
 
 type PapersBlockProps = {
   /** Desktop office: denser padding, same clustered letterhead. */
   compact?: boolean
 }
 
-/** Signature strip under the bento — legal lookup + rules + social (social absent from Claude mock). */
+/** Signature strip under the bento — coral brand surface + cream wordmark. */
 export default function PapersBlock({ compact = false }: PapersBlockProps) {
   const entity = useLegalEntity()
   const abn = entity.abn.trim()
@@ -28,19 +28,24 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
       ].join(' ')}
       style={{
         borderTop: compact
-          ? '2px double var(--quni-cream-border)'
-          : '3px double var(--quni-cream-border)',
-        background: 'linear-gradient(160deg, var(--quni-surface-1), var(--quni-cream))',
+          ? '2px double color-mix(in srgb, var(--quni-cream) 70%, transparent)'
+          : '3px double color-mix(in srgb, var(--quni-cream) 70%, transparent)',
+        background:
+          'linear-gradient(160deg, var(--quni-coral) 0%, var(--quni-coral-hover) 100%)',
       }}
     >
       <div className={['flex flex-wrap items-center', compact ? 'gap-x-6 gap-y-2' : 'gap-8'].join(' ')}>
         <div className="flex flex-col gap-0.5">
           <QuniLogoHomeLink
-            className={compact ? '[&_img]:h-5 [&_img]:sm:h-6' : '[&_img]:h-6 [&_img]:sm:h-7'}
+            variant="cream"
+            className={[
+              compact ? '[&_img]:h-5 [&_img]:sm:h-6' : '[&_img]:h-6 [&_img]:sm:h-7',
+              'focus-visible:outline-[var(--quni-cream)]',
+            ].join(' ')}
           />
           <span
             className={[
-              'font-semibold uppercase text-[var(--quni-ink-5)]',
+              'font-semibold uppercase text-[color-mix(in_srgb,var(--quni-cream)_82%,white)]',
               compact ? 'text-[9px] tracking-[0.06em]' : 'text-[10px] tracking-[0.08em]',
             ].join(' ')}
           >
@@ -49,7 +54,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[var(--quni-ink-5)]">
+          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-cream)_75%,white)]">
             The rules
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -69,7 +74,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[var(--quni-ink-5)]">
+          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-cream)_75%,white)]">
             Reach a human
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -100,20 +105,20 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
           <Link
             to="/verification"
             className={[
-              'inline-flex items-center gap-1.5 font-extrabold whitespace-nowrap text-[var(--quni-success-strong)]',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-success)]',
+              'inline-flex items-center gap-1.5 font-extrabold whitespace-nowrap text-[var(--quni-cream)]',
+              'hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-cream)]',
               compact ? 'text-[11px]' : 'text-xs',
             ].join(' ')}
           >
             <span
               aria-hidden
-              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-success)] text-[10px] font-black"
+              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-cream)] text-[10px] font-black text-[var(--quni-cream)]"
             >
               ✓
             </span>
             {compact ? 'Verified →' : 'Verified marketplace →'}
           </Link>
-          <SiteSocialLinks variant="drawer" className="justify-end" />
+          <SiteSocialLinks variant="footer" className="justify-end" />
         </div>
       </div>
     </div>
