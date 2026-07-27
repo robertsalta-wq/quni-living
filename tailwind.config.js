@@ -39,6 +39,50 @@ export default {
         'admin-serif': ['"Lora"', 'Georgia', 'serif'],
         'admin-sans': ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
       },
+      /**
+       * Type scale — aliases of `src/styles/quni-design-tokens.css`.
+       * Prefer `text-quni-*` over arbitrary `text-[Npx]` on marketing/desk pages.
+       */
+      fontSize: {
+        'quni-display-xl': [
+          'var(--text-display-xl-size)',
+          { lineHeight: 'var(--text-display-xl-lh)', letterSpacing: 'var(--text-display-xl-track)' },
+        ],
+        'quni-display-lg': [
+          'var(--text-display-lg-size)',
+          { lineHeight: 'var(--text-display-lg-lh)', letterSpacing: 'var(--text-display-lg-track)' },
+        ],
+        'quni-display-md': [
+          'var(--text-display-md-size)',
+          { lineHeight: 'var(--text-display-md-lh)', letterSpacing: 'var(--text-display-md-track)' },
+        ],
+        'quni-display-sm': [
+          'var(--text-display-sm-size)',
+          { lineHeight: 'var(--text-display-sm-lh)', letterSpacing: 'var(--text-display-sm-track)' },
+        ],
+        'quni-h1': [
+          'var(--text-h1-size)',
+          { lineHeight: 'var(--text-h1-lh)', letterSpacing: 'var(--text-h1-track)' },
+        ],
+        'quni-h2': [
+          'var(--text-h2-size)',
+          { lineHeight: 'var(--text-h2-lh)', letterSpacing: 'var(--text-h2-track)' },
+        ],
+        'quni-h3': ['var(--text-h3-size)', { lineHeight: 'var(--text-h3-lh)' }],
+        'quni-h4': ['var(--text-h4-size)', { lineHeight: 'var(--text-h4-lh)' }],
+        'quni-body-lg': ['var(--text-body-lg-size)', { lineHeight: 'var(--text-body-lg-lh)' }],
+        'quni-body': ['var(--text-body-size)', { lineHeight: 'var(--text-body-lh)' }],
+        'quni-body-sm': ['var(--text-body-sm-size)', { lineHeight: 'var(--text-body-sm-lh)' }],
+        'quni-caption': ['var(--text-caption-size)', { lineHeight: 'var(--text-caption-lh)' }],
+        'quni-micro': [
+          'var(--text-micro-size)',
+          { lineHeight: 'var(--text-micro-lh)', letterSpacing: 'var(--text-micro-track)' },
+        ],
+        'quni-price': [
+          'var(--text-price-size)',
+          { letterSpacing: 'var(--text-price-track)' },
+        ],
+      },
       colors: {
         /**
          * Living Console / admin palette — aliases of `src/styles/quni-design-tokens.css`.

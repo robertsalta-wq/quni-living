@@ -4,6 +4,8 @@ import AiSparkleIcon from './AiSparkleIcon'
 const LOGO = {
   default: { src: '/quni-logo.png', srcSet: '/quni-logo.png 1x, /quni-logo@2x.png 2x' },
   ai: { src: '/quni-logo-ai-purple.png', srcSet: '/quni-logo-ai-purple.png 1x, /quni-logo-ai-purple@2x.png 2x' },
+  /** Same mark as Footer — for navy / dark desk surfaces. */
+  white: { src: '/quni-logo-white.png', srcSet: '/quni-logo-white.png 1x, /quni-logo-white@2x.png 2x' },
 } as const
 
 type LogoVariant = keyof typeof LOGO
@@ -11,6 +13,9 @@ type LogoVariant = keyof typeof LOGO
 /** Same focus ring as marketing header — no coral dashboard-only outline. */
 export const quniLogoHomeLinkClassName =
   'flex min-w-0 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900'
+
+const quniLogoHomeLinkClassNameOnDark =
+  'flex min-w-0 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-on-navy)]'
 
 /**
  * "Dashboard" next to the logo — optically matched to the Quni letterforms
@@ -38,14 +43,21 @@ export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) 
  * Brand logo → marketing home `/`.
  * Established rule: logo is the Home control; no separate Home nav item.
  */
-export function QuniLogoHomeLink({ className = '' }: { className?: string }) {
+export function QuniLogoHomeLink({
+  className = '',
+  variant = 'default',
+}: {
+  className?: string
+  variant?: LogoVariant
+}) {
+  const linkClass = variant === 'white' ? quniLogoHomeLinkClassNameOnDark : quniLogoHomeLinkClassName
   return (
     <Link
       to="/"
-      className={[quniLogoHomeLinkClassName, className].filter(Boolean).join(' ')}
+      className={[linkClass, className].filter(Boolean).join(' ')}
       aria-label="Quni home"
     >
-      <QuniLogoImg />
+      <QuniLogoImg variant={variant} />
     </Link>
   )
 }

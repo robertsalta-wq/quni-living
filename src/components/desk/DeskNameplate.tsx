@@ -8,18 +8,16 @@ export default function DeskNameplate({ children, className = '' }: DeskNameplat
   return (
     <div
       className={[
-        'inline-flex max-w-full items-center rounded-[4px] px-[13px] py-[6px]',
+        'inline-flex max-w-full items-center rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-1)]',
         'bg-[var(--quni-brass)] text-[var(--quni-brass-ink)]',
         'border-t border-white/34 border-b border-black/34',
-        'shadow-[0_1px_3px_rgba(0,0,0,0.3)]',
+        'shadow-[var(--shadow-1)]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <span
-        className="whitespace-nowrap text-[10.5px] font-bold uppercase tracking-[0.14em] [text-shadow:0_1px_0_rgba(255,255,255,0.28)]"
-      >
+      <span className="whitespace-nowrap text-quni-micro font-bold uppercase [text-shadow:0_1px_0_color-mix(in_srgb,var(--quni-surface-1)_45%,transparent)]">
         {children}
       </span>
     </div>

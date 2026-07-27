@@ -5,12 +5,12 @@ type DeskLetterheadProps = {
   className?: string
 }
 
-/** Slot 2 — one serif line stating the offer. */
+/** Slot 2 — one serif line stating the offer. Type from `--text-h4` tokens. */
 export default function DeskLetterhead({ children, className = '' }: DeskLetterheadProps) {
   return (
     <p
       className={[
-        'max-w-[370px] font-display text-[17px] font-normal leading-[1.25] tracking-[-0.02em] text-white text-pretty',
+        'max-w-[min(100%,24rem)] font-display text-quni-h4 font-normal text-white text-pretty',
         className,
       ]
         .filter(Boolean)

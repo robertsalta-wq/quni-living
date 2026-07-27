@@ -139,9 +139,10 @@
 }
 
 .desk-kicker {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.17em;
+  font-size: var(--text-micro-size);
+  line-height: var(--text-micro-lh);
+  letter-spacing: var(--text-micro-track);
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
   color: var(--quni-ink-5);
   text-shadow: 0 1px 0 color-mix(in srgb, var(--quni-surface-1) 65%, transparent);

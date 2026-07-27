@@ -51,16 +51,14 @@ export default function LedgerCalculator({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex items-baseline justify-between gap-3 border-b border-[var(--quni-line)] pb-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          Room rent · per week
-        </span>
-        <span className="font-[family-name:var(--font-serif)] text-[17px] font-bold tabular-nums">
+      <div className="flex items-baseline justify-between gap-[var(--space-3)] border-b border-[var(--quni-line)] pb-[var(--space-2)]">
+        <span className="eyebrow m-0">Room rent · per week</span>
+        <span className="font-[family-name:var(--font-serif)] text-quni-h4 font-bold tabular-nums">
           {formatAud(rent)}
         </span>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-[var(--space-2)]">
         <input
           type="range"
           className="desk-range"
@@ -80,16 +78,14 @@ export default function LedgerCalculator({
             }
           }}
         />
-        <div className="mt-1 flex justify-between text-[10.5px] text-[var(--quni-ink-5)]">
+        <div className="mt-[var(--space-1)] flex justify-between text-quni-micro text-[var(--quni-ink-5)]">
           <span>{formatAud(RENT_MIN)}</span>
           <span>{formatAud(RENT_MAX)}</span>
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between gap-3 border-b border-[var(--quni-line)] pb-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          Rooms to let
-        </span>
+      <div className="mt-[var(--space-2)] flex items-center justify-between gap-[var(--space-3)] border-b border-[var(--quni-line)] pb-[var(--space-2)]">
+        <span className="eyebrow m-0">Rooms to let</span>
         <div
           className="inline-flex overflow-hidden rounded-lg border border-[var(--quni-line)] bg-[var(--quni-surface-2)]"
           role="group"
@@ -104,7 +100,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              compact ? 'h-[34px] w-[34px]' : 'h-7 w-[30px]',
+              compact ? 'h-9 w-9 text-quni-body-sm' : 'h-7 w-[1.875rem] text-quni-caption',
             ].join(' ')}
           >
             −
@@ -113,7 +109,7 @@ export default function LedgerCalculator({
             className={[
               'flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)]',
               'font-[family-name:var(--font-serif)] font-bold tabular-nums text-[var(--quni-ink)]',
-              compact ? 'text-[15px]' : 'text-base',
+              compact ? 'text-quni-body-sm' : 'text-quni-body',
             ].join(' ')}
             aria-live="polite"
           >
@@ -128,7 +124,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              compact ? 'h-[34px] w-[34px]' : 'h-7 w-[30px]',
+              compact ? 'h-9 w-9 text-quni-body-sm' : 'h-7 w-[1.875rem] text-quni-caption',
             ].join(' ')}
           >
             +
@@ -137,23 +133,21 @@ export default function LedgerCalculator({
       </div>
 
       {rooms >= 2 ? (
-        <p className="mt-2.5 border-b border-[var(--quni-line)] pb-2.5 text-[13px] text-[var(--quni-ink-3)]">
+        <p className="mt-[var(--space-2)] border-b border-[var(--quni-line)] pb-[var(--space-2)] text-quni-caption text-[var(--quni-ink-3)]">
           {rooms} rooms × {formatAud(rent)} = {formatAud(weeklyTotal)}/wk
         </p>
       ) : null}
 
-      <div className="mt-2 border-t-[2px] border-double border-[var(--quni-ink-4)] pt-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-            Your figure, a year
-          </span>
+      <div className="mt-[var(--space-2)] border-t-[2px] border-double border-[var(--quni-ink-4)] pt-[var(--space-2)]">
+        <div className="flex items-baseline justify-between gap-[var(--space-3)]">
+          <span className="eyebrow m-0">Your figure, a year</span>
           <span
             id={statusId}
             role="status"
             aria-live="polite"
             className={[
               'font-[family-name:var(--font-serif)] font-bold leading-none tabular-nums',
-              compact ? 'text-[26px]' : 'text-[22px]',
+              compact ? 'text-quni-h2' : 'text-quni-h3',
             ].join(' ')}
           >
             {formatAud(yearly)}
@@ -161,7 +155,7 @@ export default function LedgerCalculator({
         </div>
       </div>
 
-      <p className="mt-1.5 text-[10px] text-[var(--quni-ink-5)]">
+      <p className="mt-[var(--space-1)] text-quni-micro text-[var(--quni-ink-5)]">
         Your own figures, before costs. Not a Quni estimate.
       </p>
     </div>

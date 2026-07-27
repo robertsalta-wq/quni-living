@@ -19,20 +19,18 @@ export default function LandlordStateSelector({
   return (
     <div
       className={[
-        'desk-settle flex flex-col gap-2 rounded-[var(--radius-lg)] border border-[var(--quni-cream-border)]',
-        'bg-[var(--quni-surface-1)] px-4 py-3 shadow-[var(--shadow-1)]',
+        'desk-settle flex flex-col gap-[var(--space-2)] rounded-[var(--radius-lg)] border border-[var(--quni-cream-border)]',
+        'bg-[var(--quni-surface-1)] px-[var(--space-4)] py-[var(--space-3)] shadow-[var(--shadow-1)]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
       style={style}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--quni-ink-5)]">
-          Your state
-        </span>
+      <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+        <span className="eyebrow m-0">Your state</span>
         <div
-          className="inline-flex rounded-[var(--radius-pill)] border border-[var(--quni-cream-border)] bg-[var(--quni-surface-2)] p-0.5"
+          className="inline-flex rounded-[var(--radius-pill)] border border-[var(--quni-cream-border)] bg-[var(--quni-surface-2)] p-[var(--space-1)]"
           role="group"
           aria-label="Select state for factual context"
         >
@@ -45,7 +43,7 @@ export default function LandlordStateSelector({
                 aria-pressed={active}
                 onClick={() => onChange(code)}
                 className={[
-                  'rounded-[var(--radius-pill)] px-3.5 py-1 text-[11px] font-extrabold tracking-[0.06em] transition-colors',
+                  'rounded-[var(--radius-pill)] px-[var(--space-3)] py-[var(--space-1)] text-quni-micro font-extrabold transition-colors',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
                   active
                     ? 'bg-[var(--quni-navy)] text-white'
@@ -57,11 +55,11 @@ export default function LandlordStateSelector({
             )
           })}
         </div>
-        <span className="text-[10px] font-semibold text-[var(--quni-ink-4)]">
+        <span className="text-quni-micro font-semibold text-[var(--quni-ink-4)]">
           Bond scheme: {LANDLORD_STATE_FACTS[state].bondScheme}
         </span>
       </div>
-      <p className="m-0 text-[10px] font-semibold text-[var(--quni-ink-5)]">
+      <p className="m-0 text-quni-micro font-semibold text-[var(--quni-ink-5)]">
         Not in NSW or QLD? Quni Listing is not available in your state yet.
       </p>
     </div>
