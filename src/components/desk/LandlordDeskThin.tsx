@@ -259,7 +259,7 @@ export default function LandlordDeskThin({
     <>
       <ImageTiles open={drawerOpen} />
       <DeskInTray>
-        <LedgerCalculator compact={dense || mobileRail} onRentChange={setRent} />
+        <LedgerCalculator slim onRentChange={setRent} />
       </DeskInTray>
       <DeskPen to="/signup?role=landlord">List my room →</DeskPen>
       <DeskDrawer label="How it works — & every fee" open={drawerOpen} onOpenChange={setDrawer}>
