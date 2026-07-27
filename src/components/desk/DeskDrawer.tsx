@@ -30,7 +30,7 @@ export default function DeskDrawer({
         onClick={() => onOpenChange(!open)}
         className={[
           'inline-flex w-fit items-center gap-1.5 rounded-[var(--radius-pill)] border border-white/18',
-          'bg-white/[0.06] px-3 py-1.5 text-left text-[11.5px] font-semibold text-white/72',
+          'bg-white/[0.06] px-3 py-1.5 text-left text-[11.5px] font-semibold text-white',
           'transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
           'hover:bg-white/12 group-hover:bg-white/12',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-on-navy)]',
@@ -39,28 +39,27 @@ export default function DeskDrawer({
           .filter(Boolean)
           .join(' ')}
       >
-        <span
-          aria-hidden
-          className="text-[14px] leading-none text-[var(--quni-coral-on-navy)] opacity-80 transition-opacity duration-[var(--dur-base)] group-hover:opacity-100"
-        >
+        <span aria-hidden className="text-[14px] leading-none text-white opacity-80 transition-opacity duration-[var(--dur-base)] group-hover:opacity-100">
           {open ? '⊖' : '⊕'}
         </span>
         <span>{label}</span>
       </button>
 
+      {/* CSS-collapse (Gate 6) — content stays in the DOM; never conditional unmount. */}
       <div
         id={panelId}
-        hidden={!open}
         className={[
-          'desk-drawer-panel overflow-hidden',
-          open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1.5',
-          'transition-[opacity,transform] duration-[320ms] ease-[var(--ease-standard)]',
+          'desk-drawer-panel grid transition-[grid-template-rows] duration-[320ms] ease-[var(--ease-standard)]',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
           panelClassName,
         ]
           .filter(Boolean)
           .join(' ')}
+        data-desk-drawer={open ? 'open' : 'closed'}
       >
-        {open ? children : null}
+        <div className="min-h-0 overflow-hidden">
+          <div aria-hidden={!open}>{children}</div>
+        </div>
       </div>
     </div>
   )

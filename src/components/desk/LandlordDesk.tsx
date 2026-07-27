@@ -12,12 +12,13 @@ import LedgerCalculator, { RENT_DEFAULT } from './LedgerCalculator'
 import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
-const HOW_IT_WORKS = [
-  'Applicants arrive ID- & uni-verified',
-  'AI writes, prices & screens for you',
-  'Room lease, state-compliant, e-signed',
-  'Your contact stays private until you accept',
-] as const
+const TICK_CLASS =
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-success)] text-[9px] font-bold text-[var(--quni-success)]'
+
+const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]'
+
+const SECONDARY_DESK_LINK =
+  'text-[12.5px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
 
 type LandlordDeskProps = {
   /** Notify parent when drawer opens (bento column reflow). */
@@ -43,65 +44,40 @@ function formatRentFigure(rent: number): string {
   }).format(rent)
 }
 
-function DrawerBody({
-  listingFeeDisplay,
-  managedFeeDisplay,
-}: {
-  listingFeeDisplay: string
-  managedFeeDisplay: string
-}) {
+function DrawerBody() {
   return (
     <div className="flex flex-col gap-[13px] rounded-xl bg-[var(--quni-surface-1)] px-[17px] py-4 text-[var(--quni-ink)]">
-      <div>
-        <h3 className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          How it works
-        </h3>
-        <ul className="mt-2.5 space-y-2">
-          {HOW_IT_WORKS.map((line) => (
-            <li key={line} className="flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]">
-              <span
-                aria-hidden
-                className="mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-success)] text-[9px] font-bold text-[var(--quni-success)]"
-              >
-                ✓
-              </span>
-              {line}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ul className="m-0 space-y-2.5 p-0">
+        <li className={BEAT_TEXT}>
+          <span aria-hidden className={TICK_CLASS}>
+            ✓
+          </span>
+          <span>
+            You choose your tenant and get paid. Quni writes the listing, prices it, screens applicants
+            and drafts the lease.
+          </span>
+        </li>
+        <li className="text-[13px] leading-snug text-[var(--quni-ink-2)]">
+          Free to list. One $99 fee, only if you accept someone. No lock-in — leave any time.
+        </li>
+        <li className={BEAT_TEXT}>
+          <span aria-hidden className={TICK_CLASS}>
+            ✓
+          </span>
+          <span>
+            Every applicant is ID- and enrolment-verified before they reach you · the lease is
+            state-compliant and e-signed · your contact stays private until you accept.
+          </span>
+        </li>
+      </ul>
 
-      <div>
-        <h3 className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          Every fee
-        </h3>
-        <ul className="mt-2.5">
-          <FeeRow label="Listing, matching, AI, renewals — everything" figure="$0" />
-          <FeeRow label="When you accept a tenant, once" figure={listingFeeDisplay} />
-          <FeeRow
-            label="Quni Managed, we run the tenancy — coming soon"
-            figure={`${managedFeeDisplay}/wk`}
-          />
-        </ul>
-        <Link
-          to="/pricing"
-          className="mt-3 inline-block text-[13px] font-semibold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-        >
-          Full pricing →
+      <div className="flex flex-col gap-2.5 pt-1">
+        <DeskPen to="/signup?role=landlord">List my room →</DeskPen>
+        <Link to="/for-landlords" className={['inline-block', SECONDARY_DESK_LINK].join(' ')}>
+          I need more information →
         </Link>
       </div>
     </div>
-  )
-}
-
-function FeeRow({ label, figure }: { label: string; figure: string }) {
-  return (
-    <li className="flex items-baseline justify-between gap-3 border-b border-[var(--quni-line-soft)] py-2 last:border-b-0">
-      <span className="text-[13px] text-[var(--quni-ink-3)]">{label}</span>
-      <span className="shrink-0 font-[family-name:var(--font-serif)] text-base font-bold tabular-nums text-[var(--quni-ink)]">
-        {figure}
-      </span>
-    </li>
   )
 }
 
@@ -119,19 +95,15 @@ export default function LandlordDesk({
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rent, setRent] = useState(RENT_DEFAULT)
   const [listingFeeDisplay, setListingFeeDisplay] = useState('$99')
-  const [managedFeeDisplay, setManagedFeeDisplay] = useState('8%')
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
         const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
-        const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
         const listing = formatFeeForDisplay(listingCell)
-        const managed = formatFeeForDisplay(managedCell)
         if (!cancelled) {
           setListingFeeDisplay(listing.landlordFeeDisplay)
-          setManagedFeeDisplay(managed.landlordFeeDisplay)
         }
       } catch {
         // keep defaults
@@ -224,10 +196,7 @@ export default function LandlordDesk({
               open={drawerOpen}
               onOpenChange={setDrawer}
             >
-              <DrawerBody
-                listingFeeDisplay={listingFeeDisplay}
-                managedFeeDisplay={managedFeeDisplay}
-              />
+              <DrawerBody />
             </DeskDrawer>
             <DeskAnswerPanel
               open={answered}
@@ -274,7 +243,7 @@ export default function LandlordDesk({
       pen={<DeskPen to="/signup?role=landlord">List my room →</DeskPen>}
       drawer={
         <DeskDrawer label="How it works — & every fee" open={drawerOpen} onOpenChange={setDrawer}>
-          <DrawerBody listingFeeDisplay={listingFeeDisplay} managedFeeDisplay={managedFeeDisplay} />
+          <DrawerBody />
         </DeskDrawer>
       }
       foot={
