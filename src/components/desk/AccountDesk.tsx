@@ -15,6 +15,13 @@ type AccountDeskProps = {
   nameplateVariant?: DeskNameplateVariant
   /** `/home-v3` — tighter padding; still stretches to equal row height. */
   dense?: boolean
+  /**
+   * `/home-v4` members door — quiet Sign in / Welcome back.
+   * Default preserves `/home-v3` renter·landlord blurb.
+   */
+  memberDoor?: boolean
+  /** Override nameplate label (e.g. home-v4 “Simple account management”). */
+  nameplateLabel?: string
 }
 
 export default function AccountDesk({
@@ -26,6 +33,8 @@ export default function AccountDesk({
   onTrayOpenChange,
   nameplateVariant = 'brass',
   dense = false,
+  memberDoor = false,
+  nameplateLabel,
 }: AccountDeskProps) {
   const { user, profile, role } = useAuthContext()
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
@@ -45,8 +54,25 @@ export default function AccountDesk({
     role === 'landlord' || role === 'admin'
       ? landlordDashboardProfilePath()
       : '/student-dashboard'
+  const plateLabel = nameplateLabel ?? 'FOR RENTERS & LANDLORDS'
 
-  const body = loggedIn ? (
+  const body = memberDoor ? (
+    loggedIn ? (
+      <Link
+        to={dashboardTo}
+        className="w-fit text-[15px] font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      >
+        Welcome back, {name} → your desk.
+      </Link>
+    ) : (
+      <Link
+        to="/login"
+        className="w-fit text-[15px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      >
+        Sign in.
+      </Link>
+    )
+  ) : loggedIn ? (
     <>
       <p className="m-0 text-[15px] font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
       <Link
@@ -97,10 +123,16 @@ export default function AccountDesk({
             variant={nameplateVariant}
             className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
           >
-            FOR RENTERS & LANDLORDS
+            {plateLabel}
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
-            {loggedIn ? `Hi, ${name}` : 'Your account'}
+            {memberDoor
+              ? loggedIn
+                ? `Welcome back, ${name}`
+                : 'Sign in.'
+              : loggedIn
+                ? `Hi, ${name}`
+                : 'Your account'}
           </span>
           <span aria-hidden>{railExpanded ? '⊖' : '⊕'}</span>
         </button>
@@ -126,7 +158,7 @@ export default function AccountDesk({
           dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
         ].join(' ')}
       >
-        <DeskNameplate variant={nameplateVariant}>FOR RENTERS & LANDLORDS</DeskNameplate>
+        <DeskNameplate variant={nameplateVariant}>{plateLabel}</DeskNameplate>
         {body}
         <button
           type="button"

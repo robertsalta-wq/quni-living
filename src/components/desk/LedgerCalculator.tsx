@@ -21,6 +21,8 @@ type LedgerCalculatorProps = {
   onRentChange?: (weeklyRent: number) => void
   className?: string
   compact?: boolean
+  /** `/home-v4` — tighter spacing only; same colours and type tokens as the ledger card. */
+  slim?: boolean
 }
 
 /** Landlord desk in-tray — visitor-driven ledger. No market estimates. */
@@ -28,6 +30,7 @@ export default function LedgerCalculator({
   onRentChange,
   className = '',
   compact = false,
+  slim = false,
 }: LedgerCalculatorProps) {
   const [rent, setRent] = useState(RENT_DEFAULT)
   const [rooms, setRooms] = useState(ROOMS_MIN)
@@ -45,13 +48,18 @@ export default function LedgerCalculator({
     <div
       className={[
         'rounded-xl bg-[var(--quni-surface-1)] text-[var(--quni-ink)] shadow-[0_2px_10px_rgba(0,0,0,0.22)]',
-        compact ? 'px-3.5 py-3.5' : 'px-3.5 pb-3 pt-3',
+        slim ? 'px-2.5 py-2' : compact ? 'px-3.5 py-3.5' : 'px-3.5 pb-3 pt-3',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex items-baseline justify-between gap-3 border-b border-[var(--quni-line)] pb-2">
+      <div
+        className={[
+          'flex items-baseline justify-between gap-3 border-b border-[var(--quni-line)]',
+          slim ? 'pb-1' : 'pb-2',
+        ].join(' ')}
+      >
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
           Room rent · per week
         </span>
@@ -60,7 +68,7 @@ export default function LedgerCalculator({
         </span>
       </div>
 
-      <div className="mt-2">
+      <div className={slim ? 'mt-1' : 'mt-2'}>
         <input
           type="range"
           className="desk-range"
@@ -80,13 +88,21 @@ export default function LedgerCalculator({
             }
           }}
         />
-        <div className="mt-1 flex justify-between text-[10.5px] text-[var(--quni-ink-5)]">
-          <span>{formatAud(RENT_MIN)}</span>
-          <span>{formatAud(RENT_MAX)}</span>
-        </div>
+        {slim ? null : (
+          <div className="mt-1 flex justify-between text-[10.5px] text-[var(--quni-ink-5)]">
+            <span>{formatAud(RENT_MIN)}</span>
+            <span>{formatAud(RENT_MAX)}</span>
+          </div>
+        )}
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between gap-3 border-b border-[var(--quni-line)] pb-2">
+      <div
+        className={[
+          slim ? 'mt-1.5' : 'mt-2.5',
+          'flex items-center justify-between gap-3 border-b border-[var(--quni-line)]',
+          slim ? 'pb-1' : 'pb-2',
+        ].join(' ')}
+      >
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
           Rooms to let
         </span>
@@ -104,7 +120,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              compact ? 'h-[34px] w-[34px]' : 'h-7 w-[30px]',
+              slim || !compact ? 'h-7 w-[30px]' : 'h-[34px] w-[34px]',
             ].join(' ')}
           >
             −
@@ -113,7 +129,7 @@ export default function LedgerCalculator({
             className={[
               'flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)]',
               'font-[family-name:var(--font-serif)] font-bold tabular-nums text-[var(--quni-ink)]',
-              compact ? 'text-[15px]' : 'text-base',
+              slim || !compact ? 'text-base' : 'text-[15px]',
             ].join(' ')}
             aria-live="polite"
           >
@@ -128,7 +144,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              compact ? 'h-[34px] w-[34px]' : 'h-7 w-[30px]',
+              slim || !compact ? 'h-7 w-[30px]' : 'h-[34px] w-[34px]',
             ].join(' ')}
           >
             +
@@ -137,12 +153,22 @@ export default function LedgerCalculator({
       </div>
 
       {rooms >= 2 ? (
-        <p className="mt-2.5 border-b border-[var(--quni-line)] pb-2.5 text-[13px] text-[var(--quni-ink-3)]">
+        <p
+          className={[
+            slim ? 'mt-1.5 pb-1' : 'mt-2.5 pb-2.5',
+            'border-b border-[var(--quni-line)] text-[13px] text-[var(--quni-ink-3)]',
+          ].join(' ')}
+        >
           {rooms} rooms × {formatAud(rent)} = {formatAud(weeklyTotal)}/wk
         </p>
       ) : null}
 
-      <div className="mt-2 border-t-[2px] border-double border-[var(--quni-ink-4)] pt-2">
+      <div
+        className={[
+          slim ? 'mt-1.5 pt-1.5' : 'mt-2 pt-2',
+          'border-t-[2px] border-double border-[var(--quni-ink-4)]',
+        ].join(' ')}
+      >
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
             Your figure, a year
@@ -153,7 +179,7 @@ export default function LedgerCalculator({
             aria-live="polite"
             className={[
               'font-[family-name:var(--font-serif)] font-bold leading-none tabular-nums',
-              compact ? 'text-[26px]' : 'text-[22px]',
+              slim || !compact ? 'text-[22px]' : 'text-[26px]',
             ].join(' ')}
           >
             {formatAud(yearly)}
@@ -161,7 +187,7 @@ export default function LedgerCalculator({
         </div>
       </div>
 
-      <p className="mt-1.5 text-[10px] text-[var(--quni-ink-5)]">
+      <p className={[slim ? 'mt-1' : 'mt-1.5', 'text-[10px] text-[var(--quni-ink-5)]'].join(' ')}>
         Your own figures, before costs. Not a Quni estimate.
       </p>
     </div>
