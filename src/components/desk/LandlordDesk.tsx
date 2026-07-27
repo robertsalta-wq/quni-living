@@ -247,7 +247,7 @@ export default function LandlordDesk({
       tone="navy"
       className={[
         'min-h-full',
-        dense ? '!gap-1.5 overflow-hidden !p-2.5' : '',
+        dense ? '!gap-1.5 !p-2.5' : '',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]

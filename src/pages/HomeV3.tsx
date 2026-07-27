@@ -108,11 +108,10 @@ export default function HomeV3() {
   }, [listingCount, listings])
 
   const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
-  // Reception auto · middle (Listings) shrinks into leftover · bottom equal auto track.
-  // Trays/drawer may grow past the viewport and allow page scroll.
+  // Soft one-screen floor; min-content lets trays/drawer grow the page and scroll.
   const gridRows =
     landlordDrawerOpen || openTray || activeAnswer
-      ? 'auto minmax(0, 1fr) auto'
+      ? 'minmax(min-content, auto) minmax(min-content, 1fr) auto'
       : 'auto minmax(0, 1fr) auto'
 
   const plates = DESK_NAMEPLATE_VARIANTS
@@ -135,7 +134,7 @@ export default function HomeV3() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)] md:h-dvh md:max-h-dvh md:overflow-hidden">
+    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (Reception desk prototype)"
         description="Quni Living /home-v3 Reception desk prototype — Places and Questions; not for search indexing."
@@ -144,7 +143,7 @@ export default function HomeV3() {
       />
 
       {/* Desktop — mock grid: Reception 2-col above Listings; Landlord tall right */}
-      <div className="desk-office relative hidden min-h-0 flex-1 flex-col overflow-hidden px-3 py-2 md:flex lg:px-3.5">
+      <div className="desk-office relative hidden flex-1 flex-col px-3 py-2 md:flex lg:px-3.5">
         <Link
           to="/login"
           className="absolute top-3 right-5 z-[15] rounded-full border border-[var(--quni-line)] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink)] shadow-[var(--shadow-1)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
@@ -153,12 +152,13 @@ export default function HomeV3() {
         </Link>
 
         <div
-          className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex min-h-0 flex-1 flex-col`}
+          className={`${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')} flex flex-1 flex-col`}
           style={{ maxWidth: 1200 }}
         >
           <div
-            className="grid min-h-0 flex-1 items-stretch gap-2"
+            className="grid flex-1 items-stretch gap-2"
             style={{
+              minHeight: 'calc(100dvh - 6.5rem)',
               gridTemplateAreas: `'reception reception landlord' 'search search landlord' 'uni account trust'`,
               gridTemplateColumns: gridCols,
               gridTemplateRows: gridRows,
