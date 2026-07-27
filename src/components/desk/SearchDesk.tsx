@@ -31,6 +31,8 @@ type SearchDeskProps = {
    * Default preserves `/home-v2` behaviour.
    */
   listingsOnly?: boolean
+  /** `/home-v3` — tighter padding + shrinkable cards so middle row can compress. */
+  dense?: boolean
   /** Optional FAQ answer shown in-desk (questions owned by Listings). */
   deskAnswer?: { text: string; source: string } | null
   /** Nameplate treatment — default brass keeps `/home-v2` control. */
@@ -72,6 +74,7 @@ export default function SearchDesk({
   className = '',
   compact = false,
   listingsOnly = false,
+  dense = false,
   deskAnswer = null,
   nameplateVariant = 'brass',
 }: SearchDeskProps) {
@@ -154,7 +157,11 @@ export default function SearchDesk({
       <div
         className={[
           'flex min-h-0 flex-1 flex-col',
-          compact ? 'gap-2.5 overflow-y-auto p-3.5' : 'gap-2 p-4',
+          compact
+            ? 'gap-2.5 overflow-y-auto p-3.5'
+            : dense
+              ? 'gap-1.5 p-2.5'
+              : 'gap-2 p-4',
         ].join(' ')}
       >
         {listingsOnly ? (
@@ -353,7 +360,10 @@ export default function SearchDesk({
                     className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   >
                     <div
-                      className="relative min-h-[120px] flex-1 bg-[var(--quni-surface-3)] bg-cover bg-center"
+                      className={[
+                        'relative flex-1 bg-[var(--quni-surface-3)] bg-cover bg-center',
+                        dense ? 'min-h-0' : 'min-h-[120px]',
+                      ].join(' ')}
                       style={img ? { backgroundImage: `url(${img})` } : undefined}
                     >
                       <span className="absolute right-1.5 bottom-1.5 rotate-[-7deg] rounded border-[1.5px] border-[rgba(15,110,86,0.6)] bg-white/85 px-1.5 py-0.5 text-[8px] font-extrabold tracking-[0.1em] text-[var(--quni-success-strong)]">

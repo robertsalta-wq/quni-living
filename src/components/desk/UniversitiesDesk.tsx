@@ -13,7 +13,7 @@ type UniversitiesDeskProps = {
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
   nameplateVariant?: DeskNameplateVariant
-  /** `/home-v3` — tighter padding, no stretch filler. */
+  /** `/home-v3` — tighter padding; still stretches to equal row height. */
   dense?: boolean
 }
 
@@ -97,8 +97,8 @@ export default function UniversitiesDesk({
     >
       <div
         className={[
-          'flex min-h-0 flex-col',
-          dense ? 'gap-1 p-2.5' : 'min-h-0 flex-1 gap-1.5 p-3.5',
+          'flex min-h-0 flex-1 flex-col',
+          dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
         ].join(' ')}
       >
         <DeskNameplate variant={nameplateVariant}>FOR UNIVERSITIES</DeskNameplate>
@@ -130,8 +130,8 @@ export default function UniversitiesDesk({
         <Link
           to="/for-universities"
           className={[
-            'text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]',
-            dense ? 'pt-0.5' : 'mt-auto pt-1',
+            'mt-auto text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]',
+            dense ? 'pt-0.5' : 'pt-1',
           ].join(' ')}
         >
           Partner with Quni →

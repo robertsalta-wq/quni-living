@@ -13,7 +13,7 @@ type AccountDeskProps = {
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
   nameplateVariant?: DeskNameplateVariant
-  /** `/home-v3` — tighter padding, no stretch filler. */
+  /** `/home-v3` — tighter padding; still stretches to equal row height. */
   dense?: boolean
 }
 
@@ -122,8 +122,8 @@ export default function AccountDesk({
     >
       <div
         className={[
-          'flex min-h-0 flex-col',
-          dense ? 'gap-1 p-2.5' : 'flex-1 gap-1.5 p-3.5',
+          'flex min-h-0 flex-1 flex-col',
+          dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
         ].join(' ')}
       >
         <DeskNameplate variant={nameplateVariant}>FOR RENTERS & LANDLORDS</DeskNameplate>
@@ -155,7 +155,7 @@ export default function AccountDesk({
             </Link>
           </div>
         ) : null}
-        {dense ? null : <span className="mt-auto" />}
+        <span className="mt-auto" />
       </div>
     </article>
   )

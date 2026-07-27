@@ -27,7 +27,7 @@ type TrustDeskProps = {
   /** Optional FAQ answer shown in-desk (questions owned by Trust). */
   deskAnswer?: { text: string; source: string } | null
   nameplateVariant?: DeskNameplateVariant
-  /** `/home-v3` — tighter padding, no stretch filler. */
+  /** `/home-v3` — tighter padding; still stretches to equal row height. */
   dense?: boolean
 }
 
@@ -180,12 +180,12 @@ export default function TrustDesk({
     >
       <div
         className={[
-          'flex min-h-0 flex-col',
-          dense ? 'gap-1 p-2.5' : 'flex-1 gap-1.5 p-3.5',
+          'flex min-h-0 flex-1 flex-col',
+          dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
         ].join(' ')}
       >
         {face}
-        {dense ? null : <span className="mt-auto" />}
+        <span className="mt-auto" />
       </div>
     </article>
   )

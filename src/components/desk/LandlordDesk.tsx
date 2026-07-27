@@ -31,6 +31,8 @@ type LandlordDeskProps = {
   deskAnswer?: { text: string; source: string } | null
   /** Nameplate treatment — default brass keeps `/home-v2` control. */
   nameplateVariant?: DeskNameplateVariant
+  /** `/home-v3` — tighter padding so the tall landlord column can compress. */
+  dense?: boolean
 }
 
 function formatRentFigure(rent: number): string {
@@ -112,6 +114,7 @@ export default function LandlordDesk({
   className = '',
   deskAnswer = null,
   nameplateVariant = 'brass',
+  dense = false,
 }: LandlordDeskProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rent, setRent] = useState(RENT_DEFAULT)
@@ -147,7 +150,12 @@ export default function LandlordDesk({
   const letterhead = (
     <DeskLetterhead>
       Your spare room could be{' '}
-      <span className="text-[22px] font-bold text-[var(--quni-coral-on-navy)]">
+      <span
+        className={[
+          'font-bold text-[var(--quni-coral-on-navy)]',
+          dense ? 'text-[18px]' : 'text-[22px]',
+        ].join(' ')}
+      >
         {formatRentFigure(rent)}
       </span>{' '}
       a week — verified student, paperwork done.
@@ -239,6 +247,7 @@ export default function LandlordDesk({
       tone="navy"
       className={[
         'min-h-full',
+        dense ? '!gap-1.5 overflow-hidden !p-2.5' : '',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
@@ -259,7 +268,7 @@ export default function LandlordDesk({
       letterhead={letterhead}
       inTray={
         <DeskInTray>
-          <LedgerCalculator onRentChange={setRent} />
+          <LedgerCalculator compact={dense} onRentChange={setRent} />
         </DeskInTray>
       }
       pen={<DeskPen to="/signup?role=landlord">List my room →</DeskPen>}
@@ -276,7 +285,7 @@ export default function LandlordDesk({
             source={deskAnswer?.source ?? 'QUNI PRICING'}
             tone="navy"
           />
-          {waxSeal}
+          {dense ? null : waxSeal}
         </>
       }
     />
