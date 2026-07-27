@@ -107,12 +107,13 @@ export default function HomeV3() {
     return `${listingCount} live listing${listingCount === 1 ? '' : 's'} near campus`
   }, [listingCount, listings])
 
-  const gridCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
-  // Soft one-screen floor; min-content lets trays/drawer grow the page and scroll.
-  const gridRows =
-    landlordDrawerOpen || openTray || activeAnswer
-      ? 'minmax(min-content, auto) minmax(min-content, 1fr) auto'
-      : 'auto minmax(0, 1fr) auto'
+  // Column reflow is top-grid only — bottom uni/account/trust stay equal 1fr×3.
+  const topCols = landlordDrawerOpen ? '0.7fr 0.7fr 1.85fr' : '1fr 1fr 1fr'
+  // Soft one-screen floor; min-content lets the landlord drawer grow the page and scroll.
+  const topRows =
+    landlordDrawerOpen || activeAnswer
+      ? 'minmax(min-content, auto) minmax(min-content, 1fr)'
+      : 'auto minmax(0, 1fr)'
 
   const plates = DESK_NAMEPLATE_VARIANTS
 
@@ -156,74 +157,83 @@ export default function HomeV3() {
           style={{ maxWidth: 1200 }}
         >
           <div
-            className="grid flex-1 items-stretch gap-2"
-            style={{
-              minHeight: 'calc(100dvh - 6.5rem)',
-              gridTemplateAreas: `'reception reception landlord' 'search search landlord' 'uni account trust'`,
-              gridTemplateColumns: gridCols,
-              gridTemplateRows: gridRows,
-              transition: landlordDrawerOpen
-                ? 'grid-template-columns 320ms var(--ease-standard)'
-                : 'grid-template-columns 320ms var(--ease-standard), grid-template-rows 320ms var(--ease-standard)',
-            }}
+            className="flex flex-1 flex-col gap-2"
+            style={{ minHeight: 'calc(100dvh - 6.5rem)' }}
           >
-            <div style={{ gridArea: 'reception' }} className="relative z-20 flex min-h-0 flex-col self-start">
-              <FieldReceptionDesk
-                onSelectQuestion={onSelectQuestion}
-                answer={answerFor('reception')}
-                className="w-full"
-              />
+            {/* Top: Reception / Listings / Landlord — drawer may widen landlord + grow page height */}
+            <div
+              className="grid flex-1 items-stretch gap-2"
+              style={{
+                gridTemplateAreas: `'reception reception landlord' 'search search landlord'`,
+                gridTemplateColumns: topCols,
+                gridTemplateRows: topRows,
+                transition: landlordDrawerOpen
+                  ? 'grid-template-columns 320ms var(--ease-standard)'
+                  : 'grid-template-columns 320ms var(--ease-standard), grid-template-rows 320ms var(--ease-standard)',
+              }}
+            >
+              <div style={{ gridArea: 'reception' }} className="relative z-20 flex min-h-0 flex-col self-start">
+                <FieldReceptionDesk
+                  onSelectQuestion={onSelectQuestion}
+                  answer={answerFor('reception')}
+                  className="w-full"
+                />
+              </div>
+              <div style={{ gridArea: 'search' }} className="flex min-h-0 flex-col self-stretch">
+                <SearchDesk
+                  listings={listings}
+                  listingCount={listingCount}
+                  activityLine={activityLine}
+                  uniCoverage={uniCoverage}
+                  listingsOnly
+                  dense
+                  nameplateVariant={plates.listings}
+                  deskAnswer={answerFor('listings')}
+                  className="min-h-full flex-1"
+                />
+              </div>
+              <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
+                <LandlordDesk
+                  onDrawerOpenChange={setLandlordDrawerOpen}
+                  dense
+                  nameplateVariant={plates.landlord}
+                  deskAnswer={answerFor('landlord')}
+                  className="min-h-full flex-1"
+                />
+              </div>
             </div>
-            <div style={{ gridArea: 'search' }} className="flex min-h-0 flex-col self-stretch">
-              <SearchDesk
-                listings={listings}
-                listingCount={listingCount}
-                activityLine={activityLine}
-                uniCoverage={uniCoverage}
-                listingsOnly
-                dense
-                nameplateVariant={plates.listings}
-                deskAnswer={answerFor('listings')}
-                className="min-h-full flex-1"
-              />
-            </div>
-            <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
-              <LandlordDesk
-                onDrawerOpenChange={setLandlordDrawerOpen}
-                dense
-                nameplateVariant={plates.landlord}
-                deskAnswer={answerFor('landlord')}
-                className="min-h-full flex-1"
-              />
-            </div>
-            <div style={{ gridArea: 'uni' }} className="flex min-h-0 flex-col self-stretch">
-              <UniversitiesDesk
-                chips={uniCoverage}
-                trayOpen={openTray === 'uni'}
-                onTrayOpenChange={(open) => setTray('uni', open)}
-                nameplateVariant={plates.universities}
-                dense
-                className="h-full min-h-full flex-1"
-              />
-            </div>
-            <div style={{ gridArea: 'account' }} className="flex min-h-0 flex-col self-stretch">
-              <AccountDesk
-                trayOpen={openTray === 'account'}
-                onTrayOpenChange={(open) => setTray('account', open)}
-                nameplateVariant={plates.account}
-                dense
-                className="h-full min-h-full flex-1"
-              />
-            </div>
-            <div style={{ gridArea: 'trust' }} className="flex min-h-0 flex-col self-stretch">
-              <TrustDesk
-                trayOpen={openTray === 'trust'}
-                onTrayOpenChange={(open) => setTray('trust', open)}
-                nameplateVariant={plates.trust}
-                deskAnswer={answerFor('trust')}
-                dense
-                className="h-full min-h-full flex-1"
-              />
+
+            {/* Bottom: always equal thirds — immune to landlord column reflow */}
+            <div className="grid grid-cols-3 items-stretch gap-2">
+              <div className="flex min-h-0 flex-col self-stretch">
+                <UniversitiesDesk
+                  chips={uniCoverage}
+                  trayOpen={openTray === 'uni'}
+                  onTrayOpenChange={(open) => setTray('uni', open)}
+                  nameplateVariant={plates.universities}
+                  dense
+                  className="h-full min-h-full flex-1"
+                />
+              </div>
+              <div className="flex min-h-0 flex-col self-stretch">
+                <AccountDesk
+                  trayOpen={openTray === 'account'}
+                  onTrayOpenChange={(open) => setTray('account', open)}
+                  nameplateVariant={plates.account}
+                  dense
+                  className="h-full min-h-full flex-1"
+                />
+              </div>
+              <div className="flex min-h-0 flex-col self-stretch">
+                <TrustDesk
+                  trayOpen={openTray === 'trust'}
+                  onTrayOpenChange={(open) => setTray('trust', open)}
+                  nameplateVariant={plates.trust}
+                  deskAnswer={answerFor('trust')}
+                  dense
+                  className="h-full min-h-full flex-1"
+                />
+              </div>
             </div>
           </div>
 
