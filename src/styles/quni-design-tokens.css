@@ -27,6 +27,17 @@
   --quni-navy:            #1F2A44;   /* secondary brand / chart series */
   --quni-navy-hover:      #161E33;
   --quni-navy-tint:       rgba(31, 42, 68, 0.08);
+  /* Landlord office desk washes — gradient stops derived from navy/ink (no ad-hoc hex in components). */
+  --quni-desk-navy-a:     color-mix(in srgb, var(--quni-navy) 72%, var(--quni-ink) 28%);
+  --quni-desk-navy-b:     color-mix(in srgb, var(--quni-navy) 58%, var(--quni-ink) 42%);
+  --quni-desk-trust-a:    color-mix(in srgb, var(--quni-trust-bg) 88%, var(--quni-surface-1));
+  --quni-desk-trust-b:    color-mix(in srgb, var(--quni-trust-soft) 22%, var(--quni-trust-bg));
+  --quni-desk-cream-a:    color-mix(in srgb, var(--quni-surface-1) 94%, var(--quni-cream));
+  --quni-desk-cream-b:    var(--quni-cream);
+  --quni-desk-fees-a:     color-mix(in srgb, var(--quni-coral-soft) 82%, var(--quni-surface-1));
+  --quni-desk-fees-b:     color-mix(in srgb, var(--quni-coral) 14%, var(--quni-coral-soft));
+  --quni-desk-numbers-a:  color-mix(in srgb, var(--quni-ai-accent) 18%, var(--quni-surface-1));
+  --quni-desk-numbers-b:  color-mix(in srgb, var(--quni-ai) 10%, var(--quni-surface-2));
 
   /* Desk shell — brass nameplate + coral lifted for AA on navy */
   --quni-brass:           #B39355;

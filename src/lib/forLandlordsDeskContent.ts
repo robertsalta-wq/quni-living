@@ -32,15 +32,6 @@ export const FEE_ROWS: FeeRow[] = [
 export const FEE_ROWS_VISIBLE = FEE_ROWS.filter((r) => r.visible)
 export const FEE_ROWS_DRAWER = FEE_ROWS.filter((r) => !r.visible)
 
-export const RELATED_LANDLORD_LINKS = [
-  { to: '/services/landlord-partnerships', label: 'Landlord partnerships' },
-  { to: '/landlords/ai', label: 'Landlord AI' },
-  { to: '/pricing', label: 'Pricing' },
-  { to: '/services/property-management', label: 'Property management' },
-  { to: '/services/fully-furnished', label: 'Fully furnished' },
-  { to: '/landlord-service-agreement', label: 'Service agreement' },
-] as const
-
 const PAGE_DESCRIPTION =
   'List a spare room in NSW or QLD on Quni: free to list, $99 once when you accept a tenant. Verified applicants, state-compliant agreements, rent paid to you directly. Quni never holds bond.'
 

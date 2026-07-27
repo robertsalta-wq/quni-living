@@ -95,4 +95,54 @@
   .desk-shell {
     transition: none !important;
   }
+
+  .landlord-sticky-pen {
+    transition: none !important;
+  }
+}
+
+/* Landlord office — desk surface gradients (tokens in quni-design-tokens.css) */
+.desk-bg-navy-grand {
+  background: linear-gradient(
+    168deg,
+    var(--quni-desk-navy-a) 0%,
+    var(--quni-navy) 55%,
+    var(--quni-desk-navy-b) 100%
+  );
+}
+
+.desk-bg-trust-wash {
+  background: linear-gradient(160deg, var(--quni-desk-trust-a) 0%, var(--quni-desk-trust-b) 100%);
+}
+
+.desk-bg-cream-warm {
+  background: linear-gradient(160deg, var(--quni-desk-cream-a) 0%, var(--quni-desk-cream-b) 100%);
+}
+
+.desk-bg-fees-wash {
+  background: linear-gradient(160deg, var(--quni-desk-fees-a) 0%, var(--quni-desk-fees-b) 100%);
+}
+
+.desk-bg-numbers-wash {
+  background: linear-gradient(160deg, var(--quni-desk-numbers-a) 0%, var(--quni-desk-numbers-b) 100%);
+}
+
+.desk-bg-navy-grand::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 3px 3px;
+  border-radius: inherit;
+}
+
+.desk-kicker {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--quni-ink-5);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--quni-surface-1) 65%, transparent);
 }
