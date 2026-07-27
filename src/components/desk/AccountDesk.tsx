@@ -96,7 +96,7 @@ export default function AccountDesk({
       </div>
       <Link
         to="/login"
-        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-white px-4 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-4 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Log in
       </Link>
@@ -107,7 +107,7 @@ export default function AccountDesk({
     return (
       <article
         className={[
-          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)]',
+          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
           className,
         ]
           .filter(Boolean)
@@ -145,7 +145,7 @@ export default function AccountDesk({
     <article
       className={[
         'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
-        'border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)]',
+        'border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:450ms]',
         className,
       ]

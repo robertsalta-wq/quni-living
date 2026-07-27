@@ -63,7 +63,7 @@ export default function LedgerCalculator({
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
           Room rent · per week
         </span>
-        <span className="font-[family-name:var(--font-serif)] text-[17px] font-bold tabular-nums">
+        <span className="font-[family-name:var(--font-sans)] text-[17px] font-bold tabular-nums">
           {formatAud(rent)}
         </span>
       </div>
@@ -128,7 +128,7 @@ export default function LedgerCalculator({
           <span
             className={[
               'flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)]',
-              'font-[family-name:var(--font-serif)] font-bold tabular-nums text-[var(--quni-ink)]',
+              'font-[family-name:var(--font-sans)] font-bold tabular-nums text-[var(--quni-ink)]',
               slim || !compact ? 'text-base' : 'text-[15px]',
             ].join(' ')}
             aria-live="polite"
@@ -178,7 +178,7 @@ export default function LedgerCalculator({
             role="status"
             aria-live="polite"
             className={[
-              'font-[family-name:var(--font-serif)] font-bold leading-none tabular-nums',
+              'font-[family-name:var(--font-sans)] font-bold leading-none tabular-nums',
               slim || !compact ? 'text-[22px]' : 'text-[26px]',
             ].join(' ')}
           >

@@ -1,18 +1,18 @@
 import { Link } from 'react-router-dom'
 import SiteSocialLinks from '../SiteSocialLinks'
-import { QuniLogoHomeLink } from '../SiteBrandLockup'
 import { useLegalEntity } from '../../lib/useLegalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
 
+/** Light text on ink footer — --quni-surface-1 for contrast (cream was for coral strip). */
 const linkClass =
-  'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-cream)] no-underline [font-variant:small-caps] border-b border-dotted border-[color-mix(in_srgb,var(--quni-cream)_55%,transparent)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-cream)]'
+  'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-surface-1)] no-underline [font-variant:small-caps] border-b border-dotted border-[color-mix(in_srgb,var(--quni-surface-1)_55%,transparent)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]'
 
 type PapersBlockProps = {
   /** Desktop office: denser padding, same clustered letterhead. */
   compact?: boolean
 }
 
-/** Signature strip under the bento — coral brand surface + cream wordmark. */
+/** Signature strip under the bento — solid ink brand surface + coral wordmark. */
 export default function PapersBlock({ compact = false }: PapersBlockProps) {
   const entity = useLegalEntity()
   const abn = entity.abn.trim()
@@ -23,29 +23,32 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
   return (
     <div
       className={[
-        'quni-card desk-settle shrink-0 [animation-delay:680ms]',
+        'quni-card desk-settle shrink-0 font-[family-name:var(--font-footer)] [animation-delay:680ms]',
+        'bg-[var(--quni-ink)]',
         compact ? 'mt-2 px-4 py-2.5' : 'mt-3.5 px-6 py-4',
       ].join(' ')}
       style={{
         borderTop: compact
-          ? '2px double color-mix(in srgb, var(--quni-cream) 70%, transparent)'
-          : '3px double color-mix(in srgb, var(--quni-cream) 70%, transparent)',
-        background:
-          'linear-gradient(160deg, var(--quni-coral) 0%, var(--quni-coral-hover) 100%)',
+          ? '2px double color-mix(in srgb, var(--quni-surface-1) 35%, transparent)'
+          : '3px double color-mix(in srgb, var(--quni-surface-1) 35%, transparent)',
       }}
     >
       <div className={['flex flex-wrap items-center', compact ? 'gap-x-6 gap-y-2' : 'gap-8'].join(' ')}>
         <div className="flex flex-col gap-0.5">
-          <QuniLogoHomeLink
-            variant="cream"
+          <Link
+            to="/"
             className={[
-              compact ? '[&_img]:h-5 [&_img]:sm:h-6' : '[&_img]:h-6 [&_img]:sm:h-7',
-              'focus-visible:outline-[var(--quni-cream)]',
+              'font-[family-name:var(--font-display)] font-bold tracking-[-0.02em] text-[var(--quni-surface-1)]',
+              'rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
+              compact ? 'text-[18px]' : 'text-[22px]',
             ].join(' ')}
-          />
+            aria-label="Quni home"
+          >
+            <span className="text-[var(--quni-coral)]">Quni</span>
+          </Link>
           <span
             className={[
-              'font-semibold uppercase text-[color-mix(in_srgb,var(--quni-cream)_82%,white)]',
+              'font-semibold uppercase text-[color-mix(in_srgb,var(--quni-surface-1)_82%,transparent)]',
               compact ? 'text-[9px] tracking-[0.06em]' : 'text-[10px] tracking-[0.08em]',
             ].join(' ')}
           >
@@ -54,7 +57,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-cream)_75%,white)]">
+          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
             The rules
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -74,7 +77,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-cream)_75%,white)]">
+          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
             Reach a human
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -105,14 +108,14 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
           <Link
             to="/verification"
             className={[
-              'inline-flex items-center gap-1.5 font-extrabold whitespace-nowrap text-[var(--quni-cream)]',
-              'hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-cream)]',
+              'inline-flex items-center gap-1.5 font-extrabold whitespace-nowrap text-[var(--quni-surface-1)]',
+              'hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]',
               compact ? 'text-[11px]' : 'text-xs',
             ].join(' ')}
           >
             <span
               aria-hidden
-              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-cream)] text-[10px] font-black text-[var(--quni-cream)]"
+              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-verified)] text-[10px] font-black text-[var(--quni-verified)]"
             >
               ✓
             </span>

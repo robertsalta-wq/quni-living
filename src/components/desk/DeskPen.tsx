@@ -22,7 +22,7 @@ export default function DeskPen({
     'desk-pen inline-flex w-full items-center justify-center rounded-[var(--radius-md)] px-5 py-2.5 text-[14.5px] font-bold transition-[transform,box-shadow,background-color] duration-[120ms] ease-[var(--ease-standard)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
 
   const coral = [
-    'bg-[var(--quni-coral)] text-white',
+    'bg-[var(--quni-coral)] text-[var(--quni-ink)]',
     'shadow-[0_3px_0_var(--quni-coral-active),0_5px_12px_rgba(0,0,0,0.28)]',
     'hover:bg-[var(--quni-coral-hover)] hover:translate-y-[3px]',
     'hover:shadow-[0_0_0_var(--quni-coral-active),0_1px_3px_rgba(0,0,0,0.32)]',

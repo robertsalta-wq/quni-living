@@ -7,8 +7,8 @@ type DeskAnswerPanelProps = {
   open: boolean
   answer: string
   source: string
-  /** Navy landlord desk uses light-on-dark stamp. */
-  tone?: 'cream' | 'navy' | 'trust'
+  /** Dark landlord desk uses light-on-dark stamp. `navy` kept as alias for dark. */
+  tone?: 'cream' | 'navy' | 'ink' | 'trust'
   className?: string
 }
 
@@ -19,12 +19,11 @@ export default function DeskAnswerPanel({
   tone = 'cream',
   className = '',
 }: DeskAnswerPanelProps) {
-  const textClass =
-    tone === 'navy' ? 'text-white/85' : tone === 'trust' ? 'text-[var(--quni-ink-2)]' : 'text-[var(--quni-ink-2)]'
-  const stampClass =
-    tone === 'navy'
-      ? 'border-[rgba(143,214,166,0.55)] text-[#8FD6A6] bg-white/[0.06]'
-      : 'border-[rgba(29,158,117,0.5)] text-[var(--quni-success-strong)] bg-white/75'
+  const dark = tone === 'navy' || tone === 'ink'
+  const textClass = dark ? 'text-white/85' : 'text-[var(--quni-ink-2)]'
+  const stampClass = dark
+    ? 'border-[var(--quni-verified-border)] text-[var(--quni-verified)] bg-white/[0.06]'
+    : 'border-[var(--quni-verified-border)] text-[var(--quni-verified)] bg-[var(--quni-verified-surface)]'
 
   return (
     <div
@@ -42,7 +41,7 @@ export default function DeskAnswerPanel({
         <div
           className={[
             'mt-2.5 border-t border-dotted border-[var(--quni-line)] pt-2.5',
-            tone === 'navy' ? 'border-white/20' : '',
+            dark ? 'border-white/20' : '',
           ]
             .filter(Boolean)
             .join(' ')}

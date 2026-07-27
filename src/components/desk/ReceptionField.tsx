@@ -129,9 +129,9 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
 
   return (
     <div ref={wrapRef} className={['relative z-20', className].filter(Boolean).join(' ')}>
-      <div className="overflow-hidden rounded-[12px] border-[1.5px] border-[var(--quni-coral-border)] bg-white shadow-[var(--shadow-1)]">
+      <div className="overflow-hidden rounded-[12px] border-[1.5px] border-[var(--quni-coral-border)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]">
         <form onSubmit={onSubmit} className="flex items-center gap-2 py-0 pl-3.5 pr-1.5">
-          <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral)]">
+          <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral-active)]">
             ⌕
           </span>
           <input
@@ -157,14 +157,14 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
           />
           <button
             type="submit"
-            className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-3.5 py-1.5 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-3.5 py-1.5 text-[13px] font-extrabold text-[var(--quni-ink)] shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
           >
             {submitLabel}
           </button>
         </form>
 
         <div
-          className="flex flex-wrap gap-1.5 border-t border-[var(--quni-cream-border)] bg-[color-mix(in_srgb,var(--quni-cream)_55%,white)] px-2.5 py-2"
+          className="flex flex-wrap gap-1.5 border-t border-[var(--quni-line)] bg-[var(--quni-page)] px-2.5 py-2"
           role="group"
           aria-label="Suggested questions"
         >
@@ -173,7 +173,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
               key={chip.faqId}
               type="button"
               onClick={() => onChip(chip.faqId)}
-              className="rounded-full border border-[var(--quni-cream-border)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] transition-colors hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              className="rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] transition-colors hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               {chip.label}
             </button>
@@ -186,7 +186,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
           id={listId}
           role="listbox"
           aria-label="Places and questions"
-          className="absolute top-[calc(100%+6px)] right-0 left-0 z-40 max-h-[min(220px,36vh)] overflow-y-auto rounded-[12px] border border-[var(--quni-cream-border)] bg-white py-2 shadow-[0_18px_40px_rgba(42,37,64,0.18)]"
+          className="absolute top-[calc(100%+6px)] right-0 left-0 z-40 max-h-[min(220px,36vh)] overflow-y-auto rounded-[12px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] py-2 shadow-[var(--shadow-2)]"
         >
           {matches.places.length > 0 ? (
             <>
@@ -250,7 +250,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
                   >
                     <span
                       aria-hidden
-                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-success-bg)] text-[10px] font-extrabold text-[var(--quni-success-strong)]"
+                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-verified-surface)] text-[10px] font-extrabold text-[var(--quni-verified)]"
                     >
                       ?
                     </span>
@@ -262,13 +262,13 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
           ) : null}
 
           {flat.length === 0 ? (
-            <p className="m-0 border-t border-dotted border-[var(--quni-cream-border)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
+            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
               {noMatchNote
                 ? 'No match yet.'
                 : 'No match yet — pick a place to search, or a question to be answered.'}
             </p>
           ) : (
-            <p className="m-0 border-t border-dotted border-[var(--quni-cream-border)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
+            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
               Pick a place to search, or a question to be answered.
             </p>
           )}

@@ -33,7 +33,7 @@ export default function DeskDrawer({
           'bg-white/[0.06] px-3 py-1.5 text-left text-[11.5px] font-semibold text-white',
           'transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
           'hover:bg-white/12 group-hover:bg-white/12',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-on-navy)]',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]',
           controlClassName,
         ]
           .filter(Boolean)

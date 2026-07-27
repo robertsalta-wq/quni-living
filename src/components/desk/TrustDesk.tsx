@@ -61,7 +61,7 @@ export default function TrustDesk({
           <div key={t} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-success)] bg-white/70 text-[9px] font-black text-[var(--quni-success)]"
+              className="inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-verified)] bg-[var(--quni-surface-1)] text-[9px] font-black text-[var(--quni-verified)]"
             >
               ✓
             </span>
@@ -79,7 +79,7 @@ export default function TrustDesk({
       <div className="flex flex-wrap items-center gap-2">
         <Link
           to="/verification"
-          className="text-[12px] font-semibold text-[var(--quni-success-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-success)]"
+          className="text-[12px] font-semibold text-[var(--quni-verified)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
         >
           How verification works →
         </Link>
@@ -89,7 +89,7 @@ export default function TrustDesk({
             aria-expanded={open}
             aria-controls={panelId}
             onClick={() => setOpen(!open)}
-            className="rounded-full border border-[rgba(29,158,117,0.22)] bg-white/60 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-success-strong)] hover:bg-[rgba(29,158,117,0.1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-success)]"
+            className="rounded-full border border-[var(--quni-verified-border)] bg-[var(--quni-surface-1)]/60 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-verified)] hover:bg-[var(--quni-verified-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
           >
             {open ? '⊖ Close' : '⊕ What verified means'}
           </button>
@@ -98,7 +98,7 @@ export default function TrustDesk({
       {(open || (mobileRail && railExpanded)) && (
         <div
           id={mobileRail ? undefined : panelId}
-          className="mt-0.5 flex flex-col gap-2 border-t border-[rgba(29,158,117,0.22)] pt-3"
+          className="mt-0.5 flex flex-col gap-2 border-t border-[var(--quni-verified-border)] pt-3"
         >
           <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
             What verified means
@@ -110,7 +110,7 @@ export default function TrustDesk({
                 height="15"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--quni-success)"
+                stroke="var(--quni-verified)"
                 strokeWidth="2.4"
                 className="mt-0.5 shrink-0"
                 aria-hidden
@@ -135,7 +135,7 @@ export default function TrustDesk({
     return (
       <article
         className={[
-          'desk-settle overflow-hidden rounded-[14px] border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
+          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-verified-border)] bg-[var(--quni-verified-surface)] shadow-[var(--shadow-1)]',
           answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
         ]
@@ -157,7 +157,7 @@ export default function TrustDesk({
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink-2)]">
             Verification & fairness
           </span>
-          <span aria-hidden className="text-[var(--quni-success-strong)]">
+          <span aria-hidden className="text-[var(--quni-verified)]">
             {railExpanded ? '⊖' : '⊕'}
           </span>
         </button>
@@ -170,7 +170,7 @@ export default function TrustDesk({
     <article
       className={[
         'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
-        'border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
+        'border border-[var(--quni-verified-border)] bg-[var(--quni-verified-surface)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:550ms]',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
