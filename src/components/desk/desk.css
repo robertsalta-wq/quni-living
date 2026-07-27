@@ -101,7 +101,8 @@
   }
 }
 
-/* `/home-v4` — thin landlord at rest; unfolds out + down; bottom windows grow up */
+/* `/home-v4` — thin landlord at rest; unfolds out + down; bottom windows grow up.
+   Soft one-screen floor on load; page may grow and scroll when drawers open (not locked). */
 .home-v4-page {
   display: flex;
   width: 100%;
@@ -109,46 +110,31 @@
   flex-direction: column;
 }
 
-@media (min-width: 768px) {
-  .home-v4-page {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-  }
-}
-
 .home-v4-office {
   display: flex;
-  min-height: 0;
   flex: 1;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .home-v4-frame {
   display: flex;
-  min-height: 0;
   flex: 1;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .home-v4-shell {
   display: flex;
-  min-height: 0;
   flex: 1;
   flex-direction: column;
   gap: 0.5rem;
-  overflow: hidden;
+  min-height: calc(100dvh - 6.5rem);
 }
 
 .home-v4-top {
   display: grid;
-  min-height: 0;
   flex: 1;
   align-items: stretch;
   gap: 0.5rem;
-  overflow: hidden;
   grid-template-areas:
     'reception reception landlord'
     'search search landlord';
@@ -163,29 +149,25 @@
 }
 
 .home-v4-top.is-grown {
-  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  grid-template-rows: minmax(min-content, auto) minmax(min-content, 1fr);
 }
 
 .home-v4-area-reception {
   grid-area: reception;
-  min-height: 0;
 }
 
 .home-v4-area-search {
   grid-area: search;
   min-height: 0;
-  overflow: hidden;
 }
 
 .home-v4-area-landlord {
   grid-area: landlord;
   min-height: 0;
-  overflow: auto;
 }
 
 .home-v4-bot {
   display: grid;
-  flex-shrink: 0;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 0.5rem;
   align-items: end;
