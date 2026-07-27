@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../../lib/pricing'
 import Desk from './Desk'
 import DeskAnswerPanel from './DeskAnswerPanel'
@@ -182,9 +181,12 @@ function DrawerBody({ listingFeeDisplay, open }: { listingFeeDisplay: string; op
         </ul>
       </div>
 
-      <Link to="/for-landlords" className={['inline-block', SECONDARY_DESK_LINK].join(' ')}>
+      <a
+        href="https://quni-living-git-feat-for-landlords-desk-page-4-logistics.vercel.app/for-landlords"
+        className={['inline-block', SECONDARY_DESK_LINK].join(' ')}
+      >
         I need more information →
-      </Link>
+      </a>
     </div>
   )
 }

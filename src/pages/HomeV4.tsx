@@ -107,6 +107,7 @@ export default function HomeV4() {
   }, [listingCount, listings])
 
   const plates = DESK_NAMEPLATE_VARIANTS
+  const pageUnlocked = Boolean(landlordDrawerOpen || openTray || activeAnswer)
 
   function setTray(id: BottomTray, open: boolean) {
     setOpenTray(open ? id : null)
@@ -126,7 +127,14 @@ export default function HomeV4() {
   }
 
   return (
-    <div className="home-v4-page bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
+    <div
+      className={[
+        'home-v4-page bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]',
+        pageUnlocked ? 'is-unlocked' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <Seo
         title="Home (thin desk prototype)"
         description="Quni Living /home-v4 desk prototype — thin landlord, directional expand; not for search indexing."
