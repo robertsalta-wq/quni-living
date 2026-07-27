@@ -43,7 +43,7 @@ export default function UniversitiesDesk({
     return (
       <article
         className={[
-          'desk-settle overflow-hidden rounded-[14px] border border-[rgba(31,42,68,0.14)] bg-[rgba(31,42,68,0.08)] shadow-[var(--shadow-1)]',
+          'desk-settle overflow-hidden rounded-[14px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
           className,
         ]
           .filter(Boolean)
@@ -53,7 +53,7 @@ export default function UniversitiesDesk({
           type="button"
           aria-expanded={railExpanded}
           onClick={() => onRailExpandChange?.(!railExpanded)}
-          className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-navy)]"
+          className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-ink)]"
         >
           <DeskNameplate
             variant={nameplateVariant}
@@ -61,20 +61,20 @@ export default function UniversitiesDesk({
           >
             FOR UNIVERSITIES
           </DeskNameplate>
-          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-navy)]">
+          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
             Partner coverage
           </span>
-          <span aria-hidden className="text-[var(--quni-navy)]">
+          <span aria-hidden className="text-[var(--quni-ink)]">
             {railExpanded ? '⊖' : '⊕'}
           </span>
         </button>
         {railExpanded ? (
           <div className="flex flex-col gap-2.5 px-3.5 pb-3.5">
-            <p className="m-0 text-[13px] font-semibold text-[var(--quni-navy)]">{letterhead}</p>
+            <p className="m-0 text-[13px] font-semibold text-[var(--quni-ink)]">{letterhead}</p>
             <ChipRow chips={chips} />
             <Link
               to="/for-universities"
-              className="text-[13px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline"
+              className="text-[13px] font-semibold text-[var(--quni-coral-active)] underline-offset-2 hover:underline"
             >
               For universities →
             </Link>
@@ -88,7 +88,7 @@ export default function UniversitiesDesk({
     <article
       className={[
         'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
-        'border border-[rgba(31,42,68,0.14)] bg-[rgba(31,42,68,0.08)] shadow-[var(--shadow-1)]',
+        'border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:350ms]',
         className,
       ]
@@ -104,7 +104,7 @@ export default function UniversitiesDesk({
         <DeskNameplate variant={nameplateVariant}>FOR UNIVERSITIES</DeskNameplate>
         <p
           className={[
-            'm-0 font-semibold text-[var(--quni-navy)]',
+            'm-0 font-semibold text-[var(--quni-ink)]',
             dense ? 'text-[12px] leading-snug' : 'text-[13px] leading-snug',
           ].join(' ')}
         >
@@ -115,12 +115,12 @@ export default function UniversitiesDesk({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen(!open)}
-          className="w-fit rounded-full border border-[rgba(31,42,68,0.14)] bg-white/50 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-navy)] hover:bg-[rgba(31,42,68,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
+          className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-page)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-ink)]"
         >
           {open ? '⊖ Close' : '⊕ Coverage'}
         </button>
         {open ? (
-          <div id={panelId} className="mt-0.5 border-t border-[rgba(31,42,68,0.14)] pt-2">
+          <div id={panelId} className="mt-0.5 border-t border-[var(--quni-line)] pt-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
               Coverage by campus
             </span>
@@ -130,7 +130,7 @@ export default function UniversitiesDesk({
         <Link
           to="/for-universities"
           className={[
-            'mt-auto text-[12px] font-semibold text-[var(--quni-navy)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]',
+            'mt-auto text-[12px] font-semibold text-[var(--quni-coral-active)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
             dense ? 'pt-0.5' : 'pt-1',
           ].join(' ')}
         >
@@ -153,7 +153,7 @@ function ChipRow({ chips }: { chips: { label: string; homes: number }[] }) {
         <Link
           key={u.label}
           to={`/listings?q=${encodeURIComponent(u.label)}`}
-          className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border border-[var(--quni-line)] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[var(--quni-navy)] hover:border-[var(--quni-navy)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-navy)]"
+          className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-ink-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-ink)]"
         >
           <span className="truncate">{u.label}</span>
           <span className="shrink-0 font-medium text-[var(--quni-ink-4)]">
@@ -164,7 +164,7 @@ function ChipRow({ chips }: { chips: { label: string; homes: number }[] }) {
       {more > 0 ? (
         <Link
           to="/listings"
-          className="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink-5)] hover:text-[var(--quni-navy)]"
+          className="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink-5)] hover:text-[var(--quni-ink)]"
         >
           +{more} more
         </Link>

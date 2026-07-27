@@ -68,6 +68,13 @@
   --quni-surface-3:       #F4F3EC;   /* === --code-bg */
   --quni-surface-1:       #FFFFFF;   /* === --bg, default surface */
 
+  /* Paper & ink — home-desk redesign (additive; do not retune tokens above). */
+  --quni-page:            #FFFDF8;   /* warm off-white page */
+  --quni-line-strong:     #1F1B16;   /* framing rule on primary panels */
+  --quni-verified:        #3F6B4E;   /* green tick / label / link */
+  --quni-verified-surface:#EAF2EC;   /* trust panel + pill surface */
+  --quni-verified-border: rgba(63, 107, 78, 0.22);
+
   /* Semantic — STATUS ONLY. Never primary action / never brand-substitute. */
   --quni-success:         #1D9E75;   /* mid green (CTA on pricing) */
   --quni-success-strong:  #0F6E56;   /* dark green for emphasis */

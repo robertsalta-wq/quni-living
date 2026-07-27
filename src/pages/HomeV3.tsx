@@ -135,7 +135,7 @@ export default function HomeV3() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
+    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-page)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (Reception desk prototype)"
         description="Quni Living /home-v3 Reception desk prototype — Places and Questions; not for search indexing."

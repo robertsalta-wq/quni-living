@@ -51,7 +51,7 @@ function FactHeadline({ text }: { text: string }) {
   return (
     <p className="m-0 min-w-0 font-[family-name:var(--font-serif)] text-[14px] font-bold leading-snug tracking-[-0.01em] text-[var(--quni-ink)] sm:text-[15px]">
       {parts.map((p) => (
-        <span key={p.key} className={p.coral ? 'text-[var(--quni-coral)]' : undefined}>
+        <span key={p.key} className={p.coral ? 'text-[var(--quni-coral-active)]' : undefined}>
           {p.t}
         </span>
       ))}
@@ -134,7 +134,7 @@ export default function SearchDesk({
     'rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap transition-colors duration-[120ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
   const furnishedChip = furnished
     ? `${chipBase} border border-[var(--quni-coral-border)] bg-[var(--quni-coral-tint)] text-[var(--quni-coral-active)]`
-    : `${chipBase} border border-[var(--quni-line)] bg-white text-[var(--quni-ink-3)]`
+    : `${chipBase} border border-[var(--quni-line)] bg-[var(--quni-surface-1)] text-[var(--quni-ink-3)]`
   const filtersChip = filtersOpen
     ? `${chipBase} border border-dashed border-[var(--quni-coral-border)] bg-[var(--quni-coral-tint)] text-[var(--quni-coral-active)]`
     : `${chipBase} border border-dashed border-[var(--quni-ink-5)] bg-transparent text-[var(--quni-ink-4)]`
@@ -145,7 +145,7 @@ export default function SearchDesk({
     <article
       className={[
         'desk-shell desk-settle relative flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
-        'border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] shadow-[var(--shadow-1)]',
+        'border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-2)]',
         '[animation-delay:50ms]',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
@@ -170,7 +170,7 @@ export default function SearchDesk({
             <FactHeadline
               text={compact ? headline.replace(' — every listing checked', '') : headline}
             />
-            <span className="inline-flex items-center rounded-full border border-[rgba(29,158,117,0.35)] bg-[var(--quni-success-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-success-strong)]">
+            <span className="inline-flex items-center rounded-full border border-[var(--quni-verified-border)] bg-[var(--quni-verified-surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--quni-verified)]">
               FREE for renters
             </span>
           </div>
@@ -186,19 +186,19 @@ export default function SearchDesk({
               {!compact ? (
                 <div
                   aria-hidden
-                  className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-success)] bg-[var(--quni-success-bg)] text-center shadow-[var(--shadow-1)]"
+                  className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-verified)] bg-[var(--quni-verified-surface)] text-center shadow-[var(--shadow-1)]"
                 >
-                  <span className="font-[family-name:var(--font-serif)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-success-strong)]">
+                  <span className="font-[family-name:var(--font-sans)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-verified)]">
                     FREE
                   </span>
-                  <span className="text-[6.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-success)]">
+                  <span className="text-[6.5px] font-bold uppercase tracking-[0.1em] text-[var(--quni-verified)]">
                     for renters
                   </span>
                 </div>
               ) : null}
             </div>
             {compact ? (
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[rgba(29,158,117,0.5)] bg-[var(--quni-success-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-success-strong)]">
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border-[1.5px] border-dashed border-[var(--quni-verified-border)] bg-[var(--quni-verified-surface)] px-2.5 py-1 text-[11px] font-bold text-[var(--quni-verified)]">
                 FREE for renters — search → lease
               </span>
             ) : null}
@@ -214,7 +214,7 @@ export default function SearchDesk({
                 placeholder="Suburb — or just tell Quni what you need…"
                 aria-label="Search intent"
                 className={[
-                  'min-w-0 flex-1 border border-[var(--quni-line)] bg-white px-3.5 py-2 text-[14px] text-[var(--quni-ink)] outline-none',
+                  'min-w-0 flex-1 border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3.5 py-2 text-[14px] text-[var(--quni-ink)] outline-none',
                   'focus:border-[var(--quni-coral)] focus:shadow-[var(--shadow-focus)]',
                   compact ? 'rounded-full py-2.5 text-[13px]' : 'rounded-[10px]',
                 ].join(' ')}
@@ -222,7 +222,7 @@ export default function SearchDesk({
               <button
                 type="submit"
                 className={[
-                  'inline-flex items-center gap-2 bg-[var(--quni-coral)] px-4 py-2 text-[14px] font-semibold text-white transition-colors duration-[120ms] hover:bg-[var(--quni-coral-hover)]',
+                  'inline-flex items-center gap-2 bg-[var(--quni-coral)] px-4 py-2 text-[14px] font-semibold text-[var(--quni-ink)] transition-colors duration-[120ms] hover:bg-[var(--quni-coral-hover)]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
                   compact ? 'rounded-full px-4 py-2.5 text-[13px] font-bold' : 'rounded-[10px]',
                 ].join(' ')}
@@ -238,7 +238,7 @@ export default function SearchDesk({
             value={uniSel}
             onChange={(e) => setUniSel(e.target.value)}
             aria-label="University"
-            className="cursor-pointer rounded-[10px] border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12.5px] text-[var(--quni-ink)] outline-none"
+            className="cursor-pointer rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1.5 text-[12.5px] text-[var(--quni-ink)] outline-none"
           >
             {UNI_OPTIONS.map((u) => (
               <option key={u.value} value={u.value}>
@@ -271,7 +271,7 @@ export default function SearchDesk({
               <select
                 value={roomType}
                 onChange={(e) => setRoomType(e.target.value)}
-                className="rounded-[10px] border border-[var(--quni-line)] bg-white px-3 py-2 text-sm"
+                className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm"
               >
                 <option value="all">All types</option>
                 <option value="private">Private room</option>
@@ -287,7 +287,7 @@ export default function SearchDesk({
               <select
                 value={rentBand}
                 onChange={(e) => setRentBand(e.target.value)}
-                className="rounded-[10px] border border-[var(--quni-line)] bg-white px-3 py-2 text-sm"
+                className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm"
               >
                 <option value="any">Any price</option>
                 <option value="u300">Under $300</option>
@@ -304,7 +304,7 @@ export default function SearchDesk({
                 value={moveIn}
                 onChange={(e) => setMoveIn(e.target.value)}
                 placeholder="dd/mm/yyyy"
-                className="rounded-[10px] border border-[var(--quni-line)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--quni-coral)]"
+                className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm outline-none focus:border-[var(--quni-coral)]"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -315,7 +315,7 @@ export default function SearchDesk({
                 value={moveOut}
                 onChange={(e) => setMoveOut(e.target.value)}
                 placeholder="dd/mm/yyyy"
-                className="rounded-[10px] border border-[var(--quni-line)] bg-white px-3 py-2 text-sm outline-none focus:border-[var(--quni-coral)]"
+                className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm outline-none focus:border-[var(--quni-coral)]"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -325,7 +325,7 @@ export default function SearchDesk({
               <select
                 value={leaseLen}
                 onChange={(e) => setLeaseLen(e.target.value)}
-                className="rounded-[10px] border border-[var(--quni-line)] bg-white px-3 py-2 text-sm"
+                className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm"
               >
                 <option value="open">Open-ended</option>
                 <option value="6">6 months</option>
@@ -346,7 +346,7 @@ export default function SearchDesk({
             ].join(' ')}
           >
             {preview.length === 0 ? (
-              <p className="col-span-full m-0 rounded-xl border border-[var(--quni-line)] bg-white px-3 py-4 text-sm text-[var(--quni-ink-4)]">
+              <p className="col-span-full m-0 rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-4 text-sm text-[var(--quni-ink-4)]">
                 Live listings will appear here as they are published.
               </p>
             ) : (
@@ -357,7 +357,7 @@ export default function SearchDesk({
                   <Link
                     key={p.id}
                     to={to}
-                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   >
                     <div
                       className={[
@@ -366,19 +366,19 @@ export default function SearchDesk({
                       ].join(' ')}
                       style={img ? { backgroundImage: `url(${img})` } : undefined}
                     >
-                      <span className="absolute right-1.5 bottom-1.5 rotate-[-7deg] rounded border-[1.5px] border-[rgba(15,110,86,0.6)] bg-white/85 px-1.5 py-0.5 text-[8px] font-extrabold tracking-[0.1em] text-[var(--quni-success-strong)]">
+                      <span className="absolute right-1.5 bottom-1.5 rotate-[-7deg] rounded border-[1.5px] border-[var(--quni-verified-border)] bg-[var(--quni-verified-surface)] px-1.5 py-0.5 text-[8px] font-extrabold tracking-[0.1em] text-[var(--quni-verified)]">
                         ✓ VERIFIED
                       </span>
                     </div>
                     <div className="flex shrink-0 flex-col gap-0.5 px-2.5 py-2">
                       <div className="flex items-baseline justify-between gap-2">
                         <span>
-                          <span className="font-[family-name:var(--font-serif)] text-[17px] font-bold text-[var(--quni-ink)]">
+                          <span className="font-[family-name:var(--font-sans)] text-[17px] font-bold tabular-nums text-[var(--quni-ink)]">
                             ${p.rent_per_week}
                           </span>
                           <span className="text-[10px] text-[var(--quni-ink-4)]"> /wk</span>
                         </span>
-                        <span className="rounded-full bg-[var(--quni-navy-tint)] px-1.5 py-0.5 text-[9px] font-semibold whitespace-nowrap text-[var(--quni-navy)]">
+                        <span className="rounded-full bg-[var(--quni-page)] px-1.5 py-0.5 text-[9px] font-semibold whitespace-nowrap text-[var(--quni-ink)]">
                           {listingTag(p)}
                         </span>
                       </div>
@@ -409,7 +409,7 @@ export default function SearchDesk({
                 setMarketOpen((v) => !v)
                 if (!marketOpen) setFiltersOpen(false)
               }}
-              className="rounded-full border border-[var(--quni-line)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              className="rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               {marketOpen ? '⊖ Close' : '⊕ Live market'}
             </button>
@@ -436,7 +436,7 @@ export default function SearchDesk({
                       </span>
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--quni-surface-3)]">
                         <div
-                          className="h-full rounded-full bg-[var(--quni-navy)]"
+                          className="h-full rounded-full bg-[var(--quni-ink)]"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

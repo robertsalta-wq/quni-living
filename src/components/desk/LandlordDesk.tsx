@@ -12,7 +12,7 @@ import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-success)] text-[9px] font-bold text-[var(--quni-success)]'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-ink-3)]'
 
 const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]'
 
@@ -126,7 +126,7 @@ export default function LandlordDesk({
       Your spare room could be{' '}
       <span
         className={[
-          'font-bold text-[var(--quni-coral-on-navy)]',
+          'font-bold text-[var(--quni-coral-active)]',
           dense ? 'text-[18px]' : 'text-[22px]',
         ].join(' ')}
       >
@@ -137,9 +137,9 @@ export default function LandlordDesk({
   )
 
   const letterheadMobile = (
-    <p className="font-[family-name:var(--font-serif)] text-[14.5px] leading-snug text-white">
+    <p className="font-[family-name:var(--font-sans)] text-[14.5px] leading-snug text-white">
       List free ·{' '}
-      <span className="font-bold text-[var(--quni-coral-on-navy)]">{listingFeeDisplay}</span> on
+      <span className="font-bold text-[var(--quni-coral-active)]">{listingFeeDisplay}</span> on
       accept
     </p>
   )
@@ -156,7 +156,7 @@ export default function LandlordDesk({
     return (
       <article
         className={[
-          'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-navy)] text-white/78',
+          'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-ink)] text-white/78',
           'shadow-[var(--shadow-1)] [contain:layout_paint]',
           answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
@@ -168,7 +168,7 @@ export default function LandlordDesk({
           type="button"
           aria-expanded={railExpanded}
           onClick={() => onRailExpandChange?.(!railExpanded)}
-          className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral-on-navy)]"
+          className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral-active)]"
         >
           <DeskNameplate
             variant={nameplateVariant}
@@ -182,7 +182,7 @@ export default function LandlordDesk({
             HOMEOWNERS & LANDLORDS
           </DeskNameplate>
           <div className="min-w-0 flex-1">{letterheadMobile}</div>
-          <span aria-hidden className="text-[14px] text-[var(--quni-coral-on-navy)]">
+          <span aria-hidden className="text-[14px] text-[var(--quni-coral-active)]">
             {railExpanded ? '⊖' : '⊕'}
           </span>
         </button>
@@ -204,7 +204,7 @@ export default function LandlordDesk({
               open={answered}
               answer={deskAnswer?.text ?? ''}
               source={deskAnswer?.source ?? 'QUNI PRICING'}
-              tone="navy"
+              tone="ink"
             />
             {waxSeal}
           </div>
@@ -215,7 +215,7 @@ export default function LandlordDesk({
 
   return (
     <Desk
-      tone="navy"
+      tone="ink"
       className={[
         'min-h-full',
         dense ? '!gap-1.5 !p-2.5' : '',
@@ -254,7 +254,7 @@ export default function LandlordDesk({
             open={answered}
             answer={deskAnswer?.text ?? ''}
             source={deskAnswer?.source ?? 'QUNI PRICING'}
-            tone="navy"
+            tone="ink"
           />
           {dense ? null : waxSeal}
         </>

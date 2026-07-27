@@ -13,7 +13,7 @@ import './desk.css'
 
 /** Reused from LandlordDesk / SearchDesk — dark text on white card surfaces. */
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-success)] text-[9px] font-bold text-[var(--quni-success)]'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-ink-3)]'
 
 const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]'
 
@@ -27,17 +27,14 @@ const TILES = [
   {
     word: 'your room',
     line: 'The AI writes and prices the listing from a few details.',
-    icon: 'bed' as const,
   },
   {
     word: 'paperwork done',
     line: 'A state-compliant lease, e-signed — you don’t draft a thing.',
-    icon: 'lease' as const,
   },
   {
     word: 'your home',
     line: 'You keep living there; a verified student takes the spare room.',
-    icon: 'home' as const,
   },
 ] as const
 
@@ -60,45 +57,6 @@ function formatRentFigure(rent: number): string {
   }).format(rent)
 }
 
-function TileIcon({ kind }: { kind: (typeof TILES)[number]['icon'] }) {
-  const common = 'h-5 w-5 shrink-0 text-[var(--quni-ink-2)]'
-  if (kind === 'bed') {
-    return (
-      <svg viewBox="0 0 40 40" className={common} aria-hidden fill="none" stroke="currentColor">
-        <path
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M4 27 V17 h32 v10 M4 27 V32 M36 27 V32 M8 17 V13 h11 v4"
-        />
-      </svg>
-    )
-  }
-  if (kind === 'lease') {
-    return (
-      <svg viewBox="0 0 40 40" className={common} aria-hidden fill="none" stroke="currentColor">
-        <path
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 5 h13 l6 6 v24 h-19 z M25 5 v6 h6 M16 18 h11 M16 24 h8"
-        />
-        <circle cx="26" cy="30" r="3" strokeWidth="2" />
-      </svg>
-    )
-  }
-  return (
-    <svg viewBox="0 0 40 40" className={common} aria-hidden fill="none" stroke="currentColor">
-      <path
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M7 20 L20 8 L33 20 M10 18 V33 H30 V18 M17 33 V25 h6 v8"
-      />
-    </svg>
-  )
-}
-
 function ImageTiles({ open }: { open: boolean }) {
   return (
     <div
@@ -117,9 +75,11 @@ function ImageTiles({ open }: { open: boolean }) {
             open ? 'flex-col items-center px-2.5 py-3 text-center' : 'items-center',
           ].join(' ')}
         >
-          <TileIcon kind={tile.icon} />
+          <span aria-hidden className="text-[12px] font-bold text-[var(--quni-ink-3)]">
+            ✓
+          </span>
           <div className={open ? 'flex flex-col items-center' : 'flex min-w-0 flex-col'}>
-            <span className="text-[12px] font-bold text-[var(--quni-ink)]">{tile.word}</span>
+            <span className="text-[12px] font-bold text-[var(--quni-ink-3)]">{tile.word}</span>
             <span
               className={[
                 'text-[10.5px] font-medium leading-snug text-[var(--quni-ink-3)]',
@@ -139,7 +99,7 @@ function FeeRow({ label, figure }: { label: string; figure: string }) {
   return (
     <li className="flex items-baseline justify-between gap-3 border-b border-[var(--quni-line-soft)] py-2 last:border-b-0">
       <span className="text-[13px] text-[var(--quni-ink-3)]">{label}</span>
-      <span className="shrink-0 font-[family-name:var(--font-serif)] text-base font-bold tabular-nums text-[var(--quni-ink)]">
+      <span className="shrink-0 font-[family-name:var(--font-sans)] text-base font-bold tabular-nums text-[var(--quni-ink)]">
         {figure}
       </span>
     </li>
@@ -237,7 +197,7 @@ export default function LandlordDeskThin({
       Your spare room could be{' '}
       <span
         className={[
-          'font-bold text-[var(--quni-coral-on-navy)]',
+          'font-bold text-[var(--quni-coral-active)]',
           dense ? 'text-[18px]' : 'text-[22px]',
         ].join(' ')}
       >
@@ -248,9 +208,9 @@ export default function LandlordDeskThin({
   )
 
   const letterheadMobile = (
-    <p className="font-[family-name:var(--font-serif)] text-[14.5px] leading-snug text-white">
+    <p className="font-[family-name:var(--font-sans)] text-[14.5px] leading-snug text-white">
       List free ·{' '}
-      <span className="font-bold text-[var(--quni-coral-on-navy)]">{listingFeeDisplay}</span> on
+      <span className="font-bold text-[var(--quni-coral-active)]">{listingFeeDisplay}</span> on
       accept
     </p>
   )
@@ -271,7 +231,7 @@ export default function LandlordDeskThin({
         open={answered}
         answer={deskAnswer?.text ?? ''}
         source={deskAnswer?.source ?? 'QUNI PRICING'}
-        tone="navy"
+        tone="ink"
       />
     </>
   )
@@ -280,7 +240,7 @@ export default function LandlordDeskThin({
     return (
       <article
         className={[
-          'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-navy)] text-white/78',
+          'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-ink)] text-white/78',
           'shadow-[var(--shadow-1)]',
           className,
         ]
@@ -291,7 +251,7 @@ export default function LandlordDeskThin({
           type="button"
           aria-expanded={railExpanded}
           onClick={() => onRailExpandChange?.(!railExpanded)}
-          className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral-on-navy)]"
+          className="flex w-full items-center gap-3 px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral-active)]"
         >
           <DeskNameplate
             variant={nameplateVariant}
@@ -331,7 +291,7 @@ export default function LandlordDeskThin({
 
   return (
     <Desk
-      tone="navy"
+      tone="ink"
       className={['min-h-full', dense ? '!gap-1.5 !p-2.5' : '', className].filter(Boolean).join(' ')}
       nameplate={
         <DeskNameplate

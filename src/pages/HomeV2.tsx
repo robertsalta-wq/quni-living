@@ -110,7 +110,7 @@ export default function HomeV2() {
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
+    <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-page)] text-[var(--quni-ink-3)]">
       <Seo
         title="Home (desk prototype)"
         description="Quni Living desk-shell home prototype — not for search indexing."

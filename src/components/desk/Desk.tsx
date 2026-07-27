@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type DeskTone = 'navy' | 'paper' | 'cream'
+export type DeskTone = 'navy' | 'ink' | 'paper' | 'cream'
 
 type DeskProps = {
   /** Required slot 1 */
@@ -23,6 +23,7 @@ type DeskProps = {
 
 const toneClass: Record<DeskTone, string> = {
   navy: 'bg-[var(--quni-navy)] text-white/78',
+  ink: 'bg-[var(--quni-ink)] text-white/78',
   paper: 'bg-[var(--quni-surface-1)] text-[var(--quni-ink-3)]',
   cream: 'bg-[var(--surface-0)] text-[var(--quni-ink-3)]',
 }

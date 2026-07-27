@@ -129,7 +129,7 @@ export default function HomeV4() {
   return (
     <div
       className={[
-        'home-v4-page bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]',
+        'home-v4-page bg-[var(--quni-page)] text-[var(--quni-ink-3)]',
         pageUnlocked ? 'is-unlocked' : '',
       ]
         .filter(Boolean)

@@ -27,7 +27,7 @@ type FieldReceptionDeskProps = {
 
 /**
  * `/home-v3` Reception — condensed logo · letterhead · nameplate row + Places/Questions field.
- * Not the AI ChatPanel Reception. New composition only.
+ * Paper & ink: flat page/surface — no peach gradient.
  */
 export default function FieldReceptionDesk({
   onSelectQuestion,
@@ -40,18 +40,15 @@ export default function FieldReceptionDesk({
 
   return (
     <Desk
-      tone="cream"
+      tone="paper"
       className={[
-        'desk-settle !gap-1.5 !p-3 border border-[var(--quni-cream-border)] contain-none',
+        'desk-settle !gap-1.5 !p-3 border border-[var(--quni-line)] bg-[var(--quni-page)] contain-none',
         '[animation-delay:40ms]',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{
-        background: 'linear-gradient(150deg, var(--quni-cream) 0%, #FFF1E4 62%, #FFE8DC 100%)',
-      }}
       nameplate={
         <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <QuniLogoHomeLink className="shrink-0 [&_img]:h-7 [&_img]:sm:h-8" />
