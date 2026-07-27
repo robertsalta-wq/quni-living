@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
+import DeskAnswerPanel from './DeskAnswerPanel'
 import DeskNameplate from './DeskNameplate'
+import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 
 /** Face lines — only claims that match shipped behaviour (no rent/bond custody claim). */
 const TRUST_LINES = [
@@ -22,6 +24,11 @@ type TrustDeskProps = {
   onRailExpandChange?: (open: boolean) => void
   trayOpen?: boolean
   onTrayOpenChange?: (open: boolean) => void
+  /** Optional FAQ answer shown in-desk (questions owned by Trust). */
+  deskAnswer?: { text: string; source: string } | null
+  nameplateVariant?: DeskNameplateVariant
+  /** `/home-v3` — tighter padding; still stretches to equal row height. */
+  dense?: boolean
 }
 
 export default function TrustDesk({
@@ -31,6 +38,9 @@ export default function TrustDesk({
   onRailExpandChange,
   trayOpen,
   onTrayOpenChange,
+  deskAnswer = null,
+  nameplateVariant = 'brass',
+  dense = false,
 }: TrustDeskProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const panelId = useId()
@@ -39,11 +49,14 @@ export default function TrustDesk({
     if (onTrayOpenChange) onTrayOpenChange(next)
     else setUncontrolledOpen(next)
   }
+  const answered = Boolean(deskAnswer?.text)
 
   const face = (
     <>
-      {!mobileRail ? <DeskNameplate>TRUST & SAFETY</DeskNameplate> : null}
-      <div className="flex flex-col gap-1">
+      {!mobileRail ? (
+        <DeskNameplate variant={nameplateVariant}>TRUST & SAFETY</DeskNameplate>
+      ) : null}
+      <div className="flex flex-col gap-0.5">
         {TRUST_LINES.map((t) => (
           <div key={t} className="flex items-center gap-1.5">
             <span
@@ -52,7 +65,14 @@ export default function TrustDesk({
             >
               ✓
             </span>
-            <span className="text-[12px] font-medium leading-snug text-[var(--quni-ink-2)]">{t}</span>
+            <span
+              className={[
+                'font-medium leading-snug text-[var(--quni-ink-2)]',
+                dense ? 'text-[11.5px]' : 'text-[12px]',
+              ].join(' ')}
+            >
+              {t}
+            </span>
           </div>
         ))}
       </div>
@@ -102,6 +122,12 @@ export default function TrustDesk({
           ))}
         </div>
       )}
+      <DeskAnswerPanel
+        open={answered}
+        answer={deskAnswer?.text ?? ''}
+        source={deskAnswer?.source ?? 'VERIFICATION POLICY'}
+        tone="trust"
+      />
     </>
   )
 
@@ -110,6 +136,7 @@ export default function TrustDesk({
       <article
         className={[
           'desk-settle overflow-hidden rounded-[14px] border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
+          answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
         ]
           .filter(Boolean)
@@ -121,7 +148,10 @@ export default function TrustDesk({
           onClick={() => onRailExpandChange?.(!railExpanded)}
           className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
         >
-          <DeskNameplate className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]">
+          <DeskNameplate
+            variant={nameplateVariant}
+            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+          >
             TRUST & SAFETY
           </DeskNameplate>
           <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink-2)]">
@@ -142,12 +172,18 @@ export default function TrustDesk({
         'desk-shell desk-settle flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
         'border border-[rgba(29,158,117,0.22)] bg-[var(--quni-success-bg)] shadow-[var(--shadow-1)]',
         'transition-shadow duration-[var(--dur-base)] hover:shadow-[var(--shadow-2)] [animation-delay:550ms]',
+        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3.5">
+      <div
+        className={[
+          'flex min-h-0 flex-1 flex-col',
+          dense ? 'gap-1 p-2.5' : 'gap-1.5 p-3.5',
+        ].join(' ')}
+      >
         {face}
         <span className="mt-auto" />
       </div>
