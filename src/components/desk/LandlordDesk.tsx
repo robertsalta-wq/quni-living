@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../../lib/pricing'
 import Desk from './Desk'
 import DeskAnswerPanel from './DeskAnswerPanel'
