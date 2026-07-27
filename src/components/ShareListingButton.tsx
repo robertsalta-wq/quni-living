@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { listingShareText, listingShareUrl } from '../lib/listingShare'
+import { shareListing } from '../lib/listingShare'
 
 type Props = {
   slug: string
@@ -48,30 +48,9 @@ export default function ShareListingButton({
 
   const handleShare = useCallback(async () => {
     if (disabled || !slug.trim()) return
-
-    const url = listingShareUrl(slug)
-    const text = listingShareText(title, subtitle)
-    const payload = { title: title.trim() || 'Quni Living listing', text, url }
-
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share(payload)
-        return
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url)
-      showCopied()
-      return
-    } catch {
-      /* fall through */
-    }
-
-    window.prompt('Copy this link:', url)
-  }, [disabled, slug, subtitle, title, showCopied])
+    const result = await shareListing({ slug, title, subtitle })
+    if (result === 'copied' || result === 'prompted') showCopied()
+  }, [disabled, slug, title, subtitle, showCopied])
 
   const isCopied = label === 'Link copied'
 

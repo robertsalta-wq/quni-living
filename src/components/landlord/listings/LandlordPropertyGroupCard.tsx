@@ -5,6 +5,7 @@ import {
   type LandlordListingForGroup,
   type LandlordPropertyGroup,
 } from '../../../lib/landlordListingsGrouped'
+import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
 import LandlordListingRoomRow from './LandlordListingRoomRow'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
@@ -20,6 +21,7 @@ type Actions = {
   onPublish: (listing: LandlordListingForGroup) => void
   onDeleteDraft?: (listing: LandlordListingForGroup) => void
   onInviteTenant?: (listing: LandlordListingForGroup) => void
+  onView: (listing: LandlordListingForGroup) => void
   onAddRoom: (group: LandlordPropertyGroup) => void
   busyListingId?: string | null
 }
@@ -44,33 +46,95 @@ function roomsHeaderSubline(group: LandlordPropertyGroup): string {
   return [group.suburb?.trim(), group.roomCountLabel, `${booked} booked`].filter(Boolean).join(' · ')
 }
 
+function listingRowActions(
+  listing: LandlordListingForGroup,
+  actions: Pick<
+    Actions,
+    'onEdit' | 'onDuplicate' | 'onTogglePause' | 'onPublish' | 'onDeleteDraft' | 'onInviteTenant' | 'onView'
+  >,
+) {
+  return {
+    onEdit: () => actions.onEdit(listing),
+    onDuplicate: () => actions.onDuplicate(listing),
+    onTogglePause:
+      listing.status === 'active' || listing.status === 'inactive'
+        ? () => actions.onTogglePause(listing)
+        : undefined,
+    onPublish: listing.status === 'draft' ? () => actions.onPublish(listing) : undefined,
+    onDeleteDraft:
+      listing.status === 'draft' && actions.onDeleteDraft
+        ? () => actions.onDeleteDraft?.(listing)
+        : undefined,
+    onInviteTenant: actions.onInviteTenant ? () => actions.onInviteTenant?.(listing) : undefined,
+    onView: listing.status !== 'draft' ? () => actions.onView(listing) : undefined,
+  }
+}
+
 export function LandlordWholePlaceListingCard({
   group,
   bookings,
+  busyListingId,
   onEdit,
-}: Pick<GroupCardProps, 'group' | 'bookings' | 'onEdit'>) {
+  onDuplicate,
+  onTogglePause,
+  onPublish,
+  onDeleteDraft,
+  onInviteTenant,
+  onView,
+}: Pick<
+  GroupCardProps,
+  | 'group'
+  | 'bookings'
+  | 'busyListingId'
+  | 'onEdit'
+  | 'onDuplicate'
+  | 'onTogglePause'
+  | 'onPublish'
+  | 'onDeleteDraft'
+  | 'onInviteTenant'
+  | 'onView'
+>) {
   const listing = group.listings[0]
   const uiStatus = toLandlordListingUiStatus(listing, bookings)
   const suburbLine = [group.suburb?.trim(), 'Entire place', formatWeeklyRent(listing.rent_per_week)]
     .filter(Boolean)
     .join(' · ')
+  const rowActions = listingRowActions(listing, {
+    onEdit,
+    onDuplicate,
+    onTogglePause,
+    onPublish,
+    onDeleteDraft,
+    onInviteTenant,
+    onView,
+  })
 
   return (
     <article className="quni-card overflow-hidden">
-      <button
-        type="button"
-        onClick={() => onEdit(listing)}
-        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
-      >
-        <WholePlaceHouseIcon />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-bold text-[var(--quni-ink)] min-[840px]:text-[17px]">
-            {group.addressLabel}
-          </p>
-          <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
+      <div className="relative flex w-full items-center gap-3 p-4">
+        <button
+          type="button"
+          onClick={() => onEdit(listing)}
+          className="absolute inset-0 z-0 text-left hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]"
+          aria-label={`Edit ${group.addressLabel}`}
+        />
+        <div className="relative z-[1] pointer-events-none flex min-w-0 flex-1 items-center gap-3">
+          <WholePlaceHouseIcon />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-bold text-[var(--quni-ink)] min-[840px]:text-[17px]">
+              {group.addressLabel}
+            </p>
+            <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
+          </div>
+          <LandlordListingStatusPill status={uiStatus} />
         </div>
-        <LandlordListingStatusPill status={uiStatus} />
-      </button>
+        <LandlordListingOverflowMenu
+          listing={listing}
+          busy={busyListingId === listing.id}
+          ariaLabel={`Actions for ${group.addressLabel}`}
+          {...rowActions}
+        />
+      </div>
     </article>
   )
 }
@@ -83,12 +147,28 @@ export default function LandlordPropertyGroupCard({
   onEdit,
   onDuplicate,
   onTogglePause,
+  onPublish,
   onDeleteDraft,
+  onInviteTenant,
+  onView,
   onAddRoom,
   busyListingId,
 }: GroupCardProps) {
   if (group.kind === 'whole_place') {
-    return <LandlordWholePlaceListingCard group={group} bookings={bookings} onEdit={onEdit} />
+    return (
+      <LandlordWholePlaceListingCard
+        group={group}
+        bookings={bookings}
+        busyListingId={busyListingId}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onTogglePause={onTogglePause}
+        onPublish={onPublish}
+        onDeleteDraft={onDeleteDraft}
+        onInviteTenant={onInviteTenant}
+        onView={onView}
+      />
+    )
   }
 
   const suburbLine = roomsHeaderSubline(group)
@@ -124,6 +204,15 @@ export default function LandlordPropertyGroupCard({
             {group.visibleListings.map((listing) => {
               const index = group.listings.findIndex((l) => l.id === listing.id)
               const uiStatus = toLandlordListingUiStatus(listing, bookings)
+              const rowActions = listingRowActions(listing, {
+                onEdit,
+                onDuplicate,
+                onTogglePause,
+                onPublish,
+                onDeleteDraft,
+                onInviteTenant,
+                onView,
+              })
               return (
                 <LandlordListingRoomRow
                   key={listing.id}
@@ -133,18 +222,7 @@ export default function LandlordPropertyGroupCard({
                   weeklyRentLabel={formatWeeklyRent(listing.rent_per_week)}
                   busy={busyListingId === listing.id}
                   onOpenDetail={() => onEdit(listing)}
-                  onEdit={() => onEdit(listing)}
-                  onDuplicate={() => onDuplicate(listing)}
-                  onTogglePause={
-                    listing.status === 'active' || listing.status === 'inactive'
-                      ? () => onTogglePause(listing)
-                      : undefined
-                  }
-                  onDeleteDraft={
-                    listing.status === 'draft' && onDeleteDraft
-                      ? () => onDeleteDraft(listing)
-                      : undefined
-                  }
+                  {...rowActions}
                 />
               )
             })}

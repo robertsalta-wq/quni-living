@@ -1,7 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
 import { firstPropertyImageUrl } from '../../../lib/propertyImages'
 import type { LandlordListingForGroup, LandlordListingUiStatus } from '../../../lib/landlordListingsGrouped'
+import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
 type Props = {
@@ -15,6 +14,9 @@ type Props = {
   onDuplicate: () => void
   onTogglePause?: () => void
   onDeleteDraft?: () => void
+  onPublish?: () => void
+  onInviteTenant?: () => void
+  onView?: () => void
 }
 
 function roomTypeLabel(listing: LandlordListingForGroup): string | null {
@@ -45,30 +47,11 @@ export default function LandlordListingRoomRow({
   onDuplicate,
   onTogglePause,
   onDeleteDraft,
+  onPublish,
+  onInviteTenant,
+  onView,
 }: Props) {
-  const [open, setOpen] = useState(false)
-  const menuId = useId()
-  const rootRef = useRef<HTMLDivElement>(null)
   const typeLine = roomTypeLabel(listing)
-
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  const canPause = listing.status === 'active' || listing.status === 'inactive'
-  const pauseLabel = listing.status === 'active' ? 'Pause' : 'Unpause'
 
   return (
     <div className="relative border-b border-[var(--quni-line-soft)] last:border-b-0">
@@ -100,81 +83,18 @@ export default function LandlordListingRoomRow({
             <LandlordListingStatusPill status={uiStatus} />
           </div>
         </div>
-        <div className="relative z-[2] shrink-0" ref={rootRef}>
-          <button
-            type="button"
-            aria-label={`Actions for ${roomName}`}
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-controls={menuId}
-            disabled={busy}
-            onClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              setOpen((v) => !v)
-            }}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--quni-ink-4)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-          >
-            <MoreHorizontal className="h-4 w-4" aria-hidden />
-          </button>
-          {open ? (
-            <div
-              id={menuId}
-              role="menu"
-              className="absolute right-0 z-20 mt-1 min-w-[10.5rem] overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
-                onClick={() => {
-                  setOpen(false)
-                  onEdit()
-                }}
-              >
-                Edit
-              </button>
-              {canPause && onTogglePause ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
-                  onClick={() => {
-                    setOpen(false)
-                    onTogglePause()
-                  }}
-                >
-                  {pauseLabel}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
-                onClick={() => {
-                  setOpen(false)
-                  onDuplicate()
-                }}
-              >
-                Duplicate
-              </button>
-              {listing.status === 'draft' && onDeleteDraft ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-danger-strong)] hover:bg-[var(--quni-danger-bg)]"
-                  onClick={() => {
-                    setOpen(false)
-                    onDeleteDraft()
-                  }}
-                >
-                  Delete
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        <LandlordListingOverflowMenu
+          listing={listing}
+          busy={busy}
+          ariaLabel={`Actions for ${roomName}`}
+          onEdit={onEdit}
+          onDuplicate={onDuplicate}
+          onTogglePause={onTogglePause}
+          onDeleteDraft={onDeleteDraft}
+          onPublish={onPublish}
+          onInviteTenant={onInviteTenant}
+          onView={onView}
+        />
       </div>
     </div>
   )
