@@ -222,6 +222,11 @@ export default function LandlordListingsGroupedPanel({
               onPublish={(listing) => void onPublish(toActionListing(listing))}
               onDeleteDraft={onDeleteDraft}
               onInviteTenant={onInviteTenant}
+              onView={(listing) => {
+                const slug = listing.slug?.trim()
+                if (!slug) return
+                navigate(`/listings/${encodeURIComponent(slug)}`)
+              }}
               onAddRoom={handleAddRoom}
             />
           ))}
