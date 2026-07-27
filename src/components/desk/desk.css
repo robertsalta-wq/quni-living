@@ -64,30 +64,6 @@
   box-shadow: 0 0 0 3px var(--quni-coral-tint-15), 0 1px 3px rgba(0, 0, 0, 0.22);
 }
 
-/* Slim ledger — same colours, shorter track/thumb for /home-v4 thin desk */
-.desk-range-slim {
-  height: 16px;
-}
-
-.desk-range-slim::-webkit-slider-runnable-track {
-  height: 3px;
-}
-
-.desk-range-slim::-webkit-slider-thumb {
-  width: 16px;
-  height: 16px;
-  margin-top: -6.5px;
-}
-
-.desk-range-slim::-moz-range-track {
-  height: 3px;
-}
-
-.desk-range-slim::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-}
-
 @keyframes desk-settle {
   from {
     opacity: 0;

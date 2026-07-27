@@ -21,7 +21,7 @@ type LedgerCalculatorProps = {
   onRentChange?: (weeklyRent: number) => void
   className?: string
   compact?: boolean
-  /** `/home-v4` thin desk — tighter padding/type; same colours as the white ledger card. */
+  /** `/home-v4` — tighter spacing only; same colours and type tokens as the ledger card. */
   slim?: boolean
 }
 
@@ -44,24 +44,11 @@ export default function LedgerCalculator({
     onRentChange?.(next)
   }
 
-  const pad = slim ? 'px-2.5 py-2' : compact ? 'px-3.5 py-3.5' : 'px-3.5 pb-3 pt-3'
-  const rentFigure = slim ? 'text-[15px]' : 'text-[17px]'
-  const yearFigure = slim ? 'text-[18px]' : compact ? 'text-[26px]' : 'text-[22px]'
-  const stepBtn = slim
-    ? 'h-7 w-[30px]'
-    : compact
-      ? 'h-[34px] w-[34px]'
-      : 'h-7 w-[30px]'
-  const stepNum = slim ? 'text-[13px]' : compact ? 'text-[15px]' : 'text-base'
-  const sectionGap = slim ? 'mt-1.5' : 'mt-2.5'
-  const afterRent = slim ? 'mt-1' : 'mt-2'
-  const rowPad = slim ? 'pb-1.5' : 'pb-2'
-
   return (
     <div
       className={[
         'rounded-xl bg-[var(--quni-surface-1)] text-[var(--quni-ink)] shadow-[0_2px_10px_rgba(0,0,0,0.22)]',
-        pad,
+        slim ? 'px-2.5 py-2' : compact ? 'px-3.5 py-3.5' : 'px-3.5 pb-3 pt-3',
         className,
       ]
         .filter(Boolean)
@@ -70,26 +57,21 @@ export default function LedgerCalculator({
       <div
         className={[
           'flex items-baseline justify-between gap-3 border-b border-[var(--quni-line)]',
-          rowPad,
+          slim ? 'pb-1' : 'pb-2',
         ].join(' ')}
       >
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          {slim ? 'Rent · per week' : 'Room rent · per week'}
+          Room rent · per week
         </span>
-        <span
-          className={[
-            'font-[family-name:var(--font-serif)] font-bold tabular-nums',
-            rentFigure,
-          ].join(' ')}
-        >
+        <span className="font-[family-name:var(--font-serif)] text-[17px] font-bold tabular-nums">
           {formatAud(rent)}
         </span>
       </div>
 
-      <div className={afterRent}>
+      <div className={slim ? 'mt-1' : 'mt-2'}>
         <input
           type="range"
-          className={['desk-range', slim ? 'desk-range-slim' : ''].filter(Boolean).join(' ')}
+          className="desk-range"
           min={RENT_MIN}
           max={RENT_MAX}
           step={RENT_STEP}
@@ -116,13 +98,13 @@ export default function LedgerCalculator({
 
       <div
         className={[
-          sectionGap,
+          slim ? 'mt-1.5' : 'mt-2.5',
           'flex items-center justify-between gap-3 border-b border-[var(--quni-line)]',
-          rowPad,
+          slim ? 'pb-1' : 'pb-2',
         ].join(' ')}
       >
         <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          {slim ? 'Rooms' : 'Rooms to let'}
+          Rooms to let
         </span>
         <div
           className="inline-flex overflow-hidden rounded-lg border border-[var(--quni-line)] bg-[var(--quni-surface-2)]"
@@ -138,7 +120,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              stepBtn,
+              slim || !compact ? 'h-7 w-[30px]' : 'h-[34px] w-[34px]',
             ].join(' ')}
           >
             −
@@ -147,7 +129,7 @@ export default function LedgerCalculator({
             className={[
               'flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)]',
               'font-[family-name:var(--font-serif)] font-bold tabular-nums text-[var(--quni-ink)]',
-              stepNum,
+              slim || !compact ? 'text-base' : 'text-[15px]',
             ].join(' ')}
             aria-live="polite"
           >
@@ -162,7 +144,7 @@ export default function LedgerCalculator({
               'flex items-center justify-center font-semibold text-[var(--quni-ink-2)]',
               'hover:bg-[var(--quni-coral-tint)] disabled:cursor-not-allowed disabled:opacity-40',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]',
-              stepBtn,
+              slim || !compact ? 'h-7 w-[30px]' : 'h-[34px] w-[34px]',
             ].join(' ')}
           >
             +
@@ -173,9 +155,8 @@ export default function LedgerCalculator({
       {rooms >= 2 ? (
         <p
           className={[
-            sectionGap,
-            'border-b border-[var(--quni-line)] text-[var(--quni-ink-3)]',
-            slim ? 'pb-1.5 text-[12px]' : 'pb-2.5 text-[13px]',
+            slim ? 'mt-1.5 pb-1' : 'mt-2.5 pb-2.5',
+            'border-b border-[var(--quni-line)] text-[13px] text-[var(--quni-ink-3)]',
           ].join(' ')}
         >
           {rooms} rooms × {formatAud(rent)} = {formatAud(weeklyTotal)}/wk
@@ -184,9 +165,8 @@ export default function LedgerCalculator({
 
       <div
         className={[
-          afterRent,
+          slim ? 'mt-1.5 pt-1.5' : 'mt-2 pt-2',
           'border-t-[2px] border-double border-[var(--quni-ink-4)]',
-          slim ? 'pt-1.5' : 'pt-2',
         ].join(' ')}
       >
         <div className="flex items-baseline justify-between gap-3">
@@ -199,7 +179,7 @@ export default function LedgerCalculator({
             aria-live="polite"
             className={[
               'font-[family-name:var(--font-serif)] font-bold leading-none tabular-nums',
-              yearFigure,
+              slim || !compact ? 'text-[22px]' : 'text-[26px]',
             ].join(' ')}
           >
             {formatAud(yearly)}
@@ -208,7 +188,7 @@ export default function LedgerCalculator({
       </div>
 
       <p className={[slim ? 'mt-1' : 'mt-1.5', 'text-[10px] text-[var(--quni-ink-5)]'].join(' ')}>
-        {slim ? 'Your own figures. Not a Quni estimate.' : 'Your own figures, before costs. Not a Quni estimate.'}
+        Your own figures, before costs. Not a Quni estimate.
       </p>
     </div>
   )
