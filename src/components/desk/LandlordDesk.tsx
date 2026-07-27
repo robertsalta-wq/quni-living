@@ -73,9 +73,12 @@ function DrawerBody() {
 
       <div className="flex flex-col gap-2.5 pt-1">
         <DeskPen to="/signup?role=landlord">List my room →</DeskPen>
-        <Link to="/for-landlords" className={['inline-block', SECONDARY_DESK_LINK].join(' ')}>
+        <a
+          href="https://quni-living-git-feat-for-landlords-desk-page-4-logistics.vercel.app/for-landlords"
+          className={['inline-block', SECONDARY_DESK_LINK].join(' ')}
+        >
           I need more information →
-        </Link>
+        </a>
       </div>
     </div>
   )
