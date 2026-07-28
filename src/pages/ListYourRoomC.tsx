@@ -17,17 +17,38 @@ const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 const stepPillClass =
   'inline-flex items-center rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-0.5 text-[length:var(--text-micro-size)] font-semibold leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]'
 
-type AiFeature = {
-  label: string
+type SmartTool = {
+  title: string
+  body: string
   Icon: LucideIcon
 }
 
-const AI_FEATURES: AiFeature[] = [
-  { label: 'Write or regenerate your listing description', Icon: Sparkles },
-  { label: 'Proofread and polish listing copy', Icon: SpellCheck },
-  { label: 'Suggest weekly rent from your listing', Icon: Banknote },
-  { label: 'Draft replies to student enquiries', Icon: MessageSquareText },
-  { label: 'Assess applicant fit before you accept or decline', Icon: UserCheck },
+const SMART_TOOLS: SmartTool[] = [
+  {
+    Icon: Sparkles,
+    title: 'Instant listing builder',
+    body: 'Get a clear, high-converting room description drafted in seconds.',
+  },
+  {
+    Icon: SpellCheck,
+    title: 'Polished copy',
+    body: 'Proofreads and refines your text so your listing looks professional.',
+  },
+  {
+    Icon: Banknote,
+    title: 'Smart rent pricing',
+    body: 'Recommends competitive weekly rates based on live Sydney student demand.',
+  },
+  {
+    Icon: MessageSquareText,
+    title: '1-click quick replies',
+    body: 'Answer common student questions instantly without repetitive typing.',
+  },
+  {
+    Icon: UserCheck,
+    title: 'Applicant summaries',
+    body: 'See enrolment status, lifestyle habits, and fit at a glance before replying.',
+  },
 ]
 
 const FREE_UNTIL_ACCEPT = [
@@ -60,7 +81,7 @@ function SubtleCheck() {
 }
 
 /**
- * Editorial invite variant — leaner than the first C pass. Preview-gated.
+ * Editorial invite variant — landlord-benefit copy. Preview-gated.
  * Compare with `/list-your-room-b`.
  */
 export default function ListYourRoomC() {
@@ -108,30 +129,35 @@ export default function ListYourRoomC() {
         </header>
 
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
-          {/* AI features — icons only, no pills */}
+          {/* Smart tools — benefit headlines, no AI jargon pills */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
             <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
-              AI tools while you list
+              Smart tools that save you hours
             </h2>
-            <ul className="flex flex-col gap-3">
-              {AI_FEATURES.map(({ label, Icon }) => (
-                <li key={label} className="flex gap-3">
+            <ul className="flex flex-col gap-3.5">
+              {SMART_TOOLS.map(({ title, body, Icon }) => (
+                <li key={title} className="flex gap-3">
                   <span
                     className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--quni-coral-soft)] text-[var(--quni-coral-active)]"
                     aria-hidden
                   >
                     <Icon className="h-4 w-4" strokeWidth={2.25} />
                   </span>
-                  <p className="min-w-0 flex-1 text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
-                    {label}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
+                      {title}
+                    </p>
+                    <p className="mt-0.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
+                      {body}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Pricing & process — editorial */}
+          {/* Pricing & process */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <div className="pb-3.5">
               <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-2.5">
@@ -183,7 +209,7 @@ export default function ListYourRoomC() {
             </div>
           </div>
 
-          {/* Signup — legal entity lives in FocusFormLegalStrip footer */}
+          {/* Signup */}
           <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 md:order-2 xl:order-3">
             <Signup
               embedLandlordInvite
