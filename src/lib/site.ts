@@ -80,6 +80,7 @@ const FOCUS_FORM_FLOW_PREFIXES = [
   '/student-signup',
   '/landlord-signup',
   '/list-your-room',
+  '/list-your-room-b',
   '/landlord/property/new',
   '/landlord/property/edit/',
 ] as const
@@ -93,7 +94,12 @@ export function isFocusFormFlowPath(pathname: string): boolean {
 /** Landlord invite landing — logo + Log in only (no marketing nav). */
 export function isLandlordInviteMinimalChromePath(pathname: string): boolean {
   const p = pathname.startsWith('/') ? pathname : `/${pathname}`
-  return p === '/list-your-room' || p.startsWith('/list-your-room/')
+  return (
+    p === '/list-your-room' ||
+    p.startsWith('/list-your-room/') ||
+    p === '/list-your-room-b' ||
+    p.startsWith('/list-your-room-b/')
+  )
 }
 
 export function absoluteUrl(path: string): string {
