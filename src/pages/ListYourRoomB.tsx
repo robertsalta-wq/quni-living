@@ -100,9 +100,9 @@ export default function ListYourRoomB() {
             />
             <div className="min-w-0">
               <p className="text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)] sm:text-base sm:leading-[var(--text-body-lh)]">
-                <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
-                my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
-                message me anytime — you&apos;ll get me, not a bot.
+                &ldquo;<strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built
+                Quni with my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and
+                you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
               </p>
               <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
                 Quinnie Le, co-founder.
