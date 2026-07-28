@@ -29,14 +29,6 @@ import {
   type AccommodationUiChoice,
 } from '../../lib/landlordAccommodationChoice'
 import {
-  accommodationUnsetPublishError,
-  assertExtractorDraftMayInsertActive,
-} from '../../lib/listingExtractor/accommodationUnset'
-import type { ListingExtractorConfidenceMap, ListingExtractorDraftMeta } from '../../lib/listingExtractor/types'
-import type { ApplyExtractedListingResult } from '../../lib/listingExtractor/applyExtractedDraft'
-import ListingPasteExtractor from '../../components/landlord/ListingPasteExtractor'
-import ExtractorFieldConfidence from '../../components/landlord/ExtractorFieldConfidence'
-import {
   isQldOnSiteBoarderLodgerListing,
   parseRoomsRentedToResidents,
   qldOnSiteListingCallout,
@@ -239,8 +231,7 @@ type LandlordPropertyDraftV1 = {
   bathrooms: string
   roomsRentedToResidents: string
   roomType: RoomType | ''
-  /** Null = accommodation unset (extractor-initiated); human must pick a card. */
-  propertyListingType: PropertyListingType | null
+  propertyListingType: PropertyListingType
   furnished: boolean
   linenSupplied: boolean
   weeklyCleaning: boolean
@@ -273,7 +264,6 @@ type LandlordPropertyDraftV1 = {
   selectedRules: Partial<Record<string, RulePermitted>>
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
-  extractorMeta?: ListingExtractorDraftMeta
 }
 
 function parseDraftSelectedRules(raw: unknown): Partial<Record<string, RulePermitted>> {
@@ -300,40 +290,14 @@ function landlordPropertyDraftFromState(
 }
 
 function parseDraftRoomType(raw: unknown): RoomType | '' {
-  if (raw === '' || raw == null) return ''
+  if (raw === '') return ''
   if (typeof raw === 'string' && isRoomType(raw)) return raw
   return 'single'
-}
-
-function parseDraftPropertyListingType(raw: unknown): PropertyListingType | null {
-  if (raw === null) return null
-  if (typeof raw === 'string' && isPropertyListingType(raw)) return raw
-  return 'entire_property'
 }
 
 function parseDraftLeaseLength(raw: unknown): LandlordPropertyDraftV1['leaseLength'] {
   if (typeof raw === 'string' && (LEASE_OPTIONS as readonly string[]).includes(raw)) return raw
   return 'Flexible'
-}
-
-function parseExtractorMeta(raw: unknown): ListingExtractorDraftMeta | undefined {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
-  const o = raw as Record<string, unknown>
-  if (o.initiated !== true) return undefined
-  const confidence: ListingExtractorConfidenceMap = {}
-  if (o.confidence && typeof o.confidence === 'object' && !Array.isArray(o.confidence)) {
-    for (const [k, v] of Object.entries(o.confidence as Record<string, unknown>)) {
-      if (v === 'high' || v === 'low') confidence[k as keyof ListingExtractorConfidenceMap] = v
-    }
-  }
-  return {
-    initiated: true,
-    confidence,
-    accommodationHint: typeof o.accommodationHint === 'string' ? o.accommodationHint : null,
-    unmatchedFeatures: Array.isArray(o.unmatchedFeatures)
-      ? o.unmatchedFeatures.filter((x): x is string => typeof x === 'string')
-      : [],
-  }
 }
 
 function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1 | null {
@@ -344,15 +308,10 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
     const d = o as Record<string, unknown>
     if (d.v !== LANDLORD_PROPERTY_DRAFT_VERSION) return null
 
-    const extractorMeta = parseExtractorMeta(d.extractorMeta)
-    const propertyListingType: PropertyListingType | null =
-      d.propertyListingType === null || extractorMeta?.initiated
-        ? d.propertyListingType === null
-          ? null
-          : typeof d.propertyListingType === 'string' && isPropertyListingType(d.propertyListingType)
-            ? d.propertyListingType
-            : null
-        : parseDraftPropertyListingType(d.propertyListingType)
+    const propertyListingType: PropertyListingType =
+      typeof d.propertyListingType === 'string' && isPropertyListingType(d.propertyListingType)
+        ? d.propertyListingType
+        : 'entire_property'
 
     const draft: LandlordPropertyDraftV1 = {
       v: LANDLORD_PROPERTY_DRAFT_VERSION,
@@ -404,7 +363,6 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
         d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
           ? d.headTenantLandlordConsent
           : null,
-      extractorMeta,
     }
     return draft
   } catch {
@@ -430,8 +388,6 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.bathrooms !== '1' ||
     d.roomType !== 'apartment' ||
     d.propertyListingType !== 'entire_property' ||
-    d.propertyListingType == null ||
-    Boolean(d.extractorMeta?.initiated) ||
     d.furnished ||
     d.linenSupplied ||
     d.weeklyCleaning ||
@@ -663,18 +619,12 @@ export default function LandlordPropertyFormPage() {
   const [bathrooms, setBathrooms] = useState('1')
   const [roomsRentedToResidents, setRoomsRentedToResidents] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('apartment')
-  const [propertyListingType, setPropertyListingType] = useState<PropertyListingType | null>(
-    'entire_property',
+  const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
+
+  const accommodationChoice = useMemo(
+    () => accommodationChoiceFromFields(propertyListingType, roomType),
+    [propertyListingType, roomType],
   )
-  const [extractorMeta, setExtractorMeta] = useState<ListingExtractorDraftMeta | undefined>()
-  const [unmatchedExtractorFeatures, setUnmatchedExtractorFeatures] = useState<string[]>([])
-
-  const extractorConfidence = extractorMeta?.confidence
-
-  const accommodationChoice = useMemo((): AccommodationUiChoice | null => {
-    if (!propertyListingType) return null
-    return accommodationChoiceFromFields(propertyListingType, roomType)
-  }, [propertyListingType, roomType])
 
   const selectAccommodationChoice = useCallback((choice: AccommodationUiChoice) => {
     const next = fieldsFromAccommodationChoice(choice)
@@ -686,10 +636,7 @@ export default function LandlordPropertyFormPage() {
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
   const roomingHouseErrors = useMemo(
-    () =>
-      propertyListingType
-        ? roomingHouseFieldErrors(propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber)
-        : { onSiteConflict: null, missingRegistration: null },
+    () => roomingHouseFieldErrors(propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber),
     [propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber],
   )
 
@@ -862,24 +809,15 @@ export default function LandlordPropertyFormPage() {
   }, [rentPerWeek, maxOccupants, coupleSurchargePerWeek, parkingSurchargePerWeek, parkingAvailable])
 
   const resolvedPropertyTier = useMemo(
-    () =>
-      propertyListingType
-        ? resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse)
-        : null,
+    () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
     [propertyListingType, isRegisteredRoomingHouse],
   )
   const serviceTierAvailability = useMemo(
-    () =>
-      resolveServiceTierAvailability(
-        state.trim() || 'NSW',
-        resolvedPropertyTier ?? 't2',
-        serviceTierResolverOptions,
-      ),
+    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
     [state, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
   const showQldBondRemittance = useMemo(() => {
-    if (!propertyListingType) return false
     if ((state.trim() || '').toUpperCase() !== 'QLD' || isRegisteredRoomingHouse) return false
     const pkg = resolveTenancyPackage({
       state: 'QLD',
@@ -908,15 +846,6 @@ export default function LandlordPropertyFormPage() {
     const tier = resolvedPropertyTier
     void (async () => {
       try {
-        if (!tier) {
-          if (!cancelled) {
-            setTierPricingListing(null)
-            setTierPricingManaged(null)
-            setTierPricingLockedForListing(false)
-            setTierPricingError(null)
-          }
-          return
-        }
         if (isEdit && propertyId) {
           const { listing, managed } = await fetchLockedPricingSnapshotsForProperty(supabase, propertyId)
           if (!cancelled) {
@@ -1036,7 +965,6 @@ export default function LandlordPropertyFormPage() {
         selectedRules: { ...selectedRules },
         listerRole,
         headTenantLandlordConsent,
-        extractorMeta,
       }),
     [
       title,
@@ -1077,7 +1005,6 @@ export default function LandlordPropertyFormPage() {
       selectedRules,
       listerRole,
       headTenantLandlordConsent,
-      extractorMeta,
     ],
   )
 
@@ -1090,42 +1017,6 @@ export default function LandlordPropertyFormPage() {
     if (isEdit) return
     persistLandlordPropertyDraftToStorage(landlordPropertyDraftSnapshotRef.current)
   }, [isEdit])
-
-  const applyExtractorResultToForm = useCallback(
-    (result: ApplyExtractedListingResult) => {
-      const d = result.draft
-      setExtractorMeta(result.draft.extractorMeta)
-      setUnmatchedExtractorFeatures(result.unmatchedFeatures)
-      // Guardrail: never set tier from extractor
-      setPropertyListingType(null)
-      setRoomType('')
-      if (typeof d.title === 'string') setTitle(d.title)
-      if (typeof d.description === 'string') setDescription(d.description)
-      if (typeof d.rentPerWeek === 'string') setRentPerWeek(d.rentPerWeek)
-      if (typeof d.bedrooms === 'string') setBedrooms(d.bedrooms)
-      if (typeof d.bathrooms === 'string') setBathrooms(d.bathrooms)
-      if (typeof d.maxOccupants === 'string') setMaxOccupants(d.maxOccupants)
-      if (typeof d.furnished === 'boolean') setFurnished(d.furnished)
-      if (typeof d.linenSupplied === 'boolean') setLinenSupplied(d.linenSupplied)
-      if (typeof d.weeklyCleaning === 'boolean') setWeeklyCleaning(d.weeklyCleaning)
-      if (typeof d.parkingAvailable === 'boolean') setParkingAvailable(d.parkingAvailable)
-      if (typeof d.address === 'string') setAddress(d.address)
-      if (typeof d.suburb === 'string') setSuburb(d.suburb)
-      if (typeof d.state === 'string') setState(d.state)
-      if (typeof d.postcode === 'string') setPostcode(d.postcode)
-      if (typeof d.leaseLength === 'string') setLeaseLength(d.leaseLength)
-      if (typeof d.availableFrom === 'string') setAvailableFrom(d.availableFrom)
-      if (typeof d.houseRules === 'string') setHouseRules(d.houseRules)
-      if (Array.isArray(d.selectedFeatureIds)) {
-        setSelectedFeatureIds(new Set(d.selectedFeatureIds.filter((x): x is string => typeof x === 'string')))
-      }
-      // Bond stays at form default — extractor never overrides
-      setBondWeeks(String(DEFAULT_BOND_WEEKS))
-      setShowResumeDraftBanner(false)
-      document.getElementById('section-property-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    },
-    [],
-  )
 
   const propertyFormModeRef = useRef<'new' | 'edit' | null>(null)
   const restoredLocationKeyRef = useRef<string | null>(null)
@@ -1199,8 +1090,6 @@ export default function LandlordPropertyFormPage() {
     setBathrooms('1')
     setRoomType('apartment')
     setPropertyListingType('entire_property')
-    setExtractorMeta(undefined)
-    setUnmatchedExtractorFeatures([])
     setServiceTier('listing')
     setInitialServiceTier('listing')
     setIsRegisteredRoomingHouse(false)
@@ -1517,8 +1406,6 @@ export default function LandlordPropertyFormPage() {
       setRoomsRentedToResidents(parsed.roomsRentedToResidents)
       setRoomType(parsed.roomType)
       setPropertyListingType(parsed.propertyListingType)
-      setExtractorMeta(parsed.extractorMeta)
-      setUnmatchedExtractorFeatures(parsed.extractorMeta?.unmatchedFeatures ?? [])
       setServiceTier(parsed.serviceTier)
       setIsRegisteredRoomingHouse(parsed.isRegisteredRoomingHouse)
       setRoomingHouseRegistrationNumber(parsed.roomingHouseRegistrationNumber)
@@ -2159,28 +2046,6 @@ export default function LandlordPropertyFormPage() {
       setSubmitError('Title is required.')
       return
     }
-
-    const accommodationBlock = accommodationUnsetPublishError(propertyListingType)
-    if (accommodationBlock) {
-      setSubmitError(accommodationBlock)
-      document.getElementById('section-property-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      return
-    }
-    if (!propertyListingType) {
-      setSubmitError(accommodationUnsetPublishError(null)!)
-      return
-    }
-
-    try {
-      assertExtractorDraftMayInsertActive({
-        extractorInitiated: Boolean(extractorMeta?.initiated),
-        propertyListingType,
-      })
-    } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : accommodationUnsetPublishError(null)!)
-      return
-    }
-
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
       setSubmitError('Rent per week must be a positive number.')
@@ -2838,12 +2703,6 @@ export default function LandlordPropertyFormPage() {
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
           <div className="space-y-8">
-          {!isEdit ? (
-            <ListingPasteExtractor
-              features={features.map((f) => ({ id: f.id, name: f.name }))}
-              onApplied={applyExtractorResultToForm}
-            />
-          ) : null}
           {submitError && (
             <div
               id="listing-form-feedback-top"
@@ -2894,7 +2753,6 @@ export default function LandlordPropertyFormPage() {
               <div>
                 <label htmlFor="pf-title" className={labelClass}>
                   Title <span className="text-red-500">*</span>
-                  <ExtractorFieldConfidence confidence={extractorConfidence?.title} />
                 </label>
                 <input
                   id="pf-title"
@@ -2902,7 +2760,6 @@ export default function LandlordPropertyFormPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   className={inputClass}
-                  data-extractor-filled={extractorConfidence?.title ? 'true' : undefined}
                 />
               </div>
             </div>,
@@ -2914,33 +2771,7 @@ export default function LandlordPropertyFormPage() {
             'Property details',
             <div className="space-y-4">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-800">
-                  What is the tenant renting?{' '}
-                  {!propertyListingType ? (
-                    <span className="text-amber-800 font-semibold" data-testid="choose-how-let-prompt">
-                      Choose how this is let
-                    </span>
-                  ) : null}
-                </p>
-                {!propertyListingType ? (
-                  <div
-                    className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
-                    role="status"
-                    data-testid="accommodation-unset-banner"
-                  >
-                    Pick one option below before publishing. We never guess whether you live on site — that sets the
-                    listing tier.
-                    {extractorMeta?.accommodationHint ? (
-                      <p className="mt-1 text-xs text-amber-900/80">
-                        Hint from your paste: {extractorMeta.accommodationHint}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : extractorMeta?.accommodationHint ? (
-                  <p className="text-xs text-gray-500" data-testid="accommodation-hint">
-                    From your paste (not applied): {extractorMeta.accommodationHint}
-                  </p>
-                ) : null}
+                <p className="text-sm font-medium text-gray-800">What is the tenant renting?</p>
                 <p className="text-xs text-gray-500">
                   Choose the arrangement that matches your listing. For a room in a share house, enter total bedrooms and
                   bathrooms for the whole property, not just the room you are advertising.
@@ -2999,7 +2830,6 @@ export default function LandlordPropertyFormPage() {
                 <div>
                   <label htmlFor="pf-bed" className={labelClass}>
                     Total bedrooms in the property
-                    <ExtractorFieldConfidence confidence={extractorConfidence?.bedrooms} />
                   </label>
                   <input
                     id="pf-bed"
@@ -3024,7 +2854,7 @@ export default function LandlordPropertyFormPage() {
                   />
                 </div>
               </div>
-              {accommodationChoice && showRoomForRentSelect(accommodationChoice) && (
+              {showRoomForRentSelect(accommodationChoice) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
                     Room for rent
@@ -3226,33 +3056,8 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'Inclusions & features',
             <div className="space-y-4">
-              {unmatchedExtractorFeatures.length > 0 ? (
-                <div
-                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
-                  data-testid="unmatched-extractor-features"
-                  role="status"
-                >
-                  <p className="font-medium">Features mentioned in your paste that we couldn&apos;t match:</p>
-                  <ul className="mt-1 list-disc pl-5 text-xs">
-                    {unmatchedExtractorFeatures.map((name) => (
-                      <li key={name}>{name}</li>
-                    ))}
-                  </ul>
-                  <p className="mt-1 text-xs">Tick the closest matching feature above, or dismiss by editing — we didn&apos;t invent IDs.</p>
-                  <button
-                    type="button"
-                    className="mt-2 text-xs font-semibold text-amber-900 underline"
-                    onClick={() => setUnmatchedExtractorFeatures([])}
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              ) : null}
               <div>
-                <p className="mb-2 text-xs font-semibold text-gray-700">
-                  Inclusions
-                  <ExtractorFieldConfidence confidence={extractorConfidence?.furnished} />
-                </p>
+                <p className="mb-2 text-xs font-semibold text-gray-700">Inclusions</p>
                 <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -3765,7 +3570,6 @@ export default function LandlordPropertyFormPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label htmlFor="pf-rent" className={labelClass}>
                     Rent per week ($) <span className="text-red-500">*</span>
-                    <ExtractorFieldConfidence confidence={extractorConfidence?.rentPerWeek} />
                   </label>
                   <button
                     type="button"
@@ -4165,7 +3969,6 @@ export default function LandlordPropertyFormPage() {
                   amenities={amenitiesForAi}
                   furnished={furnished}
                 />
-                <ExtractorFieldConfidence confidence={extractorConfidence?.description} />
               </div>
             </div>,
             'section-description',

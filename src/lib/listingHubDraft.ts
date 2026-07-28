@@ -1,33 +1,19 @@
 /** Lightweight bridge to the landlord new-listing localStorage draft used by LandlordPropertyFormPage. */
 
-import { DEFAULT_BOND_WEEKS } from './booking/resolveBookingBondAmount'
-import type { ListingExtractorDraftMeta } from './listingExtractor/types'
-
-export const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft'
-export const LANDLORD_PROPERTY_DRAFT_VERSION = 1
+const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft'
+const LANDLORD_PROPERTY_DRAFT_VERSION = 1
 
 export type HubDraftBasicPatch = {
   title: string
   headline?: string
   availableFrom: string
   openToNonStudents: boolean
-  /** Null = accommodation unset (extractor / forced human choice). */
-  propertyListingType: string | null
+  propertyListingType: string
   roomType: string
   isRegisteredRoomingHouse: boolean
 }
 
-/** Loose draft record shape shared by hub bridge + extractor apply. */
-export type LandlordPropertyDraftRecord = {
-  v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
-  propertyListingType?: string | null
-  roomType?: string
-  bondWeeks?: string
-  extractorMeta?: ListingExtractorDraftMeta
-  [key: string]: unknown
-}
-
-export function emptyDraftBase(): LandlordPropertyDraftRecord {
+function emptyDraftBase(): Record<string, unknown> {
   return {
     v: LANDLORD_PROPERTY_DRAFT_VERSION,
     title: '',
@@ -56,8 +42,7 @@ export function emptyDraftBase(): LandlordPropertyDraftRecord {
     coupleSurchargePerWeek: '',
     parkingSurchargePerWeek: '',
     parkingAvailable: false,
-    // Align with form/API DEFAULT_BOND_WEEKS (was incorrectly '4')
-    bondWeeks: String(DEFAULT_BOND_WEEKS),
+    bondWeeks: '4',
     qldBondRemittancePreference: 'tenant_choice',
     leaseLength: 'Flexible',
     availableFrom: '',
@@ -71,7 +56,7 @@ export function emptyDraftBase(): LandlordPropertyDraftRecord {
   }
 }
 
-export function readLandlordPropertyDraftRaw(): LandlordPropertyDraftRecord | null {
+export function readLandlordPropertyDraftRaw(): Record<string, unknown> | null {
   try {
     const raw = localStorage.getItem(LANDLORD_PROPERTY_DRAFT_KEY)
     if (!raw) return null
@@ -79,7 +64,7 @@ export function readLandlordPropertyDraftRaw(): LandlordPropertyDraftRecord | nu
     if (!o || typeof o !== 'object') return null
     const d = o as Record<string, unknown>
     if (d.v !== LANDLORD_PROPERTY_DRAFT_VERSION) return null
-    return d as LandlordPropertyDraftRecord
+    return d
   } catch {
     return null
   }
@@ -87,7 +72,7 @@ export function readLandlordPropertyDraftRaw(): LandlordPropertyDraftRecord | nu
 
 export function patchLandlordPropertyDraftBasic(patch: HubDraftBasicPatch): void {
   const existing = readLandlordPropertyDraftRaw() ?? emptyDraftBase()
-  const next: LandlordPropertyDraftRecord = {
+  const next = {
     ...existing,
     v: LANDLORD_PROPERTY_DRAFT_VERSION,
     title: patch.title,
@@ -141,8 +126,4 @@ export function writeListingHeadline(propertyId: string | null, headline: string
   } catch {
     /* ignore */
   }
-}
-
-export function isExtractorInitiatedDraft(d: LandlordPropertyDraftRecord | null | undefined): boolean {
-  return Boolean(d?.extractorMeta && d.extractorMeta.initiated === true)
 }

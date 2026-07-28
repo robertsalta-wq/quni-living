@@ -44,9 +44,6 @@
     "api/ai/generate-description.ts": {
       "maxDuration": 30
     },
-    "api/ai/extract-listing.ts": {
-      "maxDuration": 45
-    },
     "api/ai/proofread-text.ts": {
       "maxDuration": 30
     },
