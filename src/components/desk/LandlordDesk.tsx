@@ -12,12 +12,13 @@ import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-white/55'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-sm font-bold text-white/55'
 
-const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-white/85'
+const BEAT_TEXT =
+  'flex gap-2.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/85'
 
 const SECONDARY_DESK_LINK =
-  'text-[12.5px] font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
+  'text-sm font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
 
 type LandlordDeskProps = {
   /** Notify parent when drawer opens (bento column reflow). */
@@ -56,7 +57,7 @@ function DrawerBody() {
             and drafts the lease.
           </span>
         </li>
-        <li className="text-[13px] leading-snug text-white/70">
+        <li className="text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/70">
           Free to list. One $99 fee, only if you accept someone. No lock-in — leave any time.
         </li>
         <li className={BEAT_TEXT}>
@@ -124,12 +125,7 @@ export default function LandlordDesk({
   const letterhead = (
     <DeskLetterhead>
       Your spare room could be{' '}
-      <span
-        className={[
-          'font-bold text-[var(--quni-coral-active)]',
-          dense ? 'text-[18px]' : 'text-[22px]',
-        ].join(' ')}
-      >
+      <span className="text-lg font-bold text-[var(--quni-coral-active)]">
         {formatRentFigure(rent)}
       </span>{' '}
       a week — verified student, paperwork done.
@@ -137,7 +133,7 @@ export default function LandlordDesk({
   )
 
   const letterheadMobile = (
-    <p className="font-[family-name:var(--font-sans)] text-[14.5px] leading-snug text-white">
+    <p className="font-[family-name:var(--font-sans)] text-base leading-snug text-white">
       List free ·{' '}
       <span className="font-bold text-[var(--quni-coral-active)]">{listingFeeDisplay}</span> on
       accept
@@ -145,7 +141,7 @@ export default function LandlordDesk({
   )
 
   const waxSeal = (
-    <p className="font-[family-name:var(--font-serif)] text-[10px] italic leading-snug text-white/45">
+    <p className="font-[family-name:var(--font-serif)] text-xs italic leading-snug text-white/45">
       The wax seal waits for the day you accept a tenant.
     </p>
   )
@@ -173,12 +169,12 @@ export default function LandlordDesk({
           <DeskNameplate
             variant={nameplateVariant}
             onDark
-            className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+            className="!px-2 !py-1 [&_span]:whitespace-normal "
           >
             HOMEOWNERS & LANDLORDS
           </DeskNameplate>
           <div className="min-w-0 flex-1">{letterheadMobile}</div>
-          <span aria-hidden className="text-[14px] text-[var(--quni-coral-active)]">
+          <span aria-hidden className="text-sm text-[var(--quni-coral-active)]">
             {railExpanded ? '⊖' : '⊕'}
           </span>
         </button>

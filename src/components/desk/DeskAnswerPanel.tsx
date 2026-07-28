@@ -47,11 +47,11 @@ export default function DeskAnswerPanel({
             .join(' ')}
           aria-hidden={!open}
         >
-          <p className={['m-0 text-[12.5px] leading-relaxed', textClass].join(' ')}>{answer}</p>
+          <p className={['m-0 text-sm leading-relaxed', textClass].join(' ')}>{answer}</p>
           <span
             className={[
               'mt-2 inline-flex rotate-[-2deg] items-center gap-1 rounded border px-1.5 py-0.5',
-              'text-[8px] font-extrabold tracking-[0.09em]',
+              'text-xs font-extrabold tracking-[0.09em]',
               stampClass,
             ].join(' ')}
           >

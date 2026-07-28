@@ -60,24 +60,24 @@ export default function AccountDesk({
     loggedIn ? (
       <Link
         to={dashboardTo}
-        className="w-fit text-[15px] font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="w-fit text-base font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Welcome back, {name} → your desk.
       </Link>
     ) : (
       <Link
         to="/login"
-        className="w-fit text-[15px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="w-fit text-base font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Sign in.
       </Link>
     )
   ) : loggedIn ? (
     <>
-      <p className="m-0 text-[15px] font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
+      <p className="m-0 text-base font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
       <Link
         to={dashboardTo}
-        className="w-fit text-[13px] font-semibold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="w-fit text-sm font-semibold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Your dashboard →
       </Link>
@@ -85,18 +85,18 @@ export default function AccountDesk({
   ) : (
     <>
       <div className="flex flex-col gap-0.5">
-        <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
+        <p className="m-0 text-sm leading-snug text-[var(--quni-ink-3)]">
           <span className="font-semibold text-[var(--quni-ink)]">Renters</span> — saved places,
           enquiries & bookings.
         </p>
-        <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
+        <p className="m-0 text-sm leading-snug text-[var(--quni-ink-3)]">
           <span className="font-semibold text-[var(--quni-ink)]">Landlords</span> — your listings &
           payouts.
         </p>
       </div>
       <Link
         to="/login"
-        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-4 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="mt-0.5 inline-flex w-fit rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-4 py-1.5 text-sm font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Log in
       </Link>
@@ -121,11 +121,11 @@ export default function AccountDesk({
         >
           <DeskNameplate
             variant={nameplateVariant}
-            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+            className="!px-2 !py-1"
           >
             {plateLabel}
           </DeskNameplate>
-          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink)]">
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--quni-ink)]">
             {memberDoor
               ? loggedIn
                 ? `Welcome back, ${name}`
@@ -165,23 +165,23 @@ export default function AccountDesk({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen(!open)}
-          className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+          className="w-fit rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-1 text-xs font-semibold text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
         >
           {open ? '⊖ Close' : '⊕ When you’re signed in'}
         </button>
         {open ? (
           <div id={panelId} className="mt-0.5 border-t border-[var(--quni-line)] pt-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
+            <span className="eyebrow">
               {loggedIn ? 'Your next step' : 'What you’ll find'}
             </span>
-            <p className="m-0 text-[12.5px] leading-snug text-[var(--quni-ink-3)]">
+            <p className="m-0 text-sm leading-snug text-[var(--quni-ink-3)]">
               {loggedIn
                 ? 'Messages, bookings, and profile live in your dashboard — same account on every device.'
                 : 'Sign in to save places, enquire, and manage bookings or listings. Sign up is free for renters.'}
             </p>
             <Link
               to={loggedIn ? dashboardTo : '/signup'}
-              className="text-[12px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              className="text-sm font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
             >
               {loggedIn ? 'Open dashboard →' : 'Create an account →'}
             </Link>

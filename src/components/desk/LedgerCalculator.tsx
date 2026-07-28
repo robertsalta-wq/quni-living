@@ -60,10 +60,8 @@ export default function LedgerCalculator({
           slim ? 'pb-1' : 'pb-2',
         ].join(' ')}
       >
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          Room rent · per week
-        </span>
-        <span className="font-[family-name:var(--font-sans)] text-[17px] font-bold tabular-nums">
+        <span className="eyebrow">Room rent · per week</span>
+        <span className="font-[family-name:var(--font-sans)] text-xl font-bold tabular-nums">
           {formatAud(rent)}
         </span>
       </div>
@@ -89,7 +87,7 @@ export default function LedgerCalculator({
           }}
         />
         {slim ? null : (
-          <div className="mt-1 flex justify-between text-[10.5px] text-[var(--quni-ink-5)]">
+          <div className="mt-1 flex justify-between text-xs text-[var(--quni-ink-5)]">
             <span>{formatAud(RENT_MIN)}</span>
             <span>{formatAud(RENT_MAX)}</span>
           </div>
@@ -103,9 +101,7 @@ export default function LedgerCalculator({
           slim ? 'pb-1' : 'pb-2',
         ].join(' ')}
       >
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-          Rooms to let
-        </span>
+        <span className="eyebrow">Rooms to let</span>
         <div
           className="inline-flex overflow-hidden rounded-lg border border-[var(--quni-line)] bg-[var(--quni-surface-2)]"
           role="group"
@@ -126,11 +122,7 @@ export default function LedgerCalculator({
             −
           </button>
           <span
-            className={[
-              'flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)]',
-              'font-[family-name:var(--font-sans)] font-bold tabular-nums text-[var(--quni-ink)]',
-              slim || !compact ? 'text-base' : 'text-[15px]',
-            ].join(' ')}
+            className="flex min-w-[2.25rem] items-center justify-center border-x border-[var(--quni-line)] font-[family-name:var(--font-sans)] text-base font-bold tabular-nums text-[var(--quni-ink)]"
             aria-live="polite"
           >
             {rooms}
@@ -156,7 +148,7 @@ export default function LedgerCalculator({
         <p
           className={[
             slim ? 'mt-1.5 pb-1' : 'mt-2.5 pb-2.5',
-            'border-b border-[var(--quni-line)] text-[13px] text-[var(--quni-ink-3)]',
+            'border-b border-[var(--quni-line)] text-sm text-[var(--quni-ink-3)]',
           ].join(' ')}
         >
           {rooms} rooms × {formatAud(rent)} = {formatAud(weeklyTotal)}/wk
@@ -170,24 +162,19 @@ export default function LedgerCalculator({
         ].join(' ')}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--quni-ink-5)]">
-            Your figure, a year
-          </span>
+          <span className="eyebrow">Your figure, a year</span>
           <span
             id={statusId}
             role="status"
             aria-live="polite"
-            className={[
-              'font-[family-name:var(--font-sans)] font-bold leading-none tabular-nums',
-              slim || !compact ? 'text-[22px]' : 'text-[26px]',
-            ].join(' ')}
+            className="price font-[family-name:var(--font-sans)] !font-bold leading-none tabular-nums"
           >
             {formatAud(yearly)}
           </span>
         </div>
       </div>
 
-      <p className={[slim ? 'mt-1' : 'mt-1.5', 'text-[10px] text-[var(--quni-ink-5)]'].join(' ')}>
+      <p className={[slim ? 'mt-1' : 'mt-1.5', 'text-xs text-[var(--quni-ink-5)]'].join(' ')}>
         Your own figures, before costs. Not a Quni estimate.
       </p>
     </div>

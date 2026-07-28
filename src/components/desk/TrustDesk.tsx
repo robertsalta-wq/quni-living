@@ -61,16 +61,11 @@ export default function TrustDesk({
           <div key={t} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-verified)]"
+              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-sm font-bold text-[var(--quni-verified)]"
             >
               ✓
             </span>
-            <span
-              className={[
-                'font-medium leading-snug text-[var(--quni-ink-2)]',
-                dense ? 'text-[11.5px]' : 'text-[12px]',
-              ].join(' ')}
-            >
+            <span className="text-base font-medium leading-snug text-[var(--quni-ink-2)]">
               {t}
             </span>
           </div>
@@ -79,7 +74,7 @@ export default function TrustDesk({
       <div className="flex flex-wrap items-center gap-2">
         <Link
           to="/verification"
-          className="text-[12px] font-semibold text-[var(--quni-verified)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
+          className="text-sm font-semibold text-[var(--quni-verified)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
         >
           How verification works →
         </Link>
@@ -89,7 +84,7 @@ export default function TrustDesk({
             aria-expanded={open}
             aria-controls={panelId}
             onClick={() => setOpen(!open)}
-            className="rounded-full border border-[var(--quni-verified-border)] bg-[var(--quni-surface-1)]/60 px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-verified)] hover:bg-[var(--quni-verified-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
+            className="rounded-full border border-[var(--quni-verified-border)] bg-[var(--quni-surface-1)]/60 px-2.5 py-1 text-xs font-semibold text-[var(--quni-verified)] hover:bg-[var(--quni-verified-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-verified)]"
           >
             {open ? '⊖ Close' : '⊕ What verified means'}
           </button>
@@ -100,7 +95,7 @@ export default function TrustDesk({
           id={mobileRail ? undefined : panelId}
           className="mt-0.5 flex flex-col gap-2 border-t border-[var(--quni-verified-border)] pt-3"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]">
+          <span className="eyebrow">
             What verified means
           </span>
           {VERIFIED_LINES.map((v) => (
@@ -117,7 +112,7 @@ export default function TrustDesk({
               >
                 <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-[13.5px] leading-snug text-[var(--quni-ink-3)]">{v}</span>
+              <span className="text-sm leading-snug text-[var(--quni-ink-3)]">{v}</span>
             </div>
           ))}
         </div>
@@ -150,11 +145,11 @@ export default function TrustDesk({
         >
           <DeskNameplate
             variant={nameplateVariant}
-            className="!px-2 !py-1 [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
+            className="!px-2 !py-1"
           >
             TRUST & SAFETY
           </DeskNameplate>
-          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--quni-ink-2)]">
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--quni-ink-2)]">
             Verification & fairness
           </span>
           <span aria-hidden className="text-[var(--quni-verified)]">
