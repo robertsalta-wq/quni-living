@@ -85,13 +85,10 @@ export default function ListYourRoomB() {
 
       <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:min-h-[calc(100vh-4rem)] lg:justify-center lg:py-9">
         <header className="max-w-3xl">
-          <span className="eyebrow inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 !font-bold text-[var(--quni-coral-active)]">
-            Landlord partnerships
-          </span>
           <h1 className="sr-only">More income from your spare room. Zero hassle.</h1>
 
-          {/* Quinnie — top line under the eyebrow */}
-          <div className="mt-4 flex items-start gap-3.5">
+          {/* Quinnie — top line */}
+          <div className="flex items-start gap-3.5">
             {/* TODO: replace with final approved Quinnie photo */}
             <img
               src={QUINNIE_IMG}
