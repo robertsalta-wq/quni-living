@@ -109,7 +109,7 @@
   flex-direction: column;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .home-v4-page {
     height: 100dvh;
     max-height: 100dvh;
@@ -162,64 +162,88 @@
 }
 
 .home-v4-top {
-  display: grid;
+  display: flex;
   min-height: 0;
   flex: 1;
+  flex-direction: column;
   align-items: stretch;
   gap: 0.5rem;
   overflow: hidden;
-  grid-template-areas:
-    'reception reception landlord'
-    'search search landlord';
-  /* Thin landlord column at rest (renter yields when open). */
-  grid-template-columns: 1.15fr 1.15fr 0.7fr;
-  grid-template-rows: auto minmax(0, 1fr);
-  transition: grid-template-columns var(--dur-base) var(--ease-standard);
+}
+
+.home-v4-area-reception,
+.home-v4-area-search,
+.home-v4-area-landlord {
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.home-v4-area-search {
+  overflow: hidden;
+}
+
+.home-v4-area-landlord {
+  overflow: auto;
+}
+
+.home-v4-bot {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .home-v4-top {
+    display: grid;
+    grid-template-areas:
+      'reception reception landlord'
+      'search search landlord';
+    /* Thin landlord column at rest (renter yields when open). */
+    grid-template-columns: 1.15fr 1.15fr 0.7fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    transition: grid-template-columns var(--dur-base) var(--ease-standard);
+  }
+
+  .home-v4-top.is-ll-open {
+    grid-template-columns: 0.75fr 0.75fr 1.5fr;
+  }
+
+  .home-v4-top.is-grown {
+    grid-template-rows: minmax(min-content, auto) minmax(min-content, 1fr);
+  }
+
+  .home-v4-area-reception {
+    grid-area: reception;
+  }
+
+  .home-v4-area-search {
+    grid-area: search;
+  }
+
+  .home-v4-area-landlord {
+    grid-area: landlord;
+  }
+
+  .home-v4-page.is-unlocked .home-v4-area-search {
+    overflow: visible;
+  }
+
+  .home-v4-page.is-unlocked .home-v4-area-landlord {
+    overflow: visible;
+  }
+
+  .home-v4-bot {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: end;
+  }
 }
 
 .home-v4-page.is-unlocked .home-v4-top {
   overflow: visible;
-}
-
-.home-v4-top.is-ll-open {
-  grid-template-columns: 0.75fr 0.75fr 1.5fr;
-}
-
-.home-v4-top.is-grown {
-  grid-template-rows: minmax(min-content, auto) minmax(min-content, 1fr);
-}
-
-.home-v4-area-reception {
-  grid-area: reception;
-  min-height: 0;
-}
-
-.home-v4-area-search {
-  grid-area: search;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.home-v4-page.is-unlocked .home-v4-area-search {
-  overflow: visible;
-}
-
-.home-v4-area-landlord {
-  grid-area: landlord;
-  min-height: 0;
-  overflow: auto;
-}
-
-.home-v4-page.is-unlocked .home-v4-area-landlord {
-  overflow: visible;
-}
-
-.home-v4-bot {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5rem;
-  align-items: end;
 }
 
 .home-v4-papers {

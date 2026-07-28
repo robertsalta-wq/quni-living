@@ -142,8 +142,8 @@ export default function HomeV4() {
         noindex
       />
 
-      {/* Desktop — v3 layout + thin landlord / bottom grow-up; one-screen at rest */}
-      <div className="home-v4-office desk-office relative hidden flex-1 flex-col px-3 py-2 md:flex lg:px-3.5">
+      {/* Desktop bento — lg+ only so tablets use the stacked mobile layout */}
+      <div className="home-v4-office desk-office relative hidden flex-1 flex-col px-3 py-2 lg:flex lg:px-3.5">
         <div className={`home-v4-frame ${SITE_CONTENT_MAX_CLASS.replace('px-3 sm:px-6', '')}`}>
           <div className="home-v4-shell">
             <div
@@ -227,11 +227,12 @@ export default function HomeV4() {
         </div>
       </div>
 
-      {/* Mobile: same stack as v3; Account is members door; no top pill */}
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 pb-6 md:hidden">
+      {/* Mobile / tablet: single column — landlord full-width under content */}
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pt-4 pb-6 lg:hidden">
         <FieldReceptionDesk
           onSelectQuestion={onSelectQuestion}
           answer={answerFor('reception')}
+          className="w-full"
         />
 
         <SearchDesk
@@ -243,39 +244,42 @@ export default function HomeV4() {
           compact
           nameplateVariant={plates.listings}
           deskAnswer={answerFor('listings')}
+          className="w-full"
         />
 
-        <div className="flex flex-col gap-2">
-          <LandlordDeskThin
-            mobileRail
-            railExpanded={openRail === 'landlord'}
-            onRailExpandChange={(open) => setOpenRail(open ? 'landlord' : null)}
-            nameplateVariant={plates.landlord}
-            deskAnswer={answerFor('landlord')}
-          />
-          <UniversitiesDesk
-            chips={uniCoverage}
-            mobileRail
-            railExpanded={openRail === 'uni'}
-            onRailExpandChange={(open) => setOpenRail(open ? 'uni' : null)}
-            nameplateVariant={plates.universities}
-          />
-          <TrustDesk
-            mobileRail
-            railExpanded={openRail === 'trust'}
-            onRailExpandChange={(open) => setOpenRail(open ? 'trust' : null)}
-            nameplateVariant={plates.trust}
-            deskAnswer={answerFor('trust')}
-          />
-          <AccountDesk
-            mobileRail
-            railExpanded={openRail === 'account'}
-            onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
-            nameplateVariant={plates.account}
-            memberDoor
-            nameplateLabel="Simple account management"
-          />
-        </div>
+        <LandlordDeskThin
+          mobileRail
+          railExpanded={openRail === 'landlord'}
+          onRailExpandChange={(open) => setOpenRail(open ? 'landlord' : null)}
+          nameplateVariant={plates.landlord}
+          deskAnswer={answerFor('landlord')}
+          className="w-full min-w-0"
+        />
+        <UniversitiesDesk
+          chips={uniCoverage}
+          mobileRail
+          railExpanded={openRail === 'uni'}
+          onRailExpandChange={(open) => setOpenRail(open ? 'uni' : null)}
+          nameplateVariant={plates.universities}
+          className="w-full"
+        />
+        <TrustDesk
+          mobileRail
+          railExpanded={openRail === 'trust'}
+          onRailExpandChange={(open) => setOpenRail(open ? 'trust' : null)}
+          nameplateVariant={plates.trust}
+          deskAnswer={answerFor('trust')}
+          className="w-full"
+        />
+        <AccountDesk
+          mobileRail
+          railExpanded={openRail === 'account'}
+          onRailExpandChange={(open) => setOpenRail(open ? 'account' : null)}
+          nameplateVariant={plates.account}
+          memberDoor
+          nameplateLabel="Simple account management"
+          className="w-full"
+        />
 
         <PapersBlock />
       </div>
