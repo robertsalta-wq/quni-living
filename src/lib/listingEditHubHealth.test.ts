@@ -80,35 +80,13 @@ describe('listingEditHubHealth', () => {
     expect(hubListingTypeTileFromFields('private_room_landlord_off_site', 'single', true)).toBe(
       'rooming',
     )
-    expect(hubListingTypeTileFromFields(null, '', false)).toBe(null)
-    // Private room from unset / entire must not silently pick off-site (tier guardrail)
     expect(
       fieldsFromHubListingTypeTile('room', {
-        propertyListingType: null,
-        roomType: '',
+        propertyListingType: 'entire_property',
+        roomType: 'apartment',
       }),
-    ).toEqual({ ok: false, reason: 'private_room_site_required' })
-    expect(
-      fieldsFromHubListingTypeTile(
-        'room',
-        { propertyListingType: 'entire_property', roomType: 'apartment' },
-        { privateRoomSite: 'off_site' },
-      ),
     ).toEqual({
-      ok: true,
       propertyListingType: 'private_room_landlord_off_site',
-      roomType: 'single',
-      isRegisteredRoomingHouse: false,
-    })
-    expect(
-      fieldsFromHubListingTypeTile(
-        'room',
-        { propertyListingType: null, roomType: '' },
-        { privateRoomSite: 'on_site' },
-      ),
-    ).toEqual({
-      ok: true,
-      propertyListingType: 'private_room_landlord_on_site',
       roomType: 'single',
       isRegisteredRoomingHouse: false,
     })

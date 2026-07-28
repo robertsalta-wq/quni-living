@@ -5,12 +5,9 @@ import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import {
   fieldsFromHubListingTypeTile,
   hubListingTypeTileFromFields,
-  hubNeedsPrivateRoomSiteChoice,
   listingHubPath,
   type HubListingTypeTile,
-  type HubPrivateRoomSite,
 } from '../../../lib/listingEditHubHealth'
-import { HUB_PRIVATE_ROOM_SITE_REQUIRED_MESSAGE } from '../../../lib/listingExtractor/types'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
@@ -28,8 +25,7 @@ export type ListingBasicInfoValues = {
   headline: string
   availableFrom: string
   openToNonStudents: boolean
-  /** Null when accommodation is unset (extractor draft) — must not publish until set. */
-  propertyListingType: PropertyListingType | null
+  propertyListingType: PropertyListingType
   roomType: RoomType | ''
   isRegisteredRoomingHouse: boolean
 }
@@ -71,12 +67,6 @@ export default function ListingBasicInfoDrillIn({
       initial.isRegisteredRoomingHouse,
     ),
   )
-  const [privateRoomSite, setPrivateRoomSite] = useState<HubPrivateRoomSite | null>(() => {
-    if (initial.propertyListingType === 'private_room_landlord_on_site') return 'on_site'
-    if (initial.propertyListingType === 'private_room_landlord_off_site') return 'off_site'
-    return null
-  })
-  const [siteChoiceError, setSiteChoiceError] = useState<string | null>(null)
 
   useEffect(() => {
     setTitle(initial.title)
@@ -90,47 +80,22 @@ export default function ListingBasicInfoDrillIn({
         initial.isRegisteredRoomingHouse,
       ),
     )
-    if (initial.propertyListingType === 'private_room_landlord_on_site') setPrivateRoomSite('on_site')
-    else if (initial.propertyListingType === 'private_room_landlord_off_site') setPrivateRoomSite('off_site')
-    else if (initial.propertyListingType == null) setPrivateRoomSite(null)
   }, [initial])
 
   const titleCount = title.length
-  const needsPrivateRoomSite = hubNeedsPrivateRoomSiteChoice(listingType, initial.propertyListingType)
-  const basicDone =
-    title.trim().length > 0 && listingType != null && (!needsPrivateRoomSite || privateRoomSite != null)
+  const basicDone = title.trim().length > 0 && listingType != null
 
   const values = useMemo((): ListingBasicInfoValues => {
-    if (!listingType) {
-      return {
-        title: title.trim(),
-        headline: headline.trim(),
-        availableFrom: availableFrom.trim(),
-        openToNonStudents,
-        propertyListingType: initial.propertyListingType,
-        roomType: initial.roomType,
-        isRegisteredRoomingHouse: initial.isRegisteredRoomingHouse,
-      }
-    }
-    const mapped = fieldsFromHubListingTypeTile(
-      listingType,
-      {
-        propertyListingType: initial.propertyListingType,
-        roomType: initial.roomType,
-      },
-      { privateRoomSite },
-    )
-    if (!mapped.ok) {
-      return {
-        title: title.trim(),
-        headline: headline.trim(),
-        availableFrom: availableFrom.trim(),
-        openToNonStudents,
-        propertyListingType: null,
-        roomType: '',
-        isRegisteredRoomingHouse: false,
-      }
-    }
+    const mapped = listingType
+      ? fieldsFromHubListingTypeTile(listingType, {
+          propertyListingType: initial.propertyListingType,
+          roomType: initial.roomType,
+        })
+      : {
+          propertyListingType: initial.propertyListingType,
+          roomType: (initial.roomType || 'apartment') as RoomType,
+          isRegisteredRoomingHouse: initial.isRegisteredRoomingHouse,
+        }
     return {
       title: title.trim(),
       headline: headline.trim(),
@@ -146,7 +111,6 @@ export default function ListingBasicInfoDrillIn({
     availableFrom,
     openToNonStudents,
     listingType,
-    privateRoomSite,
     initial.propertyListingType,
     initial.roomType,
     initial.isRegisteredRoomingHouse,
@@ -155,24 +119,11 @@ export default function ListingBasicInfoDrillIn({
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
 
-  function trySave(intent: 'save' | 'draft' | 'next') {
-    if (needsPrivateRoomSite && !privateRoomSite) {
-      setSiteChoiceError(HUB_PRIVATE_ROOM_SITE_REQUIRED_MESSAGE)
-      return
-    }
-    if (values.propertyListingType == null && listingType != null) {
-      setSiteChoiceError(HUB_PRIVATE_ROOM_SITE_REQUIRED_MESSAGE)
-      return
-    }
-    setSiteChoiceError(null)
-    onSave(values, intent)
-  }
-
   const actionItems: AppActionBarItem[] = useMemo(() => {
     const specs = listingBasicInfoActionBarItemSpecs({
       isSetupMode,
       saving,
-      canSubmit: Boolean(title.trim()) && basicDone,
+      canSubmit: Boolean(title.trim()),
     })
     return specs.map((spec) => ({
       ...spec,
@@ -180,15 +131,15 @@ export default function ListingBasicInfoDrillIn({
       onClick:
         spec.id === 'cancel'
           ? onCancel
-          : () => trySave(spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
+          : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
     }))
-  }, [isSetupMode, saving, title, basicDone, values, onCancel, needsPrivateRoomSite, privateRoomSite])
+  }, [isSetupMode, saving, title, values, onSave, onCancel])
   useSetAppChromeActions(actionItems)
 
   const footerSpecs = listingBasicInfoActionBarItemSpecs({
     isSetupMode,
     saving,
-    canSubmit: Boolean(title.trim()) && basicDone,
+    canSubmit: Boolean(title.trim()),
   })
 
   return (
@@ -253,11 +204,7 @@ export default function ListingBasicInfoDrillIn({
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => {
-                    setListingType(t.key)
-                    setSiteChoiceError(null)
-                    if (t.key !== 'room') setPrivateRoomSite(null)
-                  }}
+                  onClick={() => setListingType(t.key)}
                   className={`flex-1 rounded-xl p-3 text-left ${
                     sel
                       ? 'border-[1.5px] border-[var(--quni-coral)] bg-[rgba(255,111,97,0.06)] shadow-[0_0_0_1px_var(--quni-coral)]'
@@ -288,50 +235,6 @@ export default function ListingBasicInfoDrillIn({
             })}
           </div>
         </div>
-
-        {needsPrivateRoomSite ? (
-          <div className="mb-[22px]" data-testid="hub-private-room-site">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]">
-              Do you live on site?
-            </p>
-            <p className="mb-2 text-xs text-[var(--quni-ink-5)]">
-              This sets the listing tier (boarder/lodger vs private tenancy). We never guess it.
-            </p>
-            <div className="flex gap-2.5">
-              {(
-                [
-                  { key: 'on_site' as const, label: 'Yes — I live here', sub: 'Tier 1 / on-site' },
-                  { key: 'off_site' as const, label: 'No — I live elsewhere', sub: 'Tier 2 / off-site' },
-                ] as const
-              ).map((opt) => {
-                const sel = privateRoomSite === opt.key
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => {
-                      setPrivateRoomSite(opt.key)
-                      setSiteChoiceError(null)
-                    }}
-                    className={`flex-1 rounded-xl p-3 text-left ${
-                      sel
-                        ? 'border-[1.5px] border-[var(--quni-coral)] bg-[rgba(255,111,97,0.06)] shadow-[0_0_0_1px_var(--quni-coral)]'
-                        : 'border border-[var(--quni-input-border)] bg-white'
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold text-[var(--quni-ink)]">{opt.label}</span>
-                    <span className="block text-[11px] text-[var(--quni-ink-5)]">{opt.sub}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {siteChoiceError ? (
-              <p className="mt-2 text-sm text-[var(--quni-danger-fg)]" role="alert">
-                {siteChoiceError}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
 
         <div className="mb-[22px]">
           <label
@@ -430,7 +333,7 @@ export default function ListingBasicInfoDrillIn({
                     onCancel()
                     return
                   }
-                  trySave(spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save')
+                  onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save')
                 }}
                 className={
                   primary

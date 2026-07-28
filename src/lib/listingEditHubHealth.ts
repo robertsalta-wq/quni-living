@@ -129,9 +129,6 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
 
 export type HubListingTypeTile = 'entire' | 'room' | 'rooming'
 
-/** Explicit on-site vs off-site for Private room — never silently defaulted (tier guardrail). */
-export type HubPrivateRoomSite = 'on_site' | 'off_site'
-
 export function hubListingTypeTileFromFields(
   propertyListingType: PropertyListingType | string | null | undefined,
   roomType: RoomType | string | null | undefined,
@@ -147,64 +144,34 @@ export function hubListingTypeTileFromFields(
   return 'room'
 }
 
-export function hubNeedsPrivateRoomSiteChoice(
-  tile: HubListingTypeTile | null,
-  propertyListingType: PropertyListingType | string | null | undefined,
-): boolean {
-  if (tile !== 'room') return false
-  return (
-    propertyListingType !== 'private_room_landlord_on_site' &&
-    propertyListingType !== 'private_room_landlord_off_site' &&
-    propertyListingType !== 'shared_room'
-  )
-}
-
-export type HubListingTypeFieldsOk = {
-  ok: true
-  propertyListingType: PropertyListingType
-  roomType: RoomType
-  isRegisteredRoomingHouse: boolean
-}
-
-export type HubListingTypeFieldsNeedSite = {
-  ok: false
-  reason: 'private_room_site_required'
-}
-
-export type HubListingTypeFieldsResult = HubListingTypeFieldsOk | HubListingTypeFieldsNeedSite
-
 export function fieldsFromHubListingTypeTile(
   tile: HubListingTypeTile,
   current: {
-    propertyListingType: PropertyListingType | null
+    propertyListingType: PropertyListingType
     roomType: RoomType | ''
   },
-  opts?: { privateRoomSite?: HubPrivateRoomSite | null },
-): HubListingTypeFieldsResult {
+): {
+  propertyListingType: PropertyListingType
+  roomType: RoomType
+  isRegisteredRoomingHouse: boolean
+} {
   if (tile === 'rooming') {
     return {
-      ok: true,
       propertyListingType: 'private_room_landlord_off_site',
       roomType: 'single',
       isRegisteredRoomingHouse: true,
     }
   }
   if (tile === 'entire') {
-    if (
-      current.propertyListingType &&
-      isEntirePlaceChoice(
-        accommodationChoiceFromFields(current.propertyListingType, current.roomType),
-      )
-    ) {
+    const choice = accommodationChoiceFromFields(current.propertyListingType, current.roomType)
+    if (isEntirePlaceChoice(choice)) {
       return {
-        ok: true,
         propertyListingType: current.propertyListingType,
         roomType: (current.roomType || 'apartment') as RoomType,
         isRegisteredRoomingHouse: false,
       }
     }
     return {
-      ok: true,
       propertyListingType: 'entire_property',
       roomType: 'apartment',
       isRegisteredRoomingHouse: false,
@@ -217,30 +184,16 @@ export function fieldsFromHubListingTypeTile(
     current.propertyListingType === 'shared_room'
   ) {
     return {
-      ok: true,
       propertyListingType: current.propertyListingType,
       roomType: (current.roomType || 'single') as RoomType,
       isRegisteredRoomingHouse: false,
     }
   }
-  // Never silently default to off-site (was a silent T2) — require explicit site choice
-  if (opts?.privateRoomSite === 'on_site') {
-    return {
-      ok: true,
-      propertyListingType: 'private_room_landlord_on_site',
-      roomType: 'single',
-      isRegisteredRoomingHouse: false,
-    }
+  return {
+    propertyListingType: 'private_room_landlord_off_site',
+    roomType: 'single',
+    isRegisteredRoomingHouse: false,
   }
-  if (opts?.privateRoomSite === 'off_site') {
-    return {
-      ok: true,
-      propertyListingType: 'private_room_landlord_off_site',
-      roomType: 'single',
-      isRegisteredRoomingHouse: false,
-    }
-  }
-  return { ok: false, reason: 'private_room_site_required' }
 }
 
 function hasText(v: string | null | undefined): boolean {
