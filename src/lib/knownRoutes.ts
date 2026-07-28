@@ -35,6 +35,7 @@ const EXACT = new Set([
   '/services/landlord-partnerships',
   '/services/fully-furnished',
   '/for-landlords',
+  '/list-your-room',
   '/landlords/ai',
   '/auth/callback',
   '/login',
