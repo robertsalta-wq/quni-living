@@ -186,7 +186,7 @@ export default function SearchDesk({
               {!compact ? (
                 <div
                   aria-hidden
-                  className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-verified)] bg-[var(--quni-verified-surface)] text-center shadow-[var(--shadow-1)]"
+                  className="ml-auto flex h-[56px] w-[56px] shrink-0 rotate-[8deg] flex-col items-center justify-center gap-px rounded-full border-2 border-dashed border-[var(--quni-verified)] bg-[var(--quni-verified-surface)] text-center"
                 >
                   <span className="font-[family-name:var(--font-sans)] text-[13px] font-bold leading-none tracking-[0.02em] text-[var(--quni-verified)]">
                     FREE
@@ -346,7 +346,7 @@ export default function SearchDesk({
             ].join(' ')}
           >
             {preview.length === 0 ? (
-              <p className="col-span-full m-0 rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-4 text-sm text-[var(--quni-ink-4)]">
+              <p className="col-span-full m-0 px-1 py-3 text-sm text-[var(--quni-ink-4)]">
                 Live listings will appear here as they are published.
               </p>
             ) : (
@@ -357,7 +357,7 @@ export default function SearchDesk({
                   <Link
                     key={p.id}
                     to={to}
-                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--quni-line)] transition-colors duration-[var(--dur-base)] hover:bg-[var(--quni-page)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   >
                     <div
                       className={[

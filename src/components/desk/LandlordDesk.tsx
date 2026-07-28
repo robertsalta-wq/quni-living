@@ -12,12 +12,12 @@ import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-ink-3)]'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-white/55'
 
-const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]'
+const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-white/85'
 
 const SECONDARY_DESK_LINK =
-  'text-[12.5px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
+  'text-[12.5px] font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
 
 type LandlordDeskProps = {
   /** Notify parent when drawer opens (bento column reflow). */
@@ -45,7 +45,7 @@ function formatRentFigure(rent: number): string {
 
 function DrawerBody() {
   return (
-    <div className="flex flex-col gap-[13px] rounded-xl bg-[var(--quni-surface-1)] px-[17px] py-4 text-[var(--quni-ink)]">
+    <div className="flex flex-col gap-[13px] border-t border-white/15 px-0.5 pt-3 text-white/85">
       <ul className="m-0 space-y-2.5 p-0">
         <li className={BEAT_TEXT}>
           <span aria-hidden className={TICK_CLASS}>
@@ -56,7 +56,7 @@ function DrawerBody() {
             and drafts the lease.
           </span>
         </li>
-        <li className="text-[13px] leading-snug text-[var(--quni-ink-2)]">
+        <li className="text-[13px] leading-snug text-white/70">
           Free to list. One $99 fee, only if you accept someone. No lock-in — leave any time.
         </li>
         <li className={BEAT_TEXT}>
@@ -172,11 +172,7 @@ export default function LandlordDesk({
         >
           <DeskNameplate
             variant={nameplateVariant}
-            onDark={
-              nameplateVariant === 'bronze' ||
-              nameplateVariant === 'darkPlate' ||
-              nameplateVariant === 'letterpress'
-            }
+            onDark
             className="!px-2 !py-1 [&_span]:whitespace-normal [&_span]:text-[8.5px] [&_span]:tracking-[0.12em]"
           >
             HOMEOWNERS & LANDLORDS
@@ -227,11 +223,7 @@ export default function LandlordDesk({
       nameplate={
         <DeskNameplate
           variant={nameplateVariant}
-          onDark={
-            nameplateVariant === 'bronze' ||
-            nameplateVariant === 'darkPlate' ||
-            nameplateVariant === 'letterpress'
-          }
+          onDark
         >
           FOR HOMEOWNERS & LANDLORDS
         </DeskNameplate>

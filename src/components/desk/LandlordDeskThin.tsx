@@ -11,17 +11,14 @@ import LedgerCalculator, { RENT_DEFAULT } from './LedgerCalculator'
 import type { DeskNameplateVariant } from '../../lib/deskNameplateVariants'
 import './desk.css'
 
-/** Reused from LandlordDesk / SearchDesk — dark text on white card surfaces. */
+/** Neutral check + phrase on the ink desk (no nested white cards). */
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-ink-3)]'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-white/55'
 
-const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]'
+const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-white/85'
 
 const SECONDARY_DESK_LINK =
-  'text-[12.5px] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
-
-const WHITE_CARD =
-  'rounded-xl bg-[var(--quni-surface-1)] text-[var(--quni-ink)] shadow-[var(--shadow-1)]'
+  'text-[12.5px] font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
 
 const TILES = [
   {
@@ -70,19 +67,18 @@ function ImageTiles({ open }: { open: boolean }) {
         <div
           key={tile.word}
           className={[
-            WHITE_CARD,
-            'flex gap-2.5 px-2.5 py-2',
-            open ? 'flex-col items-center px-2.5 py-3 text-center' : 'items-center',
+            'flex gap-2.5',
+            open ? 'flex-col items-center text-center' : 'items-center',
           ].join(' ')}
         >
-          <span aria-hidden className="text-[12px] font-bold text-[var(--quni-ink-3)]">
+          <span aria-hidden className="text-[12px] font-bold text-white/55">
             ✓
           </span>
           <div className={open ? 'flex flex-col items-center' : 'flex min-w-0 flex-col'}>
-            <span className="text-[12px] font-bold text-[var(--quni-ink-3)]">{tile.word}</span>
+            <span className="text-[12px] font-bold text-white/85">{tile.word}</span>
             <span
               className={[
-                'text-[10.5px] font-medium leading-snug text-[var(--quni-ink-3)]',
+                'text-[10.5px] font-medium leading-snug text-white/55',
                 open ? 'mt-1 block' : 'hidden',
               ].join(' ')}
             >
@@ -97,9 +93,9 @@ function ImageTiles({ open }: { open: boolean }) {
 
 function FeeRow({ label, figure }: { label: string; figure: string }) {
   return (
-    <li className="flex items-baseline justify-between gap-3 border-b border-[var(--quni-line-soft)] py-2 last:border-b-0">
-      <span className="text-[13px] text-[var(--quni-ink-3)]">{label}</span>
-      <span className="shrink-0 font-[family-name:var(--font-sans)] text-base font-bold tabular-nums text-[var(--quni-ink)]">
+    <li className="flex items-baseline justify-between gap-3 border-b border-white/15 py-2 last:border-b-0">
+      <span className="text-[13px] text-white/70">{label}</span>
+      <span className="shrink-0 font-[family-name:var(--font-sans)] text-base font-bold tabular-nums text-white">
         {figure}
       </span>
     </li>
@@ -108,7 +104,7 @@ function FeeRow({ label, figure }: { label: string; figure: string }) {
 
 function DrawerBody({ listingFeeDisplay, open }: { listingFeeDisplay: string; open: boolean }) {
   return (
-    <div className={['flex flex-col gap-3 px-0.5 py-1', WHITE_CARD, 'px-3.5 py-3.5'].join(' ')}>
+    <div className="flex flex-col gap-3 border-t border-white/15 px-0.5 pt-3">
       <div className={open ? 'grid grid-cols-1 gap-3 sm:grid-cols-2' : 'flex flex-col gap-3'}>
         <ul className="m-0 space-y-2.5 p-0">
           <li className={BEAT_TEXT}>
@@ -120,7 +116,7 @@ function DrawerBody({ listingFeeDisplay, open }: { listingFeeDisplay: string; op
               applicants and drafts the lease.
             </span>
           </li>
-          <li className="text-[13px] leading-snug text-[var(--quni-ink-2)]">
+          <li className="text-[13px] leading-snug text-white/70">
             Free to list. One $99 fee, only if you accept someone. No lock-in — leave any time.
           </li>
           <li className={BEAT_TEXT}>
@@ -152,7 +148,7 @@ function DrawerBody({ listingFeeDisplay, open }: { listingFeeDisplay: string; op
 }
 
 /**
- * `/home-v4` landlord desk — thin navy frame, white-card content, image tiles.
+ * `/home-v4` landlord desk — ink shell; ledger is the only nested white surface.
  * Does not replace LandlordDesk (`/home-v3` fallback).
  */
 export default function LandlordDeskThin({
@@ -255,11 +251,7 @@ export default function LandlordDeskThin({
         >
           <DeskNameplate
             variant={nameplateVariant}
-            onDark={
-              nameplateVariant === 'bronze' ||
-              nameplateVariant === 'darkPlate' ||
-              nameplateVariant === 'letterpress'
-            }
+            onDark
             className="!px-2 !py-1"
           >
             HOMEOWNERS & LANDLORDS
@@ -296,11 +288,7 @@ export default function LandlordDeskThin({
       nameplate={
         <DeskNameplate
           variant={nameplateVariant}
-          onDark={
-            nameplateVariant === 'bronze' ||
-            nameplateVariant === 'darkPlate' ||
-            nameplateVariant === 'letterpress'
-          }
+          onDark
         >
           FOR HOMEOWNERS & LANDLORDS
         </DeskNameplate>
