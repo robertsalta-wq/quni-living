@@ -186,6 +186,45 @@ function SignupTermsFields({
   )
 }
 
+/** Embed invite: no checkbox barrier — continuing implies acceptance (still recorded). */
+function SignupImpliedConsentNotice({ includeLandlordAgreement }: { includeLandlordAgreement: boolean }) {
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
+  const activeLegalDoc = openLegalDoc ? LEGAL_DOC_MODAL[openLegalDoc] : null
+
+  return (
+    <div className="mt-3 text-center text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-5)]">
+      <p>
+        By continuing, you agree to our{' '}
+        <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
+          Terms of Service
+        </SignupLegalDocLink>
+        ,{' '}
+        <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
+          Privacy Policy
+        </SignupLegalDocLink>
+        {includeLandlordAgreement ? (
+          <>
+            , and{' '}
+            <SignupLegalDocLink kind="landlord-agreement" onOpen={setOpenLegalDoc}>
+              Landlord Service Agreement
+            </SignupLegalDocLink>
+          </>
+        ) : null}
+        .
+      </p>
+      {activeLegalDoc && (
+        <LegalDocumentModal
+          open={openLegalDoc !== null}
+          onClose={() => setOpenLegalDoc(null)}
+          title={activeLegalDoc.title}
+        >
+          {activeLegalDoc.content}
+        </LegalDocumentModal>
+      )}
+    </div>
+  )
+}
+
 type SignupProps = {
   /**
    * Landlord invite embed (`/list-your-room`): skip role picker, Google-first,
@@ -321,6 +360,8 @@ export default function Signup({
   const showLandlordAgreement = effectiveAccountKind === 'landlord'
 
   function termsAcceptedForSignup(): boolean {
+    // Landlord invite embed: CTA click is acceptance (notice under the button).
+    if (embedLandlordInvite) return true
     if (!termsPrivacy) return false
     if (showLandlordAgreement && !landlordAgreement) return false
     return true
@@ -605,14 +646,12 @@ export default function Signup({
           </div>
         )}
 
-        <div className="mt-4 [&_label]:text-[length:var(--text-caption-size)] [&_label]:leading-[var(--text-caption-lh)] [&_label]:text-[var(--quni-ink-4)]">
-          <SignupTermsFields {...signupTermsFieldsProps} />
-        </div>
-
         {googleButton(
           'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-base font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
           { multicolorIcon: true },
         )}
+
+        <SignupImpliedConsentNotice includeLandlordAgreement={showLandlordAgreement} />
 
         {collapsedEmail && !emailFieldsOpen ? (
           <button

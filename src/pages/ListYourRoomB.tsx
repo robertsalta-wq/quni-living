@@ -15,8 +15,8 @@ const PITCH_POINTS = [
     body: 'ID verification, enrolment checks, and an AI fit assessment land as a shortlist — not forty Flatmates replies from people who ghost.',
   },
   {
-    title: 'Vacancy',
-    body: 'Campus demand that comes back every semester. Longer stays, fewer empty weeks.',
+    title: 'Fewer empty weeks.',
+    body: 'Campus demand that comes back every semester. Longer stays, fewer gaps between tenants.',
   },
   {
     title: 'The paperwork signs itself.',
@@ -68,7 +68,7 @@ export default function ListYourRoomB() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your property"
-        description="More income. Less vacancy. Predictable returns — partner with Quni Living for verified student accommodation and proper leases."
+        description="More income from your spare room. Zero hassle — partner with Quni Living for verified student renters and proper leases."
         canonicalPath="/list-your-room-b"
         noindex
       />
@@ -79,8 +79,8 @@ export default function ListYourRoomB() {
             Landlord partnerships
           </span>
           <h1 className="font-display mt-3 text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)] !mt-3 !mb-0">
-            More income. Less vacancy.{' '}
-            <span className="text-[var(--quni-coral)]">Predictable returns.</span>
+            More income from your spare room.{' '}
+            <span className="text-[var(--quni-coral)]">Zero hassle.</span>
           </h1>
 
           {/* Quinnie — top line under the headline */}
