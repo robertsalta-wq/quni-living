@@ -146,9 +146,6 @@ export default function ListYourRoomC() {
         <header className="max-w-3xl">
           {/* Visual headline lives in the chrome on C; keep an sr-only h1 for document outline. */}
           <h1 className="sr-only">The safest way to rent your spare room to university students.</h1>
-          <p className="!mt-0 !mb-5 max-w-2xl text-[length:var(--text-body-size)] font-medium leading-[var(--text-body-lh)] text-[var(--quni-ink-2)] sm:text-[length:var(--text-body-lg-size)] sm:leading-[var(--text-body-lg-lh)]">
-            Set your terms, vet pre-screened student applicants, and get paid weekly with zero admin headaches.
-          </p>
 
           <div className="flex items-start gap-3.5">
             <div className="relative h-20 w-20 shrink-0">
@@ -188,7 +185,6 @@ export default function ListYourRoomC() {
         <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:grid-cols-2 md:gap-5 md:pb-0 xl:grid-cols-3 xl:gap-6">
           {/* Smart tools — functional icons only (no AI sparkles) */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
-            <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
               Smart tools that save you hours
             </h2>
@@ -217,7 +213,7 @@ export default function ListYourRoomC() {
           {/* Offer lines — Pricing Listing pattern + paperwork */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-5">
-              What you get
+              Safe and Simple
             </h2>
             <div>
               <OfferLineItem
@@ -254,13 +250,7 @@ export default function ListYourRoomC() {
               embedLandlordInvite
               collapsedEmail
               embedInviteTitle="List your property"
-              embedInviteSub={
-                <>
-                  Free to list. Pay{' '}
-                  <strong className="font-semibold text-[var(--quni-ink)]">$99 only when you accept</strong> — takes a
-                  few minutes.
-                </>
-              }
+              embedInviteSub="Free to list. Takes just a few minutes."
             />
           </aside>
         </div>
