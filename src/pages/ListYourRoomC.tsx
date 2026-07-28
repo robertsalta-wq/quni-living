@@ -1,9 +1,10 @@
+import { useEffect, useRef, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowRight,
   Banknote,
+  FilePenLine,
   MessageSquareText,
-  Sparkles,
   SpellCheck,
   UserCheck,
 } from 'lucide-react'
@@ -25,7 +26,7 @@ type SmartTool = {
 
 const SMART_TOOLS: SmartTool[] = [
   {
-    Icon: Sparkles,
+    Icon: FilePenLine,
     title: 'Instant listing builder',
     body: 'Get a clear, high-converting room description drafted in seconds.',
   },
@@ -82,9 +83,36 @@ function SubtleCheck() {
 
 /**
  * Editorial invite variant — landlord-benefit copy. Preview-gated.
- * Compare with `/list-your-room-b`.
+ * Compare with `/list-your-room-b` (do not mirror C changes onto B).
  */
 export default function ListYourRoomC() {
+  const signupRef = useRef<HTMLElement | null>(null)
+  const [signupInView, setSignupInView] = useState(true)
+
+  useEffect(() => {
+    const node = signupRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setSignupInView(entry.isIntersecting)
+      },
+      {
+        // Treat as “in view” when a meaningful portion of the card is visible
+        root: null,
+        rootMargin: '0px 0px -12% 0px',
+        threshold: 0.35,
+      },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  function scrollToSignup() {
+    signupRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
@@ -96,10 +124,8 @@ export default function ListYourRoomC() {
 
       <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:py-9">
         <header className="max-w-3xl">
-          <h1 className="font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] !mt-0 !mb-3 md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
-            The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
-            students.
-          </h1>
+          {/* Visual headline lives in the chrome on C; keep an sr-only h1 for document outline. */}
+          <h1 className="sr-only">The safest way to rent your spare room to university students.</h1>
           <p className="!mt-0 !mb-5 max-w-2xl text-[length:var(--text-body-size)] font-medium leading-[var(--text-body-lh)] text-[var(--quni-ink-2)] sm:text-[length:var(--text-body-lg-size)] sm:leading-[var(--text-body-lg-lh)]">
             Set your terms, vet pre-screened student applicants, and get paid weekly with zero admin headaches.
           </p>
@@ -134,8 +160,13 @@ export default function ListYourRoomC() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[min(58dvh,26rem)] md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
-          {/* Smart tools — benefit headlines, no AI jargon pills */}
+        {/*
+          mobile: signup → tools → pricing
+          md+: tools | signup | pricing
+          xl: tools | pricing | signup
+        */}
+        <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:grid-cols-2 md:gap-5 md:pb-0 xl:grid-cols-3 xl:gap-6">
+          {/* Smart tools — functional icons only (no AI sparkles) */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
             <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
@@ -215,8 +246,12 @@ export default function ListYourRoomC() {
             </div>
           </div>
 
-          {/* Signup — docked to bottom on mobile */}
-          <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:max-h-[min(58dvh,26rem)] max-md:overflow-y-auto max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-8px_30px_-12px_rgba(8,6,13,0.2)] max-md:pb-[max(1rem,env(safe-area-inset-bottom))] md:order-2 md:max-h-none md:overflow-visible xl:order-3">
+          {/* Signup — first on mobile (after Quinnie), third column on xl */}
+          <aside
+            ref={signupRef}
+            id="list-your-room-c-signup"
+            className="quni-card order-1 flex h-full min-h-0 flex-col scroll-mt-24 p-6 md:order-2 xl:order-3"
+          >
             <Signup
               embedLandlordInvite
               collapsedEmail
@@ -230,6 +265,27 @@ export default function ListYourRoomC() {
               }
             />
           </aside>
+        </div>
+      </div>
+
+      {/* Mobile sticky CTA — hidden while signup card is on screen */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[var(--quni-line)] bg-[var(--quni-surface-1)]/95 shadow-[0_-8px_24px_-12px_rgba(8,6,13,0.18)] backdrop-blur-md transition-transform duration-200 md:hidden ${
+          signupInView ? 'pointer-events-none translate-y-full' : 'translate-y-0'
+        }`}
+        aria-hidden={signupInView}
+      >
+        <div className="mx-auto flex max-w-site items-center justify-between gap-3 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <p className="min-w-0 text-[length:var(--text-caption-size)] font-medium leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
+            Free to list · $99 on accept
+          </p>
+          <button
+            type="button"
+            onClick={scrollToSignup}
+            className="shrink-0 rounded-lg bg-[var(--quni-coral)] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+          >
+            List Your Property
+          </button>
         </div>
       </div>
     </div>

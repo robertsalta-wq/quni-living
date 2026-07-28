@@ -88,9 +88,12 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
-  /** B keeps the original income tagline in chrome for A/B comparison; C owns its hero on-page. */
+  /** B keeps the original income tagline in chrome for A/B comparison. */
   const inviteBTaglinePath =
     location.pathname === '/list-your-room-b' || location.pathname.startsWith('/list-your-room-b/')
+  /** C puts the safety headline in chrome (scaled for the locked h-11 row). */
+  const inviteCTaglinePath =
+    location.pathname === '/list-your-room-c' || location.pathname.startsWith('/list-your-room-c/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -391,7 +394,9 @@ export default function Header({ embedded = false }: HeaderProps) {
         >
         <div
           className={`min-w-0 ${
-            inviteBTaglinePath || (dashboardMobileChrome && dashboardMobileTitle) ? '' : 'shrink-0'
+            inviteBTaglinePath || inviteCTaglinePath || (dashboardMobileChrome && dashboardMobileTitle)
+              ? ''
+              : 'shrink-0'
           }`}
         >
           {dashboardMobileChrome && dashboardMobileTitle ? (
@@ -412,6 +417,18 @@ export default function Header({ embedded = false }: HeaderProps) {
               <p className="hidden min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:block md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
                 More income from your spare room.{' '}
                 <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+              </p>
+            </div>
+          ) : inviteCTaglinePath ? (
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-2.5 md:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
+              {/* Locked chrome row is h-11 — scale + clamp so Log in stays clear of the headline. */}
+              <p className="min-w-0 font-display text-[11px] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-xs sm:leading-tight md:text-sm md:leading-snug lg:text-[15px] lg:leading-snug">
+                The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
+                students.
               </p>
             </div>
           ) : (
