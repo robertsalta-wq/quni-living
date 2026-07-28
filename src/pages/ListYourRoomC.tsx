@@ -1,22 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  ArrowRight,
   Banknote,
   FilePenLine,
   MessageSquareText,
   SpellCheck,
   UserCheck,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import Signup from './Signup'
 
 /** TODO: replace with final approved Quinnie photo (same asset as `/list-your-room`). */
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
-
-const stepPillClass =
-  'inline-flex items-center rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-0.5 text-[length:var(--text-micro-size)] font-semibold leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]'
 
 type SmartTool = {
   title: string
@@ -52,34 +47,59 @@ const SMART_TOOLS: SmartTool[] = [
   },
 ]
 
-const FREE_UNTIL_ACCEPT = [
-  'ID & enrolment verified',
-  'Phone & email kept private until you accept',
-] as const
+/** Same line-item pattern as `/pricing` landlord Listing column. */
+function OfferLineItem({
+  icon,
+  name,
+  value,
+  description,
+  valueKind,
+}: {
+  icon: ReactNode
+  name: string
+  value: string
+  description: string
+  valueKind: 'coralLg' | 'coralSm'
+}) {
+  const valueCls =
+    valueKind === 'coralLg'
+      ? 'font-lora text-lg font-semibold text-[var(--quni-rust)]'
+      : 'font-lora text-sm font-semibold text-[var(--quni-rust)]'
 
-const FEE_STEPS = ['$0 to List', '$0 to Review', '$99 on Acceptance'] as const
-
-function SubtleCheck() {
   return (
-    <span
-      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--quni-trust-bg)] text-[var(--quni-trust)]"
-      aria-hidden
-    >
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    <div className="mb-[18px] grid grid-cols-[22px_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 last:mb-0">
+      <div
+        className="flex h-5 w-5 shrink-0 items-center justify-center text-[var(--quni-rust)] [&_svg]:h-4 [&_svg]:w-4"
+        aria-hidden
       >
-        <path d="M20 6L9 17l-5-5" />
-      </svg>
-    </span>
+        {icon}
+      </div>
+      <div className="text-sm font-medium text-[var(--quni-ink)]">{name}</div>
+      <div className={`whitespace-nowrap leading-none ${valueCls}`}>{value}</div>
+      <p className="col-span-2 col-start-2 text-[13px] leading-snug text-[var(--quni-ink-4)]">{description}</p>
+    </div>
   )
 }
+
+const HOUSE_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+    <path d="M2 6l6-4 6 4v8H2z" />
+    <path d="M6 14V9h4v5" />
+  </svg>
+)
+
+const CHECK_ICON = (
+  <svg
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3,8 7,12 13,4" />
+  </svg>
+)
 
 /**
  * Editorial invite variant — landlord-benefit copy. Preview-gated.
@@ -194,55 +214,33 @@ export default function ListYourRoomC() {
             </ul>
           </div>
 
-          {/* Pricing & process */}
+          {/* Offer lines — Pricing Listing pattern + paperwork */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
-            <div className="pb-3.5">
-              <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-2.5">
-                Free until you accept.
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {FREE_UNTIL_ACCEPT.map((line) => (
-                  <li
-                    key={line}
-                    className="flex gap-2.5 text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]"
-                  >
-                    <SubtleCheck />
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="border-t border-[var(--quni-line-soft)] py-3.5">
-              <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-2.5">
-                $99 once — when you say yes.
-              </h2>
-              <ol className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                {FEE_STEPS.map((label, i) => (
-                  <li key={label} className="flex items-center gap-1.5 sm:gap-2">
-                    <span className={stepPillClass}>{label}</span>
-                    {i < FEE_STEPS.length - 1 ? (
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--quni-ink-5)]" aria-hidden />
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-2.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
-                Not charged to list, browse, or decline. See{' '}
-                <Link to="/pricing" className="font-semibold text-[var(--quni-coral)] hover:underline">
-                  Pricing
-                </Link>
-                .
-              </p>
-            </div>
-
-            <div className="border-t border-[var(--quni-line-soft)] pt-3.5">
-              <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-1.5">
-                The paperwork signs itself.
-              </h2>
-              <p className="text-sm leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)]">
-                Legally binding NSW tenancy agreements generated and e-signed automatically.
-              </p>
+            <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-5">
+              What you get
+            </h2>
+            <div>
+              <OfferLineItem
+                icon={HOUSE_ICON}
+                name="Listing fee"
+                value="$99.00"
+                description="One-off, only when you accept a tenant. No subscription."
+                valueKind="coralLg"
+              />
+              <OfferLineItem
+                icon={CHECK_ICON}
+                name="Verified renters"
+                value="Included"
+                description="Students and professionals with verified identity."
+                valueKind="coralSm"
+              />
+              <OfferLineItem
+                icon={CHECK_ICON}
+                name="The paperwork signs itself."
+                value="Included"
+                description="Legally binding NSW tenancy agreements generated and e-signed automatically."
+                valueKind="coralSm"
+              />
             </div>
           </div>
 

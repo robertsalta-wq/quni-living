@@ -425,8 +425,8 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
               <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
-              {/* Locked chrome row is h-11 — scale + clamp so Log in stays clear of the headline. */}
-              <p className="min-w-0 font-display text-[11px] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-xs sm:leading-tight md:text-sm md:leading-snug lg:text-[15px] lg:leading-snug">
+              {/* Locked chrome row is h-11 — larger type, clamp to two lines so Log in stays clear. */}
+              <p className="min-w-0 font-display text-xs font-extrabold leading-[1.2] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-sm sm:leading-snug md:text-base md:leading-snug lg:text-lg lg:leading-snug xl:text-xl xl:leading-tight">
                 The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
                 students.
               </p>
