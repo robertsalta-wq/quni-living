@@ -402,7 +402,7 @@ export default function Header({ embedded = false }: HeaderProps) {
           ) : inviteBTaglinePath ? (
             <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
               <SiteBrandLockup />
-              <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-bold leading-snug text-[var(--quni-ink)] sm:text-sm md:text-base">
+              <p className="min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
                 More income from your spare room.{' '}
                 <span className="text-[var(--quni-coral)]">Zero hassle.</span>
               </p>
