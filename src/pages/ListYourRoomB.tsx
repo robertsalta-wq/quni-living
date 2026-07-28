@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import Signup from './Signup'
 import { LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
@@ -9,21 +10,6 @@ const INVITE_ABN_FALLBACK = '65675990968'
 /** TODO: replace with final approved Quinnie photo (same asset as `/list-your-room`). */
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-const PITCH_POINTS = [
-  {
-    title: 'A shortlist, not an inbox.',
-    body: 'ID verification, enrolment checks, and an AI fit assessment land as a shortlist — not forty Flatmates replies from people who ghost.',
-  },
-  {
-    title: 'Fewer empty weeks.',
-    body: 'Campus demand that comes back every semester. Longer stays, fewer gaps between tenants.',
-  },
-  {
-    title: 'The paperwork signs itself.',
-    body: 'Quni determines the legally correct document per rental, generates it, and e-signs it with every party.',
-  },
-] as const
-
 /** Condensed from landlord AI feature set — fits one panel. */
 const AI_FEATURES = [
   'Write or regenerate your listing description',
@@ -31,6 +17,30 @@ const AI_FEATURES = [
   'Suggest weekly rent from your listing',
   'Draft replies to student enquiries',
   'Assess applicant fit before you accept or decline',
+] as const
+
+/** Succinct free → review → $99 story for the invite ad. */
+const FEE_STORY = [
+  {
+    title: 'Free until you accept.',
+    body: 'List your room, use the AI tools, and take booking requests — no subscription. Review name, verification, profile, messages, and AI fit before you decide. Email and phone stay masked until accept.',
+  },
+  {
+    title: '$99 once — when you say yes.',
+    body: (
+      <>
+        Charged once per accepted booking to your saved card — not for listing, browsing, or declining. Amount on{' '}
+        <Link to="/pricing" className="font-semibold text-[var(--quni-coral)] hover:underline">
+          Pricing
+        </Link>
+        . Covers that placement: verified marketplace, AI helpers, and in-platform tenancy docs with e-signing.
+      </>
+    ),
+  },
+  {
+    title: 'You still run rent & bond.',
+    body: 'The tenant pays you directly. On Quni Listing we don’t collect rent or hold bond — disputes and maintenance stay with you.',
+  },
 ] as const
 
 function TickBadge() {
@@ -57,7 +67,7 @@ function TickBadge() {
 
 /**
  * A/B alternative to `/list-your-room`.
- * Quinnie trust in the hero; AI features + pitch + signup. Preview-gated.
+ * Quinnie trust in the hero; AI features + fee story + signup. Preview-gated.
  */
 export default function ListYourRoomB() {
   const entity = getFallbackLegalEntity()
@@ -68,7 +78,7 @@ export default function ListYourRoomB() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your property"
-        description="More income from your spare room. Zero hassle — partner with Quni Living for verified student renters and proper leases."
+        description="More income from your spare room. Zero hassle — free to list until you accept. One-off $99 when you place a tenant."
         canonicalPath="/list-your-room-b"
         noindex
       />
@@ -108,15 +118,15 @@ export default function ListYourRoomB() {
         </header>
 
         {/*
-          mobile: signup → AI → pitch
-          md+: AI | pitch | signup
+          mobile: signup → AI → fee story
+          md+: AI | fee story | signup
         */}
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
-          {/* AI features */}
+          {/* AI features (free on Listing) */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
-            <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Powered by AI</p>
+            <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
-              Tools built for landlords
+              AI tools while you list
             </h2>
             <ul className="flex flex-col gap-2.5">
               {AI_FEATURES.map((line) => (
@@ -131,10 +141,10 @@ export default function ListYourRoomB() {
             </ul>
           </div>
 
-          {/* Pitch points — flat list, no nested cards */}
+          {/* Free → $99 — flat list, no nested cards */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <ul className="flex flex-col">
-              {PITCH_POINTS.map((point, i) => (
+              {FEE_STORY.map((point, i) => (
                 <li
                   key={point.title}
                   className={`py-3.5 ${i === 0 ? 'pt-0' : 'border-t border-[var(--quni-line-soft)]'}`}
@@ -154,8 +164,8 @@ export default function ListYourRoomB() {
               embedInviteTitle="List your property"
               embedInviteSub={
                 <>
-                  Join Quni Living and connect with verified renters. Takes less than{' '}
-                  <strong className="font-semibold text-[var(--quni-ink)]">5 minutes</strong>.
+                  Free to list. Pay <strong className="font-semibold text-[var(--quni-ink)]">$99 only when you accept</strong>{' '}
+                  — takes a few minutes.
                 </>
               }
             />
