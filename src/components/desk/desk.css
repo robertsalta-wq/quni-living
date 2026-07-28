@@ -123,8 +123,9 @@
   }
 }
 
+/* display: none|flex comes from Tailwind (hidden lg:flex) — do not set
+   display here or it overrides `hidden` and the desktop bento stays on mobile. */
 .home-v4-office {
-  display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
