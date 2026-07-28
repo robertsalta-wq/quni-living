@@ -15,9 +15,6 @@ const INVITE_ABN_FALLBACK = '65675990968'
 const ROOM_IMG = '/landlord-invite/room.jpg'
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-const CARD_SHELL =
-  'flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(31,42,68,0.08)] bg-white p-6 shadow-[0_10px_30px_rgba(31,42,68,0.06)]'
-
 /** Sample listing for the live PropertyCard preview — no named places. */
 const SAMPLE_LISTING_BASE = {
   id: 'list-your-room-sample',
@@ -114,10 +111,19 @@ const PITCH_POINTS = [
 function TickBadge() {
   return (
     <span
-      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ECFDF5] text-[#10B981]"
+      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--quni-trust-bg)] text-[var(--quni-trust)]"
       aria-hidden
     >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M20 6L9 17l-5-5" />
       </svg>
     </span>
@@ -141,7 +147,7 @@ export default function ListYourRoom() {
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-5 py-4 md:gap-5 md:px-6 md:py-5 lg:py-6">
         {/* Row 1 — full-width hero */}
         <header className="max-w-3xl">
-          <span className="inline-block rounded-md border border-[#F4D8CF] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.09em] text-[var(--quni-coral-active)]">
+          <span className="inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.09em] text-[var(--quni-coral-active)]">
             For landlords
           </span>
           <h1 className="font-display mt-2.5 text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-[var(--quni-ink)] sm:text-[2.125rem] !mt-2.5 !mb-0">
@@ -160,7 +166,7 @@ export default function ListYourRoom() {
         */}
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.25fr)] xl:gap-6">
           {/* 1. Listing preview */}
-          <div className={`order-2 md:order-1 xl:order-1 ${CARD_SHELL} [&_.h-48]:!h-[136px] [&_.quni-card]:shadow-none [&_.quni-card]:border-0`}>
+          <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1 xl:order-1 [&_.h-48]:!h-[136px] [&_.quni-card]:border-0 [&_.quni-card]:shadow-none">
             <PropertyCard property={sampleListing} staticDisplay />
             <p className="mt-3 text-[12px] leading-snug text-[var(--quni-ink-4)]">
               This is what your room looks like on Quni — photo, price, verified badge and all.
@@ -168,7 +174,7 @@ export default function ListYourRoom() {
           </div>
 
           {/* 2. Quinnie + proof points */}
-          <div className={`order-3 md:order-3 xl:order-2 ${CARD_SHELL}`}>
+          <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <div className="flex items-start gap-3.5">
               {/* TODO: replace with final approved Quinnie photo */}
               <img
@@ -180,16 +186,16 @@ export default function ListYourRoom() {
                 className="h-[88px] w-[88px] shrink-0 rounded-full object-cover object-[center_16%]"
               />
               <div className="min-w-0">
-                <p className="text-[14px] font-medium leading-relaxed text-[#1F2A44]">
+                <p className="text-[14px] font-medium leading-relaxed text-[var(--quni-navy)]">
                   <strong className="font-semibold">Hi, I&apos;m Quinnie.</strong> I built Quni with my partner so a
                   spare room is easy money, not a headache. It takes a few minutes to set up, and you can message me
                   anytime — you&apos;ll get me, not a bot.
                 </p>
-                <p className="mt-2 text-[12.5px] font-semibold text-[#1F2A44]">Quinnie Le, co-founder.</p>
+                <p className="mt-2 text-[12.5px] font-semibold text-[var(--quni-navy)]">Quinnie Le, co-founder.</p>
               </div>
             </div>
 
-            <ul className="mt-5 flex flex-col gap-2.5 border-t border-[rgba(31,42,68,0.08)] pt-5">
+            <ul className="mt-5 flex flex-col gap-2.5 border-t border-[var(--quni-navy-tint)] pt-5">
               {PITCH_POINTS.map((line) => (
                 <li key={line} className="flex gap-2.5 text-[13px] leading-snug text-[var(--quni-ink-2)]">
                   <TickBadge />
@@ -200,7 +206,7 @@ export default function ListYourRoom() {
           </div>
 
           {/* 3. Signup */}
-          <aside className={`order-1 md:order-2 xl:order-3 ${CARD_SHELL} sm:p-6`}>
+          <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 md:order-2 xl:order-3">
             <Signup embedLandlordInvite collapsedEmail />
             <p className="mt-3 text-center text-[11px] text-[var(--quni-ink-5)]">{legalLine}</p>
           </aside>

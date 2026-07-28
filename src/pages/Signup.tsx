@@ -594,7 +594,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
         </div>
 
         {googleButton(
-          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[#FF6F61] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
           { multicolorIcon: true },
         )}
 
