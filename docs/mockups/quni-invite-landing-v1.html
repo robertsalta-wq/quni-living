@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quni — Add your room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap");
+
+:root{
+  --quni-coral:#FF6F61; --quni-coral-hover:#F2604F; --quni-coral-active:#CC4A3C; --quni-coral-tint:rgba(255,111,97,0.08);
+  --quni-verified-surface:#EAF2EC; --quni-verified:#3F6B4E; --quni-verified-border:rgba(63,107,78,0.22); --quni-verified-nameplate:#DDEAE0;
+  --quni-page:#FFFDF8; --quni-surface:#FFFFFF; --quni-ink:#14110E; --quni-ink-2:#3D372F; --quni-ink-3:#6E655A;
+  --quni-line:#DCD6CB; --quni-line-strong:#1F1B16; --quni-ai:#AA3BFF;
+  --font-display:'Lora',Georgia,serif; --font-sans:'Inter',system-ui,sans-serif; --font-footer:'Open Sans',system-ui,sans-serif;
+  --radius:3px; --ease:cubic-bezier(0.2,0,0,1); --dur:200ms;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--quni-page);color:var(--quni-ink-2);font-family:var(--font-sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:-0.01em;color:var(--quni-ink);margin:0 0 8px;}
+a{color:var(--quni-coral-active);text-decoration:none;font-weight:600;}
+a:hover{text-decoration:underline;}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px;}
+.eyebrow{display:inline-block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;color:var(--quni-line-strong);background:var(--quni-page);border:1px solid var(--quni-line);border-radius:var(--radius);padding:7px 11px;}
+.figure{font-variant-numeric:tabular-nums;font-weight:700;color:var(--quni-ink);}
+
+/* header */
+header{background:var(--quni-page);border-bottom:1px solid var(--quni-line);}
+.hbar{display:flex;align-items:center;justify-content:space-between;height:60px;}
+.word{font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--quni-coral);letter-spacing:-0.01em;}
+.hmark{display:inline-flex;align-items:center;gap:8px;}
+.hmark .sub{font-family:var(--font-display);color:var(--quni-ink);font-weight:600;font-size:18px;}
+
+/* buttons */
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--quni-coral);color:var(--quni-ink);border:none;font-family:var(--font-sans);font-weight:700;font-size:15px;padding:13px 20px;border-radius:var(--radius);cursor:pointer;transition:background var(--dur) var(--ease);}
+.btn-primary:hover{background:var(--quni-coral-hover);}
+.btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,111,97,0.35);}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--quni-surface);color:var(--quni-ink);border:1px solid var(--quni-line);font-family:var(--font-sans);font-weight:600;font-size:15px;padding:14px 18px;border-radius:var(--radius);cursor:pointer;transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);}
+.btn-google:hover{border-color:var(--quni-ink);transform:translateY(-1px);}
+.btn-email{width:100%;background:transparent;color:var(--quni-ink);border:1px solid var(--quni-line);font-family:var(--font-sans);font-weight:600;font-size:15px;padding:12px 18px;border-radius:var(--radius);cursor:pointer;margin-top:10px;}
+
+/* sections */
+section{padding:44px 0;}
+.hero{padding-top:40px;padding-bottom:24px;}
+.hi{color:var(--quni-ink-3);font-weight:600;font-size:15px;margin:14px 0 6px;}
+.display{font-size:34px;line-height:1.15;}
+.lede{font-size:16px;line-height:1.55;color:var(--quni-ink-2);max-width:620px;margin:12px 0 0;}
+.lede b{color:var(--quni-ink);}
+
+/* paste panel — primary panel with strong frame */
+.panel{background:var(--quni-surface);border:1px solid var(--quni-line);border-radius:var(--radius);padding:22px;}
+.panel.primary{border:1px solid var(--quni-line-strong);}
+.panel .kick{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.aispark{color:var(--quni-ai);}
+.ptitle{font-family:var(--font-sans);font-weight:600;color:var(--quni-ink);font-size:15px;}
+textarea{width:100%;min-height:120px;resize:vertical;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--quni-ink-2);background:var(--quni-page);border:1px solid var(--quni-line);border-radius:var(--radius);padding:12px 14px;margin:6px 0 12px;}
+textarea:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,111,97,0.35);border-color:var(--quni-coral);}
+.prow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.micro{font-size:13px;color:var(--quni-ink-3);}
+.samplelink{font-size:13px;}
+
+/* preview */
+.preview{margin-top:18px;display:none;}
+.preview.show{display:block;animation:fade var(--dur) var(--ease);}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+.pgrid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
+.fromad{background:var(--quni-page);border:1px dashed var(--quni-line);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--quni-ink-3);line-height:1.55;}
+.fromad .lbl{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;color:var(--quni-ink-3);display:block;margin-bottom:6px;}
+/* listing card */
+.lcard{background:var(--quni-surface);border:1px solid var(--quni-line);border-radius:var(--radius);overflow:hidden;}
+.lphoto{position:relative;height:150px;background:linear-gradient(135deg,#F3 E9 DA,#EAD9BE);background:#F1E6D4;}
+.lphoto svg{position:absolute;inset:0;width:100%;height:100%;}
+.vbadge{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:5px;background:var(--quni-verified-surface);color:var(--quni-verified);border:1px solid var(--quni-verified-border);border-radius:var(--radius);padding:4px 8px;font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+.lbody{padding:12px 14px 14px;}
+.lprice{font-size:22px;font-variant-numeric:tabular-nums;font-weight:700;color:var(--quni-ink);}
+.lprice span{font-size:13px;font-weight:600;color:var(--quni-ink-3);}
+.chip{display:inline-block;font-size:11px;font-weight:600;color:var(--quni-ink-2);border:1px solid var(--quni-line);border-radius:var(--radius);padding:2px 7px;margin-left:8px;vertical-align:2px;}
+.lmeta{color:var(--quni-ink-3);font-size:13px;margin-top:6px;}
+.lfields{margin-top:12px;border-top:1px solid var(--quni-line);padding-top:10px;display:flex;flex-direction:column;gap:6px;}
+.lf{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--quni-ink-2);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--quni-verified);flex:none;}
+.pcap{font-size:13px;color:var(--quni-ink-3);margin-top:12px;}
+
+/* commit block */
+.commit{background:var(--quni-surface);border:1px solid var(--quni-line-strong);border-radius:var(--radius);padding:24px;max-width:460px;}
+.commit h2{font-size:22px;}
+.joinas{font-size:12px;color:var(--quni-ink-3);margin:2px 0 16px;}
+.agree{font-size:12px;color:var(--quni-ink-3);line-height:1.5;margin-top:12px;text-align:center;}
+
+/* ink landlord desk */
+.desk{background:var(--quni-ink);border-radius:var(--radius);padding:28px;color:#F3EFE9;}
+.desk .eyebrow{background:transparent;color:#C9C0B4;border-color:rgba(255,255,255,0.22);}
+.desk h2{color:#FFFFFF;font-size:22px;margin-top:14px;}
+.drow{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-top:1px solid rgba(255,255,255,0.12);}
+.drow:first-of-type{border-top:none;}
+.dtick{color:#C9C0B4;flex:none;margin-top:1px;}
+.drow b{color:#FFFFFF;font-weight:600;}
+.drow .t{font-size:14.5px;line-height:1.5;color:#DED7CC;}
+.desknote{font-size:12px;color:#9C9488;margin-top:14px;}
+
+/* trust panel green */
+.trust{background:var(--quni-verified-surface);border:1px solid var(--quni-verified-border);border-radius:var(--radius);padding:24px;}
+.trust .np{display:inline-block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;color:var(--quni-verified);background:var(--quni-verified-nameplate);border:1px solid var(--quni-verified-border);border-radius:var(--radius);padding:7px 11px;}
+.trow{display:flex;gap:10px;align-items:flex-start;margin-top:14px;}
+.tcheck{color:var(--quni-verified);flex:none;margin-top:1px;}
+.trow .t{font-size:14.5px;color:#2E4636;line-height:1.5;}
+.trow b{color:var(--quni-verified);}
+.legal{font-size:12px;color:#4C6553;margin-top:16px;border-top:1px solid var(--quni-verified-border);padding-top:12px;}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;}
+
+/* footer */
+footer{background:var(--quni-ink);color:#C9C0B4;font-family:var(--font-footer);margin-top:20px;}
+.fbar{display:flex;align-items:center;justify-content:space-between;padding:22px 0;flex-wrap:wrap;gap:12px;}
+.fbar .word{font-size:22px;}
+.fstamp{display:inline-flex;align-items:center;gap:6px;color:#9FC0AB;font-size:12px;font-weight:600;}
+.flinks a{color:#C9C0B4;font-family:var(--font-footer);font-weight:400;text-decoration:underline;text-underline-offset:3px;margin-left:16px;font-size:13px;}
+
+@media(max-width:720px){
+  .pgrid{grid-template-columns:1fr;}
+  .two{grid-template-columns:1fr;}
+  .display{font-size:28px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <span class="hmark"><span class="word">Quni</span></span>
+    <span class="eyebrow">For landlords</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">You're invited · For landlords</span>
+    <h1 class="display">Add your room to Quni — in about a minute.</h1>
+    <p class="lede">You're already advertising it on Facebook. Keep that ad — just add Quni as a <b>second, free shelf</b>. More places your room shows, more chance it fills. You only pay <b>$99 when you actually place a tenant</b>, never before.</p>
+  </div>
+</section>
+
+<!-- PASTE -->
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="panel primary">
+      <div class="kick">
+        <svg class="aispark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/></svg>
+        <span class="ptitle">Start with the ad you already wrote</span>
+      </div>
+      <p class="micro" style="margin-bottom:8px;">Paste your Facebook, Flatmates or Gumtree ad. We'll build your Quni listing from it — you check it before anything goes live.</p>
+      <textarea id="ad" placeholder="Paste your listing text here…"></textarea>
+      <div class="prow">
+        <button class="btn-primary" onclick="build()">Build my listing
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <a href="#" class="samplelink" onclick="sample();return false;">Try it with a sample ad</a>
+        <span class="micro">Nothing goes live until you approve it.</span>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="preview" id="preview">
+        <div class="pgrid">
+          <div class="fromad">
+            <span class="lbl">From your ad</span>
+            <span id="adEcho">Furnished single room for rent in Kingsford, 10 min walk to UNSW. $320/week including bills and wifi. Available early March. Quiet, clean share house. Message me to arrange an inspection.</span>
+          </div>
+          <div>
+            <div class="lcard">
+              <div class="lphoto">
+                <svg viewBox="0 0 320 150" preserveAspectRatio="xMidYMid slice"><rect width="320" height="150" fill="#F1E6D4"/><rect y="104" width="320" height="46" fill="#E7D5B9"/><rect x="196" y="26" width="96" height="60" rx="3" fill="#CBE3F2" stroke="#FFFDF6" stroke-width="5"/><rect x="28" y="70" width="120" height="34" rx="4" fill="#FF8A7A"/><rect x="28" y="60" width="120" height="14" rx="4" fill="#FFF4E6"/></svg>
+                <span class="vbadge">Preview</span>
+              </div>
+              <div class="lbody">
+                <div><span class="lprice">$320 <span>/wk</span></span><span class="chip">Private room</span></div>
+                <div class="lmeta">Kingsford · UNSW</div>
+                <div class="lfields">
+                  <div class="lf"><span class="dot"></span> Furnished · bills included · wifi</div>
+                  <div class="lf"><span class="dot"></span> Available early March</div>
+                  <div class="lf"><span class="dot"></span> Single room in a share house</div>
+                </div>
+              </div>
+            </div>
+            <p class="pcap">Green dots are pulled straight from your ad. Every field is yours to edit before it's live.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMIT + trust side by side -->
+<section style="padding-top:8px;">
+  <div class="wrap two">
+    <div class="commit">
+      <h2>Publish your listing</h2>
+      <p class="joinas">You're joining as a landlord — no forms to sort, we already know.</p>
+      <button class="btn-google">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3 0-5.6-2-6.6-4.8H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.5a7.2 7.2 0 0 1 0-4.6V6.8H1.4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.5 1.8l3.4-3.4A12 12 0 0 0 1.4 6.8l4 3.1C6.4 6.8 9 4.8 12 4.8z"/></svg>
+        Continue with Google to publish
+      </button>
+      <button class="btn-email">Continue with email</button>
+      <p class="agree">By continuing you agree to Quni's <a href="#">Terms</a> and <a href="#">Landlord Service Agreement</a>. Your listing draft is saved to your account.</p>
+    </div>
+
+    <div class="trust">
+      <span class="np">Why it's safe</span>
+      <div class="trow"><span class="tcheck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="t"><b>Every renter is ID- and enrolment-verified</b> before they ever reach you.</span></div>
+      <div class="trow"><span class="tcheck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg></span><span class="t"><b>State-compliant leases</b>, signed in-platform. The right agreement for NSW or QLD.</span></div>
+      <div class="trow"><span class="tcheck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="t"><b>Rent and bond stay yours.</b> Quni is never in the money chain and never holds your bond.</span></div>
+      <p class="legal">Quinnvestments Pty Ltd t/a Quni Living · ABN 65 675 990 968 · Parramatta, NSW</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY / desk -->
+<section style="padding-top:8px;">
+  <div class="wrap">
+    <div class="desk">
+      <span class="eyebrow">What adding Quni actually means</span>
+      <h2>Keep everything you're doing. Just add one more.</h2>
+      <div class="drow"><span class="dtick"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span class="t"><b>Keep your other ads.</b> Facebook, Flatmates, wherever — Quni is a second free shelf, not a replacement. More shelves, more chance your room fills.</span></div>
+      <div class="drow"><span class="dtick"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span class="t"><b>Free to list. $99 once — only when you accept a tenant.</b> No subscription, no listing fee, nothing before you say yes.</span></div>
+      <div class="drow"><span class="dtick"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span class="t"><b>We do the paperwork.</b> Verified renters, the right state lease, e-signed — you review a shortlist that fits, not a flooded inbox.</span></div>
+      <p class="desknote">You're getting this because you're advertising a room right now. This is just the fast way to add it.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fbar">
+    <span class="word">Quni</span>
+    <span class="flinks">
+      <a href="#">How it works</a><a href="#">Pricing</a><a href="#">Contact</a>
+    </span>
+    <span class="fstamp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg> Verified marketplace</span>
+  </div>
+</footer>
+
+<script>
+const SAMPLE = "Furnished single room for rent in Kingsford, 10 min walk to UNSW. $320/week including bills and wifi. Available early March. Quiet, clean share house. Message me to arrange an inspection.";
+function sample(){ document.getElementById('ad').value = SAMPLE; build(); }
+function build(){
+  const v = document.getElementById('ad').value.trim();
+  const echo = document.getElementById('adEcho');
+  if(v) echo.textContent = v;
+  document.getElementById('preview').classList.add('show');
+  document.getElementById('preview').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+</script>
+</body>
+</html>
