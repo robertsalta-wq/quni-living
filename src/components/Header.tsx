@@ -88,6 +88,8 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
+  const inviteBTaglinePath =
+    location.pathname === '/list-your-room-b' || location.pathname.startsWith('/list-your-room-b/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -397,6 +399,14 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
             </>
+          ) : inviteBTaglinePath ? (
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <SiteBrandLockup />
+              <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-bold leading-snug text-[var(--quni-ink)] sm:text-sm md:text-base">
+                More income from your spare room.{' '}
+                <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+              </p>
+            </div>
           ) : (
             <SiteBrandLockup />
           )}

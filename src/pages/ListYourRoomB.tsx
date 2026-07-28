@@ -38,8 +38,8 @@ const FEE_STORY = [
     ),
   },
   {
-    title: 'You still run rent & bond.',
-    body: 'The tenant pays you directly. On Quni Listing we don’t collect rent or hold bond — disputes and maintenance stay with you.',
+    title: 'The paperwork signs itself.',
+    body: 'Quni determines the legally correct document per rental, generates it, and e-signs it with every party.',
   },
 ] as const
 
@@ -88,12 +88,9 @@ export default function ListYourRoomB() {
           <span className="eyebrow inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 !font-bold text-[var(--quni-coral-active)]">
             Landlord partnerships
           </span>
-          <h1 className="font-display mt-3 text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)] !mt-3 !mb-0">
-            More income from your spare room.{' '}
-            <span className="text-[var(--quni-coral)]">Zero hassle.</span>
-          </h1>
+          <h1 className="sr-only">More income from your spare room. Zero hassle.</h1>
 
-          {/* Quinnie — top line under the headline */}
+          {/* Quinnie — top line under the eyebrow */}
           <div className="mt-4 flex items-start gap-3.5">
             {/* TODO: replace with final approved Quinnie photo */}
             <img
