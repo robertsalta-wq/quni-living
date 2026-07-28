@@ -153,13 +153,13 @@ export default function ListYourRoomB() {
       <div className="mx-auto flex max-w-[1240px] flex-col justify-center gap-5 px-5 py-6 md:gap-6 md:px-7 md:py-8 lg:min-h-[calc(100vh-4rem)] lg:py-9">
         {/* Row 1 — full-width hero (same copy as /list-your-room) */}
         <header className="max-w-3xl">
-          <span className="inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.09em] text-[var(--quni-coral-active)]">
+          <span className="eyebrow inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 !font-bold text-[var(--quni-coral-active)]">
             For landlords
           </span>
-          <h1 className="font-display mt-3.5 text-[1.875rem] font-extrabold leading-[1.06] tracking-tight text-[var(--quni-ink)] sm:text-[2.25rem] lg:text-[2.625rem] !mt-3.5 !mb-0">
+          <h1 className="font-display mt-3.5 text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)] !mt-3.5 !mb-0">
             Fill your room with a verified student.
           </h1>
-          <p className="mt-3 max-w-[760px] text-[15px] leading-relaxed text-[var(--quni-ink-3)] sm:text-[17px]">
+          <p className="mt-3 max-w-[760px] text-base leading-[var(--text-body-lh)] text-[var(--quni-ink-3)] sm:text-lg sm:leading-[var(--text-body-lg-lh)]">
             An empty room is rent you&apos;re not earning. Quni fills it —{' '}
             <strong className="font-semibold text-[var(--quni-ink)]">fast, verified, and free until you accept</strong>.
             Keep your Facebook ad running too.
@@ -176,7 +176,7 @@ export default function ListYourRoomB() {
             <div className="p-4 pb-0 sm:p-5 sm:pb-0">
               <PropertyCard property={sampleListing} staticDisplay />
             </div>
-            <p className="mt-2.5 px-4 pb-4 text-[12px] leading-snug text-[var(--quni-ink-4)] sm:px-5 sm:pb-5">
+            <p className="mt-2.5 px-4 pb-4 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)] sm:px-5 sm:pb-5">
               This is what your room looks like on Quni — photo, price, verified badge and all.
             </p>
           </div>
@@ -195,28 +195,26 @@ export default function ListYourRoomB() {
               />
             </div>
             <div className="flex flex-1 flex-col justify-center p-4 sm:p-[18px]">
-              <p className="text-[14px] leading-relaxed text-[var(--quni-ink-3)]">
+              <p className="text-sm leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)]">
                 <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
                 my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
                 message me anytime — you&apos;ll get me, not a bot.
               </p>
-              <p className="font-display mt-3.5 text-[15px] font-bold text-[var(--quni-ink)] !mt-3.5 !mb-0">
-                Quinnie Le
+              <p className="font-display mt-3.5 text-base font-bold text-[var(--quni-ink)] !mt-3.5 !mb-0">Quinnie Le</p>
+              <p className="mt-0.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
+                Co-founder, Quni
               </p>
-              <p className="mt-0.5 text-[12px] text-[var(--quni-ink-4)]">Co-founder, Quni</p>
             </div>
           </div>
 
           {/* 3. Why landlords list */}
           <div className="quni-card order-4 flex h-full min-h-0 flex-col justify-center p-5 md:order-4 xl:order-3">
-            <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--quni-ink-4)]">
-              Why landlords list
-            </p>
+            <p className="eyebrow mb-3.5 !font-bold text-[var(--quni-ink-4)]">Why landlords list</p>
             <ul className="flex flex-col">
               {PITCH_POINTS.map((line, i) => (
                 <li
                   key={line}
-                  className={`flex gap-2.5 py-2.5 text-[14.5px] font-semibold leading-snug text-[var(--quni-ink-2)] ${
+                  className={`flex gap-2.5 py-2.5 text-sm font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)] ${
                     i === 0 ? '' : 'border-t border-[var(--quni-line-soft)]'
                   }`}
                 >
@@ -230,7 +228,9 @@ export default function ListYourRoomB() {
           {/* 4. Signup */}
           <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-[22px] md:order-2 xl:order-4">
             <Signup embedLandlordInvite collapsedEmail />
-            <p className="mt-3.5 text-center text-[10.5px] leading-normal text-[var(--quni-ink-5)]">{legalLine}</p>
+            <p className="mt-3.5 text-center text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-5)]">
+              {legalLine}
+            </p>
           </aside>
         </div>
       </div>

@@ -559,8 +559,10 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
     const showEmailFields = !collapsedEmail || emailFieldsOpen
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-[22px] font-bold text-[var(--quni-ink)] !mt-0 !mb-0">Put your room up</h2>
-        <p className="mt-1 text-[13.5px] text-[var(--quni-ink-4)]">
+        <h2 className="font-display text-2xl font-bold leading-[var(--text-h2-lh)] tracking-[var(--text-h2-track)] text-[var(--quni-ink)] !mt-0 !mb-0">
+          Put your room up
+        </h2>
+        <p className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
           Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few minutes.
         </p>
 
@@ -589,12 +591,12 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
           </div>
         )}
 
-        <div className="mt-4 [&_label]:text-[12.5px] [&_label]:leading-snug [&_label]:text-[var(--quni-ink-4)]">
+        <div className="mt-4 [&_label]:text-[length:var(--text-caption-size)] [&_label]:leading-[var(--text-caption-lh)] [&_label]:text-[var(--quni-ink-4)]">
           <SignupTermsFields {...signupTermsFieldsProps} />
         </div>
 
         {googleButton(
-          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-base font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
           { multicolorIcon: true },
         )}
 
@@ -602,13 +604,13 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
           <button
             type="button"
             onClick={() => setEmailFieldsOpen(true)}
-            className="mt-3 w-full text-center text-[12.5px] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
+            className="mt-3 w-full text-center text-[length:var(--text-caption-size)] font-medium leading-[var(--text-caption-lh)] text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
           >
             or continue with email
           </button>
         ) : (
           <>
-            <p className="mt-3 text-center text-[12px] text-[var(--quni-ink-5)]">
+            <p className="mt-3 text-center text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-5)]">
               {collapsedEmail ? 'or continue with email' : 'or sign up with email'}
             </p>
 
@@ -617,7 +619,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                 <div>
                   <label
                     htmlFor="invite-su-name"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1.5 block text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-ink-2)]"
                   >
                     Full name
                   </label>
@@ -629,13 +631,13 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="invite-su-email"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1.5 block text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-ink-2)]"
                   >
                     Email
                   </label>
@@ -652,7 +654,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     placeholder="you@email.com"
                     aria-invalid={emailFormatError}
                     aria-describedby={emailFormatError ? 'invite-su-email-error' : undefined}
-                    className={`w-full rounded-[9px] border bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
+                    className={`w-full rounded-[9px] border bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
                       emailFormatError
                         ? 'border-red-500 focus:ring-red-400/30'
                         : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-admin-coral/20'
@@ -667,7 +669,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                 <div>
                   <label
                     htmlFor="invite-su-password"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1.5 block text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-ink-2)]"
                   >
                     Password
                   </label>
@@ -680,13 +682,13 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     required
                     minLength={6}
                     placeholder="Create a password"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 w-full rounded-[10px] border border-[var(--quni-line)] bg-transparent py-3 text-[15px] font-semibold text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
+                  className="mt-1 w-full rounded-[10px] border border-[var(--quni-line)] bg-transparent py-3 text-base font-semibold text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
                 >
                   {submitting ? 'Creating account…' : 'Sign up with email'}
                 </button>
