@@ -88,8 +88,11 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
-  const inviteBTaglinePath =
-    location.pathname === '/list-your-room-b' || location.pathname.startsWith('/list-your-room-b/')
+  const inviteTaglinePath =
+    location.pathname === '/list-your-room-b' ||
+    location.pathname.startsWith('/list-your-room-b/') ||
+    location.pathname === '/list-your-room-c' ||
+    location.pathname.startsWith('/list-your-room-c/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -399,7 +402,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
             </>
-          ) : inviteBTaglinePath ? (
+          ) : inviteTaglinePath ? (
             <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
               <SiteBrandLockup />
               <p className="min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">

@@ -81,6 +81,7 @@ const FOCUS_FORM_FLOW_PREFIXES = [
   '/landlord-signup',
   '/list-your-room',
   '/list-your-room-b',
+  '/list-your-room-c',
   '/landlord/property/new',
   '/landlord/property/edit/',
 ] as const
@@ -98,7 +99,9 @@ export function isLandlordInviteMinimalChromePath(pathname: string): boolean {
     p === '/list-your-room' ||
     p.startsWith('/list-your-room/') ||
     p === '/list-your-room-b' ||
-    p.startsWith('/list-your-room-b/')
+    p.startsWith('/list-your-room-b/') ||
+    p === '/list-your-room-c' ||
+    p.startsWith('/list-your-room-c/')
   )
 }
 
