@@ -6,6 +6,7 @@ export type AiRoute =
   | 'draft-enquiry-reply'
   | 'proofread-text'
   | 'student-assessment'
+  | 'extract-listing'
   | 'chat'
   | 'health'
 

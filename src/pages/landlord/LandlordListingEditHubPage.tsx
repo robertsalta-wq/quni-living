@@ -15,11 +15,13 @@ import {
   type ListingHubHealthInput,
 } from '../../lib/listingEditHubHealth'
 import {
+  isExtractorInitiatedDraft,
   patchLandlordPropertyDraftBasic,
   readLandlordPropertyDraftRaw,
   readListingHeadline,
   writeListingHeadline,
 } from '../../lib/listingHubDraft'
+import { HUB_PRIVATE_ROOM_SITE_REQUIRED_MESSAGE } from '../../lib/listingExtractor/types'
 import type { PropertyListingType, RoomType } from '../../lib/listings'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
@@ -161,10 +163,19 @@ export default function LandlordListingEditHubPage() {
       availableFrom: typeof d?.availableFrom === 'string' ? d.availableFrom.slice(0, 10) : '',
       openToNonStudents: Boolean(d?.openToNonStudents),
       propertyListingType:
-        typeof d?.propertyListingType === 'string'
-          ? (d.propertyListingType as PropertyListingType)
-          : 'entire_property',
-      roomType: typeof d?.roomType === 'string' ? (d.roomType as RoomType | '') : 'apartment',
+        d?.propertyListingType === null
+          ? null
+          : typeof d?.propertyListingType === 'string'
+            ? (d.propertyListingType as PropertyListingType)
+            : isExtractorInitiatedDraft(d)
+              ? null
+              : 'entire_property',
+      roomType:
+        typeof d?.roomType === 'string'
+          ? (d.roomType as RoomType | '')
+          : isExtractorInitiatedDraft(d)
+            ? ''
+            : 'apartment',
       isRegisteredRoomingHouse: Boolean(d?.isRegisteredRoomingHouse),
     }
   }, [property, draftTick])
@@ -173,6 +184,9 @@ export default function LandlordListingEditHubPage() {
     setSaving(true)
     setSaveError(null)
     try {
+      if (values.propertyListingType == null) {
+        throw new Error(HUB_PRIVATE_ROOM_SITE_REQUIRED_MESSAGE)
+      }
       writeListingHeadline(propertyId, values.headline)
 
       if (!propertyId) {
