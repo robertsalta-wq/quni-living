@@ -10,7 +10,7 @@ export default function DeskLetterhead({ children, className = '' }: DeskLetterh
   return (
     <p
       className={[
-        'max-w-[370px] font-[family-name:var(--font-serif)] text-[17px] font-normal leading-[1.25] tracking-[-0.02em] text-white text-pretty',
+        'max-w-[370px] font-[family-name:var(--font-serif)] text-lg font-normal leading-[1.25] tracking-[-0.02em] text-white text-pretty',
         className,
       ]
         .filter(Boolean)

@@ -24,8 +24,8 @@ export default function DeskNameplate({
     <div className={['inline-flex max-w-full items-center', className].filter(Boolean).join(' ')}>
       <span
         className={[
-          'whitespace-nowrap text-[10.5px] font-bold uppercase tracking-[0.14em]',
-          onDark ? 'text-white/78' : 'text-[var(--quni-ink-3)]',
+          'eyebrow !font-bold',
+          onDark ? '!text-white/78' : '!text-[var(--quni-ink-3)]',
         ].join(' ')}
       >
         {children}

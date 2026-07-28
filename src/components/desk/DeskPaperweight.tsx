@@ -9,7 +9,7 @@ type DeskPaperweightProps = {
 export default function DeskPaperweight({ children, className = '' }: DeskPaperweightProps) {
   return (
     <div
-      className={['text-[11px] leading-snug text-white/55', className].filter(Boolean).join(' ')}
+      className={['text-xs leading-snug text-white/55', className].filter(Boolean).join(' ')}
     >
       {children}
     </div>

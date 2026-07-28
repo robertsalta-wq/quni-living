@@ -131,7 +131,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
     <div ref={wrapRef} className={['relative z-20', className].filter(Boolean).join(' ')}>
       <div className="overflow-hidden rounded-[12px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)]">
         <form onSubmit={onSubmit} className="flex items-center gap-2 py-0 pl-3.5 pr-1.5">
-          <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral-active)]">
+          <span aria-hidden className="text-base font-extrabold text-[var(--quni-coral-active)]">
             ⌕
           </span>
           <input
@@ -153,11 +153,11 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
             }
             role="combobox"
             autoComplete="off"
-            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-[14px] text-[var(--quni-ink)] outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-[var(--quni-ink)] outline-none"
           />
           <button
             type="submit"
-            className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-3.5 py-1.5 text-[13px] font-extrabold text-[var(--quni-ink)] shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            className="shrink-0 rounded-[9px] bg-[var(--quni-coral)] px-3.5 py-1.5 text-sm font-extrabold text-[var(--quni-ink)] shadow-[0_4px_12px_rgba(255,111,97,0.3)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
           >
             {submitLabel}
           </button>
@@ -173,7 +173,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
               key={chip.faqId}
               type="button"
               onClick={() => onChip(chip.faqId)}
-              className="rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink-3)] transition-colors hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              className="rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1 text-xs font-semibold text-[var(--quni-ink-3)] transition-colors hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               {chip.label}
             </button>
@@ -190,7 +190,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
         >
           {matches.places.length > 0 ? (
             <>
-              <div className="px-4 pt-1.5 pb-1 text-[8.5px] font-extrabold tracking-[0.16em] text-[var(--quni-ink-5)] uppercase">
+              <div className="px-4 pt-1.5 pb-1 text-xs font-extrabold tracking-[0.16em] text-[var(--quni-ink-5)] uppercase">
                 Places
               </div>
               {matches.places.map((place, i) => {
@@ -206,18 +206,18 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => selectPlace(place)}
                     className={[
-                      'flex w-full items-center gap-2.5 px-4 py-2 text-left text-[13px] text-[var(--quni-ink)]',
+                      'flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-[var(--quni-ink)]',
                       active ? 'bg-[var(--quni-coral-tint)]' : 'hover:bg-[var(--quni-surface-2)]',
                     ].join(' ')}
                   >
                     <span
                       aria-hidden
-                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-coral-tint)] text-[10px] font-extrabold text-[var(--quni-coral-active)]"
+                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-coral-tint)] text-xs font-extrabold text-[var(--quni-coral-active)]"
                     >
                       ⌕
                     </span>
                     <span className="min-w-0 flex-1 truncate">{place.label}</span>
-                    <span className="shrink-0 text-[11px] font-semibold text-[var(--quni-ink-5)]">
+                    <span className="shrink-0 text-xs font-semibold text-[var(--quni-ink-5)]">
                       {place.hint}
                     </span>
                   </button>
@@ -228,7 +228,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
 
           {matches.questions.length > 0 ? (
             <>
-              <div className="px-4 pt-1.5 pb-1 text-[8.5px] font-extrabold tracking-[0.16em] text-[var(--quni-ink-5)] uppercase">
+              <div className="px-4 pt-1.5 pb-1 text-xs font-extrabold tracking-[0.16em] text-[var(--quni-ink-5)] uppercase">
                 Questions
               </div>
               {matches.questions.map((item, i) => {
@@ -244,13 +244,13 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => selectQuestion(item)}
                     className={[
-                      'flex w-full items-center gap-2.5 px-4 py-2 text-left text-[13px] text-[var(--quni-ink)]',
+                      'flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-[var(--quni-ink)]',
                       active ? 'bg-[var(--quni-coral-tint)]' : 'hover:bg-[var(--quni-surface-2)]',
                     ].join(' ')}
                   >
                     <span
                       aria-hidden
-                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-verified-surface)] text-[10px] font-extrabold text-[var(--quni-verified)]"
+                      className="inline-flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] bg-[var(--quni-verified-surface)] text-xs font-extrabold text-[var(--quni-verified)]"
                     >
                       ?
                     </span>
@@ -262,13 +262,13 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
           ) : null}
 
           {flat.length === 0 ? (
-            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
+            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-xs text-[var(--quni-ink-5)] italic">
               {noMatchNote
                 ? 'No match yet.'
                 : 'No match yet — pick a place to search, or a question to be answered.'}
             </p>
           ) : (
-            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-[10.5px] text-[var(--quni-ink-5)] italic">
+            <p className="m-0 border-t border-dotted border-[var(--quni-line)] px-4 pt-2 pb-1 font-[family-name:var(--font-serif)] text-xs text-[var(--quni-ink-5)] italic">
               Pick a place to search, or a question to be answered.
             </p>
           )}

@@ -52,7 +52,7 @@ export default function FieldReceptionDesk({
       nameplate={
         <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <QuniLogoHomeLink className="shrink-0 [&_img]:h-7 [&_img]:sm:h-8" />
-          <p className="m-0 min-w-0 flex-1 font-[family-name:var(--font-serif)] text-[14px] leading-snug text-[var(--quni-ink-3)] sm:text-[15px]">
+          <p className="m-0 min-w-0 flex-1 font-[family-name:var(--font-serif)] text-base leading-snug text-[var(--quni-ink-3)]">
             {LETTERHEAD}
           </p>
           {showNameplate ? (

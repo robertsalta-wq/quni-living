@@ -5,7 +5,7 @@ import { formatAustralianAbn } from '../../lib/platformIdentity'
 
 /** Light text on ink footer — --quni-surface-1 for contrast (cream was for coral strip). */
 const linkClass =
-  'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-surface-1)] no-underline [font-variant:small-caps] border-b border-dotted border-[color-mix(in_srgb,var(--quni-surface-1)_55%,transparent)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]'
+  'text-xs font-semibold tracking-[0.03em] text-[var(--quni-surface-1)] no-underline [font-variant:small-caps] border-b border-dotted border-[color-mix(in_srgb,var(--quni-surface-1)_55%,transparent)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]'
 
 type PapersBlockProps = {
   /** Desktop office: denser padding, same clustered letterhead. */
@@ -40,7 +40,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
             className={[
               'font-[family-name:var(--font-display)] font-bold tracking-[-0.02em] text-[var(--quni-surface-1)]',
               'rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
-              compact ? 'text-[18px]' : 'text-[22px]',
+              compact ? 'text-lg' : 'text-2xl',
             ].join(' ')}
             aria-label="Quni home"
           >
@@ -49,7 +49,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
           <span
             className={[
               'font-semibold uppercase text-[color-mix(in_srgb,var(--quni-surface-1)_82%,transparent)]',
-              compact ? 'text-[9px] tracking-[0.06em]' : 'text-[10px] tracking-[0.08em]',
+              compact ? 'text-xs tracking-[0.06em]' : 'text-xs tracking-[0.08em]',
             ].join(' ')}
           >
             {abnLine}
@@ -57,7 +57,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
+          <span className="eyebrow !font-extrabold text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
             The rules
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -77,7 +77,7 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[8.5px] font-extrabold uppercase tracking-[0.16em] text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
+          <span className="eyebrow !font-extrabold text-[color-mix(in_srgb,var(--quni-surface-1)_75%,transparent)]">
             Reach a human
           </span>
           <div className="flex flex-wrap gap-3.5">
@@ -110,12 +110,12 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
             className={[
               'inline-flex items-center gap-1.5 font-extrabold whitespace-nowrap text-[var(--quni-surface-1)]',
               'hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]',
-              compact ? 'text-[11px]' : 'text-xs',
+              compact ? 'text-xs' : 'text-xs',
             ].join(' ')}
           >
             <span
               aria-hidden
-              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-verified)] text-[10px] font-black text-[var(--quni-verified)]"
+              className="inline-flex h-[17px] w-[17px] rotate-[-5deg] items-center justify-center rounded-[3px] border-[1.4px] border-[var(--quni-verified)] text-xs font-black text-[var(--quni-verified)]"
             >
               ✓
             </span>

@@ -13,12 +13,13 @@ import './desk.css'
 
 /** Neutral check + phrase on the ink desk (no nested white cards). */
 const TICK_CLASS =
-  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-white/55'
+  'mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-sm font-bold text-white/55'
 
-const BEAT_TEXT = 'flex gap-2.5 text-[13px] leading-snug text-white/85'
+const BEAT_TEXT =
+  'flex gap-2.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/85'
 
 const SECONDARY_DESK_LINK =
-  'text-[12.5px] font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
+  'text-sm font-semibold text-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]'
 
 const TILES = [
   {
@@ -71,14 +72,14 @@ function ImageTiles({ open }: { open: boolean }) {
             open ? 'flex-col items-center text-center' : 'items-center',
           ].join(' ')}
         >
-          <span aria-hidden className="text-[12px] font-bold text-white/55">
+          <span aria-hidden className="text-sm font-bold text-white/55">
             ✓
           </span>
           <div className={open ? 'flex flex-col items-center' : 'flex min-w-0 flex-col'}>
-            <span className="text-[12px] font-bold text-white/85">{tile.word}</span>
+            <span className="text-sm font-bold text-white/85">{tile.word}</span>
             <span
               className={[
-                'text-[10.5px] font-medium leading-snug text-white/55',
+                'text-xs font-medium leading-snug text-white/55',
                 open ? 'mt-1 block' : 'hidden',
               ].join(' ')}
             >
@@ -94,7 +95,9 @@ function ImageTiles({ open }: { open: boolean }) {
 function FeeRow({ label, figure }: { label: string; figure: string }) {
   return (
     <li className="flex items-baseline justify-between gap-3 border-b border-white/15 py-2 last:border-b-0">
-      <span className="text-[13px] text-white/70">{label}</span>
+      <span className="text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/70">
+        {label}
+      </span>
       <span className="shrink-0 font-[family-name:var(--font-sans)] text-base font-bold tabular-nums text-white">
         {figure}
       </span>
@@ -116,7 +119,7 @@ function DrawerBody({ listingFeeDisplay, open }: { listingFeeDisplay: string; op
               applicants and drafts the lease.
             </span>
           </li>
-          <li className="text-[13px] leading-snug text-white/70">
+          <li className="text-sm leading-snug text-white/70">
             Free to list. One $99 fee, only if you accept someone. No lock-in — leave any time.
           </li>
           <li className={BEAT_TEXT}>
@@ -191,12 +194,7 @@ export default function LandlordDeskThin({
   const letterhead = (
     <DeskLetterhead>
       Your spare room could be{' '}
-      <span
-        className={[
-          'font-bold text-[var(--quni-coral-active)]',
-          dense ? 'text-[18px]' : 'text-[22px]',
-        ].join(' ')}
-      >
+      <span className="text-lg font-bold text-[var(--quni-coral-active)]">
         {formatRentFigure(rent)}
       </span>{' '}
       a week — verified student, paperwork done.
@@ -204,7 +202,7 @@ export default function LandlordDeskThin({
   )
 
   const letterheadMobile = (
-    <p className="font-[family-name:var(--font-sans)] text-[14.5px] leading-snug text-white">
+    <p className="font-[family-name:var(--font-sans)] text-base leading-snug text-white">
       List free ·{' '}
       <span className="font-bold text-[var(--quni-coral-active)]">{listingFeeDisplay}</span> on
       accept
@@ -257,7 +255,7 @@ export default function LandlordDeskThin({
             HOMEOWNERS & LANDLORDS
           </DeskNameplate>
           <div className="min-w-0 flex-1">{letterheadMobile}</div>
-          <span aria-hidden className="text-[14px] text-white">
+          <span aria-hidden className="text-sm text-white">
             {railExpanded ? '⊖' : '⊕'}
           </span>
         </button>
