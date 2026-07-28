@@ -391,7 +391,11 @@ export default function Header({ embedded = false }: HeaderProps) {
               : 'grid-cols-[auto_minmax(0,1fr)_auto]'
           }`}
         >
-        <div className="min-w-0 shrink-0">
+        <div
+          className={`min-w-0 ${
+            inviteTaglinePath || (dashboardMobileChrome && dashboardMobileTitle) ? '' : 'shrink-0'
+          }`}
+        >
           {dashboardMobileChrome && dashboardMobileTitle ? (
             <>
               <div className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-2">
@@ -403,9 +407,12 @@ export default function Header({ embedded = false }: HeaderProps) {
               </div>
             </>
           ) : inviteTaglinePath ? (
-            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-              <SiteBrandLockup />
-              <p className="min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              {/* Display tagline needs room — hide in the locked mobile chrome row; pages show it below. */}
+              <p className="hidden min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:block md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
                 More income from your spare room.{' '}
                 <span className="text-[var(--quni-coral)]">Zero hassle.</span>
               </p>

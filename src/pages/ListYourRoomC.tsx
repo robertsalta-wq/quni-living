@@ -96,7 +96,11 @@ export default function ListYourRoomC() {
 
       <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:py-9">
         <header className="max-w-3xl">
-          <h1 className="sr-only">More income from your spare room. Zero hassle.</h1>
+          {/* Mobile: full headline under chrome (header row is height-locked). Desktop: in header. */}
+          <h1 className="font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] !mt-0 !mb-4 md:sr-only">
+            More income from your spare room.{' '}
+            <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+          </h1>
 
           <div className="flex items-start gap-3.5">
             <div className="relative h-20 w-20 shrink-0">
@@ -128,7 +132,7 @@ export default function ListYourRoomC() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
+        <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[min(58dvh,26rem)] md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
           {/* Smart tools — benefit headlines, no AI jargon pills */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
             <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
@@ -209,8 +213,8 @@ export default function ListYourRoomC() {
             </div>
           </div>
 
-          {/* Signup */}
-          <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 md:order-2 xl:order-3">
+          {/* Signup — docked to bottom on mobile */}
+          <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:max-h-[min(58dvh,26rem)] max-md:overflow-y-auto max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-8px_30px_-12px_rgba(8,6,13,0.2)] max-md:pb-[max(1rem,env(safe-area-inset-bottom))] md:order-2 md:max-h-none md:overflow-visible xl:order-3">
             <Signup
               embedLandlordInvite
               collapsedEmail
