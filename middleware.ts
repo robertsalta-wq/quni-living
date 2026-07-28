@@ -2,6 +2,10 @@ import { next, rewrite } from '@vercel/functions'
 import { isSocialCrawler } from './api/lib/socialCrawler.js'
 import { isKnownAppPath, isStaticAssetPath } from './src/lib/knownRoutes.js'
 import { isDeskShellGatedPath, resolveDeskShellEnabled } from './src/lib/deskShellCore.js'
+import {
+  isListYourRoomGatedPath,
+  resolveListYourRoomEnabled,
+} from './src/lib/listYourRoomGateCore.js'
 
 export const config = {
   matcher: [
@@ -18,6 +22,16 @@ function isDeskShellEnabledOnEdge(): boolean {
   const override =
     process.env.DESK_SHELL_ENABLED ?? process.env.VITE_DESK_SHELL_ENABLED ?? ''
   return resolveDeskShellEnabled({
+    override,
+    vercelEnv: process.env.VERCEL_ENV,
+    treatUnknownAsEnabled: false,
+  })
+}
+
+function isListYourRoomEnabledOnEdge(): boolean {
+  const override =
+    process.env.LIST_YOUR_ROOM_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_ENABLED ?? ''
+  return resolveListYourRoomEnabled({
     override,
     vercelEnv: process.env.VERCEL_ENV,
     treatUnknownAsEnabled: false,
@@ -42,6 +56,18 @@ export default async function middleware(request: Request): Promise<Response> {
   // Desk-shell gated routes: Production → temporary redirect (302, never 301).
   // Preview (flag ON) falls through to the desk page at the same URL.
   if (isDeskShellGatedPath(pathname) && !isDeskShellEnabledOnEdge()) {
+    const dest = new URL('/services/landlord-partnerships', url.origin)
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: dest.toString(),
+        'Cache-Control': 'private, no-store',
+      },
+    })
+  }
+
+  // Landlord invite landing (`/list-your-room`): Preview + Production ON (go-live).
+  if (isListYourRoomGatedPath(pathname) && !isListYourRoomEnabledOnEdge()) {
     const dest = new URL('/services/landlord-partnerships', url.origin)
     return new Response(null, {
       status: 302,
