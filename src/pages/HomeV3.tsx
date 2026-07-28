@@ -144,7 +144,7 @@ export default function HomeV3() {
       />
 
       {/* Desktop — mock grid: Reception 2-col above Listings; Landlord tall right */}
-      <div className="desk-office relative hidden flex-1 flex-col px-3 py-2 md:flex lg:px-3.5">
+      <div className="desk-office relative hidden flex-1 flex-col px-3 py-2 lg:flex lg:px-3.5">
         <Link
           to="/login"
           className="absolute top-3 right-5 z-[15] rounded-full border border-[var(--quni-line)] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink)] shadow-[var(--shadow-1)] hover:border-[var(--quni-coral-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
@@ -242,7 +242,7 @@ export default function HomeV3() {
       </div>
 
       {/* Mobile: Reception first (field included), then Listings filters/cards, then rails */}
-      <div className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-6 md:hidden">
+      <div className="flex flex-1 flex-col gap-3 px-4 pt-4 pb-6 lg:hidden">
         <div className="flex items-center justify-end gap-3">
           <Link
             to="/login"
