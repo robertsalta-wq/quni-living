@@ -89,18 +89,20 @@ export default function ListYourRoomC() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your property"
-        description="More income from your spare room. Zero hassle — free to list until you accept. One-off $99 when you place a tenant."
+        description="The safest way to rent your spare room to university students. Set your terms, vet pre-screened applicants, and get paid weekly — free to list until you accept."
         canonicalPath="/list-your-room-c"
         noindex
       />
 
       <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:py-9">
         <header className="max-w-3xl">
-          {/* Mobile: full headline under chrome (header row is height-locked). Desktop: in header. */}
-          <h1 className="font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] !mt-0 !mb-4 md:sr-only">
-            More income from your spare room.{' '}
-            <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+          <h1 className="font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] !mt-0 !mb-3 md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
+            The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
+            students.
           </h1>
+          <p className="!mt-0 !mb-5 max-w-2xl text-[length:var(--text-body-size)] font-medium leading-[var(--text-body-lh)] text-[var(--quni-ink-2)] sm:text-[length:var(--text-body-lg-size)] sm:leading-[var(--text-body-lg-lh)]">
+            Set your terms, vet pre-screened student applicants, and get paid weekly with zero admin headaches.
+          </p>
 
           <div className="flex items-start gap-3.5">
             <div className="relative h-20 w-20 shrink-0">
