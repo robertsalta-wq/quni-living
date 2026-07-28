@@ -102,7 +102,7 @@ export default function UniversitiesDesk({
         ].join(' ')}
       >
         <DeskNameplate variant={nameplateVariant}>FOR UNIVERSITIES</DeskNameplate>
-        <p className="m-0 text-base font-semibold leading-snug text-[var(--quni-ink)]">
+        <p className="m-0 text-sm font-semibold leading-snug text-[var(--quni-ink)]">
           {letterhead}
         </p>
         <button

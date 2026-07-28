@@ -50,10 +50,9 @@ export default function Desk({
   return (
     <article
       className={[
-        'desk-shell desk-settle group flex min-h-0 w-full flex-col gap-2.5 overflow-visible rounded-[var(--radius-lg)] p-4',
+        'desk-shell desk-settle group flex h-auto min-h-0 w-full flex-col gap-2.5 overflow-visible rounded-[var(--radius-lg)] p-4',
         'shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-standard)]',
         'hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]',
-        '[contain:layout_paint]',
         toneClass[tone],
         className,
       ]

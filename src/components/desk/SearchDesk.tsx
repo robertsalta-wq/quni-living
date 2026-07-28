@@ -49,7 +49,7 @@ function FactHeadline({ text }: { text: string }) {
   }, [text])
 
   return (
-    <p className="m-0 min-w-0 font-[family-name:var(--font-serif)] text-lg font-bold leading-snug tracking-[-0.01em] text-[var(--quni-ink)]">
+    <p className="m-0 min-w-0 font-[family-name:var(--font-serif)] text-base font-bold leading-snug tracking-[-0.01em] text-[var(--quni-ink)]">
       {parts.map((p) => (
         <span key={p.key} className={p.coral ? 'text-[var(--quni-coral-active)]' : undefined}>
           {p.t}
@@ -382,7 +382,7 @@ export default function SearchDesk({
                           {listingTag(p)}
                         </span>
                       </div>
-                      <span className="truncate text-sm text-[var(--quni-ink-4)]">
+                      <span className="truncate text-xs text-[var(--quni-ink-4)]">
                         {p.suburb || 'Sydney'}
                         {p.universities?.name ? ` · ${p.universities.name}` : ''}
                       </span>

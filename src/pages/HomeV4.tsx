@@ -175,13 +175,13 @@ export default function HomeV4() {
                   className="min-h-full flex-1"
                 />
               </div>
-              <div className="home-v4-area-landlord flex min-h-0 flex-col self-stretch">
+              <div className="home-v4-area-landlord flex min-h-0 flex-col self-start">
                 <LandlordDeskThin
                   onDrawerOpenChange={setLandlordDrawerOpen}
                   dense
                   nameplateVariant={plates.landlord}
                   deskAnswer={answerFor('landlord')}
-                  className="min-h-full flex-1"
+                  className="h-auto w-full"
                 />
               </div>
             </div>

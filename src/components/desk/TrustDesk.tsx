@@ -58,14 +58,14 @@ export default function TrustDesk({
       ) : null}
       <div className="flex flex-col gap-0.5">
         {TRUST_LINES.map((t) => (
-          <div key={t} className="flex items-center gap-1.5">
+          <div key={t} className="flex items-start gap-1.5">
             <span
               aria-hidden
-              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-sm font-bold text-[var(--quni-verified)]"
+              className="mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-sm font-bold leading-none text-[var(--quni-verified)]"
             >
               ✓
             </span>
-            <span className="text-base font-medium leading-snug text-[var(--quni-ink-2)]">
+            <span className="text-sm font-medium leading-snug text-[var(--quni-ink-2)]">
               {t}
             </span>
           </div>

@@ -192,13 +192,13 @@ export default function HomeV3() {
                   className="min-h-full flex-1"
                 />
               </div>
-              <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
+              <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-start">
                 <LandlordDesk
                   onDrawerOpenChange={setLandlordDrawerOpen}
                   dense
                   nameplateVariant={plates.landlord}
                   deskAnswer={answerFor('landlord')}
-                  className="min-h-full flex-1"
+                  className="h-auto w-full"
                 />
               </div>
             </div>

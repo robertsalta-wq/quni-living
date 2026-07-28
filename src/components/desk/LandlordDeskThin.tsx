@@ -282,7 +282,7 @@ export default function LandlordDeskThin({
   return (
     <Desk
       tone="ink"
-      className={['min-h-full', dense ? '!gap-1.5 !p-2.5' : '', className].filter(Boolean).join(' ')}
+      className={['h-auto w-full', dense ? '!gap-1.5 !p-2.5' : '', className].filter(Boolean).join(' ')}
       nameplate={
         <DeskNameplate
           variant={nameplateVariant}

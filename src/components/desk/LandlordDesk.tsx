@@ -152,8 +152,8 @@ export default function LandlordDesk({
     return (
       <article
         className={[
-          'desk-shell desk-settle overflow-hidden rounded-[var(--radius-lg)] bg-[var(--quni-ink)] text-white/78',
-          'shadow-[var(--shadow-1)] [contain:layout_paint]',
+          'desk-shell desk-settle overflow-visible rounded-[var(--radius-lg)] bg-[var(--quni-ink)] text-white/78',
+          'shadow-[var(--shadow-1)]',
           answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
           className,
         ]
@@ -209,7 +209,7 @@ export default function LandlordDesk({
     <Desk
       tone="ink"
       className={[
-        'min-h-full',
+        'h-auto w-full',
         dense ? '!gap-1.5 !p-2.5' : '',
         answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,

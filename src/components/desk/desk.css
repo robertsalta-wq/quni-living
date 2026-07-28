@@ -111,9 +111,12 @@
 
 @media (min-width: 1024px) {
   .home-v4-page {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
+    /* Floor at one screen; grow when landlord (or other) content needs height. */
+    min-height: 100dvh;
+    height: auto;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .home-v4-page.is-unlocked {
@@ -129,7 +132,7 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-v4-page.is-unlocked .home-v4-office {
@@ -141,7 +144,7 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-v4-page.is-unlocked .home-v4-frame {
@@ -154,7 +157,7 @@
   flex: 1;
   flex-direction: column;
   gap: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-v4-page.is-unlocked .home-v4-shell {
@@ -169,7 +172,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-v4-area-reception,
@@ -185,15 +188,7 @@
 }
 
 .home-v4-area-landlord {
-  overflow: auto;
-}
-
-.home-v4-bot {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: stretch;
+  overflow: visible;
 }
 
 @media (min-width: 1024px) {
@@ -204,8 +199,10 @@
       'search search landlord';
     /* Thin landlord column at rest (renter yields when open). */
     grid-template-columns: 1.15fr 1.15fr 0.7fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(min-content, 1fr);
+    align-items: start;
     transition: grid-template-columns var(--dur-base) var(--ease-standard);
+    overflow: visible;
   }
 
   .home-v4-top.is-ll-open {
@@ -222,10 +219,15 @@
 
   .home-v4-area-search {
     grid-area: search;
+    align-self: stretch;
+    min-height: 0;
   }
 
   .home-v4-area-landlord {
     grid-area: landlord;
+    align-self: start;
+    overflow: visible;
+    height: auto;
   }
 
   .home-v4-page.is-unlocked .home-v4-area-search {

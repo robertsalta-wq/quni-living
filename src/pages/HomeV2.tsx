@@ -152,10 +152,10 @@ export default function HomeV2() {
                 className="min-h-full flex-1"
               />
             </div>
-            <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-stretch">
+            <div style={{ gridArea: 'landlord' }} className="flex min-h-0 flex-col self-start">
               <LandlordDesk
                 onDrawerOpenChange={setLandlordDrawerOpen}
-                className="min-h-full flex-1"
+                className="h-auto w-full"
               />
             </div>
             <div style={{ gridArea: 'uni' }} className="flex min-h-0 flex-col self-stretch">

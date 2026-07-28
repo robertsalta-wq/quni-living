@@ -60,21 +60,21 @@ export default function AccountDesk({
     loggedIn ? (
       <Link
         to={dashboardTo}
-        className="w-fit text-base font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="w-fit text-sm font-semibold text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Welcome back, {name} → your desk.
       </Link>
     ) : (
       <Link
         to="/login"
-        className="w-fit text-base font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+        className="w-fit text-sm font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
       >
         Sign in.
       </Link>
     )
   ) : loggedIn ? (
     <>
-      <p className="m-0 text-base font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
+      <p className="m-0 text-sm font-semibold text-[var(--quni-ink)]">Welcome back, {name}.</p>
       <Link
         to={dashboardTo}
         className="w-fit text-sm font-semibold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
