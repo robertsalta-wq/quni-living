@@ -2,9 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   ArrowRight,
   Banknote,
-  FileSignature,
   MessageSquareText,
-  ShieldCheck,
   Sparkles,
   SpellCheck,
   UserCheck,
@@ -12,55 +10,60 @@ import {
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import Signup from './Signup'
-import { LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
-import { formatAustralianAbn } from '../lib/platformIdentity'
-
-/** Interim ABN for invite card until public_legal_entity always supplies it. */
-const INVITE_ABN_FALLBACK = '65675990968'
 
 /** TODO: replace with final approved Quinnie photo (same asset as `/list-your-room`). */
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-const pillClass =
+const stepPillClass =
   'inline-flex items-center rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-0.5 text-[length:var(--text-micro-size)] font-semibold leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]'
-
-const pillTrustClass =
-  'inline-flex items-center rounded-full border border-[var(--quni-trust)]/25 bg-[var(--quni-trust-bg)] px-2.5 py-0.5 text-[length:var(--text-micro-size)] font-semibold leading-[var(--text-micro-lh)] text-[var(--quni-trust)]'
-
-const pillCoralClass =
-  'inline-flex items-center rounded-full border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-0.5 text-[length:var(--text-micro-size)] font-semibold leading-[var(--text-micro-lh)] text-[var(--quni-coral-active)]'
 
 type AiFeature = {
   label: string
   Icon: LucideIcon
-  badge?: string
 }
 
 const AI_FEATURES: AiFeature[] = [
-  { label: 'Write or regenerate your listing description', Icon: Sparkles, badge: 'AI Draft' },
+  { label: 'Write or regenerate your listing description', Icon: Sparkles },
   { label: 'Proofread and polish listing copy', Icon: SpellCheck },
-  { label: 'Suggest weekly rent from your listing', Icon: Banknote, badge: '$320/wk estimate' },
+  { label: 'Suggest weekly rent from your listing', Icon: Banknote },
   { label: 'Draft replies to student enquiries', Icon: MessageSquareText },
-  { label: 'Assess applicant fit before you accept or decline', Icon: UserCheck, badge: 'AI Fit' },
+  { label: 'Assess applicant fit before you accept or decline', Icon: UserCheck },
 ]
 
-const REVIEW_BADGES = ['ID Verified', 'Contact Info Masked', 'AI Fit Score'] as const
-
-const FEE_STEPS = [
-  { label: '$0 to List' },
-  { label: '$0 to Review' },
-  { label: '$99 on Acceptance' },
+const FREE_UNTIL_ACCEPT = [
+  'ID & enrolment verified',
+  'Phone & email kept private until you accept',
 ] as const
 
+const FEE_STEPS = ['$0 to List', '$0 to Review', '$99 on Acceptance'] as const
+
+function SubtleCheck() {
+  return (
+    <span
+      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--quni-trust-bg)] text-[var(--quni-trust)]"
+      aria-hidden
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 6L9 17l-5-5" />
+      </svg>
+    </span>
+  )
+}
+
 /**
- * Visual-scannable A/B/C variant of `/list-your-room-b`.
- * Same copy bones; icons, pills, and a fee flow instead of dense paragraphs. Preview-gated.
+ * Editorial invite variant — leaner than the first C pass. Preview-gated.
+ * Compare with `/list-your-room-b`.
  */
 export default function ListYourRoomC() {
-  const entity = getFallbackLegalEntity()
-  const abn = entity.abn.trim() || INVITE_ABN_FALLBACK
-  const legalLine = `${entity.legalName.trim() || LEGAL_ENTITY_NAME} t/a Quni Living · ABN ${formatAustralianAbn(abn)} · ${entity.registeredState}`
-
   return (
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
@@ -105,14 +108,14 @@ export default function ListYourRoomC() {
         </header>
 
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-3 xl:gap-6">
-          {/* AI features */}
+          {/* AI features — icons only, no pills */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
             <p className="eyebrow mb-3 !font-bold text-[var(--quni-coral-active)]">Included free</p>
             <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
               AI tools while you list
             </h2>
             <ul className="flex flex-col gap-3">
-              {AI_FEATURES.map(({ label, Icon, badge }) => (
+              {AI_FEATURES.map(({ label, Icon }) => (
                 <li key={label} className="flex gap-3">
                   <span
                     className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--quni-coral-soft)] text-[var(--quni-coral-active)]"
@@ -120,33 +123,31 @@ export default function ListYourRoomC() {
                   >
                     <Icon className="h-4 w-4" strokeWidth={2.25} />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
-                      {label}
-                    </p>
-                    {badge ? (
-                      <span className={`${pillCoralClass} mt-1.5`}>{badge}</span>
-                    ) : null}
-                  </div>
+                  <p className="min-w-0 flex-1 text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
+                    {label}
+                  </p>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Pricing & process — visual */}
+          {/* Pricing & process — editorial */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <div className="pb-3.5">
               <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-2.5">
                 Free until you accept.
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {REVIEW_BADGES.map((badge) => (
-                  <span key={badge} className={pillTrustClass}>
-                    <ShieldCheck className="mr-1 h-3 w-3" aria-hidden strokeWidth={2.5} />
-                    {badge}
-                  </span>
+              <ul className="flex flex-col gap-2">
+                {FREE_UNTIL_ACCEPT.map((line) => (
+                  <li
+                    key={line}
+                    className="flex gap-2.5 text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]"
+                  >
+                    <SubtleCheck />
+                    <span>{line}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             <div className="border-t border-[var(--quni-line-soft)] py-3.5">
@@ -154,9 +155,9 @@ export default function ListYourRoomC() {
                 $99 once — when you say yes.
               </h2>
               <ol className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                {FEE_STEPS.map((step, i) => (
-                  <li key={step.label} className="flex items-center gap-1.5 sm:gap-2">
-                    <span className={i === FEE_STEPS.length - 1 ? pillCoralClass : pillClass}>{step.label}</span>
+                {FEE_STEPS.map((label, i) => (
+                  <li key={label} className="flex items-center gap-1.5 sm:gap-2">
+                    <span className={stepPillClass}>{label}</span>
                     {i < FEE_STEPS.length - 1 ? (
                       <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--quni-ink-5)]" aria-hidden />
                     ) : null}
@@ -173,25 +174,16 @@ export default function ListYourRoomC() {
             </div>
 
             <div className="border-t border-[var(--quni-line-soft)] pt-3.5">
-              <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-2.5">
+              <h2 className="font-display text-lg font-bold text-[var(--quni-ink)] !mt-0 !mb-1.5">
                 The paperwork signs itself.
               </h2>
-              <div className="flex items-start gap-3">
-                <span
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--quni-navy-tint)] text-[var(--quni-navy)]"
-                  aria-hidden
-                >
-                  <FileSignature className="h-5 w-5" strokeWidth={2} />
-                </span>
-                <div className="flex min-w-0 flex-wrap gap-2">
-                  <span className={pillClass}>Legally Binding NSW Agreement</span>
-                  <span className={pillTrustClass}>Auto E-Signed</span>
-                </div>
-              </div>
+              <p className="text-sm leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)]">
+                Legally binding NSW tenancy agreements generated and e-signed automatically.
+              </p>
             </div>
           </div>
 
-          {/* Signup */}
+          {/* Signup — legal entity lives in FocusFormLegalStrip footer */}
           <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 md:order-2 xl:order-3">
             <Signup
               embedLandlordInvite
@@ -205,9 +197,6 @@ export default function ListYourRoomC() {
                 </>
               }
             />
-            <p className="mt-3 text-center text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-5)]">
-              {legalLine}
-            </p>
           </aside>
         </div>
       </div>
