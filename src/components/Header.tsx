@@ -88,6 +88,9 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
+  /** B keeps the original income tagline in chrome for A/B comparison; C owns its hero on-page. */
+  const inviteBTaglinePath =
+    location.pathname === '/list-your-room-b' || location.pathname.startsWith('/list-your-room-b/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -388,7 +391,7 @@ export default function Header({ embedded = false }: HeaderProps) {
         >
         <div
           className={`min-w-0 ${
-            dashboardMobileChrome && dashboardMobileTitle ? '' : 'shrink-0'
+            inviteBTaglinePath || (dashboardMobileChrome && dashboardMobileTitle) ? '' : 'shrink-0'
           }`}
         >
           {dashboardMobileChrome && dashboardMobileTitle ? (
@@ -401,6 +404,16 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
             </>
+          ) : inviteBTaglinePath ? (
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              <p className="hidden min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:block md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
+                More income from your spare room.{' '}
+                <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+              </p>
+            </div>
           ) : (
             <SiteBrandLockup />
           )}
