@@ -15,6 +15,7 @@ import {
   dashboardMobileSectionTitle,
   isDashboardMobileChromePath,
 } from '../lib/dashboardMobileChrome'
+import { isLandlordInviteMinimalChromePath } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
 import AccountAvatar, {
@@ -86,6 +87,7 @@ export default function Header({ embedded = false }: HeaderProps) {
   const isMobile = useIsMobile()
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
+  const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -402,8 +404,8 @@ export default function Header({ embedded = false }: HeaderProps) {
 
         <div
           className={`flex min-w-0 items-center justify-center ${
-            dashboardMobileChrome ? 'max-sm:hidden' : ''
-          }`}
+            dashboardMobileChrome || inviteMinimalChrome ? 'max-sm:hidden' : ''
+          } ${inviteMinimalChrome ? 'hidden' : ''}`}
         >
           <nav
             className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
@@ -444,6 +446,16 @@ export default function Header({ embedded = false }: HeaderProps) {
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
+          ) : inviteMinimalChrome ? (
+            user ? (
+              <Link to={dashboardHref} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                Dashboard
+              </Link>
+            ) : (
+              <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                Log in
+              </Link>
+            )
           ) : user ? (
             <>
               {role === 'admin' && (
@@ -593,8 +605,8 @@ export default function Header({ embedded = false }: HeaderProps) {
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
             className={`inline-flex md:hidden h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 ${
-              dashboardMobileChrome ? 'max-sm:hidden' : ''
-            }`}
+              dashboardMobileChrome || inviteMinimalChrome ? 'max-sm:hidden' : ''
+            } ${inviteMinimalChrome ? 'hidden' : ''}`}
             aria-expanded={mobileNavOpen}
             aria-haspopup="true"
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
