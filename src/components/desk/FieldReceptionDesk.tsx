@@ -42,9 +42,8 @@ export default function FieldReceptionDesk({
     <Desk
       tone="paper"
       className={[
-        'desk-settle !gap-1.5 !p-3 border border-[var(--quni-line)] bg-[var(--quni-page)] contain-none !shadow-none hover:!shadow-none hover:!translate-y-0',
+        'desk-settle !gap-1.5 !p-0 !bg-transparent contain-none !shadow-none hover:!shadow-none hover:!translate-y-0',
         '[animation-delay:40ms]',
-        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)

@@ -144,11 +144,9 @@ export default function SearchDesk({
   return (
     <article
       className={[
-        'desk-shell desk-settle relative flex min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-lg)]',
-        'border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]',
-        'transition-shadow duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:shadow-[var(--shadow-2)]',
+        'desk-settle relative flex min-h-0 w-full flex-col overflow-visible',
+        'bg-transparent',
         '[animation-delay:50ms]',
-        answered ? 'shadow-[0_0_0_2px_rgba(255,111,97,0.45),var(--shadow-2)]' : '',
         className,
       ]
         .filter(Boolean)
@@ -158,10 +156,10 @@ export default function SearchDesk({
         className={[
           'flex min-h-0 flex-1 flex-col',
           compact
-            ? 'gap-2.5 overflow-y-auto p-3.5'
+            ? 'gap-2.5 overflow-y-auto py-1'
             : dense
-              ? 'gap-1.5 p-2.5'
-              : 'gap-2 p-4',
+              ? 'gap-2 py-0.5'
+              : 'gap-2.5 py-1',
         ].join(' ')}
       >
         {listingsOnly ? (
@@ -357,7 +355,7 @@ export default function SearchDesk({
                   <Link
                     key={p.id}
                     to={to}
-                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--quni-line)] transition-colors duration-[var(--dur-base)] hover:bg-[var(--quni-page)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                    className="group flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--quni-line)] bg-[var(--quni-surface-1)] transition-colors duration-[var(--dur-base)] hover:border-[var(--quni-ink-5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   >
                     <div
                       className={[
