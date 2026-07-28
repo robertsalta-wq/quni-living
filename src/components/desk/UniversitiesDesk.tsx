@@ -153,7 +153,7 @@ function ChipRow({ chips }: { chips: { label: string; homes: number }[] }) {
         <Link
           key={u.label}
           to={`/listings?q=${encodeURIComponent(u.label)}`}
-          className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--quni-ink)] hover:border-[var(--quni-ink-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-ink)]"
+          className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full px-1 py-1 text-[12.5px] font-semibold text-[var(--quni-ink)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-ink)]"
         >
           <span className="truncate">{u.label}</span>
           <span className="shrink-0 font-medium text-[var(--quni-ink-4)]">

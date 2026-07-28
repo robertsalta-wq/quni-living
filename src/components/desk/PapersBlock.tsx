@@ -23,8 +23,8 @@ export default function PapersBlock({ compact = false }: PapersBlockProps) {
   return (
     <div
       className={[
-        'quni-card desk-settle shrink-0 font-[family-name:var(--font-footer)] [animation-delay:680ms]',
-        'bg-[var(--quni-ink)]',
+        'desk-settle shrink-0 font-[family-name:var(--font-footer)] [animation-delay:680ms]',
+        'rounded-[var(--radius-lg)] bg-[var(--quni-ink)]',
         compact ? 'mt-2 px-4 py-2.5' : 'mt-3.5 px-6 py-4',
       ].join(' ')}
       style={{

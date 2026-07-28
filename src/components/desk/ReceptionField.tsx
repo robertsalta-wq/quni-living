@@ -129,7 +129,7 @@ export default function ReceptionField({ onSelectQuestion, className = '' }: Rec
 
   return (
     <div ref={wrapRef} className={['relative z-20', className].filter(Boolean).join(' ')}>
-      <div className="overflow-hidden rounded-[12px] border-[1.5px] border-[var(--quni-coral-border)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-1)]">
+      <div className="overflow-hidden rounded-[12px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)]">
         <form onSubmit={onSubmit} className="flex items-center gap-2 py-0 pl-3.5 pr-1.5">
           <span aria-hidden className="text-[15px] font-extrabold text-[var(--quni-coral-active)]">
             ⌕

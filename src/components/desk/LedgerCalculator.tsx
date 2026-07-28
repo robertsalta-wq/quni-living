@@ -47,7 +47,7 @@ export default function LedgerCalculator({
   return (
     <div
       className={[
-        'rounded-xl bg-[var(--quni-surface-1)] text-[var(--quni-ink)] shadow-[0_2px_10px_rgba(0,0,0,0.22)]',
+        'rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-1)] text-[var(--quni-ink)]',
         slim ? 'px-2.5 py-2' : compact ? 'px-3.5 py-3.5' : 'px-3.5 pb-3 pt-3',
         className,
       ]

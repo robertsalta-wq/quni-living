@@ -61,7 +61,7 @@ export default function TrustDesk({
           <div key={t} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="inline-flex h-3.5 w-3.5 shrink-0 rotate-[-4deg] items-center justify-center rounded-[3px] border-[1.3px] border-[var(--quni-verified)] bg-[var(--quni-surface-1)] text-[9px] font-black text-[var(--quni-verified)]"
+              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[12px] font-bold text-[var(--quni-verified)]"
             >
               ✓
             </span>
