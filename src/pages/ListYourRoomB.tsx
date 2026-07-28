@@ -83,7 +83,7 @@ export default function ListYourRoomB() {
         noindex
       />
 
-      <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:min-h-[calc(100vh-4rem)] lg:justify-center lg:py-9">
+      <div className="mx-auto flex max-w-site flex-col gap-5 px-5 py-6 md:gap-6 md:px-6 md:py-8 lg:py-9">
         <header className="max-w-3xl">
           <h1 className="sr-only">More income from your spare room. Zero hassle.</h1>
 
