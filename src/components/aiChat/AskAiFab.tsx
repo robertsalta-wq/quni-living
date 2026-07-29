@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import AiSparkleIcon from '../AiSparkleIcon'
-import { useOpenAiChat } from '../../context/AiChatOpenContext'
+import { useIsAiChatOpen, useOpenAiChat } from '../../context/AiChatOpenContext'
 import { isAppShellPath } from '../../lib/appShell'
 import { ASK_AI_BUTTON_LABEL } from './chatAiLabels'
 
@@ -18,6 +18,7 @@ function propertyDetailHasStickyBar(pathname: string): boolean {
 export default function AskAiFab() {
   const { pathname } = useLocation()
   const openChat = useOpenAiChat()
+  const isChatOpen = useIsAiChatOpen()
 
   const bottomClass = useMemo(() => {
     if (propertyDetailHasStickyBar(pathname)) {
@@ -26,7 +27,7 @@ export default function AskAiFab() {
     return 'bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))]'
   }, [pathname])
 
-  if (isAppShellPath(pathname)) return null
+  if (isAppShellPath(pathname) || isChatOpen) return null
 
   return (
     <button
