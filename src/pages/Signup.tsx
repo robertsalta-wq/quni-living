@@ -197,9 +197,18 @@ type SignupProps = {
    * expands “or continue with email”. Default `/signup` is unchanged.
    */
   collapsedEmail?: boolean
+  /** Override embed heading (default: Put your room up). */
+  embedInviteTitle?: string
+  /** Override embed subcopy under the heading. */
+  embedInviteSub?: ReactNode
 }
 
-export default function Signup({ embedLandlordInvite = false, collapsedEmail = false }: SignupProps) {
+export default function Signup({
+  embedLandlordInvite = false,
+  collapsedEmail = false,
+  embedInviteTitle,
+  embedInviteSub,
+}: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const location = useLocation()
@@ -559,10 +568,15 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
     const showEmailFields = !collapsedEmail || emailFieldsOpen
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-[22px] font-bold text-[var(--quni-ink)] !mt-0 !mb-0">Put your room up</h2>
-        <p className="mt-1 text-[13.5px] text-[var(--quni-ink-4)]">
-          Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few minutes.
-        </p>
+        <h2 className="font-display text-[22px] font-bold text-[var(--quni-ink)] !mt-0 !mb-0">
+          {embedInviteTitle ?? 'Put your room up'}
+        </h2>
+        {embedInviteSub ?? (
+          <p className="mt-1 text-[13.5px] text-[var(--quni-ink-4)]">
+            Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
+            minutes.
+          </p>
+        )}
 
         {keyMisuse && (
           <div className="mb-3 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">

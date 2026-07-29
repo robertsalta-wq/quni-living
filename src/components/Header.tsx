@@ -88,6 +88,9 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
+  /** D puts the safety headline in chrome (same lockup as the desk masthead). */
+  const inviteDTaglinePath =
+    location.pathname === '/list-your-room-d' || location.pathname.startsWith('/list-your-room-d/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -368,7 +371,7 @@ export default function Header({ embedded = false }: HeaderProps) {
       embedded={embedded}
       data-chrome-header="marketing"
       className={
-        embedded
+        embedded || inviteMinimalChrome
           ? 'relative'
           : dashboardMobileChrome
             ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
@@ -386,7 +389,11 @@ export default function Header({ embedded = false }: HeaderProps) {
               : 'grid-cols-[auto_minmax(0,1fr)_auto]'
           }`}
         >
-        <div className="min-w-0 shrink-0">
+        <div
+          className={`min-w-0 ${
+            inviteDTaglinePath || (dashboardMobileChrome && dashboardMobileTitle) ? '' : 'shrink-0'
+          }`}
+        >
           {dashboardMobileChrome && dashboardMobileTitle ? (
             <>
               <div className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-2">
@@ -397,6 +404,17 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
             </>
+          ) : inviteDTaglinePath ? (
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-2.5 md:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
+              <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-extrabold leading-[var(--text-caption-lh)] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-[length:var(--text-body-sm-size)] sm:leading-[var(--text-body-sm-lh)] md:text-[length:var(--text-body-size)] md:leading-[var(--text-body-lh)] lg:text-[length:var(--text-body-lg-size)] lg:leading-[var(--text-body-lg-lh)] xl:text-[length:var(--text-h3-size)] xl:leading-[var(--text-h3-lh)]">
+                The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
+                students.
+              </p>
+            </div>
           ) : (
             <SiteBrandLockup />
           )}
