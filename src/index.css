@@ -5,6 +5,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .lyrd-preview-height {
+    height: 100dvh;
+  }
+
+  @media (min-width: 640px) {
+    .lyrd-preview-height {
+      height: calc(100dvh - (2 * var(--space-4)));
+    }
+  }
+}
+
 :root {
   /* Set to 48px on native Android only (see nativeStatusBarInsetFallback.ts). */
   --quni-status-bar-fallback: 0px;

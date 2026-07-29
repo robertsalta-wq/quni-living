@@ -106,7 +106,7 @@ function TrustTick() {
   )
 }
 
-function EarningsCard({ onPreview }: { onPreview: (opener: HTMLElement) => void }) {
+function EarningsCard() {
   const selectId = useId()
   const [campusId, setCampusId] = useState(LIST_YOUR_ROOM_D_CAMPUSES[0].id)
   const [roomKind, setRoomKind] = useState<ListYourRoomDRoomKind>('single')
@@ -197,7 +197,7 @@ function EarningsCard({ onPreview }: { onPreview: (opener: HTMLElement) => void 
                 setGuide({ status: 'loading' })
                 setCampusId(event.target.value)
               }}
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm font-medium text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:w-auto"
+              className="min-w-0 basis-64 flex-1 rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-sm font-medium text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               {LIST_YOUR_ROOM_D_CAMPUSES.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -250,13 +250,6 @@ function EarningsCard({ onPreview }: { onPreview: (opener: HTMLElement) => void 
           ) : guide.status === 'empty' || guide.status === 'error' ? (
             <p className="text-sm text-[var(--quni-ink-3)]">{guide.message}</p>
           ) : null}
-          <button
-            type="button"
-            onClick={(event) => onPreview(event.currentTarget)}
-            className="mt-3 rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-          >
-            Preview your room on Quni →
-          </button>
         </div>
       </div>
     </section>
@@ -479,11 +472,18 @@ export default function ListYourRoomD() {
         noindex
       />
 
-      <main className="mx-auto max-w-site px-5 pt-5">
+      <main className="mx-auto max-w-site px-5 pt-4">
         <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1 space-y-5">
             <QuinnieBand />
-            <EarningsCard onPreview={(opener) => openOverlay('preview', opener)} />
+            <EarningsCard />
+            <button
+              type="button"
+              onClick={(event) => openOverlay('preview', event.currentTarget)}
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] px-4 py-3 text-sm font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:hidden"
+            >
+              Preview your room →
+            </button>
             <div className="grid gap-5 md:grid-cols-2">
               <SmartToolsPanel />
               <TrustPanel onOpenVerification={() => setVerificationOpen(true)} />

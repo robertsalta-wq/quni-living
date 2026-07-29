@@ -31,6 +31,14 @@ function CloseIcon() {
   )
 }
 
+function LeftArrowIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  )
+}
+
 function TrustTick() {
   return (
     <svg
@@ -47,15 +55,36 @@ function TrustTick() {
 }
 
 export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
+  const openFromControl = (control: HTMLElement) => onOpen(control)
+
   return (
     <aside className="hidden w-12 shrink-0 self-stretch sm:block" aria-label="Property preview">
-      <button
-        type="button"
-        onClick={(event) => onOpen(event.currentTarget)}
-        className="sticky top-4 flex h-96 w-12 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--quni-ink)] text-white shadow-[var(--shadow-2)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-      >
-        <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
-      </button>
+      <div className="lyrd-preview-height group sticky top-4 z-50 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
+        <button
+          type="button"
+          onClick={(event) => openFromControl(event.currentTarget)}
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          aria-label="Slide out property preview"
+        >
+          <LeftArrowIcon />
+        </button>
+        <button
+          type="button"
+          onClick={(event) => openFromControl(event.currentTarget)}
+          className="flex min-h-0 flex-1 items-center justify-center px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          aria-label="Preview your room — slide out"
+        >
+          <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
+        </button>
+        <button
+          type="button"
+          onClick={(event) => openFromControl(event.currentTarget)}
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          aria-label="Slide out property preview"
+        >
+          <LeftArrowIcon />
+        </button>
+      </div>
     </aside>
   )
 }
@@ -251,17 +280,57 @@ export default function ListYourRoomDPreviewDrawer({
         setEntered(false)
         onClose()
       }}
-      className="fixed inset-0 m-0 h-dvh w-full max-w-none overflow-hidden bg-transparent p-0 text-[var(--quni-ink)] backdrop:bg-[var(--quni-ink)]/60"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-hidden bg-transparent p-0 text-[var(--quni-ink)] backdrop:bg-[var(--quni-ink)]/60"
     >
       <div
-        className="mx-auto flex h-dvh max-w-site justify-end sm:px-5"
+        className="relative mx-auto h-dvh max-w-site"
         onClick={(event) => {
           if (event.target === event.currentTarget) onClose()
         }}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          className={[
+            'lyrd-preview-height absolute right-5 top-4 z-20 hidden overflow-hidden rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:flex sm:flex-col sm:items-center sm:justify-between',
+            entered ? 'w-1.5' : 'w-12',
+          ].join(' ')}
+          aria-label="Retract property preview"
+        >
+          <span
+            className={[
+              'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] transition-opacity duration-[var(--dur-base)]',
+              entered ? 'opacity-0' : 'opacity-100',
+            ].join(' ')}
+            aria-hidden
+          >
+            <LeftArrowIcon />
+          </span>
+          <span
+            className={[
+              '-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide transition-opacity duration-[var(--dur-base)]',
+              entered ? 'opacity-0' : 'opacity-100',
+            ].join(' ')}
+            aria-hidden
+          >
+            Preview your room
+          </span>
+          <span
+            className={[
+              'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] transition-opacity duration-[var(--dur-base)]',
+              entered ? 'opacity-0' : 'opacity-100',
+            ].join(' ')}
+            aria-hidden
+          >
+            <LeftArrowIcon />
+          </span>
+        </button>
         <section
           className={[
-            'flex h-dvh w-full flex-col border-l border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
+            'lyrd-preview-height absolute right-0 top-0 flex w-full flex-col overflow-hidden border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:right-5 sm:top-4 sm:rounded-[var(--radius-sm)]',
             entered
               ? 'translate-x-0 translate-y-0'
               : isMobile
