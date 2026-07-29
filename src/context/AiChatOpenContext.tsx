@@ -14,7 +14,7 @@ type AiChatOpenContextValue = {
 
 const AiChatOpenContext = createContext<AiChatOpenContextValue | null>(null)
 
-/** Hosts the AI chat panel and exposes `openChat` for the shared action bar (no FAB). */
+/** Hosts the AI chat panel and exposes `openChat` for action bar, desktop header, and marketing FAB. */
 export function AiChatOpenProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const openChat = useCallback(() => setOpen(true), [])
@@ -29,7 +29,7 @@ export function AiChatOpenProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** Opens the AI chat panel — same action the floating FAB used to trigger. */
+/** Opens the AI chat panel — shared by action bar, desktop header, and marketing FAB. */
 export function useOpenAiChat(): () => void {
   const ctx = useContext(AiChatOpenContext)
   return ctx?.openChat ?? (() => {})
