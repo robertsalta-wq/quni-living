@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import AiSparkleIcon from './AiSparkleIcon'
 
 const LOGO = {
   default: { src: '/quni-logo.png', srcSet: '/quni-logo.png 1x, /quni-logo@2x.png 2x' },
@@ -51,8 +50,7 @@ export function QuniLogoHomeLink({ className = '' }: { className?: string }) {
 }
 
 /**
- * Marketing mobile left-cell logo wrapper (SiteBrandLockup without the AI control).
- * Keep this class string identical so dashboard and marketing share the same mark box.
+ * Marketing logo mark box (shared with dashboard chrome).
  */
 export const QUNI_LOGO_MARK_WRAP_CLASS = 'flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2'
 
@@ -74,7 +72,7 @@ export function DashboardBrandLockup() {
   )
 }
 
-/** Same logo + AI entry as the main site header (size, spacing, home link). */
+/** Marketing header brand lockup (logo → home). */
 export default function SiteBrandLockup({ variant = 'default' }: { variant?: LogoVariant }) {
   const isAi = variant === 'ai'
   return (
@@ -90,16 +88,6 @@ export default function SiteBrandLockup({ variant = 'default' }: { variant?: Log
       ) : (
         <QuniLogoHomeLink />
       )}
-      <Link
-        to="/landlords/ai"
-        className={`items-center justify-center rounded-xl border border-admin-coral/25 bg-admin-coral-tint p-2 text-[var(--quni-coral)] hover:bg-admin-coral/15 hover:border-admin-coral/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] transition-colors ${
-          isAi ? 'inline-flex' : 'hidden md:inline-flex'
-        }`}
-        aria-label="Landlord AI features"
-        title="Landlord AI features"
-      >
-        <AiSparkleIcon className="h-6 w-6 sm:h-7 sm:w-7" />
-      </Link>
     </div>
   )
 }

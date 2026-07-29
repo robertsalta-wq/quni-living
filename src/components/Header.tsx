@@ -89,6 +89,12 @@ export default function Header({ embedded = false }: HeaderProps) {
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
   const inviteMinimalChrome = isLandlordInviteMinimalChromePath(location.pathname)
+  /** B keeps the original income tagline in chrome for A/B comparison. */
+  const inviteBTaglinePath =
+    location.pathname === '/list-your-room-b' || location.pathname.startsWith('/list-your-room-b/')
+  /** C puts the safety headline in chrome (scaled for the locked h-11 row). */
+  const inviteCTaglinePath =
+    location.pathname === '/list-your-room-c' || location.pathname.startsWith('/list-your-room-c/')
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
@@ -369,7 +375,7 @@ export default function Header({ embedded = false }: HeaderProps) {
       embedded={embedded}
       data-chrome-header="marketing"
       className={
-        embedded
+        embedded || inviteMinimalChrome
           ? 'relative'
           : dashboardMobileChrome
             ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
@@ -387,7 +393,13 @@ export default function Header({ embedded = false }: HeaderProps) {
               : 'grid-cols-[auto_minmax(0,1fr)_auto]'
           }`}
         >
-        <div className="min-w-0 shrink-0">
+        <div
+          className={`min-w-0 ${
+            inviteBTaglinePath || inviteCTaglinePath || (dashboardMobileChrome && dashboardMobileTitle)
+              ? ''
+              : 'shrink-0'
+          }`}
+        >
           {dashboardMobileChrome && dashboardMobileTitle ? (
             <>
               <div className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-2">
@@ -398,6 +410,28 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
             </>
+          ) : inviteBTaglinePath ? (
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              <p className="hidden min-w-0 font-display text-[length:var(--text-display-sm-size)] font-extrabold leading-[var(--text-display-sm-lh)] tracking-[var(--text-display-sm-track)] text-[var(--quni-ink)] md:block md:text-[length:var(--text-display-md-size)] md:leading-[var(--text-display-md-lh)] md:tracking-[var(--text-display-md-track)]">
+                More income from your spare room.{' '}
+                <span className="text-[var(--quni-coral)]">Zero hassle.</span>
+              </p>
+            </div>
+          ) : inviteCTaglinePath ? (
+            <div className="flex min-w-0 max-w-full items-center gap-2 sm:gap-2.5 md:gap-3">
+              <div className="shrink-0">
+                <SiteBrandLockup />
+              </div>
+              <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
+              {/* Locked chrome row is h-11 — larger type, clamp to two lines so Log in stays clear. */}
+              <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-extrabold leading-[var(--text-caption-lh)] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-[length:var(--text-body-sm-size)] sm:leading-[var(--text-body-sm-lh)] md:text-[length:var(--text-body-size)] md:leading-[var(--text-body-lh)] lg:text-[length:var(--text-body-lg-size)] lg:leading-[var(--text-body-lg-lh)] xl:text-[length:var(--text-h3-size)] xl:leading-[var(--text-h3-lh)]">
+                The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
+                students.
+              </p>
+            </div>
           ) : (
             <SiteBrandLockup />
           )}
@@ -447,14 +481,20 @@ export default function Header({ embedded = false }: HeaderProps) {
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {inviteMinimalChrome ? null : <AskAiHeaderControl className="hidden md:inline-flex" />}
           {loading ? (
-            <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
+            <div className="h-9 w-9 rounded-full bg-[var(--quni-surface-2)] animate-pulse" />
           ) : inviteMinimalChrome ? (
             user ? (
-              <Link to={dashboardHref} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              <Link
+                to={dashboardHref}
+                className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              >
                 Dashboard
               </Link>
             ) : (
-              <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              <Link
+                to="/login"
+                className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              >
                 Log in
               </Link>
             )
