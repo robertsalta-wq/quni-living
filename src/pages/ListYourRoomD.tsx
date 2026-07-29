@@ -597,8 +597,8 @@ export default function ListYourRoomD() {
       />
 
       <div className="mx-auto max-w-site px-5 pt-4 md:px-6 md:pt-5">
-        {/* Fold: 2fr left / 1fr dark pen — stretch so pen bottom matches preview desk */}
-        <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* Fold: 2fr left / 1fr dark pen — items-start so a tall pen never stretches the preview column */}
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-5">
             {/* Quinnie band — letterhead opens the page (no marketing header) */}
             <section className="relative rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)]">
@@ -641,13 +641,12 @@ export default function ListYourRoomD() {
             <PreviewDesk property={previewProperty} />
           </div>
 
-          {/* Dark pen — full left-column height so bottom aligns with preview desk */}
+          {/* Dark pen — condensed; collapsed email keeps height aligned with preview desk */}
           <aside
             id="list-your-room-d-signup"
             className={[
-              'flex h-full min-h-0 flex-col rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-5 text-white',
-              /* Token-only dark overrides for the light Signup embed */
-              '[&_h2]:!text-white',
+              'rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-4 text-white lg:sticky lg:top-4',
+              '[&_h2]:!mt-0 [&_h2]:!text-[length:var(--text-h3-size)] [&_h2]:!text-white',
               '[&_label]:!text-white/80',
               '[&_a]:!text-white/80 [&_a:hover]:!text-white',
               '[&_p]:!text-white/70',
@@ -659,26 +658,27 @@ export default function ListYourRoomD() {
           >
             <Signup
               embedLandlordInvite
+              collapsedEmail
               embedInviteTitle="List your property"
               embedInviteSub={
-                <div className="mt-3.5">
-                  <ul className="mb-4 flex flex-col gap-2">
+                <div className="mt-2.5">
+                  <ul className="mb-2.5 flex flex-col gap-1.5">
                     {PEN_REASSURANCES.map((line) => (
                       <li
                         key={line}
-                        className="flex items-center gap-2 text-[length:var(--text-body-sm-size)] text-white/90"
+                        className="flex items-center gap-2 text-[length:var(--text-caption-size)] text-white/90"
                       >
                         <WhiteTick />
                         {line}
                       </li>
                     ))}
                   </ul>
-                  <div className="mb-1 flex items-center justify-between gap-2.5 border-y border-white/15 py-3">
-                    <span className="text-[length:var(--text-caption-size)] text-white/70">
+                  <div className="mb-0 flex items-center justify-between gap-2 border-y border-white/15 py-2">
+                    <span className="text-[length:var(--text-caption-size)] leading-snug text-white/70">
                       <strong className="font-semibold text-white">Listing fee</strong> · one-off, on accept. No
                       subscription.
                     </span>
-                    <span className="shrink-0 font-sans text-[length:var(--text-h2-size)] font-bold tabular-nums text-white">
+                    <span className="shrink-0 font-sans text-[length:var(--text-h3-size)] font-bold tabular-nums text-white">
                       $99.00
                     </span>
                   </div>

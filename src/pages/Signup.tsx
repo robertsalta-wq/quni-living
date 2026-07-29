@@ -646,7 +646,7 @@ export default function Signup({
         )}
 
         {googleButton(
-          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          'mt-3 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3 text-[14.5px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
           { multicolorIcon: true },
         )}
 
@@ -656,7 +656,7 @@ export default function Signup({
           <button
             type="button"
             onClick={() => setEmailFieldsOpen(true)}
-            className="mt-3 w-full text-center text-[12.5px] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
+            className="mt-2.5 w-full text-center text-[12.5px] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
           >
             or continue with email
           </button>
