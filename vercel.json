@@ -38,6 +38,9 @@
     "api/ai/suggest-pricing.ts": {
       "maxDuration": 30
     },
+    "api/invite-rent-guide.ts": {
+      "maxDuration": 15
+    },
     "api/ai/health.ts": {
       "maxDuration": 15
     },

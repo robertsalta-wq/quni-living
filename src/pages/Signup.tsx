@@ -186,6 +186,46 @@ function SignupTermsFields({
   )
 }
 
+/** Landlord invite dark pen: implied consent under Google (no checkboxes). */
+function SignupImpliedConsentLine({ showLandlordAgreement }: { showLandlordAgreement: boolean }) {
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
+  const activeLegalDoc = openLegalDoc ? LEGAL_DOC_MODAL[openLegalDoc] : null
+
+  return (
+    <>
+      <p className="mt-2.5 text-center text-[length:var(--text-micro-size)] leading-relaxed text-[var(--quni-ink-5)]">
+        By continuing you agree to our{' '}
+        <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
+          Terms
+        </SignupLegalDocLink>
+        ,{' '}
+        <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
+          Privacy Policy
+        </SignupLegalDocLink>
+        {showLandlordAgreement ? (
+          <>
+            {' '}
+            &amp;{' '}
+            <SignupLegalDocLink kind="landlord-agreement" onOpen={setOpenLegalDoc}>
+              Landlord Service Agreement
+            </SignupLegalDocLink>
+          </>
+        ) : null}
+        .
+      </p>
+      {activeLegalDoc ? (
+        <LegalDocumentModal
+          open={openLegalDoc !== null}
+          onClose={() => setOpenLegalDoc(null)}
+          title={activeLegalDoc.title}
+        >
+          {activeLegalDoc.content}
+        </LegalDocumentModal>
+      ) : null}
+    </>
+  )
+}
+
 type SignupProps = {
   /**
    * Landlord invite embed (`/list-your-room`): skip role picker, Google-first,
@@ -197,9 +237,27 @@ type SignupProps = {
    * expands “or continue with email”. Default `/signup` is unchanged.
    */
   collapsedEmail?: boolean
+  /** Override embed heading (default: Put your room up). */
+  embedInviteTitle?: string
+  /** Override embed subcopy under the heading. */
+  embedInviteSub?: ReactNode
+  /** Optional eyebrow above the embed title (e.g. mobile sheet “For landlords”). */
+  embedInviteEyebrow?: string
+  /** Place implied consent after the email form (mobile sheet order). */
+  embedConsentAfterForm?: boolean
+  /** Sheet wrapper supplies its own ink title and fee header. */
+  embedHideHeading?: boolean
 }
 
-export default function Signup({ embedLandlordInvite = false, collapsedEmail = false }: SignupProps) {
+export default function Signup({
+  embedLandlordInvite = false,
+  collapsedEmail = false,
+  embedInviteTitle,
+  embedInviteSub,
+  embedInviteEyebrow,
+  embedConsentAfterForm = false,
+  embedHideHeading = false,
+}: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const location = useLocation()
@@ -312,6 +370,8 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
   const showLandlordAgreement = effectiveAccountKind === 'landlord'
 
   function termsAcceptedForSignup(): boolean {
+    /* Invite embed: consent is the “By continuing…” line under Google. */
+    if (embedLandlordInvite) return true
     if (!termsPrivacy) return false
     if (showLandlordAgreement && !landlordAgreement) return false
     return true
@@ -331,10 +391,16 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
     clearTermsError: () => setTermsError(false),
   }
 
-  function googleButton(className: string, opts?: { multicolorIcon?: boolean }) {
+  function googleButton(className: string, opts?: { multicolorIcon?: boolean; primaryCta?: boolean }) {
     const multicolor = opts?.multicolorIcon === true
     return (
-      <button type="button" onClick={handleGoogleSignup} disabled={!accountKind} className={className}>
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        disabled={!accountKind}
+        className={className}
+        data-invite-primary-cta={opts?.primaryCta ? 'true' : undefined}
+      >
         <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path
             fill={multicolor ? '#4285F4' : 'currentColor'}
@@ -557,12 +623,30 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
 
   if (embedLandlordInvite && accountKind === 'landlord') {
     const showEmailFields = !collapsedEmail || emailFieldsOpen
+    const consentLine = <SignupImpliedConsentLine showLandlordAgreement={showLandlordAgreement} />
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-[22px] font-bold text-[var(--quni-ink)] !mt-0 !mb-0">Put your room up</h2>
-        <p className="mt-1 text-[13.5px] text-[var(--quni-ink-4)]">
-          Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few minutes.
-        </p>
+        {!embedHideHeading && embedInviteEyebrow ? (
+          <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
+            {embedInviteEyebrow}
+          </p>
+        ) : null}
+        {!embedHideHeading ? (
+          <h2
+            className={[
+              'font-display text-[length:var(--text-h2-size)] font-bold text-[var(--quni-ink)] !mb-0',
+              embedInviteEyebrow ? '!mt-1.5' : '!mt-0',
+            ].join(' ')}
+          >
+            {embedInviteTitle ?? 'Put your room up'}
+          </h2>
+        ) : null}
+        {!embedHideHeading && (embedInviteSub ?? (
+          <p className="mt-1 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink-4)]">
+            Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
+            minutes.
+          </p>
+        ))}
 
         {keyMisuse && (
           <div className="mb-3 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -589,26 +673,24 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
           </div>
         )}
 
-        <div className="mt-4 [&_label]:text-[12.5px] [&_label]:leading-snug [&_label]:text-[var(--quni-ink-4)]">
-          <SignupTermsFields {...signupTermsFieldsProps} />
-        </div>
-
         {googleButton(
-          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
-          { multicolorIcon: true },
+          'flex w-full items-center justify-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 py-3 text-[length:var(--text-body-size)] font-bold text-white shadow-[var(--shadow-1)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          { multicolorIcon: true, primaryCta: true },
         )}
+
+        {embedConsentAfterForm ? null : consentLine}
 
         {collapsedEmail && !emailFieldsOpen ? (
           <button
             type="button"
             onClick={() => setEmailFieldsOpen(true)}
-            className="mt-3 w-full text-center text-[12.5px] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
+            className="mt-2.5 w-full text-center text-[length:var(--text-caption-size)] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
           >
             or continue with email
           </button>
         ) : (
           <>
-            <p className="mt-3 text-center text-[12px] text-[var(--quni-ink-5)]">
+            <p className="mt-3 text-center text-[length:var(--text-caption-size)] text-[var(--quni-ink-5)]">
               {collapsedEmail ? 'or continue with email' : 'or sign up with email'}
             </p>
 
@@ -617,7 +699,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                 <div>
                   <label
                     htmlFor="invite-su-name"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Full name
                   </label>
@@ -629,13 +711,13 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-admin-coral/20"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="invite-su-email"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Email
                   </label>
@@ -652,7 +734,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     placeholder="you@email.com"
                     aria-invalid={emailFormatError}
                     aria-describedby={emailFormatError ? 'invite-su-email-error' : undefined}
-                    className={`w-full rounded-[9px] border bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
+                    className={`w-full scroll-mt-16 rounded-[var(--radius-md)] border bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:outline-none focus:ring-2 ${
                       emailFormatError
                         ? 'border-red-500 focus:ring-red-400/30'
                         : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-admin-coral/20'
@@ -667,7 +749,7 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                 <div>
                   <label
                     htmlFor="invite-su-password"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Password
                   </label>
@@ -680,13 +762,13 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
                     required
                     minLength={6}
                     placeholder="Create a password"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-admin-coral/20"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 w-full rounded-[10px] border border-[var(--quni-line)] bg-transparent py-3 text-[15px] font-semibold text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
+                  className="mt-1 w-full rounded-[var(--radius-md)] border border-[var(--quni-ink)] bg-transparent py-3 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] disabled:opacity-50"
                 >
                   {submitting ? 'Creating account…' : 'Sign up with email'}
                 </button>
@@ -694,6 +776,8 @@ export default function Signup({ embedLandlordInvite = false, collapsedEmail = f
             ) : null}
           </>
         )}
+
+        {embedConsentAfterForm ? consentLine : null}
 
         {verificationModalFocus !== null ? (
           <VerificationChecklistModal
