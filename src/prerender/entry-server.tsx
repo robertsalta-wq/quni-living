@@ -9,6 +9,7 @@ import {
   listingPrerenderPaths,
 } from '../lib/publishedListings'
 import { writePropertyDetailCache } from '../lib/propertyDetailCache'
+import { hoistHeadTags } from './headTags'
 import { listPrerenderPathnames, pathnameToDistDir } from './routes'
 import NotFoundPage from '../pages/NotFoundPage'
 
@@ -20,18 +21,7 @@ function renderNotFoundBody(): { body: string; head: string } {
       </MemoryRouter>
     </HelmetProvider>,
   )
-  // No marketing <header> — hoist leading Helmet tags out of the stream manually.
-  const headParts: string[] = []
-  let rest = body
-  const leading =
-    /^\s*((?:<title[\s\S]*?<\/title>|<meta\b[^>]*\/?>|<link\b[^>]*\/?>|<script\b[^>]*type="application\/ld\+json"[\s\S]*?<\/script>)\s*)/i
-  while (true) {
-    const m = rest.match(leading)
-    if (!m) break
-    headParts.push(m[1].trim())
-    rest = rest.slice(m[0].length)
-  }
-  return { body: stripSuspenseBoundaryComments(rest), head: headParts.join('\n') }
+  return hoistHeadTags(body)
 }
 
 function renderAppAt(pathname: string): { body: string; head: string } {
@@ -43,32 +33,6 @@ function renderAppAt(pathname: string): { body: string; head: string } {
     </HelmetProvider>,
   )
   return hoistHeadTags(body)
-}
-
-/**
- * react-helmet-async v3 emits title/meta/link at the start of the SSR stream and JSON-LD
- * scripts inline in the route tree. Hoist all of those into <head> so the #root body matches
- * what the client renders after Helmet moves tags into document.head.
- */
-function hoistHeadTags(body: string): { body: string; head: string } {
-  const headParts: string[] = []
-
-  let rest = body
-  const headerIdx = rest.indexOf('<header')
-  if (headerIdx > 0) {
-    headParts.push(rest.slice(0, headerIdx).trim())
-    rest = rest.slice(headerIdx)
-  }
-
-  return {
-    body: stripSuspenseBoundaryComments(rest),
-    head: headParts.filter(Boolean).join('\n'),
-  }
-}
-
-/** React 19 Suspense SSR comments are absent once the guide route is eager on the client. */
-function stripSuspenseBoundaryComments(html: string): string {
-  return html.replace(/<!--\$[^>]*-->/g, '').replace(/<!--\/\$-->/g, '')
 }
 
 /** Remove default homepage SEO from the SPA shell so prerendered tags are authoritative. */

@@ -10,6 +10,7 @@ import ChatPanel from '../components/aiChat/ChatPanel'
 
 type AiChatOpenContextValue = {
   openChat: () => void
+  isChatOpen: boolean
 }
 
 const AiChatOpenContext = createContext<AiChatOpenContextValue | null>(null)
@@ -19,7 +20,7 @@ export function AiChatOpenProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const openChat = useCallback(() => setOpen(true), [])
   const close = useCallback(() => setOpen(false), [])
-  const value = useMemo(() => ({ openChat }), [openChat])
+  const value = useMemo(() => ({ openChat, isChatOpen: open }), [openChat, open])
 
   return (
     <AiChatOpenContext.Provider value={value}>
@@ -33,4 +34,9 @@ export function AiChatOpenProvider({ children }: { children: ReactNode }) {
 export function useOpenAiChat(): () => void {
   const ctx = useContext(AiChatOpenContext)
   return ctx?.openChat ?? (() => {})
+}
+
+/** True while the chat panel is mounted — the FAB hides so it never floats over the panel. */
+export function useIsAiChatOpen(): boolean {
+  return useContext(AiChatOpenContext)?.isChatOpen ?? false
 }
