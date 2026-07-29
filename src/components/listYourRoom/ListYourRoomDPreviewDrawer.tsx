@@ -72,7 +72,7 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
           className="flex min-h-0 flex-1 items-center justify-center px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          aria-label="Preview your room — slide out"
+          aria-label="Preview your room, slide out"
         >
           <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
         </button>
@@ -209,7 +209,7 @@ function FullPropertyPreview({ property }: { property: Property }) {
                     key={row.rule_id}
                     className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-2 text-xs text-[var(--quni-ink-2)]"
                   >
-                    {row.house_rules_ref?.name?.trim() || 'House rule'} — {row.permitted}
+                    {row.house_rules_ref?.name?.trim() || 'House rule'}: {row.permitted}
                   </li>
                 ))}
               </ul>
@@ -398,7 +398,7 @@ export default function ListYourRoomDPreviewDrawer({
               <div className="mx-auto max-w-sm">
                 <PropertyCard property={property} staticDisplay />
                 <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
-                  The exact card a verified student sees while browsing — the same live component used by every
+                  The exact card a verified student sees while browsing. It is the same live component used by every
                   listing.
                 </p>
               </div>

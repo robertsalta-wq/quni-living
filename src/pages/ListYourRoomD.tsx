@@ -67,7 +67,7 @@ const SAFE_ITEMS = [
   },
   {
     name: 'See them before you pay',
-    description: 'Full request review before the $99 — accept or decline with no fee.',
+    description: 'Full request review before the $99. Accept or decline with no fee.',
   },
   {
     name: 'Your details stay private',
@@ -184,7 +184,7 @@ function EarningsCard() {
       <div className="mt-4 grid items-center gap-5 md:grid-cols-2">
         <div>
           <p className="text-sm text-[var(--quni-ink-3)]">
-            Pick the campus your room is near — we&apos;ll show what similar rooms are renting for right now.
+            Pick the campus your room is near, and we&apos;ll show what similar rooms are renting for right now.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <label htmlFor={selectId} className="sr-only">
@@ -284,7 +284,7 @@ function QuinnieBand() {
           <p className="text-sm leading-relaxed text-[var(--quni-ink-2)]">
             <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
             my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
-            message me anytime — you&apos;ll get me, not a bot.
+            message me anytime. You&apos;ll get me, not a bot.
           </p>
           <p className="mt-1 text-xs font-semibold text-[var(--quni-ink-3)]">Quinnie Le, co-founder.</p>
         </div>
@@ -354,7 +354,7 @@ function TrustPanel({ onOpenVerification }: { onOpenVerification: () => void }) 
 const VERIFICATION_STEPS = [
   {
     title: 'Identity checked',
-    body: 'Every renter verifies their identity before they can enquire — no anonymous messages.',
+    body: 'Every renter verifies their identity before they can enquire, so there are no anonymous messages.',
   },
   {
     title: 'Enrolment confirmed',
