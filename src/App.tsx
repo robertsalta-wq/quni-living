@@ -6,6 +6,7 @@ import NativePushNotificationsInitializer from './components/NativePushNotificat
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import PageRouteFallback from './components/PageRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
+import AskAiFab from './components/aiChat/AskAiFab'
 import { AiChatOpenProvider } from './context/AiChatOpenContext'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
@@ -361,6 +362,7 @@ function App() {
               </Route>
             </Route>
           </Routes>
+          <AskAiFab />
         </div>
       </AiChatOpenProvider>
     </BookingFlowChromeProvider>
