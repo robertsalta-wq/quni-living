@@ -17,13 +17,15 @@ export default function MarketingChromeLayout() {
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
   const papersFooterPage = isLandlordInvitePapersFooterPath(location.pathname)
   const inviteInFlowHeader = isLandlordInviteMinimalChromePath(location.pathname)
+  /** Desk invite opens with its own letterhead — no marketing masthead. */
+  const hideMarketingHeader = papersFooterPage
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
-      <Header />
+      {!hideMarketingHeader ? <Header /> : null}
       <main
         className={`flex min-h-0 w-full min-w-0 flex-1 flex-col ${
-          inviteInFlowHeader ? '' : 'max-md:pt-main-below-fixed-header md:pt-0'
+          hideMarketingHeader || inviteInFlowHeader ? '' : 'max-md:pt-main-below-fixed-header md:pt-0'
         }`}
       >
         <OnboardingResumeBanner />

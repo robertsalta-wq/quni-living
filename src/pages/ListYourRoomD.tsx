@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Banknote,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
+import AiSparkleIcon from '../components/AiSparkleIcon'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import Signup from './Signup'
@@ -29,7 +30,6 @@ import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
 /** TODO: replace with final approved Quinnie photo (same asset as `/list-your-room`). */
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-/** Interim ABN for papers footer until public_legal_entity always supplies it. */
 const INVITE_ABN_FALLBACK = '65675990968'
 
 type SmartTool = {
@@ -67,63 +67,30 @@ const SMART_TOOLS: SmartTool[] = [
   },
 ]
 
-/** Same line-item pattern as `/list-your-room-c` / Pricing Listing column. */
-function OfferLineItem({
-  icon,
-  name,
-  value,
-  description,
-  valueKind,
-}: {
-  icon: ReactNode
-  name: string
-  value: string
-  description: string
-  valueKind: 'coralLg' | 'coralSm'
-}) {
-  const valueCls =
-    valueKind === 'coralLg'
-      ? 'font-lora text-[length:var(--text-body-lg-size)] font-semibold text-[var(--quni-rust)]'
-      : 'font-lora text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-rust)]'
+const SAFE_ITEMS = [
+  {
+    name: 'Verified renters',
+    description: 'Students with checked identity (and enrolment where required).',
+  },
+  {
+    name: 'See them before you pay',
+    description: 'Full request review before the $99 — accept or decline with no fee.',
+  },
+  {
+    name: 'Your details stay private',
+    description: 'Email and phone stay masked until you accept.',
+  },
+  {
+    name: 'The paperwork signs itself.',
+    description: 'NSW and QLD tenancy agreements generated and e-signed in-platform.',
+  },
+] as const
 
-  return (
-    <div className="mb-[18px] grid grid-cols-[22px_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 last:mb-0">
-      <div
-        className="flex h-5 w-5 shrink-0 items-center justify-center text-[var(--quni-rust)] [&_svg]:h-4 [&_svg]:w-4"
-        aria-hidden
-      >
-        {icon}
-      </div>
-      <div className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
-        {name}
-      </div>
-      <div className={`whitespace-nowrap leading-none ${valueCls}`}>{value}</div>
-      <p className="col-span-2 col-start-2 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
-        {description}
-      </p>
-    </div>
-  )
-}
-
-const HOUSE_ICON = (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
-    <path d="M2 6l6-4 6 4v8H2z" />
-    <path d="M6 14V9h4v5" />
-  </svg>
-)
-
-const CHECK_ICON = (
-  <svg
-    viewBox="0 0 16 16"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="3,8 7,12 13,4" />
-  </svg>
-)
+const PEN_REASSURANCES = [
+  'Verified students only',
+  'The lease, done for you',
+  'Pay only when someone moves in',
+] as const
 
 type RentGuideOk = {
   low: number
@@ -140,7 +107,41 @@ type RentGuideState =
   | { status: 'error'; message: string }
 
 function plateClassName() {
-  return 'inline-block rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2.5 py-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink)]'
+  return 'inline-block rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2.5 py-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink)]'
+}
+
+function WhiteTick() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      className="shrink-0 text-white/85"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
+function TrustTick() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      className="mt-0.5 shrink-0 text-[var(--quni-trust)]"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
 }
 
 function EarningsStrip() {
@@ -235,21 +236,21 @@ function EarningsStrip() {
 
   return (
     <section
-      className="grid grid-cols-1 items-center gap-5 rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] p-5 md:grid-cols-[1.1fr_0.9fr] md:gap-6 md:p-6"
+      className="grid grid-cols-1 items-center gap-4 rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] p-5 md:grid-cols-[1.1fr_0.9fr] md:gap-5"
       aria-labelledby="lyrd-earn-heading"
     >
       <div>
         <span className={plateClassName()}>What could it earn?</span>
         <h2
           id="lyrd-earn-heading"
-          className="font-display mt-3 text-[length:var(--text-h3-size)] font-semibold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-3 !mb-0"
+          className="font-display mt-2.5 text-[length:var(--text-h4-size)] font-semibold leading-[var(--text-h4-lh)] text-[var(--quni-ink)] !mt-2.5 !mb-0 md:text-[length:var(--text-h3-size)] md:leading-[var(--text-h3-lh)]"
         >
           See the going rate before you list.
         </h2>
-        <p className="mt-1.5 max-w-md text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)]">
+        <p className="mt-1 max-w-md text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
           Pick the campus your room is near — we&apos;ll show what similar rooms are renting for right now.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <label htmlFor={selectId} className="sr-only">
             Nearest university
           </label>
@@ -257,7 +258,7 @@ function EarningsStrip() {
             id={selectId}
             value={campusId}
             onChange={(e) => setCampusId(e.target.value)}
-            className="w-full cursor-pointer rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2.5 text-[length:var(--text-body-sm-size)] font-medium text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:w-auto"
+            className="w-full cursor-pointer rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-2 text-[length:var(--text-body-sm-size)] font-medium text-[var(--quni-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:w-auto"
           >
             {LIST_YOUR_ROOM_D_CAMPUSES.map((c) => (
               <option key={c.id} value={c.id}>
@@ -284,7 +285,7 @@ function EarningsStrip() {
                   aria-pressed={pressed}
                   onClick={() => setRoomKind(kind)}
                   className={[
-                    'px-3.5 py-2.5 text-[length:var(--text-caption-size)] font-semibold transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
+                    'px-3 py-2 text-[length:var(--text-caption-size)] font-semibold transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
                     pressed
                       ? 'bg-[var(--quni-surface-2)] text-[var(--quni-ink)] shadow-[inset_0_0_0_1px_var(--quni-line)]'
                       : 'bg-[var(--quni-surface-1)] text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-2)]',
@@ -298,13 +299,13 @@ function EarningsStrip() {
         </div>
       </div>
 
-      <div className="border-t border-[var(--quni-line)] pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+      <div className="border-t border-[var(--quni-line)] pt-3.5 md:border-l md:border-t-0 md:pl-5 md:pt-0">
         <p className="text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
           Rooms near {campus.label}
         </p>
         <div
           key={fadeKey}
-          className="mt-1.5 font-sans text-[length:var(--text-display-sm-size)] font-bold leading-[var(--text-display-sm-lh)] tabular-nums text-[var(--quni-ink)] transition-opacity duration-[var(--dur-base)] ease-[var(--ease-standard)]"
+          className="mt-1 font-sans text-[length:var(--text-h1-size)] font-bold leading-[var(--text-h1-lh)] tabular-nums text-[var(--quni-ink)] transition-opacity duration-[var(--dur-base)] ease-[var(--ease-standard)] md:text-[length:var(--text-display-sm-size)] md:leading-[var(--text-display-sm-lh)]"
         >
           {guide.status === 'loading' || guide.status === 'idle' ? (
             <span className="text-[length:var(--text-h3-size)] font-semibold text-[var(--quni-ink-4)]">
@@ -313,7 +314,7 @@ function EarningsStrip() {
           ) : guide.status === 'ok' ? (
             <>
               ${guide.data.low}&ndash;${guide.data.high}{' '}
-              <span className="text-[length:var(--text-body-size)] font-semibold text-[var(--quni-ink-3)]">
+              <span className="text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink-3)]">
                 /wk
               </span>
             </>
@@ -324,15 +325,15 @@ function EarningsStrip() {
           )}
         </div>
         {guide.status === 'ok' ? (
-          <p className="mt-2 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
+          <p className="mt-1.5 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
             {guide.data.caveat}
           </p>
         ) : guide.status === 'empty' || guide.status === 'error' ? (
-          <p className="mt-2 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
+          <p className="mt-1.5 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
             {guide.message}
           </p>
         ) : (
-          <p className="mt-2 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
+          <p className="mt-1.5 max-w-sm text-[length:var(--text-micro-size)] leading-[var(--text-micro-lh)] text-[var(--quni-ink-3)]">
             A guide to what students are paying — not an estimate of your specific room.
           </p>
         )}
@@ -350,18 +351,18 @@ function PreviewDesk({ property }: { property: Property | null }) {
 
   return (
     <section className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)]">
-      <div className="flex flex-wrap items-center gap-3.5 px-5 py-4">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
         <span className={plateClassName()}>Preview</span>
-        <p className="font-display text-[length:var(--text-body-size)] text-[var(--quni-ink)]">
+        <p className="font-display text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)]">
           See your room on Quni before you list.{' '}
-          <span className="font-sans text-[length:var(--text-body-sm-size)] font-normal text-[var(--quni-ink-3)]">
-            Optional — open a mode to preview.
+          <span className="font-sans text-[length:var(--text-caption-size)] font-normal text-[var(--quni-ink-3)]">
+            Optional — open a mode.
           </span>
         </p>
       </div>
 
       <details className="group border-t border-[var(--quni-line)]">
-        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3.5 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors hover:bg-[var(--quni-surface-2)] [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-2.5 px-5 py-3 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors hover:bg-[var(--quni-surface-2)] [&::-webkit-details-marker]:hidden">
           <ChevronRight
             className="h-3.5 w-3.5 shrink-0 text-[var(--quni-coral-active)] transition-transform duration-[var(--dur-base)] group-open:rotate-90"
             aria-hidden
@@ -371,13 +372,13 @@ function PreviewDesk({ property }: { property: Property | null }) {
             how your room appears in search
           </span>
         </summary>
-        <div className="px-5 pb-5 pt-1.5">
+        <div className="px-5 pb-5 pt-1">
           {property ? (
-            <div className="flex flex-wrap items-start gap-6">
+            <div className="flex flex-wrap items-start gap-5">
               <div className="w-full max-w-xs shrink-0 [&_.quni-card]:shadow-[var(--shadow-1)]">
                 <PropertyCard property={property} staticDisplay />
               </div>
-              <p className="max-w-xs text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)]">
+              <p className="max-w-xs text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
                 The exact card a <strong className="font-semibold text-[var(--quni-ink-2)]">verified student</strong>{' '}
                 sees while browsing — same component as every live listing, so what you preview is what publishes.
               </p>
@@ -389,7 +390,7 @@ function PreviewDesk({ property }: { property: Property | null }) {
       </details>
 
       <details className="group border-t border-[var(--quni-line)]">
-        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3.5 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors hover:bg-[var(--quni-surface-2)] [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-2.5 px-5 py-3 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors hover:bg-[var(--quni-surface-2)] [&::-webkit-details-marker]:hidden">
           <ChevronRight
             className="h-3.5 w-3.5 shrink-0 text-[var(--quni-coral-active)] transition-transform duration-[var(--dur-base)] group-open:rotate-90"
             aria-hidden
@@ -399,16 +400,16 @@ function PreviewDesk({ property }: { property: Property | null }) {
             the page a student opens
           </span>
         </summary>
-        <div className="px-5 pb-5 pt-1.5">
+        <div className="px-5 pb-5 pt-1">
           {property ? (
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)]">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(12rem,15rem)]">
               <div>
-                <div className="grid aspect-[4/3] max-h-80 grid-cols-[2fr_1fr] grid-rows-2 gap-2">
+                <div className="grid aspect-[4/3] max-h-72 grid-cols-[2fr_1fr] grid-rows-2 gap-2">
                   <div className="relative row-span-2 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]">
                     {hero ? (
                       <img src={hero} alt="" className="h-full w-full object-cover" loading="lazy" />
                     ) : null}
-                    <span className="absolute bottom-3 left-3 rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-2 py-1 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-surface-1)]">
+                    <span className="absolute bottom-2.5 left-2.5 rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-2 py-1 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-surface-1)]">
                       Your room
                     </span>
                   </div>
@@ -421,16 +422,16 @@ function PreviewDesk({ property }: { property: Property | null }) {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4">
-                  <h3 className="font-display text-[length:var(--text-h2-size)] font-semibold leading-[var(--text-h2-lh)] text-[var(--quni-ink)] !mt-0 !mb-0">
+                <div className="mt-3.5">
+                  <h3 className="font-display text-[length:var(--text-h3-size)] font-semibold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-0">
                     {property.title}
                   </h3>
-                  <p className="mt-1.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink-3)]">
+                  <p className="mt-1 text-[length:var(--text-caption-size)] text-[var(--quni-ink-3)]">
                     {[property.suburb, property.state].filter(Boolean).join(', ')}
                     {accommodation ? ` · ${accommodation}` : null}
                   </p>
                 </div>
-                <div className="mt-3.5 flex items-center gap-2.5 border-y border-[var(--quni-line)] py-3">
+                <div className="mt-3 flex items-center gap-2.5 border-y border-[var(--quni-line)] py-2.5">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink-3)]">
                     {hostName.charAt(0).toUpperCase()}
                   </div>
@@ -449,17 +450,17 @@ function PreviewDesk({ property }: { property: Property | null }) {
                   ) : null}
                 </div>
                 {property.description?.trim() ? (
-                  <div className="mt-4">
-                    <p className="mb-2 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
+                  <div className="mt-3.5">
+                    <p className="mb-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
                       About this room
                     </p>
-                    <p className="line-clamp-5 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
+                    <p className="line-clamp-4 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
                       {property.description.trim()}
                     </p>
                   </div>
                 ) : null}
-                <p className="mt-4 text-[length:var(--text-caption-size)] text-[var(--quni-ink-3)]">
-                  Read-only preview of a live listing —{' '}
+                <p className="mt-3 text-[length:var(--text-caption-size)] text-[var(--quni-ink-3)]">
+                  Read-only preview —{' '}
                   <Link
                     to={`/properties/${property.slug}`}
                     className="font-semibold text-[var(--quni-coral-active)] underline-offset-2 hover:underline"
@@ -515,17 +516,17 @@ function PapersFooter() {
   const legalLine = `${entity.legalName.trim() || LEGAL_ENTITY_NAME} t/a Quni Living · ABN ${formatAustralianAbn(abn)} · ${entity.registeredState} · Information, not legal advice.`
 
   return (
-    <footer className="mt-11 bg-[var(--quni-navy)]">
-      <div className="mx-auto flex max-w-site flex-wrap items-start justify-between gap-7 px-5 py-8 md:px-6">
+    <footer className="mt-6 bg-[var(--quni-navy)]">
+      <div className="mx-auto flex max-w-site flex-wrap items-start justify-between gap-7 px-5 py-7 md:px-6">
         <div>
           <span className="font-display text-[length:var(--text-h2-size)] font-bold text-[var(--quni-coral)]">
             Quni
           </span>
-          <p className="mt-3 max-w-md font-footer text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/55">
+          <p className="mt-2.5 max-w-md font-footer text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/55">
             {legalLine}
           </p>
         </div>
-        <div className="flex flex-col items-start gap-3.5 sm:items-end">
+        <div className="flex flex-col items-start gap-3 sm:items-end">
           <nav className="flex flex-wrap gap-5" aria-label="Footer">
             {(
               [
@@ -545,7 +546,7 @@ function PapersFooter() {
             ))}
           </nav>
           <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-white/20 bg-[var(--quni-success-bg)] px-2.5 py-1.5 text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-success-fg)]">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
               <path d="M20 6L9 17l-5-5" />
             </svg>
             Verified student marketplace
@@ -557,8 +558,8 @@ function PapersFooter() {
 }
 
 /**
- * Desk-format landlord invite — Preview-gated (`list_your_room_d_enabled`).
- * Does not replace `/list-your-room`, `-b`, or `-c`.
+ * Desk-format landlord invite v5 — Preview-gated (`list_your_room_d_enabled`).
+ * Fold: Quinnie+earnings+preview | dark sticky pen. Below: tools + green trust.
  */
 export default function ListYourRoomD() {
   const [previewProperty, setPreviewProperty] = useState<Property | null>(null)
@@ -574,7 +575,7 @@ export default function ListYourRoomD() {
   }, [loadPreview])
 
   return (
-    <div className="bg-[var(--quni-surface-1)]">
+    <div className="bg-[var(--quni-surface-2)]">
       <Seo
         title="List your property"
         description="The safest way to rent your spare room to university students. Set your terms, vet pre-screened applicants, and get paid weekly — free to list until you accept."
@@ -582,59 +583,128 @@ export default function ListYourRoomD() {
         noindex
       />
 
-      <div className="mx-auto flex max-w-site flex-col gap-6 px-5 py-6 md:px-6 md:py-8 lg:py-9">
-        <h1 className="sr-only">The safest way to rent your spare room to university students.</h1>
+      <div className="mx-auto max-w-site px-5 pt-4 md:px-6 md:pt-5">
+        {/* Fold: 2fr left / 1fr dark pen */}
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-5">
+            {/* Quinnie band — letterhead opens the page (no marketing header) */}
+            <section className="relative rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)]">
+              <Link
+                to="/login"
+                className="absolute right-4 top-4 text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              >
+                Log in
+              </Link>
+              <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:gap-5 sm:pr-20">
+                <div className="flex shrink-0 flex-col items-center gap-2">
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--quni-coral-border)] bg-[var(--quni-coral-tint)] text-[var(--quni-coral-active)]"
+                      aria-hidden
+                    >
+                      <AiSparkleIcon className="h-3 w-3" />
+                    </span>
+                    <span className="font-display text-[length:var(--text-h2-size)] font-bold leading-none text-[var(--quni-coral)]">
+                      Quni
+                    </span>
+                  </span>
+                  <img
+                    src={QUINNIE_IMG}
+                    alt="Quinnie Le, co-founder of Quni"
+                    width={70}
+                    height={70}
+                    loading="lazy"
+                    className="h-16 w-16 rounded-full border border-[var(--quni-line)] object-cover object-[center_16%] sm:h-20 sm:w-20"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="font-display text-[length:var(--text-h3-size)] font-semibold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-0 md:text-[length:var(--text-h2-size)] md:leading-[var(--text-h2-lh)]">
+                    The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to
+                    university students.
+                  </h1>
+                  <p className="mt-1.5 max-w-2xl text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
+                    <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni
+                    with my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and
+                    you can message me anytime — you&apos;ll get me, not a bot.
+                  </p>
+                  <p className="mt-1 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
+                    Quinnie Le, co-founder.
+                  </p>
+                </div>
+              </div>
+            </section>
 
-        {/* Quinnie desk — wordmark above avatar (letterhead) */}
-        <section className="flex max-w-3xl items-center gap-4 rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-5 py-5">
-          <div className="flex shrink-0 flex-col items-center gap-2">
-            <span className="font-display text-[length:var(--text-h3-size)] font-bold leading-none text-[var(--quni-coral)]">
-              Quni
-            </span>
-            <img
-              src={QUINNIE_IMG}
-              alt="Quinnie Le, co-founder of Quni"
-              width={70}
-              height={70}
-              loading="lazy"
-              className="h-20 w-20 rounded-full border border-[var(--quni-line)] object-cover object-[center_16%]"
+            <EarningsStrip />
+            <PreviewDesk property={previewProperty} />
+          </div>
+
+          {/* Dark sticky pen */}
+          <aside
+            id="list-your-room-d-signup"
+            className={[
+              'rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-5 text-white lg:sticky lg:top-4',
+              /* Token-only dark overrides for the light Signup embed */
+              '[&_h2]:!text-white',
+              '[&_label]:!text-white/80',
+              '[&_a]:!text-white/80 [&_a:hover]:!text-white',
+              '[&_p]:!text-white/70',
+              '[&_p_strong]:!text-white',
+              '[&_input]:!border-white/20 [&_input]:!bg-white/10 [&_input]:!text-white [&_input]:placeholder:!text-white/40',
+              '[&_button[type=submit]]:!border-white/35 [&_button[type=submit]]:!text-white [&_button[type=submit]:hover]:!border-white',
+              '[&_.mt-3.text-center]:!text-white/50',
+            ].join(' ')}
+          >
+            <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-white/55">
+              For landlords
+            </p>
+            <Signup
+              embedLandlordInvite
+              embedInviteTitle="List your property"
+              embedInviteSub={
+                <div className="mt-3.5">
+                  <ul className="mb-4 flex flex-col gap-2">
+                    {PEN_REASSURANCES.map((line) => (
+                      <li
+                        key={line}
+                        className="flex items-center gap-2 text-[length:var(--text-body-sm-size)] text-white/90"
+                      >
+                        <WhiteTick />
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mb-1 flex items-center justify-between gap-2.5 border-y border-white/15 py-3">
+                    <span className="text-[length:var(--text-caption-size)] text-white/70">
+                      <strong className="font-semibold text-white">Listing fee</strong> · one-off, on accept. No
+                      subscription.
+                    </span>
+                    <span className="shrink-0 font-sans text-[length:var(--text-h2-size)] font-bold tabular-nums text-white">
+                      $99.00
+                    </span>
+                  </div>
+                </div>
+              }
             />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[length:var(--text-body-size)] leading-[var(--text-body-lh)] text-[var(--quni-ink-2)]">
-              <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
-              my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
-              message me anytime — you&apos;ll get me, not a bot.
-            </p>
-            <p className="mt-1.5 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
-              Quinnie Le, co-founder.
-            </p>
-          </div>
-        </section>
+          </aside>
+        </div>
 
-        <EarningsStrip />
-        <PreviewDesk property={previewProperty} />
-
-        {/* Three content desks — Rob's -c copy */}
-        <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.05fr]">
-          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5 md:p-6">
-            <h2 className="font-display text-[length:var(--text-h2-size)] font-semibold leading-[var(--text-h2-lh)] text-[var(--quni-ink)] !mt-0 !mb-4">
+        {/* Full-width row beneath the fold */}
+        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5">
+            <h2 className="font-display text-[length:var(--text-h3-size)] font-semibold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-3.5">
               Smart tools that save you hours
             </h2>
             <ul className="flex flex-col">
               {SMART_TOOLS.map(({ title, body, Icon }, i) => (
                 <li
                   key={title}
-                  className={[
-                    'flex gap-3 py-2.5',
-                    i === 0 ? 'pt-0.5' : 'border-t border-[var(--quni-line)]',
-                  ].join(' ')}
+                  className={['flex gap-2.5 py-2.5', i === 0 ? 'pt-0' : 'border-t border-[var(--quni-line)]'].join(' ')}
                 >
                   <span
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-[var(--quni-coral-active)]"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-[var(--quni-coral-active)]"
                     aria-hidden
                   >
-                    <Icon className="h-4 w-4" strokeWidth={2} />
+                    <Icon className="h-3.5 w-3.5" strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[length:var(--text-body-sm-size)] font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
@@ -649,62 +719,38 @@ export default function ListYourRoomD() {
             </ul>
           </section>
 
-          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5 md:p-6">
-            <h2 className="font-display text-[length:var(--text-h2-size)] font-semibold leading-[var(--text-h2-lh)] text-[var(--quni-ink)] !mt-0 !mb-4">
-              Safe and Simple
-            </h2>
-            <div>
-              <OfferLineItem
-                icon={CHECK_ICON}
-                name="Verified renters"
-                value="Included"
-                description="Students with checked identity (and enrolment where required)."
-                valueKind="coralSm"
-              />
-              <OfferLineItem
-                icon={CHECK_ICON}
-                name="See them before you pay"
-                value="Included"
-                description="Full request review before the $99 — accept or decline with no fee."
-                valueKind="coralSm"
-              />
-              <OfferLineItem
-                icon={CHECK_ICON}
-                name="Your details stay private"
-                value="Included"
-                description="Email and phone stay masked until you accept."
-                valueKind="coralSm"
-              />
-              <OfferLineItem
-                icon={CHECK_ICON}
-                name="The paperwork signs itself."
-                value="Included"
-                description="NSW and QLD tenancy agreements generated and e-signed in-platform."
-                valueKind="coralSm"
-              />
-            </div>
+          {/* Trust panel — uses --quni-trust* / --quni-success* (no --quni-verified* in tokens; flagged for Rob) */}
+          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-success-border)] bg-[var(--quni-success-bg)] p-5">
+            <span className="mb-3 inline-block rounded-[var(--radius-sm)] border border-[var(--quni-success-border)] bg-[var(--quni-trust-bg)] px-2.5 py-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-trust)]">
+              Safe and simple
+            </span>
+            <ul className="flex flex-col">
+              {SAFE_ITEMS.map((item) => (
+                <li key={item.name} className="flex gap-2.5 py-2">
+                  <TrustTick />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-trust)]">
+                        {item.name}
+                      </p>
+                      <span className="ml-auto text-[length:var(--text-micro-size)] font-semibold text-[var(--quni-trust)]">
+                        Included
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-trust-text)]">
+                      {item.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/verification"
+              className="mt-2 inline-block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-trust)] underline-offset-2 hover:underline"
+            >
+              How verification works →
+            </Link>
           </section>
-
-          <aside
-            id="list-your-room-d-signup"
-            className="rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] p-5 md:p-6 md:col-span-2 xl:col-span-1"
-          >
-            <Signup
-              embedLandlordInvite
-              embedInviteTitle="List your property"
-              embedInviteSub={
-                <div className="mt-4">
-                  <OfferLineItem
-                    icon={HOUSE_ICON}
-                    name="Listing fee"
-                    value="$99.00"
-                    description="One-off, only when you accept a tenant. No subscription."
-                    valueKind="coralLg"
-                  />
-                </div>
-              }
-            />
-          </aside>
         </div>
       </div>
 
