@@ -32,6 +32,4 @@ export async function verifyTurnstileToken(
   }
 }
 
-export function isTurnstileSiteKeyConfigured(): boolean {
-  return Boolean((import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim())
-}
+export { isTurnstileSiteKeyConfigured, getTurnstileSiteKey } from './turnstileSiteKey'

@@ -19,7 +19,7 @@ type Props = {
   disabled?: boolean
   sending?: boolean
   buttonLabel?: string
-  /** Turnstile scaled down, to the left of Send on one row (embed / listings chat). */
+  /** Narrow desks / embeds — use Turnstile compact size (not CSS scale). */
   compactInline?: boolean
 }
 
@@ -77,19 +77,16 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
 
   if (compactInline) {
     return (
-      <div className="flex w-full flex-col gap-2">
-        <div className="flex w-full flex-row flex-wrap items-center justify-end gap-2">
-          <div
-            className="shrink-0"
-            style={{ transform: 'scale(0.75)', transformOrigin: 'left center' }}
-          >
-            <TurnstileCaptcha
-              resetKey={captchaResetKey}
-              disabled={Boolean(sending) || !turnstileConfigured}
-              onTokenChange={handleTokenChange}
-              showLabel={false}
-            />
-          </div>
+      <div className="flex w-full flex-col gap-2 overflow-visible">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-end">
+          <TurnstileCaptcha
+            resetKey={captchaResetKey}
+            disabled={Boolean(sending) || !turnstileConfigured}
+            onTokenChange={handleTokenChange}
+            showLabel={false}
+            size="compact"
+            onWidgetError={setError}
+          />
           <button
             type="button"
             onClick={() => void verifyAndSend()}
@@ -109,12 +106,14 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-visible">
       <TurnstileCaptcha
         resetKey={captchaResetKey}
         disabled={Boolean(sending) || !turnstileConfigured}
         onTokenChange={handleTokenChange}
         labelClassName="text-xs font-semibold text-gray-800 mb-2"
+        size="normal"
+        onWidgetError={setError}
       />
 
       <button
@@ -134,4 +133,3 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
     </div>
   )
 }
-

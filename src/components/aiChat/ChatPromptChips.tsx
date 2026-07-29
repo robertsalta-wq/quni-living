@@ -1,7 +1,12 @@
 import type { PersonaKey } from '../../lib/aiChat/chatTypes'
 
+export type AudienceMode = 'renter' | 'homeowner'
+
 type Props = {
-  personaKey: PersonaKey
+  /** Auth-derived persona chips (widget / embed default). */
+  personaKey?: PersonaKey
+  /** Reception desk renter ↔ homeowner switch (overrides persona chips when set). */
+  audienceMode?: AudienceMode
   onPick: (prompt: string) => void
   disabled?: boolean
 }
@@ -29,8 +34,27 @@ const CHIPS: Record<PersonaKey, string[]> = {
   ],
 }
 
-export default function ChatPromptChips({ personaKey, onPick, disabled }: Props) {
-  const chips = CHIPS[personaKey]
+/** Suggested questions for the reception desk audience toggle. */
+export const AUDIENCE_CHIPS: Record<AudienceMode, string[]> = {
+  renter: [
+    'Rooms near UTS',
+    'How does verification work?',
+    'What do I pay when I book?',
+  ],
+  homeowner: [
+    'Can I rent out my spare room in NSW?',
+    'Who holds the bond?',
+    'Is my lodger a tenant?',
+  ],
+}
+
+export default function ChatPromptChips({
+  personaKey = 'visitor',
+  audienceMode,
+  onPick,
+  disabled,
+}: Props) {
+  const chips = audienceMode ? AUDIENCE_CHIPS[audienceMode] : CHIPS[personaKey]
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -52,4 +76,3 @@ export default function ChatPromptChips({ personaKey, onPick, disabled }: Props)
     </div>
   )
 }
-

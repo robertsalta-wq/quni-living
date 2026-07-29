@@ -28,8 +28,10 @@ import AccountAvatar, {
   ACCOUNT_MENU_NAME_CLASS,
   ACCOUNT_MENU_TRIGGER_CLASS,
 } from '../AccountAvatar'
+import AskQuniNavPill from '../aiChat/AskQuniNavPill'
 import ChromeHeaderShell from '../ChromeHeaderShell'
 import { DashboardBrandLockup } from '../SiteBrandLockup'
+import { isDeskShellEnabled } from '../../lib/deskShell'
 
 /** Match marketing Header account menu width (w-52). */
 const ACCOUNT_MENU_WIDTH_PX = 208
@@ -353,6 +355,7 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+            {isDeskShellEnabled() ? <AskQuniNavPill /> : null}
             <Link
               to="/messages"
               className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
@@ -412,6 +415,7 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+            {isDeskShellEnabled() ? <AskQuniNavPill /> : null}
             <AccountMenu
               displayName={displayName}
               initials={desktopInitials}
@@ -430,15 +434,18 @@ export default function AppHeader() {
       <ChromeHeaderShell data-chrome-header="dashboard-desktop">
         <div className="flex w-full max-w-full items-center justify-between gap-3">
           <DashboardBrandLockup />
-          {user ? (
-            <AccountMenu
-              displayName={displayName}
-              initials={desktopInitials}
-              photoUrl={profilePhotoUrl}
-              profileHref={profileHref}
-              onSignOut={() => void signOut()}
-            />
-          ) : null}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {isDeskShellEnabled() ? <AskQuniNavPill /> : null}
+            {user ? (
+              <AccountMenu
+                displayName={displayName}
+                initials={desktopInitials}
+                photoUrl={profilePhotoUrl}
+                profileHref={profileHref}
+                onSignOut={() => void signOut()}
+              />
+            ) : null}
+          </div>
         </div>
       </ChromeHeaderShell>
     )

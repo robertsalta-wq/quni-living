@@ -5,12 +5,15 @@ import Footer from '../Footer'
 import FocusFormLegalStrip from '../FocusFormLegalStrip'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
 import PageRouteFallback from '../PageRouteFallback'
+import AskQuniMobileDock from '../aiChat/AskQuniMobileDock'
+import { isDeskShellEnabled } from '../../lib/deskShell'
 import { isFocusFormFlowPath } from '../../lib/site'
 
 /** Public / marketing chrome (Header + Footer). App shell routes do not use this. */
 export default function MarketingChromeLayout() {
   const location = useLocation()
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
+  const showAskQuniDock = isDeskShellEnabled() && !hideFooterForFormFlow
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -22,6 +25,7 @@ export default function MarketingChromeLayout() {
         </Suspense>
       </main>
       {!hideFooterForFormFlow ? <Footer /> : <FocusFormLegalStrip />}
+      {showAskQuniDock ? <AskQuniMobileDock /> : null}
     </div>
   )
 }

@@ -1,8 +1,11 @@
 /**
  * Cloudflare Turnstile server-side validation (Vercel serverless).
- * Env: TURNSTILE_SECRET_KEY (dashboard → Turnstile → site → secret keys)
+ * Production: TURNSTILE_SECRET_KEY. Preview / local: Cloudflare always-pass test secret.
  */
-export default async function handler(req, res) {
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getTurnstileSecretKey } from './lib/turnstileEnv.js'
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -14,12 +17,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  const secret = (process.env.TURNSTILE_SECRET_KEY || '').trim()
+  const secret = getTurnstileSecretKey()
   if (!secret) {
     return res.status(500).json({ ok: false, error: 'Captcha verification is not configured on the server.' })
   }
 
-  let token
+  let token: string | undefined
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body
     token = typeof body?.token === 'string' ? body.token : undefined
@@ -41,7 +44,7 @@ export default async function handler(req, res) {
     body: form,
   })
 
-  const data = await verifyRes.json()
+  const data = (await verifyRes.json()) as { success?: boolean; 'error-codes'?: string[] }
 
   if (!data.success) {
     return res.status(400).json({

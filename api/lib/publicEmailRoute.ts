@@ -2,6 +2,8 @@
  * Shared helpers for public POST + Turnstile + Resend routes (Edge).
  */
 
+import { getTurnstileSecretKey } from './turnstileEnv.js'
+
 export function jsonResponse(body: unknown, status: number, origin: string): Response {
   const allowOrigin = origin || '*'
   return new Response(JSON.stringify(body), {
@@ -48,7 +50,7 @@ export async function verifyTurnstileToken(
   token: string,
   logLabel: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
-  const secret = (process.env.TURNSTILE_SECRET_KEY || '').trim()
+  const secret = getTurnstileSecretKey()
   if (!secret) {
     console.error(`[${logLabel}] Turnstile secret not configured`)
     return { ok: false, message: 'This form is temporarily unavailable. Please try again later.' }

@@ -1,9 +1,8 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Turnstile } from '@marsidev/react-turnstile'
+import { getTurnstileSiteKey, useTurnstileTestKeys } from '../lib/turnstileSiteKey'
 
-const siteKey = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
-
-const DEFAULT_OPTIONS = { theme: 'light' as const, size: 'normal' as const }
+type TurnstileSize = 'normal' | 'compact' | 'flexible'
 
 type Props = {
   /** Bump after a failed submit to get a fresh challenge */
@@ -14,13 +13,43 @@ type Props = {
   labelClassName?: string
   /** When false, only an sr-only label is rendered (compact inline layouts). */
   showLabel?: boolean
+  /** Prefer `compact` in narrow desks — never CSS-scale the iframe (breaks Cloudflare). */
+  size?: TurnstileSize
+  /** Surface Cloudflare widget failures. */
+  onWidgetError?: (message: string) => void
 }
 
-function TurnstileCaptcha({ resetKey, onTokenChange, disabled, labelClassName, showLabel = true }: Props) {
-  const onSuccess = useCallback((t: string) => onTokenChange(t), [onTokenChange])
+function TurnstileCaptcha({
+  resetKey,
+  onTokenChange,
+  disabled,
+  labelClassName,
+  showLabel = true,
+  size = 'normal',
+  onWidgetError,
+}: Props) {
+  const [widgetError, setWidgetError] = useState<string | null>(null)
+  const siteKey = useMemo(() => getTurnstileSiteKey(), [])
+  const usingTestKey = useMemo(() => useTurnstileTestKeys(), [])
+
+  const onSuccess = useCallback(
+    (t: string) => {
+      setWidgetError(null)
+      onTokenChange(t)
+    },
+    [onTokenChange],
+  )
   const onExpire = useCallback(() => onTokenChange(null), [onTokenChange])
-  const onError = useCallback(() => onTokenChange(null), [onTokenChange])
-  const options = useMemo(() => DEFAULT_OPTIONS, [])
+  const onError = useCallback(() => {
+    onTokenChange(null)
+    const msg = usingTestKey
+      ? 'Cloudflare Turnstile could not load. Reload and try again.'
+      : 'Cloudflare could not connect. Check the Turnstile widget hostname allowlist, then reload.'
+    setWidgetError(msg)
+    onWidgetError?.(msg)
+  }, [onTokenChange, onWidgetError, usingTestKey])
+
+  const options = useMemo(() => ({ theme: 'light' as const, size }), [size])
 
   if (!siteKey) {
     return (
@@ -41,14 +70,22 @@ function TurnstileCaptcha({ resetKey, onTokenChange, disabled, labelClassName, s
       ) : (
         <span className="sr-only">I&apos;m not a robot</span>
       )}
-      <Turnstile
-        key={resetKey}
-        siteKey={siteKey}
-        onSuccess={onSuccess}
-        onExpire={onExpire}
-        onError={onError}
-        options={options}
-      />
+      {/* No CSS transform:scale — that commonly triggers Cloudflare “unable to connect”. */}
+      <div className="min-h-[65px] min-w-0 overflow-visible">
+        <Turnstile
+          key={resetKey}
+          siteKey={siteKey}
+          onSuccess={onSuccess}
+          onExpire={onExpire}
+          onError={onError}
+          options={options}
+        />
+      </div>
+      {widgetError ? (
+        <p className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+          {widgetError}
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -66,7 +66,7 @@ function AskAiBarItem() {
   return (
     <button
       type="button"
-      onClick={openChat}
+      onClick={() => openChat()}
       aria-label={ASK_AI_BUTTON_LABEL}
       className="relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 select-none touch-manipulation text-[var(--quni-coral)] [-webkit-touch-callout:none]"
     >

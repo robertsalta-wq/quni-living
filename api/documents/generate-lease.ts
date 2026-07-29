@@ -12,7 +12,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { Database } from '../../src/lib/database.types.js'
-import type { ListingDocGenResult } from '../lib/booking/listingAgreementTypes.js'
+import { mapListingDocGenHttpResult } from '../lib/booking/listingAgreementTypes.js'
 import { runNswOccupancyListingTenancy } from '../lib/documents/listingTenancyGeneration/nswOccupancy.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
@@ -21,36 +21,6 @@ export const config = {
   maxDuration: 60,
 }
 
-function mapDocGenResult(
-  result: ListingDocGenResult,
-  deferSigning: boolean,
-): { status: number; body: Record<string, unknown> } {
-  if (!result.ok) {
-    return {
-      status: result.status,
-      body: {
-        error: result.error,
-        ...(result.detail ? { detail: result.detail, message: result.detail } : {}),
-      },
-    }
-  }
-  if ('skipped' in result && result.skipped) {
-    return {
-      status: 200,
-      body: { ok: true, skipped: true, reason: result.reason },
-    }
-  }
-  return {
-    status: 200,
-    body: {
-      ok: true,
-      tenancy_id: result.tenancyId,
-      document_id: result.documentId,
-      deferred_signing: deferSigning,
-      ...(result.docusealSubmissionId ? { docuseal_submission_id: result.docusealSubmissionId } : {}),
-    },
-  }
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[generate-lease] incoming request', { method: req.method })
@@ -93,6 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const deferSigning = body.defer_signing === true
   const admin = createClient<Database>(supabaseUrl, serviceRole)
   const result = await runNswOccupancyListingTenancy(admin, bookingId, { deferSigning })
-  const mapped = mapDocGenResult(result, deferSigning)
+  const mapped = mapListingDocGenHttpResult(result, deferSigning)
   return res.status(mapped.status).json(mapped.body)
 }
