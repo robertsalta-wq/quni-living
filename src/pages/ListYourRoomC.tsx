@@ -152,7 +152,7 @@ export default function ListYourRoomC() {
               {/* TODO: replace with final approved Quinnie photo */}
               <img
                 src={QUINNIE_IMG}
-                alt="Quinnie Le, co-founder of Quni"
+                alt="Quinnie Lee, co-founder of Quni"
                 width={88}
                 height={88}
                 loading="lazy"
@@ -171,7 +171,7 @@ export default function ListYourRoomC() {
                 you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
               </p>
               <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
-                Quinnie Le, co-founder.
+                Quinnie Lee, co-founder.
               </p>
             </div>
           </div>
@@ -217,24 +217,31 @@ export default function ListYourRoomC() {
             </h2>
             <div>
               <OfferLineItem
-                icon={HOUSE_ICON}
-                name="Listing fee"
-                value="$99.00"
-                description="One-off, only when you accept a tenant. No subscription."
-                valueKind="coralLg"
-              />
-              <OfferLineItem
                 icon={CHECK_ICON}
                 name="Verified renters"
                 value="Included"
-                description="Students and professionals with verified identity."
+                description="Students with checked identity (and enrolment where required)."
+                valueKind="coralSm"
+              />
+              <OfferLineItem
+                icon={CHECK_ICON}
+                name="See them before you pay"
+                value="Included"
+                description="Full request review before the $99 — accept or decline with no fee."
+                valueKind="coralSm"
+              />
+              <OfferLineItem
+                icon={CHECK_ICON}
+                name="Your details stay private"
+                value="Included"
+                description="Email and phone stay masked until you accept."
                 valueKind="coralSm"
               />
               <OfferLineItem
                 icon={CHECK_ICON}
                 name="The paperwork signs itself."
                 value="Included"
-                description="Legally binding NSW tenancy agreements generated and e-signed automatically."
+                description="NSW and QLD tenancy agreements generated and e-signed in-platform."
                 valueKind="coralSm"
               />
             </div>
@@ -250,7 +257,15 @@ export default function ListYourRoomC() {
               embedLandlordInvite
               collapsedEmail
               embedInviteTitle="List your property"
-              embedInviteSub="Free to list. Takes just a few minutes."
+              embedInviteSub={
+                <OfferLineItem
+                  icon={HOUSE_ICON}
+                  name="Listing fee"
+                  value="$99.00"
+                  description="One-off, only when you accept a tenant. No subscription."
+                  valueKind="coralLg"
+                />
+              }
             />
           </aside>
         </div>
