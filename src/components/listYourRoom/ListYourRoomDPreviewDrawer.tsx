@@ -1,7 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react'
-import { Link } from 'react-router-dom'
 import { ListingAccommodationStats } from '../ListingAccommodationStats'
 import { PropertyCard } from '../PropertyCard'
+import { VerifiedLandlordBadge } from '../VerifiedLandlordBadge'
 import type { Property } from '../../lib/listings'
 import { formatListingDetailAccommodation } from '../../lib/listingAccommodationDisplay'
 import { getListingRentDisplay } from '../../lib/pricing/listingRentDisplay'
@@ -15,9 +15,12 @@ type ListYourRoomDPreviewDrawerProps = {
   property: Property | null
   isMobile: boolean
   dialogRef: RefObject<HTMLDialogElement | null>
-  onOpen: (opener: HTMLElement) => void
   onClose: () => void
   onModeChange: (mode: ListYourRoomDPreviewMode) => void
+}
+
+type PreviewRailProps = {
+  onOpen: (opener: HTMLElement) => void
 }
 
 function CloseIcon() {
@@ -28,24 +31,61 @@ function CloseIcon() {
   )
 }
 
+function TrustTick() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0 text-[var(--quni-trust)]"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  )
+}
+
+export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
+  return (
+    <aside className="hidden w-12 shrink-0 self-stretch sm:block" aria-label="Property preview">
+      <button
+        type="button"
+        onClick={(event) => onOpen(event.currentTarget)}
+        className="sticky top-4 flex h-96 w-12 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--quni-ink)] text-white shadow-[var(--shadow-2)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+      >
+        <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
+      </button>
+    </aside>
+  )
+}
+
 function FullPropertyPreview({ property }: { property: Property }) {
   const images = normalizePropertyImages(property.images).map((image) => image.url)
   const rent = getListingRentDisplay(property)
   const accommodation = formatListingDetailAccommodation(property)
+  const hostName = property.landlord_profiles?.full_name?.trim() || 'Private landlord'
+  const hostAvatar = property.landlord_profiles?.avatar_url?.trim()
+  const featureNames = (property.property_features ?? [])
+    .map((row) => row.features?.name?.trim())
+    .filter((name): name is string => Boolean(name))
+    .slice(0, 8)
   const houseRuleRows = property.property_house_rules ?? []
-  const writtenRules = property.house_rules?.trim()
+  const aboutSummary = property.description
+    ?.trim()
+    .replace(/\s+/g, ' ')
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="aspect-video overflow-hidden rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="aspect-video overflow-hidden rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]">
           {images[0] ? <img src={images[0]} alt="" className="h-full w-full object-cover" /> : null}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {[images[1], images[2], images[3], images[4]].map((src, index) => (
             <div
               key={src ?? index}
-              className="aspect-video overflow-hidden rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]"
+              className="aspect-video overflow-hidden rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]"
             >
               {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
             </div>
@@ -53,7 +93,7 @@ function FullPropertyPreview({ property }: { property: Property }) {
         </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid items-start gap-5 sm:grid-cols-2">
         <div className="space-y-4">
           <div>
             <h3 className="font-display text-2xl font-semibold text-[var(--quni-ink)]">{property.title}</h3>
@@ -62,88 +102,109 @@ function FullPropertyPreview({ property }: { property: Property }) {
               {accommodation ? ` · ${accommodation}` : null}
             </p>
           </div>
+
+          <div className="flex items-center gap-3 border-y border-[var(--quni-line)] py-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-sm font-semibold text-[var(--quni-ink-3)]">
+              {hostAvatar ? <img src={hostAvatar} alt="" className="h-full w-full object-cover" /> : hostName.charAt(0)}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--quni-ink)]">Hosted by {hostName}</p>
+              <p className="text-xs text-[var(--quni-ink-3)]">Usually replies within a few hours</p>
+            </div>
+            {property.landlord_profiles?.verified ? <VerifiedLandlordBadge className="ml-auto" /> : null}
+          </div>
+
           <ListingAccommodationStats
             property={property}
             roomLabel={typeof property.room_type === 'string' ? property.room_type : null}
             variant="compact"
           />
-          {property.description?.trim() ? (
-            <section className="border-t border-[var(--quni-line)] pt-4" aria-labelledby="lyrd-preview-about">
-              <h4 id="lyrd-preview-about" className="font-display text-lg font-semibold text-[var(--quni-ink)]">
-                About this place
-              </h4>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--quni-ink-3)]">
-                {property.description.trim()}
-              </p>
-            </section>
+
+          {rent ? (
+            <p className="text-2xl font-bold tabular-nums text-[var(--quni-ink)]">
+              {rent.showFromPrefix ? 'From ' : ''}$
+              {rent.primaryAmount.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+              <span className="ml-1 text-sm font-medium text-[var(--quni-ink-3)]">/wk</span>
+            </p>
           ) : null}
         </div>
 
-        <div className="space-y-4">
-          <aside className="rounded-[var(--radius-md)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] p-4">
-            {rent ? (
-              <p className="text-2xl font-bold tabular-nums text-[var(--quni-ink)]">
-                {rent.showFromPrefix ? 'From ' : ''}$
-                {rent.primaryAmount.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
-                <span className="ml-1 text-sm font-medium text-[var(--quni-ink-3)]">/wk</span>
-              </p>
-            ) : null}
-            <p className="mt-2 text-sm text-[var(--quni-ink-3)]">Read-only preview — booking is disabled here.</p>
-          </aside>
+        <div className="space-y-5">
+          <section aria-labelledby="lyrd-preview-included">
+            <h4
+              id="lyrd-preview-included"
+              className="text-xs font-semibold uppercase tracking-wide text-[var(--quni-ink-3)]"
+            >
+              What&apos;s included
+            </h4>
+            {featureNames.length > 0 ? (
+              <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                {featureNames.map((name) => (
+                  <li
+                    key={name}
+                    className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-2 text-sm text-[var(--quni-ink-2)]"
+                  >
+                    <TrustTick />
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-[var(--quni-ink-3)]">Included features appear with the live listing.</p>
+            )}
+          </section>
 
-          {houseRuleRows.length > 0 || writtenRules ? (
+          {aboutSummary ? (
+            <section className="border-t border-[var(--quni-line)] pt-4" aria-labelledby="lyrd-preview-about">
+              <h4
+                id="lyrd-preview-about"
+                className="text-xs font-semibold uppercase tracking-wide text-[var(--quni-ink-3)]"
+              >
+                About this room
+              </h4>
+              <p className="mt-2 line-clamp-6 text-sm leading-relaxed text-[var(--quni-ink-2)]">{aboutSummary}</p>
+            </section>
+          ) : null}
+
+          {houseRuleRows.length > 0 ? (
             <section className="border-t border-[var(--quni-line)] pt-4" aria-labelledby="lyrd-preview-rules">
-              <h4 id="lyrd-preview-rules" className="font-display text-lg font-semibold text-[var(--quni-ink)]">
+              <h4
+                id="lyrd-preview-rules"
+                className="text-xs font-semibold uppercase tracking-wide text-[var(--quni-ink-3)]"
+              >
                 House rules
               </h4>
-              {houseRuleRows.length > 0 ? (
-                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {houseRuleRows.map((row) => (
-                    <li
-                      key={row.rule_id}
-                      className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-2 text-sm text-[var(--quni-ink-3)]"
-                    >
-                      {row.house_rules_ref?.name?.trim() || 'House rule'} — {row.permitted}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {writtenRules ? (
-                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-[var(--quni-ink-3)]">
-                  {writtenRules}
-                </p>
-              ) : null}
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {houseRuleRows.map((row) => (
+                  <li
+                    key={row.rule_id}
+                    className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-2 text-xs text-[var(--quni-ink-2)]"
+                  >
+                    {row.house_rules_ref?.name?.trim() || 'House rule'} — {row.permitted}
+                  </li>
+                ))}
+              </ul>
             </section>
           ) : null}
         </div>
       </div>
 
       <p className="border-t border-[var(--quni-line)] pt-4 text-sm text-[var(--quni-ink-3)]">
-        This uses the live property data.{' '}
-        <Link
-          to={`/properties/${property.slug}`}
-          className="font-semibold text-[var(--quni-coral-active)] underline-offset-2 hover:underline"
-        >
-          Open the complete property page
-        </Link>
-        .
+        The structured page a student opens before they ask to book, using the live property data.
       </p>
     </div>
   )
 }
 
-/** Adaptive native preview dialog plus one-time desktop edge-tab nudge. */
 export default function ListYourRoomDPreviewDrawer({
   open,
   mode,
   property,
   isMobile,
   dialogRef,
-  onOpen,
   onClose,
   onModeChange,
 }: ListYourRoomDPreviewDrawerProps) {
-  const [nudgeIterations, setNudgeIterations] = useState(0)
   const [entered, setEntered] = useState(false)
 
   useEffect(() => {
@@ -154,7 +215,7 @@ export default function ListYourRoomDPreviewDrawer({
       const frame = requestAnimationFrame(() => setEntered(true))
       return () => cancelAnimationFrame(frame)
     }
-    if (!open && dialog.open) dialog.close()
+    if (dialog.open) dialog.close()
   }, [dialogRef, open])
 
   useEffect(() => {
@@ -171,91 +232,88 @@ export default function ListYourRoomDPreviewDrawer({
   }, [dialogRef, open])
 
   return (
-    <>
-      {!isMobile ? (
-        <div className="fixed right-0 top-1/2 z-30 h-12 w-48 origin-bottom-right -rotate-90">
-          <button
-            type="button"
-            onClick={(event) => onOpen(event.currentTarget)}
-            onAnimationIteration={() => setNudgeIterations((count) => count + 1)}
-            className={[
-              'h-full w-full rounded-t-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 text-sm font-semibold text-white shadow-[var(--shadow-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
-              nudgeIterations < 3 ? 'animate-pulse' : '',
-            ].join(' ')}
-          >
-            Preview your room
-          </button>
-        </div>
-      ) : null}
-
-      <dialog
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Preview your room"
-        onCancel={(event) => {
+    <dialog
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Preview your room"
+      onCancel={(event) => {
+        event.preventDefault()
+        onClose()
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
           event.preventDefault()
           onClose()
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            onClose()
-          }
-        }}
-        onClose={() => {
-          setEntered(false)
-          onClose()
-        }}
+        }
+      }}
+      onClose={() => {
+        setEntered(false)
+        onClose()
+      }}
+      className="fixed inset-0 m-0 h-dvh w-full max-w-none overflow-hidden bg-transparent p-0 text-[var(--quni-ink)] backdrop:bg-[var(--quni-ink)]/60"
+    >
+      <div
+        className="mx-auto flex h-dvh max-w-site justify-end sm:px-5"
         onClick={(event) => {
           if (event.target === event.currentTarget) onClose()
         }}
-        className={[
-          'fixed bottom-0 right-0 top-0 m-0 h-dvh w-full max-w-none overflow-hidden border-l border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60',
-          'transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
-          entered
-            ? 'translate-x-0 translate-y-0'
-            : isMobile
-              ? 'translate-y-full'
-              : 'translate-x-full',
-          mode === 'listing' ? 'sm:max-w-md' : 'sm:max-w-4xl',
-        ].join(' ')}
       >
-        <div className="flex h-dvh flex-col">
-          <header className="shrink-0 bg-[var(--quni-ink)] px-4 pb-4 pt-3 text-white">
+        <section
+          className={[
+            'flex h-dvh w-full flex-col border-l border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
+            entered
+              ? 'translate-x-0 translate-y-0'
+              : isMobile
+                ? 'translate-y-full'
+                : 'translate-x-full',
+            mode === 'listing' ? 'sm:max-w-md' : 'sm:max-w-4xl',
+          ].join(' ')}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <header className="shrink-0 border-b border-[var(--quni-line)] px-5 pb-4 pt-3">
             <button
               type="button"
               onClick={onClose}
               className="mx-auto flex w-full justify-center py-1 sm:hidden"
               aria-label="Close preview drawer"
             >
-              <span className="h-1 w-10 rounded-[var(--radius-pill)] bg-white/40" aria-hidden />
+              <span className="h-1 w-10 rounded-[var(--radius-pill)] bg-[var(--quni-line)]" aria-hidden />
             </button>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-white/60">Your listing preview</p>
-                <h2 className="mt-1 font-display text-xl font-semibold text-white">Preview your room</h2>
+                <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Preview your room</h2>
+                <p className="mt-1 text-xs text-[var(--quni-ink-3)]">
+                  Exactly how your room appears the day it goes live.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                 aria-label="Close"
               >
                 <CloseIcon />
               </button>
             </div>
-            <div className="mt-3 inline-flex rounded-[var(--radius-sm)] border border-white/30 p-1" role="group" aria-label="Preview mode">
+            <div
+              className="mt-3 inline-flex rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] p-1"
+              role="tablist"
+              aria-label="Preview mode"
+            >
               {(['listing', 'full'] as const).map((nextMode, index) => (
                 <button
                   key={nextMode}
                   type="button"
+                  role="tab"
                   data-preview-first-control={index === 0 ? 'true' : undefined}
-                  aria-pressed={mode === nextMode}
+                  aria-selected={mode === nextMode}
                   onClick={() => onModeChange(nextMode)}
                   className={[
                     'rounded-[var(--radius-sm)] px-3 py-2 text-sm font-semibold transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
-                    mode === nextMode ? 'bg-white text-[var(--quni-ink)]' : 'text-white/70 hover:text-white',
+                    mode === nextMode
+                      ? 'bg-[var(--quni-surface-1)] text-[var(--quni-ink)] shadow-[var(--shadow-1)]'
+                      : 'text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]',
                   ].join(' ')}
                 >
                   {nextMode === 'listing' ? 'Listing' : 'Full viewing'}
@@ -270,13 +328,17 @@ export default function ListYourRoomDPreviewDrawer({
             ) : mode === 'listing' ? (
               <div className="mx-auto max-w-sm">
                 <PropertyCard property={property} staticDisplay />
+                <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
+                  The exact card a verified student sees while browsing — the same live component used by every
+                  listing.
+                </p>
               </div>
             ) : (
               <FullPropertyPreview property={property} />
             )}
           </div>
-        </div>
-      </dialog>
-    </>
+        </section>
+      </div>
+    </dialog>
   )
 }

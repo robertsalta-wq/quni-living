@@ -3,11 +3,12 @@ import type { LucideIcon } from 'lucide-react'
 import { Banknote, FilePenLine, MessageSquareText, SpellCheck, UserCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ListYourRoomDPreviewDrawer, {
+  ListYourRoomDPreviewRail,
   type ListYourRoomDPreviewMode,
 } from '../components/listYourRoom/ListYourRoomDPreviewDrawer'
 import ListYourRoomDSignupSheet from '../components/listYourRoom/ListYourRoomDSignupSheet'
 import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
-import SiteSocialLinks from '../components/SiteSocialLinks'
+import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
 import { useIsMobile } from '../hooks/useIsMobile'
 import {
@@ -105,7 +106,7 @@ function TrustTick() {
   )
 }
 
-function EarningsCard() {
+function EarningsCard({ onPreview }: { onPreview: (opener: HTMLElement) => void }) {
   const selectId = useId()
   const [campusId, setCampusId] = useState(LIST_YOUR_ROOM_D_CAMPUSES[0].id)
   const [roomKind, setRoomKind] = useState<ListYourRoomDRoomKind>('single')
@@ -249,6 +250,13 @@ function EarningsCard() {
           ) : guide.status === 'empty' || guide.status === 'error' ? (
             <p className="text-sm text-[var(--quni-ink-3)]">{guide.message}</p>
           ) : null}
+          <button
+            type="button"
+            onClick={(event) => onPreview(event.currentTarget)}
+            className="mt-3 rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+          >
+            Preview your room on Quni →
+          </button>
         </div>
       </div>
     </section>
@@ -264,23 +272,23 @@ function QuinnieBand() {
       >
         Log in
       </Link>
-      <div className="flex items-start gap-4 pr-12 sm:items-center">
-        <div className="flex shrink-0 flex-col items-center gap-2">
-          <QuniLogoHomeLink />
-          <img
-            src={QUINNIE_IMG}
-            alt="Quinnie Le, co-founder of Quni"
-            width={80}
-            height={80}
-            className="h-20 w-20 rounded-full border border-[var(--quni-line)] object-cover object-top"
-          />
-        </div>
+      <div className="flex items-baseline gap-3 pr-12">
+        <QuniLogoHomeLink />
+        <h1 className="min-w-0 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
+          The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
+          students.
+        </h1>
+      </div>
+      <div className="mt-3 flex items-start gap-3">
+        <img
+          src={QUINNIE_IMG}
+          alt="Quinnie Le, co-founder of Quni"
+          width={56}
+          height={56}
+          className="h-14 w-14 shrink-0 rounded-full border border-[var(--quni-line)] object-cover object-top"
+        />
         <div className="min-w-0">
-          <h1 className="font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
-            The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to
-            university students.
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--quni-ink-2)]">
+          <p className="text-sm leading-relaxed text-[var(--quni-ink-2)]">
             <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
             my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
             message me anytime — you&apos;ll get me, not a bot.
@@ -319,7 +327,7 @@ function SmartToolsPanel() {
   )
 }
 
-function TrustPanel() {
+function TrustPanel({ onOpenVerification }: { onOpenVerification: () => void }) {
   return (
     <section className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] p-5">
       <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-surface-1)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--quni-trust)]">
@@ -339,36 +347,86 @@ function TrustPanel() {
           </li>
         ))}
       </ul>
-      <Link to="/verification" className="mt-2 inline-block text-sm font-semibold text-[var(--quni-trust)] hover:underline">
+      <button
+        type="button"
+        onClick={onOpenVerification}
+        className="mt-2 text-sm font-semibold text-[var(--quni-trust)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-trust)]"
+      >
         How verification works →
-      </Link>
+      </button>
     </section>
+  )
+}
+
+const VERIFICATION_STEPS = [
+  {
+    title: 'Identity checked',
+    body: 'Every renter verifies their identity before they can enquire — no anonymous messages.',
+  },
+  {
+    title: 'Enrolment confirmed',
+    body: 'Where a listing is student-only, we confirm current university enrolment.',
+  },
+  {
+    title: 'Every listing reviewed',
+    body: 'Each room is checked before it goes live, so what students see is real.',
+  },
+] as const
+
+function VerificationExplainerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <LegalDocumentModal
+      open={open}
+      onClose={onClose}
+      title="How verification works"
+      subtitle="Verification is handled inside Quni."
+    >
+      <ul>
+        {VERIFICATION_STEPS.map((step, index) => (
+          <li
+            key={step.title}
+            className={['flex gap-3 py-3', index === 0 ? '' : 'border-t border-[var(--quni-line)]'].join(' ')}
+          >
+            <TrustTick />
+            <div>
+              <p className="text-sm font-semibold text-[var(--quni-ink)]">{step.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--quni-ink-3)]">{step.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </LegalDocumentModal>
   )
 }
 
 function PapersFooter() {
   const entity = getFallbackLegalEntity()
   const abn = entity.abn.trim() || INVITE_ABN_FALLBACK
-  const legalLine = `${entity.legalName.trim() || LEGAL_ENTITY_NAME} t/a Quni Living · ABN ${formatAustralianAbn(abn)} · ${entity.registeredState}`
+  const legalLine = `${entity.legalName.trim() || LEGAL_ENTITY_NAME} t/a Quni Living · ABN ${formatAustralianAbn(abn)} · ${entity.registeredState} · Information, not legal advice.`
 
   return (
-    <footer className="mt-5 bg-[var(--quni-navy)]">
-      <div className="mx-auto flex max-w-site flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
-        <Link to="/" className="font-display text-2xl font-bold text-[var(--quni-coral)]" aria-label="Quni home">
-          Quni
+    <footer className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
+      <Link to="/" className="font-display text-lg font-bold text-[var(--quni-coral)]" aria-label="Quni home">
+        Quni
+      </Link>
+      <p className="min-w-0 flex-1 font-footer text-xs text-[var(--quni-ink-3)]">{legalLine}</p>
+      <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">
+        <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
+          Terms
         </Link>
-        <p className="text-xs text-white/60">{legalLine}</p>
-        <nav className="flex flex-wrap gap-4 text-xs text-white/80" aria-label="Footer">
-          <Link to="/terms">Terms</Link>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/refunds">Refunds</Link>
-          <Link to="/non-discrimination">Non-Discrimination</Link>
-        </nav>
-        <SiteSocialLinks variant="footer" className="sm:ml-auto" />
-        <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] px-3 py-2 text-xs font-semibold text-[var(--quni-trust)]">
-          ✓ Verified marketplace
-        </span>
-      </div>
+        <Link to="/privacy" className="hover:text-[var(--quni-ink)] hover:underline">
+          Privacy
+        </Link>
+        <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
+          Refunds
+        </Link>
+        <Link to="/non-discrimination" className="hover:text-[var(--quni-ink)] hover:underline">
+          Non-Discrimination
+        </Link>
+      </nav>
+      <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] px-2 py-1 text-xs font-semibold text-[var(--quni-trust)]">
+        ✓ Verified marketplace
+      </span>
     </footer>
   )
 }
@@ -381,6 +439,7 @@ export default function ListYourRoomD() {
   const [property, setProperty] = useState<Property | null>(null)
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null)
   const [previewMode, setPreviewMode] = useState<ListYourRoomDPreviewMode>('listing')
+  const [verificationOpen, setVerificationOpen] = useState(false)
 
   const loadPreview = useCallback(() => {
     void loadPropertyDetailBySlug(LIST_YOUR_ROOM_D_PREVIEW_SLUG).then((nextProperty) => {
@@ -420,35 +479,20 @@ export default function ListYourRoomD() {
         noindex
       />
 
-      <main className="mx-auto max-w-site space-y-5 px-5 pt-5">
-        <QuinnieBand />
-        <EarningsCard />
-
-        <section className="flex flex-col gap-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--quni-ink-3)] bg-[var(--quni-surface-1)] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-display text-lg font-semibold text-[var(--quni-ink)]">
-              See your room the day it goes live.
-            </h2>
-            <p className="mt-1 text-sm text-[var(--quni-ink-3)]">
-              Preview the browsing card and the complete property view before you list.
-            </p>
+      <main className="mx-auto max-w-site px-5 pt-5">
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1 space-y-5">
+            <QuinnieBand />
+            <EarningsCard onPreview={(opener) => openOverlay('preview', opener)} />
+            <div className="grid gap-5 md:grid-cols-2">
+              <SmartToolsPanel />
+              <TrustPanel onOpenVerification={() => setVerificationOpen(true)} />
+            </div>
+            <PapersFooter />
           </div>
-          <button
-            type="button"
-            onClick={(event) => openOverlay('preview', event.currentTarget)}
-            className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral-active)]"
-          >
-            Preview your room →
-          </button>
-        </section>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <SmartToolsPanel />
-          <TrustPanel />
+          <ListYourRoomDPreviewRail onOpen={(opener) => openOverlay('preview', opener)} />
         </div>
       </main>
-
-      <PapersFooter />
 
       <ListYourRoomDPreviewDrawer
         open={activeOverlay === 'preview'}
@@ -456,7 +500,6 @@ export default function ListYourRoomD() {
         property={property}
         isMobile={isMobile}
         dialogRef={previewDialogRef}
-        onOpen={(opener) => openOverlay('preview', opener)}
         onClose={() => setActiveOverlay((current) => (current === 'preview' ? null : current))}
         onModeChange={setPreviewMode}
       />
@@ -465,6 +508,7 @@ export default function ListYourRoomD() {
         onOpen={(opener) => openOverlay('signup', opener)}
         onClose={() => setActiveOverlay((current) => (current === 'signup' ? null : current))}
       />
+      <VerificationExplainerModal open={verificationOpen} onClose={() => setVerificationOpen(false)} />
     </div>
   )
 }

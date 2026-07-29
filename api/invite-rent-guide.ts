@@ -22,6 +22,8 @@ const ALLOWED_CAMPUS_IDS = new Set([
 ])
 
 const ROOM_KINDS = new Set(['single', 'ensuite'])
+/** Product-approved v10 fallback while the properties schema has no ensuite segment. */
+const ENSUITE_WEEKLY_UPLIFT_AUD = 70
 
 /** Soft per-isolate IP budget — complements Cache-Control. */
 const RATE_WINDOW_MS = 60 * 60 * 1000
@@ -164,8 +166,10 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: 'Server configuration missing Supabase credentials.' }, 503, corsHeaders(origin))
   }
 
-  // DB has no dedicated ensuite enum yet — query single rooms and frame honestly.
+  // DB has no dedicated ensuite enum yet. Use the v10 product-approved uplift
+  // and disclose it in the response instead of showing an identical range.
   const queryRoomType = 'single'
+  const roomTypeUplift = roomKind === 'ensuite' ? ENSUITE_WEEKLY_UPLIFT_AUD : 0
 
   try {
     const campusRents = await fetchRents(supabaseUrl, anonKey, {
@@ -177,13 +181,15 @@ export default async function handler(request: Request): Promise<Response> {
     if (campusRange && campusRange.sampleSize >= 2) {
       return json(
         {
-          low: campusRange.low,
-          high: campusRange.high,
+          low: campusRange.low + roomTypeUplift,
+          high: campusRange.high + roomTypeUplift,
           sampleSize: campusRange.sampleSize,
           framing: 'campus_listings',
           roomTypeRequested: roomKind,
           caveat:
-            'Based on recent Quni listings near campus. A guide to what students are paying — not an estimate of your specific room.',
+            roomKind === 'ensuite'
+              ? `Based on recent Quni listings near campus, with the approved $${ENSUITE_WEEKLY_UPLIFT_AUD} weekly ensuite uplift. A guide to what students are paying — not an estimate of your specific room.`
+              : 'Based on recent Quni listings near campus. A guide to what students are paying — not an estimate of your specific room.',
         },
         200,
         corsHeaders(origin),
@@ -209,13 +215,13 @@ export default async function handler(request: Request): Promise<Response> {
 
     const ensuiteNote =
       roomKind === 'ensuite'
-        ? ' Ensuite listings are limited on Quni right now — showing the typical private-room range.'
+        ? ` Ensuite listings are limited on Quni right now, so this includes the approved $${ENSUITE_WEEKLY_UPLIFT_AUD} weekly ensuite uplift.`
         : ''
 
     return json(
       {
-        low: nswRange.low,
-        high: nswRange.high,
+        low: nswRange.low + roomTypeUplift,
+        high: nswRange.high + roomTypeUplift,
         sampleSize: nswRange.sampleSize,
         framing: 'typical_nsw',
         roomTypeRequested: roomKind,
