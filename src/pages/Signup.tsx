@@ -612,14 +612,14 @@ export default function Signup({
         <h2 className="font-display text-2xl font-bold leading-[var(--text-h2-lh)] tracking-[var(--text-h2-track)] text-[var(--quni-ink)] !mt-0 !mb-0">
           {embedInviteTitle ?? 'Put your room up'}
         </h2>
-        <p className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
+        <div className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
           {embedInviteSub ?? (
             <>
               Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
               minutes.
             </>
           )}
-        </p>
+        </div>
 
         {keyMisuse && (
           <div className="mb-3 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
