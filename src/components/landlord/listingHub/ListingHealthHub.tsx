@@ -120,7 +120,8 @@ export default function ListingHealthHub({
               </svg>
             </span>
             <p className="text-[12.5px] leading-snug text-[#5C5326]">
-              We&apos;ll walk you through each section in order. Your progress saves as you go.
+              We&apos;ll walk you through each section in order. Drafts save on this device as you
+              type, when you leave a section, or when you tap Save draft.
             </p>
           </div>
         ) : null}
