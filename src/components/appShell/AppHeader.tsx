@@ -28,6 +28,7 @@ import AccountAvatar, {
   ACCOUNT_MENU_NAME_CLASS,
   ACCOUNT_MENU_TRIGGER_CLASS,
 } from '../AccountAvatar'
+import AskAiHeaderControl from '../aiChat/AskAiHeaderControl'
 import ChromeHeaderShell from '../ChromeHeaderShell'
 import { DashboardBrandLockup } from '../SiteBrandLockup'
 
@@ -353,6 +354,7 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+            <AskAiHeaderControl />
             <Link
               to="/messages"
               className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
@@ -412,6 +414,7 @@ export default function AppHeader() {
             </nav>
           </div>
           <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+            <AskAiHeaderControl />
             <AccountMenu
               displayName={displayName}
               initials={desktopInitials}
@@ -430,15 +433,18 @@ export default function AppHeader() {
       <ChromeHeaderShell data-chrome-header="dashboard-desktop">
         <div className="flex w-full max-w-full items-center justify-between gap-3">
           <DashboardBrandLockup />
-          {user ? (
-            <AccountMenu
-              displayName={displayName}
-              initials={desktopInitials}
-              photoUrl={profilePhotoUrl}
-              profileHref={profileHref}
-              onSignOut={() => void signOut()}
-            />
-          ) : null}
+          <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+            <AskAiHeaderControl />
+            {user ? (
+              <AccountMenu
+                displayName={displayName}
+                initials={desktopInitials}
+                photoUrl={profilePhotoUrl}
+                profileHref={profileHref}
+                onSignOut={() => void signOut()}
+              />
+            ) : null}
+          </div>
         </div>
       </ChromeHeaderShell>
     )
