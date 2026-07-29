@@ -58,9 +58,9 @@ describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', 
     expect(items[1]).toMatchObject({ label: 'Next', primary: true })
   })
 
-  it('edit mode → Cancel · Save', () => {
+  it('edit mode → Save draft · Save', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: true })
-    expect(items.map((i) => i.id)).toEqual(['cancel', 'save'])
+    expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
     expect(items[1]).toMatchObject({ label: 'Save', primary: true })
   })
 
@@ -84,9 +84,9 @@ describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', 
 })
 
 describe('AppActionBar — section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
-  it('edit listing → Cancel · Save', () => {
+  it('edit listing → Save draft · Save', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: false })
-    expect(items.map((i) => i.id)).toEqual(['cancel', 'save'])
+    expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
     expect(items[1]).toMatchObject({ label: 'Save', primary: true })
   })
 

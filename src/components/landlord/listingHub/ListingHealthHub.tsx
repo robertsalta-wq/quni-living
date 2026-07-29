@@ -121,7 +121,8 @@ export default function ListingHealthHub({
             </span>
             <p className="text-[12.5px] leading-snug text-[#5C5326]">
               We&apos;ll walk you through each section in order. Drafts save on this device as you
-              type, when you leave a section, or when you tap Save draft.
+              type or leave a section. Tap Save draft to keep progress — with a title and rent, new
+              listings also save to your account Drafts tab.
             </p>
           </div>
         ) : null}

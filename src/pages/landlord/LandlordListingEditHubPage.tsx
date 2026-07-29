@@ -16,7 +16,9 @@ import {
 } from '../../lib/listingEditHubHealth'
 import {
   patchLandlordPropertyDraftBasic,
+  patchLandlordPropertyEditDraftBasic,
   readLandlordPropertyDraftRaw,
+  readLandlordPropertyEditDraftRaw,
   readListingHeadline,
   writeListingHeadline,
 } from '../../lib/listingHubDraft'
@@ -144,14 +146,31 @@ export default function LandlordListingEditHubPage() {
 
   const basicInitial: ListingBasicInfoValues = useMemo(() => {
     if (property) {
+      const d = readLandlordPropertyEditDraftRaw(property.id)
       return {
-        title: property.title,
-        headline: readListingHeadline(property.id),
-        availableFrom: property.availableFrom?.slice(0, 10) ?? '',
-        openToNonStudents: property.openToNonStudents,
-        propertyListingType: (property.propertyType as PropertyListingType) || 'entire_property',
-        roomType: (property.roomType as RoomType | '') || 'apartment',
-        isRegisteredRoomingHouse: property.isRegisteredRoomingHouse,
+        title: typeof d?.title === 'string' && d.title.trim() ? d.title : property.title,
+        headline:
+          typeof d?.headline === 'string' && d.headline.trim()
+            ? d.headline
+            : readListingHeadline(property.id),
+        availableFrom:
+          typeof d?.availableFrom === 'string' && d.availableFrom
+            ? d.availableFrom.slice(0, 10)
+            : (property.availableFrom?.slice(0, 10) ?? ''),
+        openToNonStudents:
+          typeof d?.openToNonStudents === 'boolean' ? d.openToNonStudents : property.openToNonStudents,
+        propertyListingType:
+          typeof d?.propertyListingType === 'string'
+            ? (d.propertyListingType as PropertyListingType)
+            : (property.propertyType as PropertyListingType) || 'entire_property',
+        roomType:
+          typeof d?.roomType === 'string'
+            ? (d.roomType as RoomType | '')
+            : (property.roomType as RoomType | '') || 'apartment',
+        isRegisteredRoomingHouse:
+          typeof d?.isRegisteredRoomingHouse === 'boolean'
+            ? d.isRegisteredRoomingHouse
+            : property.isRegisteredRoomingHouse,
       }
     }
     const d = readLandlordPropertyDraftRaw()
@@ -194,9 +213,24 @@ export default function LandlordListingEditHubPage() {
         return
       }
 
+      // Edit: Save draft = device draft only (autosave already wrote; ensure flush + leave).
+      if (intent === 'draft') {
+        patchLandlordPropertyEditDraftBasic(propertyId, {
+          title: values.title,
+          headline: values.headline,
+          availableFrom: values.availableFrom,
+          openToNonStudents: values.openToNonStudents,
+          propertyListingType: values.propertyListingType,
+          roomType: values.roomType || 'apartment',
+          isRegisteredRoomingHouse: values.isRegisteredRoomingHouse,
+        })
+        navigate(listingHubPath({ propertyId }))
+        return
+      }
+
       if (!user) throw new Error('You must be signed in to save.')
 
-  // When clearing rooming house, null the registration number; otherwise leave it alone.
+      // When clearing rooming house, null the registration number; otherwise leave it alone.
       const patch: PropertyUpdate = {
         title: values.title,
         available_from: values.availableFrom.trim() || null,

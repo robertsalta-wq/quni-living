@@ -16,6 +16,11 @@ import {
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
+import {
+  clearLandlordPropertyEditDraft,
+  clearLandlordPropertyNewDraft,
+  landlordPropertyEditDraftKey,
+} from '../../lib/listingHubDraft'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
@@ -361,11 +366,13 @@ function parseDraftSelectedRules(raw: unknown): Partial<Record<string, RulePermi
   return out
 }
 
-function persistLandlordPropertyDraftToStorage(draft: LandlordPropertyDraftV1): void {
+function persistLandlordPropertyDraftToStorage(key: string, draft: LandlordPropertyDraftV1): boolean {
   try {
-    localStorage.setItem(LANDLORD_PROPERTY_DRAFT_KEY, JSON.stringify(draft))
+    localStorage.setItem(key, JSON.stringify(draft))
+    return true
   } catch {
     /* quota / private mode */
+    return false
   }
 }
 
@@ -1113,11 +1120,6 @@ export default function LandlordPropertyFormPage() {
     landlordPropertyDraftSnapshotRef.current = landlordPropertyDraftSnapshot
   }, [landlordPropertyDraftSnapshot])
 
-  const persistLandlordPropertyDraft = useCallback(() => {
-    if (isEdit) return
-    persistLandlordPropertyDraftToStorage(landlordPropertyDraftSnapshotRef.current)
-  }, [isEdit])
-
   const propertyFormModeRef = useRef<'new' | 'edit' | null>(null)
   const restoredLocationKeyRef = useRef<string | null>(null)
   /** When set to `location.key`, do not show the resume banner again after re-fetch/re-load on the same navigation. */
@@ -1126,6 +1128,23 @@ export default function LandlordPropertyFormPage() {
   const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
   const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+  const [draftPersistError, setDraftPersistError] = useState<string | null>(null)
+  /** Edit-mode: only write local draft after the user changes something (or a prior dirty draft was restored). */
+  const editDirtyRef = useRef(false)
+  const editBaselineJsonRef = useRef<string | null>(null)
+
+  const persistLandlordPropertyDraft = useCallback((): boolean => {
+    if (isEdit && !propertyId) return false
+    const key = isEdit && propertyId ? landlordPropertyEditDraftKey(propertyId) : LANDLORD_PROPERTY_DRAFT_KEY
+    if (isEdit && propertyId && !editDirtyRef.current) {
+      return true
+    }
+    const ok = persistLandlordPropertyDraftToStorage(key, landlordPropertyDraftSnapshotRef.current)
+    setDraftPersistError(
+      ok ? null : 'Could not save draft on this device (storage full or private mode).',
+    )
+    return ok
+  }, [isEdit, propertyId])
 
   const setParkingAvailableWithFeature = useCallback(
     (next: boolean) => {
@@ -1176,11 +1195,8 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleDraftStartFresh = useCallback(() => {
-    try {
-      localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
-    } catch {
-      /* ignore */
-    }
+    clearLandlordPropertyNewDraft()
+    if (propertyId) clearLandlordPropertyEditDraft(propertyId)
     setShowResumeDraftBanner(false)
     resumeDraftBannerDismissedKeyRef.current = location.key
     setTitle('')
@@ -1245,7 +1261,7 @@ export default function LandlordPropertyFormPage() {
       window.clearTimeout(draftSavedHideTimerRef.current)
       draftSavedHideTimerRef.current = null
     }
-  }, [location.key])
+  }, [location.key, propertyId])
 
   const loadPage = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -1483,16 +1499,25 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   useEffect(() => {
-    if (isEdit || !loadingPage) return
+    if (!loadingPage) return
     restoredLocationKeyRef.current = null
-  }, [isEdit, loadingPage])
+    editDirtyRef.current = false
+    editBaselineJsonRef.current = null
+  }, [loadingPage])
 
   useEffect(() => {
-    if (isEdit) {
-      setDraftSaveEnabled(false)
-      setShowResumeDraftBanner(false)
+    if (!isEdit || !draftSaveEnabled || loadingPage) return
+    const json = JSON.stringify(landlordPropertyDraftSnapshot)
+    if (editBaselineJsonRef.current == null) {
+      editBaselineJsonRef.current = json
       return
     }
+    if (json !== editBaselineJsonRef.current) {
+      editDirtyRef.current = true
+    }
+  }, [isEdit, draftSaveEnabled, loadingPage, landlordPropertyDraftSnapshot])
+
+  useEffect(() => {
     if (loadingPage) {
       setDraftSaveEnabled(false)
       return
@@ -1504,7 +1529,9 @@ export default function LandlordPropertyFormPage() {
     }
     restoredLocationKeyRef.current = location.key
 
-    const parsed = parseLandlordPropertyDraft(localStorage.getItem(LANDLORD_PROPERTY_DRAFT_KEY))
+    const draftKey =
+      isEdit && propertyId ? landlordPropertyEditDraftKey(propertyId) : LANDLORD_PROPERTY_DRAFT_KEY
+    const parsed = parseLandlordPropertyDraft(localStorage.getItem(draftKey))
     if (parsed && isLandlordPropertyDraftMeaningful(parsed)) {
       const valid = new Set(features.map((f) => f.id))
       const featureIds = parsed.selectedFeatureIds.filter((id) => valid.has(id))
@@ -1571,23 +1598,28 @@ export default function LandlordPropertyFormPage() {
       if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
         setShowResumeDraftBanner(true)
       }
+      if (isEdit) {
+        editDirtyRef.current = true
+      }
     } else {
       setShowResumeDraftBanner(false)
-      const intended = parseLandlordServiceTier(localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY))
-      if (intended) {
-        setServiceTier(intended)
-        try {
-          localStorage.removeItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
-        } catch {
-          /* ignore */
+      if (!isEdit) {
+        const intended = parseLandlordServiceTier(localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY))
+        if (intended) {
+          setServiceTier(intended)
+          try {
+            localStorage.removeItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
+          } catch {
+            /* ignore */
+          }
         }
       }
     }
     setDraftSaveEnabled(true)
-  }, [isEdit, loadingPage, location.key, features])
+  }, [isEdit, propertyId, loadingPage, location.key, features])
 
   useEffect(() => {
-    if (isEdit || !draftSaveEnabled || loadingPage) return
+    if (!draftSaveEnabled || loadingPage) return
     const id = window.setTimeout(() => {
       persistLandlordPropertyDraft()
       setDraftSavedVisible(true)
@@ -1598,25 +1630,25 @@ export default function LandlordPropertyFormPage() {
       }, 2200)
     }, 500)
     return () => window.clearTimeout(id)
-  }, [landlordPropertyDraftSnapshot, isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+  }, [landlordPropertyDraftSnapshot, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
     const onVisibility = () => {
-      if (document.visibilityState !== 'hidden' || isEdit || !draftSaveEnabled || loadingPage) return
+      if (document.visibilityState !== 'hidden' || !draftSaveEnabled || loadingPage) return
       persistLandlordPropertyDraft()
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+  }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
     const onPageHide = () => {
-      if (isEdit || !draftSaveEnabled || loadingPage) return
+      if (!draftSaveEnabled || loadingPage) return
       persistLandlordPropertyDraft()
     }
     window.addEventListener('pagehide', onPageHide)
     return () => window.removeEventListener('pagehide', onPageHide)
-  }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+  }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   /** SPA leave (Cancel / hub back) does not fire pagehide — flush draft on unmount. */
   const draftSaveEnabledRef = useRef(draftSaveEnabled)
@@ -1625,10 +1657,22 @@ export default function LandlordPropertyFormPage() {
   loadingPageRef.current = loadingPage
   useEffect(() => {
     return () => {
-      if (isEdit || !draftSaveEnabledRef.current || loadingPageRef.current) return
+      if (!draftSaveEnabledRef.current || loadingPageRef.current) return
       persistLandlordPropertyDraft()
     }
-  }, [isEdit, persistLandlordPropertyDraft])
+  }, [persistLandlordPropertyDraft])
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!draftSaveEnabled || loadingPage) return
+      persistLandlordPropertyDraft()
+      if (!isLandlordPropertyDraftMeaningful(landlordPropertyDraftSnapshotRef.current)) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
     if (!isEdit || loadingPage || refsLoading) return
@@ -2594,6 +2638,11 @@ export default function LandlordPropertyFormPage() {
             scrollToFormFeedback('listing-form-feedback-bottom')
           })
         }
+        if (propertyId) {
+          clearLandlordPropertyEditDraft(propertyId)
+          editDirtyRef.current = false
+          editBaselineJsonRef.current = JSON.stringify(landlordPropertyDraftSnapshotRef.current)
+        }
       } else {
         const slug = generatePropertySlug(t)
         const { data: inserted, error: insErr } = await supabase
@@ -2642,7 +2691,7 @@ export default function LandlordPropertyFormPage() {
           if (payoutErr) throw payoutErr
         }
         try {
-          localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
+          clearLandlordPropertyNewDraft()
         } catch {
           /* ignore */
         }
@@ -2669,22 +2718,136 @@ export default function LandlordPropertyFormPage() {
     }, 2200)
   }, [])
 
-  const handleSaveDraftAndLeave = useCallback(() => {
-    if (isEdit) return
+  const handleSaveDraftAndLeave = useCallback(async () => {
+    editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
+
+    if (!isEdit && user?.id) {
+      const t = title.trim()
+      const rent = Number(rentPerWeek)
+      const landlordId = role === 'admin' ? adminLandlordId || null : landlordProfile?.id ?? null
+      if (t && Number.isFinite(rent) && rent > 0 && landlordId) {
+        try {
+          setSubmitting(true)
+          const slug = generatePropertySlug(t)
+          const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+          const { data: inserted, error: insErr } = await supabase
+            .from('properties')
+            .insert({
+              title: t,
+              slug,
+              landlord_id: landlordId,
+              status: 'draft',
+              featured: false,
+              description: description.trim() || null,
+              bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
+              bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
+              room_type: accommodation.roomType,
+              property_type: accommodation.propertyListingType,
+              furnished,
+              linen_supplied: linenSupplied,
+              weekly_cleaning_service: weeklyCleaning,
+              address: address.trim() || null,
+              suburb: suburb.trim() || null,
+              state: state.trim() || 'NSW',
+              postcode: postcode.trim() || null,
+              latitude,
+              longitude,
+              university_id: universityId.trim() || null,
+              campus_id: campusId.trim() || null,
+              open_to_non_students: openToNonStudents,
+              is_registered_rooming_house: isRegisteredRoomingHouse,
+              rooming_house_registration_number:
+                isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
+                  ? roomingHouseRegistrationNumber.trim()
+                  : null,
+              rent_per_week: rent,
+              max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+              bond_weeks: Math.min(
+                MAX_BOND_WEEKS,
+                Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS),
+              ),
+              lease_length: leaseLength || null,
+              available_from: availableFrom.trim() || null,
+              images: images.length ? serializePropertyImages(images) : null,
+              house_rules: houseRules.trim() || null,
+              service_tier: serviceTier,
+              lister_role: listerRole,
+            } as PropertyInsert)
+            .select('id')
+            .single()
+          if (insErr) throw insErr
+          const newId = (inserted as { id: string }).id
+          const featureIds = [...selectedFeatureIds]
+          if (featureIds.length) await savePropertyFeatures(newId, featureIds)
+          if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
+          clearLandlordPropertyNewDraft()
+          navigate(listingHubPath({ propertyId: newId }), { replace: true })
+          return
+        } catch (err) {
+          console.error('[LandlordPropertyFormPage] server draft save failed', err)
+          setDraftPersistError(
+            err instanceof Error
+              ? `Saved on this device only — account draft failed: ${err.message}`
+              : 'Saved on this device only — could not create account draft.',
+          )
+        } finally {
+          setSubmitting(false)
+        }
+      }
+    }
+
     if (isHubSectionMode) {
       navigate(hubReturnPath)
+    } else if (isEdit && propertyId) {
+      navigate(listingHubPath({ propertyId }))
     } else {
       navigate('/landlord/dashboard?tab=listings')
     }
   }, [
-    isEdit,
     persistLandlordPropertyDraft,
     flashDraftSavedIndicator,
+    isEdit,
+    user?.id,
+    title,
+    rentPerWeek,
+    role,
+    adminLandlordId,
+    landlordProfile?.id,
+    propertyListingType,
+    roomType,
+    isRegisteredRoomingHouse,
+    description,
+    bedrooms,
+    bathrooms,
+    furnished,
+    linenSupplied,
+    weeklyCleaning,
+    address,
+    suburb,
+    state,
+    postcode,
+    latitude,
+    longitude,
+    universityId,
+    campusId,
+    openToNonStudents,
+    roomingHouseRegistrationNumber,
+    maxOccupants,
+    bondWeeks,
+    leaseLength,
+    availableFrom,
+    images,
+    houseRules,
+    serviceTier,
+    listerRole,
+    selectedFeatureIds,
+    selectedRules,
     isHubSectionMode,
-    navigate,
     hubReturnPath,
+    propertyId,
+    navigate,
   ])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
@@ -2695,13 +2858,12 @@ export default function LandlordPropertyFormPage() {
       }).map((spec) => ({
         ...spec,
         icon: spec.primary ? Check : X,
-        ...(spec.id === 'cancel'
-          ? { to: hubReturnPath }
-          : spec.id === 'draft'
-            ? { onClick: handleSaveDraftAndLeave }
-            : { onClick: () => formRef.current?.requestSubmit() }),
+        onClick:
+          spec.id === 'draft'
+            ? () => void handleSaveDraftAndLeave()
+            : () => formRef.current?.requestSubmit(),
       })),
-    [submitting, hubReturnPath, isEdit, handleSaveDraftAndLeave],
+    [submitting, isEdit, handleSaveDraftAndLeave],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -2798,7 +2960,7 @@ export default function LandlordPropertyFormPage() {
                 {hubSectionMeta?.title ?? 'Edit section'}
               </h1>
               <div className="flex shrink-0 items-baseline gap-2">
-                {!isEdit && draftSavedVisible ? (
+                {draftSavedVisible ? (
                   <p className="text-xs text-[var(--quni-ink-5)] tabular-nums" aria-live="polite">
                     Draft saved
                   </p>
@@ -2826,7 +2988,7 @@ export default function LandlordPropertyFormPage() {
                 </h1>
                 {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
               </div>
-              {!isEdit && draftSavedVisible && (
+              {draftSavedVisible && (
                 <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
                   Draft saved
                 </p>
@@ -2863,6 +3025,51 @@ export default function LandlordPropertyFormPage() {
             </div>
           </div>
         )}
+
+        {isEdit && showResumeDraftBanner && !isHubSectionMode && (
+          <div
+            className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            role="region"
+            aria-label="Unsaved edits"
+          >
+            <p className="text-gray-700">Unsaved edits restored from this device.</p>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  resumeDraftBannerDismissedKeyRef.current = location.key
+                  setShowResumeDraftBanner(false)
+                }}
+                className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+              >
+                Continue editing
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (propertyId) clearLandlordPropertyEditDraft(propertyId)
+                  editDirtyRef.current = false
+                  editBaselineJsonRef.current = null
+                  resumeDraftBannerDismissedKeyRef.current = location.key
+                  setShowResumeDraftBanner(false)
+                  void loadPage()
+                }}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Discard unsaved edits
+              </button>
+            </div>
+          </div>
+        )}
+
+        {draftPersistError ? (
+          <div
+            className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+            role="status"
+          >
+            {draftPersistError}
+          </div>
+        ) : null}
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
           <div className="space-y-8">
@@ -4237,36 +4444,28 @@ export default function LandlordPropertyFormPage() {
                       ? 'Save changes'
                       : 'Publish listing'}
               </button>
-              {!isEdit ? (
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={handleSaveDraftAndLeave}
-                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-                >
-                  Save draft
-                </button>
-              ) : null}
-              {isEdit || isHubSectionMode ? (
-                <Link
-                  to={isHubSectionMode ? hubReturnPath : '/landlord/dashboard?tab=listings'}
-                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
-                >
-                  Cancel
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => {
-                    persistLandlordPropertyDraft()
-                    navigate('/landlord/dashboard?tab=listings')
-                  }}
-                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => void handleSaveDraftAndLeave()}
+                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+              >
+                Save draft
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => {
+                  editDirtyRef.current = true
+                  persistLandlordPropertyDraft()
+                  if (isHubSectionMode) navigate(hubReturnPath)
+                  else if (isEdit && propertyId) navigate(listingHubPath({ propertyId }))
+                  else navigate('/landlord/dashboard?tab=listings')
+                }}
+                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+              >
+                Cancel
+              </button>
             </div>
           </div>
           </div>
