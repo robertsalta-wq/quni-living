@@ -9,7 +9,7 @@ import {
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
-import { patchLandlordPropertyDraftBasic } from '../../../lib/listingHubDraft'
+import { patchLandlordPropertyDraftBasic, patchLandlordPropertyEditDraftBasic, writeListingHeadline } from '../../../lib/listingHubDraft'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
 
@@ -117,8 +117,7 @@ export default function ListingBasicInfoDrillIn({
     initial.isRegisteredRoomingHouse,
   ])
 
-  /** New-listing Basic info: debounce + leave/unmount flush so leaving for photos never drops fields. */
-  const isNewListingDraft = !propertyId
+  /** Autosave Basic to device draft (new + edit) so leave never drops fields. */
   const valuesRef = useRef(values)
   valuesRef.current = values
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
@@ -126,9 +125,8 @@ export default function ListingBasicInfoDrillIn({
   const suppressInitialDraftFlashRef = useRef(true)
 
   const persistBasicDraft = () => {
-    if (!isNewListingDraft) return
     const v = valuesRef.current
-    patchLandlordPropertyDraftBasic({
+    const patch = {
       title: v.title,
       headline: v.headline,
       availableFrom: v.availableFrom,
@@ -136,7 +134,13 @@ export default function ListingBasicInfoDrillIn({
       propertyListingType: v.propertyListingType,
       roomType: v.roomType || 'apartment',
       isRegisteredRoomingHouse: v.isRegisteredRoomingHouse,
-    })
+    }
+    if (propertyId) {
+      patchLandlordPropertyEditDraftBasic(propertyId, patch)
+      writeListingHeadline(propertyId, v.headline)
+    } else {
+      patchLandlordPropertyDraftBasic(patch)
+    }
   }
 
   const flashDraftSaved = () => {
@@ -149,7 +153,6 @@ export default function ListingBasicInfoDrillIn({
   }
 
   useEffect(() => {
-    if (!isNewListingDraft) return
     const id = window.setTimeout(() => {
       persistBasicDraft()
       if (suppressInitialDraftFlashRef.current) {
@@ -159,10 +162,9 @@ export default function ListingBasicInfoDrillIn({
       flashDraftSaved()
     }, 500)
     return () => window.clearTimeout(id)
-  }, [values, isNewListingDraft])
+  }, [values, propertyId])
 
   useEffect(() => {
-    if (!isNewListingDraft) return
     const onVisibility = () => {
       if (document.visibilityState !== 'hidden') return
       persistBasicDraft()
@@ -179,7 +181,7 @@ export default function ListingBasicInfoDrillIn({
         draftSavedHideTimerRef.current = null
       }
     }
-  }, [isNewListingDraft])
+  }, [propertyId])
 
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
@@ -222,7 +224,7 @@ export default function ListingBasicInfoDrillIn({
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[var(--quni-ink)]">Basic info</h1>
           <div className="flex shrink-0 items-baseline gap-2">
-            {isNewListingDraft && draftSavedVisible ? (
+            {draftSavedVisible ? (
               <p className="text-xs text-[var(--quni-ink-5)] tabular-nums" aria-live="polite">
                 Draft saved
               </p>

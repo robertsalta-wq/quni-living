@@ -40,45 +40,39 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in — Cancel · Save / setup: Save draft · Next. Cancel → hub (fixed). */
+/** Basic-info drill-in — Save draft · Next (setup) / Save (edit). Always persists on leave. */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
   canSubmit: boolean
 }): AppChromeBarItemSpec[] {
   const primaryLabel = opts.saving ? 'Saving…' : opts.isSetupMode ? 'Next' : 'Save'
-  return opts.isSetupMode
-    ? [
-        { id: 'draft', label: 'Save draft', disabled: opts.saving },
-        { id: 'next', label: primaryLabel, primary: true, disabled: opts.saving || !opts.canSubmit },
-      ]
-    : [
-        { id: 'cancel', label: 'Cancel', disabled: opts.saving },
-        { id: 'save', label: primaryLabel, primary: true, disabled: opts.saving || !opts.canSubmit },
-      ]
+  return [
+    { id: 'draft', label: 'Save draft', disabled: opts.saving },
+    {
+      id: opts.isSetupMode ? 'next' : 'save',
+      label: primaryLabel,
+      primary: true,
+      disabled: opts.saving || !opts.canSubmit,
+    },
+  ]
 }
 
 /**
- * Section drill-in — new listing: Save draft · Publish; edit: Cancel · Save.
- * Cancel / Save draft → hub (caller wires navigation).
+ * Section drill-in — Save draft · Publish (new) / Save (edit).
+ * Save draft → hub (caller wires); never discard without persisting.
  */
 export function listingSectionDrillInActionBarItemSpecs(opts: {
   saving: boolean
   isNewListing?: boolean
 }): AppChromeBarItemSpec[] {
-  if (opts.isNewListing) {
-    return [
-      { id: 'draft', label: 'Save draft', disabled: opts.saving },
-      {
-        id: 'save',
-        label: opts.saving ? 'Saving…' : 'Publish',
-        primary: true,
-        disabled: opts.saving,
-      },
-    ]
-  }
   return [
-    { id: 'cancel', label: 'Cancel', disabled: opts.saving },
-    { id: 'save', label: opts.saving ? 'Saving…' : 'Save', primary: true, disabled: opts.saving },
+    { id: 'draft', label: 'Save draft', disabled: opts.saving },
+    {
+      id: 'save',
+      label: opts.saving ? 'Saving…' : opts.isNewListing ? 'Publish' : 'Save',
+      primary: true,
+      disabled: opts.saving,
+    },
   ]
 }
