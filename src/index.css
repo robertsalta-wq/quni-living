@@ -6,6 +6,11 @@
 @tailwind utilities;
 
 @layer utilities {
+  .lyrd-quinnie-thumbnail {
+    width: calc(var(--space-16) + var(--space-2));
+    height: calc(var(--space-16) + var(--space-2));
+  }
+
   .lyrd-preview-height {
     height: 100dvh;
   }

@@ -267,7 +267,7 @@ function QuinnieBand() {
       </Link>
       <div className="flex items-baseline gap-3 pr-12">
         <QuniLogoHomeLink />
-        <h1 className="min-w-0 -translate-y-1.5 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
+        <h1 className="min-w-0 -translate-y-2.5 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
           The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
           students.
         </h1>
@@ -276,9 +276,9 @@ function QuinnieBand() {
         <img
           src={QUINNIE_IMG}
           alt="Quinnie Le, co-founder of Quni"
-          width={56}
-          height={56}
-          className="h-14 w-14 shrink-0 rounded-full border border-[var(--quni-line)] object-cover object-top"
+          width={72}
+          height={72}
+          className="lyrd-quinnie-thumbnail -translate-y-1 shrink-0 rounded-full border border-[var(--quni-line)] object-cover object-top"
         />
         <div className="min-w-0">
           <p className="text-sm leading-relaxed text-[var(--quni-ink-2)]">
