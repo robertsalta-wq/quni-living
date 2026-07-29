@@ -463,7 +463,8 @@ export default function Header({ embedded = false }: HeaderProps) {
         </div>
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-          {inviteMinimalChrome ? null : <AskAiHeaderControl className="hidden md:inline-flex" />}
+          {/* Ask AI stays available on invite-minimal pages (e.g. /list-your-room-d). */}
+          <AskAiHeaderControl className="hidden md:inline-flex" />
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : inviteMinimalChrome ? (
