@@ -12,9 +12,11 @@ import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
 import SiteSocialLinks from '../components/SiteSocialLinks'
+import ListYourRoomDMobileSignup from '../components/listYourRoom/ListYourRoomDMobileSignup'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import Signup from './Signup'
+import { useIsMobile } from '../hooks/useIsMobile'
 import {
   LIST_YOUR_ROOM_D_CAMPUSES,
   LIST_YOUR_ROOM_D_PREVIEW_SLUG,
@@ -575,7 +577,9 @@ function PapersFooter() {
  * Fold: Quinnie+earnings+preview | dark sticky pen. Below: tools + green trust.
  */
 export default function ListYourRoomD() {
+  const isMobile = useIsMobile()
   const [previewProperty, setPreviewProperty] = useState<Property | null>(null)
+  const [mobileSignupOpen, setMobileSignupOpen] = useState(false)
 
   const loadPreview = useCallback(() => {
     void loadPropertyDetailBySlug(LIST_YOUR_ROOM_D_PREVIEW_SLUG).then((p) => {
@@ -587,8 +591,19 @@ export default function ListYourRoomD() {
     loadPreview()
   }, [loadPreview])
 
+  useEffect(() => {
+    if (!isMobile) setMobileSignupOpen(false)
+  }, [isMobile])
+
   return (
-    <div className="bg-[var(--quni-surface-2)]">
+    <div
+      className={[
+        'bg-[var(--quni-surface-2)]',
+        isMobile ? 'pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <Seo
         title="List your property"
         description="The safest way to rent your spare room to university students. Set your terms, vet pre-screened applicants, and get paid weekly — free to list until you accept."
@@ -598,7 +613,14 @@ export default function ListYourRoomD() {
 
       <div className="mx-auto max-w-site px-5 pt-4 md:px-6 md:pt-5">
         {/* Fold: 2fr left / 1fr dark pen — items-start so a tall pen never stretches the preview column */}
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div
+          className={[
+            'grid grid-cols-1 items-start gap-5',
+            isMobile ? '' : 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           <div className="flex flex-col gap-5">
             {/* Quinnie band — letterhead opens the page (no marketing header) */}
             <section className="relative rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)]">
@@ -641,51 +663,53 @@ export default function ListYourRoomD() {
             <PreviewDesk property={previewProperty} />
           </div>
 
-          {/* Dark pen — condensed; collapsed email keeps height aligned with preview desk */}
-          <aside
-            id="list-your-room-d-signup"
-            className={[
-              'rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-4 text-white lg:sticky lg:top-4',
-              '[&_h2]:!mt-0 [&_h2]:!text-[length:var(--text-h3-size)] [&_h2]:!text-white',
-              '[&_label]:!text-white/80',
-              '[&_a]:!text-white/80 [&_a:hover]:!text-white',
-              '[&_p]:!text-white/70',
-              '[&_p_strong]:!text-white',
-              '[&_input]:!border-white/20 [&_input]:!bg-white/10 [&_input]:!text-white [&_input]:placeholder:!text-white/40',
-              '[&_button[type=submit]]:!border-white/35 [&_button[type=submit]]:!text-white [&_button[type=submit]:hover]:!border-white',
-              '[&_.mt-3.text-center]:!text-white/50',
-            ].join(' ')}
-          >
-            <Signup
-              embedLandlordInvite
-              collapsedEmail
-              embedInviteTitle="List your property"
-              embedInviteSub={
-                <div className="mt-2.5">
-                  <ul className="mb-2.5 flex flex-col gap-1.5">
-                    {PEN_REASSURANCES.map((line) => (
-                      <li
-                        key={line}
-                        className="flex items-center gap-2 text-[length:var(--text-caption-size)] text-white/90"
-                      >
-                        <WhiteTick />
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mb-0 flex items-center justify-between gap-2 border-y border-white/15 py-2">
-                    <span className="text-[length:var(--text-caption-size)] leading-snug text-white/70">
-                      <strong className="font-semibold text-white">Listing fee</strong> · one-off, on accept. No
-                      subscription.
-                    </span>
-                    <span className="shrink-0 font-sans text-[length:var(--text-h3-size)] font-bold tabular-nums text-white">
-                      $99.00
-                    </span>
+          {/* Dark pen — desktop / ≥ sm only (mobile uses sticky CTA + sheet) */}
+          {!isMobile ? (
+            <aside
+              id="list-your-room-d-signup"
+              className={[
+                'rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-4 text-white lg:sticky lg:top-4',
+                '[&_h2]:!mt-0 [&_h2]:!text-[length:var(--text-h3-size)] [&_h2]:!text-white',
+                '[&_label]:!text-white/80',
+                '[&_a]:!text-white/80 [&_a:hover]:!text-white',
+                '[&_p]:!text-white/70',
+                '[&_p_strong]:!text-white',
+                '[&_input]:!border-white/20 [&_input]:!bg-white/10 [&_input]:!text-white [&_input]:placeholder:!text-white/40',
+                '[&_button[type=submit]]:!border-white/35 [&_button[type=submit]]:!text-white [&_button[type=submit]:hover]:!border-white',
+                '[&_.mt-3.text-center]:!text-white/50',
+              ].join(' ')}
+            >
+              <Signup
+                embedLandlordInvite
+                collapsedEmail
+                embedInviteTitle="List your property"
+                embedInviteSub={
+                  <div className="mt-2.5">
+                    <ul className="mb-2.5 flex flex-col gap-1.5">
+                      {PEN_REASSURANCES.map((line) => (
+                        <li
+                          key={line}
+                          className="flex items-center gap-2 text-[length:var(--text-caption-size)] text-white/90"
+                        >
+                          <WhiteTick />
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mb-0 flex items-center justify-between gap-2 border-y border-white/15 py-2">
+                      <span className="text-[length:var(--text-caption-size)] leading-snug text-white/70">
+                        <strong className="font-semibold text-white">Listing fee</strong> · one-off, on accept. No
+                        subscription.
+                      </span>
+                      <span className="shrink-0 font-sans text-[length:var(--text-h3-size)] font-bold tabular-nums text-white">
+                        $99.00
+                      </span>
+                    </div>
                   </div>
-                </div>
-              }
-            />
-          </aside>
+                }
+              />
+            </aside>
+          ) : null}
         </div>
 
         {/* Full-width row beneath the fold */}
@@ -719,9 +743,9 @@ export default function ListYourRoomD() {
             </ul>
           </section>
 
-          {/* Trust panel — uses --quni-trust* / --quni-success* (no --quni-verified* in tokens; flagged for Rob) */}
-          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-success-border)] bg-[var(--quni-success-bg)] p-5">
-            <span className="mb-3 inline-block rounded-[var(--radius-sm)] border border-[var(--quni-success-border)] bg-[var(--quni-trust-bg)] px-2.5 py-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-trust)]">
+          {/* Trust panel — --quni-trust* only (no --quni-verified* / not --quni-success*) */}
+          <section className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] p-5">
+            <span className="mb-3 inline-block rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-surface-1)] px-2.5 py-1.5 text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-trust)]">
               Safe and simple
             </span>
             <ul className="flex flex-col">
@@ -755,6 +779,14 @@ export default function ListYourRoomD() {
       </div>
 
       <PapersFooter />
+
+      {isMobile ? (
+        <ListYourRoomDMobileSignup
+          open={mobileSignupOpen}
+          onOpen={() => setMobileSignupOpen(true)}
+          onClose={() => setMobileSignupOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }

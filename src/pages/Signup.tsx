@@ -241,6 +241,10 @@ type SignupProps = {
   embedInviteTitle?: string
   /** Override embed subcopy under the heading. */
   embedInviteSub?: ReactNode
+  /** Optional eyebrow above the embed title (e.g. mobile sheet “For landlords”). */
+  embedInviteEyebrow?: string
+  /** Place implied consent after the email form (mobile sheet order). */
+  embedConsentAfterForm?: boolean
 }
 
 export default function Signup({
@@ -248,6 +252,8 @@ export default function Signup({
   collapsedEmail = false,
   embedInviteTitle,
   embedInviteSub,
+  embedInviteEyebrow,
+  embedConsentAfterForm = false,
 }: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -382,10 +388,16 @@ export default function Signup({
     clearTermsError: () => setTermsError(false),
   }
 
-  function googleButton(className: string, opts?: { multicolorIcon?: boolean }) {
+  function googleButton(className: string, opts?: { multicolorIcon?: boolean; primaryCta?: boolean }) {
     const multicolor = opts?.multicolorIcon === true
     return (
-      <button type="button" onClick={handleGoogleSignup} disabled={!accountKind} className={className}>
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        disabled={!accountKind}
+        className={className}
+        data-invite-primary-cta={opts?.primaryCta ? 'true' : undefined}
+      >
         <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path
             fill={multicolor ? '#4285F4' : 'currentColor'}
@@ -608,9 +620,20 @@ export default function Signup({
 
   if (embedLandlordInvite && accountKind === 'landlord') {
     const showEmailFields = !collapsedEmail || emailFieldsOpen
+    const consentLine = <SignupImpliedConsentLine showLandlordAgreement={showLandlordAgreement} />
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-[22px] font-bold text-[var(--quni-ink)] !mt-0 !mb-0">
+        {embedInviteEyebrow ? (
+          <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
+            {embedInviteEyebrow}
+          </p>
+        ) : null}
+        <h2
+          className={[
+            'font-display text-[22px] font-bold text-[var(--quni-ink)] !mb-0',
+            embedInviteEyebrow ? '!mt-1.5' : '!mt-0',
+          ].join(' ')}
+        >
           {embedInviteTitle ?? 'Put your room up'}
         </h2>
         {embedInviteSub ?? (
@@ -646,11 +669,11 @@ export default function Signup({
         )}
 
         {googleButton(
-          'mt-3 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3 text-[14.5px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
-          { multicolorIcon: true },
+          'mt-3 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          { multicolorIcon: true, primaryCta: true },
         )}
 
-        <SignupImpliedConsentLine showLandlordAgreement={showLandlordAgreement} />
+        {embedConsentAfterForm ? null : consentLine}
 
         {collapsedEmail && !emailFieldsOpen ? (
           <button
@@ -683,7 +706,7 @@ export default function Signup({
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
                   />
                 </div>
                 <div>
@@ -706,7 +729,7 @@ export default function Signup({
                     placeholder="you@email.com"
                     aria-invalid={emailFormatError}
                     aria-describedby={emailFormatError ? 'invite-su-email-error' : undefined}
-                    className={`w-full rounded-[9px] border bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
+                    className={`w-full scroll-mt-16 rounded-[9px] border bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
                       emailFormatError
                         ? 'border-red-500 focus:ring-red-400/30'
                         : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-admin-coral/20'
@@ -734,7 +757,7 @@ export default function Signup({
                     required
                     minLength={6}
                     placeholder="Create a password"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
                   />
                 </div>
                 <button
@@ -748,6 +771,8 @@ export default function Signup({
             ) : null}
           </>
         )}
+
+        {embedConsentAfterForm ? consentLine : null}
 
         {verificationModalFocus !== null ? (
           <VerificationChecklistModal
