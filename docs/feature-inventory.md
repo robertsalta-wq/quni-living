@@ -79,7 +79,8 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **AI chat** widget (persona: student renter vs landlord); host verification honesty rules + knowledge-base chunk
 - **Sample agreement previews** (`/sample-agreements`) - watermarked PDF templates by state/tier; dashboard link for renters and landlords
 - Auth: signup, login, Google OAuth, email verification, forgot/reset password, sign out
-- **App chrome**: shared `AppHeader` (desktop Ask AI) + mobile bottom nav + action bar (`Cancel` / `Save` / Ask AI) on dashboard and drill-in surfaces; floating Ask AI FAB on marketing / public routes outside the app shell
+- **App chrome**: shared `AppHeader` + mobile bottom nav + action bar (`Cancel` / `Save` / Ask AI) on dashboard and drill-in surfaces
+- **Ask AI entry points** (open to signed-out visitors too): desktop header control on marketing and dashboard, mobile action-bar chip in the app shell, mobile floating button elsewhere
 - **Incomplete-profile nudge**: shared warning chrome (“Finish your profile” + next step); expandable readiness driver on profile; global resume strip on marketing/browse (hidden on dashboards that already nudge)
 - Shared dashboard feedback: empty states, error banner, fatal error, welcome toast
 - **Non-discrimination** policy page (`/non-discrimination`)
