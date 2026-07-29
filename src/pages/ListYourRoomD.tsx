@@ -395,14 +395,17 @@ function VerificationExplainerModal({ open, onClose }: { open: boolean; onClose:
 function PapersFooter() {
   const entity = getFallbackLegalEntity()
   const abn = entity.abn.trim() || INVITE_ABN_FALLBACK
-  const legalLine = `${entity.legalName.trim() || LEGAL_ENTITY_NAME} t/a Quni Living · ABN ${formatAustralianAbn(abn)} · ${entity.registeredState} · Information, not legal advice.`
+  const legalName = entity.legalName.trim() || LEGAL_ENTITY_NAME
 
   return (
     <footer className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
       <Link to="/" className="font-display text-lg font-bold text-[var(--quni-coral)]" aria-label="Quni home">
         Quni
       </Link>
-      <p className="min-w-0 flex-1 font-footer text-xs text-[var(--quni-ink-3)]">{legalLine}</p>
+      <div className="min-w-0 flex-1 font-footer text-xs text-[var(--quni-ink-3)]">
+        <p>{legalName} t/a Quni Living</p>
+        <p>ABN {formatAustralianAbn(abn)}</p>
+      </div>
       <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">
         <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
           Terms
