@@ -244,6 +244,13 @@ export default function ListYourRoomC() {
                 description="NSW and QLD tenancy agreements generated and e-signed in-platform."
                 valueKind="coralSm"
               />
+              <OfferLineItem
+                icon={CHECK_ICON}
+                name="No subscription"
+                value="Included"
+                description="One fee when a tenant is accepted — nothing to list or browse."
+                valueKind="coralSm"
+              />
             </div>
           </div>
 
