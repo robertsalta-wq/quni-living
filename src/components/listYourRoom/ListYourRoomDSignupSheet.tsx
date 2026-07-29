@@ -71,7 +71,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   return (
     <>
       <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-[var(--quni-ink)] px-4 pt-3 text-white [padding-bottom:max(var(--space-3),env(safe-area-inset-bottom,0px))]"
+        className="fixed bottom-0 left-1/2 z-40 w-full max-w-site -translate-x-1/2 border-t border-white/20 bg-[var(--quni-ink)] px-4 pt-3 text-white [padding-bottom:max(var(--space-3),env(safe-area-inset-bottom,0px))]"
         role="region"
         aria-label="List your property"
       >

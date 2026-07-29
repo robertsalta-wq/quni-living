@@ -330,12 +330,12 @@ export default function ListYourRoomDPreviewDrawer({
         </button>
         <section
           className={[
-            'lyrd-preview-height absolute right-0 top-0 flex w-full flex-col overflow-hidden border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:right-5 sm:top-4 sm:rounded-[var(--radius-sm)]',
+            'lyrd-preview-height lyrd-preview-panel absolute right-0 top-0 flex w-full flex-col overflow-hidden border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:right-5 sm:top-4 sm:rounded-[var(--radius-sm)]',
             entered
-              ? 'translate-x-0 translate-y-0'
+              ? 'lyrd-preview-panel-open translate-y-0'
               : isMobile
                 ? 'translate-y-full'
-                : 'translate-x-full',
+                : '',
             mode === 'listing' ? 'sm:max-w-md' : 'sm:max-w-4xl',
           ].join(' ')}
           onClick={(event) => event.stopPropagation()}

@@ -267,7 +267,7 @@ function QuinnieBand() {
       </Link>
       <div className="flex items-baseline gap-3 pr-12">
         <QuniLogoHomeLink />
-        <h1 className="min-w-0 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
+        <h1 className="min-w-0 -translate-y-1.5 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
           The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
           students.
         </h1>
