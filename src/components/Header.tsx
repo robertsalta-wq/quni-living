@@ -426,7 +426,7 @@ export default function Header({ embedded = false }: HeaderProps) {
               </div>
               <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
               {/* Locked chrome row is h-11 — larger type, clamp to two lines so Log in stays clear. */}
-              <p className="min-w-0 font-display text-xs font-extrabold leading-[1.2] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-sm sm:leading-snug md:text-base md:leading-snug lg:text-lg lg:leading-snug xl:text-xl xl:leading-tight">
+              <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-extrabold leading-[var(--text-caption-lh)] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-[length:var(--text-body-sm-size)] sm:leading-[var(--text-body-sm-lh)] md:text-[length:var(--text-body-size)] md:leading-[var(--text-body-lh)] lg:text-[length:var(--text-body-lg-size)] lg:leading-[var(--text-body-lg-lh)] xl:text-[length:var(--text-h3-size)] xl:leading-[var(--text-h3-lh)]">
                 The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
                 students.
               </p>
@@ -479,14 +479,20 @@ export default function Header({ embedded = false }: HeaderProps) {
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {loading ? (
-            <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
+            <div className="h-9 w-9 rounded-full bg-[var(--quni-surface-2)] animate-pulse" />
           ) : inviteMinimalChrome ? (
             user ? (
-              <Link to={dashboardHref} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              <Link
+                to={dashboardHref}
+                className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              >
                 Dashboard
               </Link>
             ) : (
-              <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+              <Link
+                to="/login"
+                className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+              >
                 Log in
               </Link>
             )

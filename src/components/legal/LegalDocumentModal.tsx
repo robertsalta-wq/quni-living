@@ -88,22 +88,31 @@ export function LegalDocumentModal({ open, onClose, title, children, subtitle }:
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <header className="flex shrink-0 items-start gap-3 border-b border-stone-200 bg-white px-4 py-4 sm:px-6 [padding-top:max(1rem,env(safe-area-inset-top))]">
+        <header className="flex shrink-0 items-start gap-3 border-b border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-4 py-4 sm:px-6 [padding-top:max(1rem,env(safe-area-inset-top))]">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="font-display text-xl font-bold text-[var(--quni-coral)] tracking-tight sm:text-2xl">
+            <h2
+              id={titleId}
+              className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-coral)] sm:text-[length:var(--text-h2-size)] sm:leading-[var(--text-h2-lh)]"
+            >
               {title}
             </h2>
             {subtitle !== undefined ? (
-              subtitle ? <p className="mt-1 text-sm text-stone-500">{subtitle}</p> : null
+              subtitle ? (
+                <p className="mt-1 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-5)]">
+                  {subtitle}
+                </p>
+              ) : null
             ) : (
-              <p className="mt-1 text-sm text-stone-500">Last updated: 23 March 2026</p>
+              <p className="mt-1 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-5)]">
+                Last updated: 23 March 2026
+              </p>
             )}
           </div>
           <button
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2"
+            className="shrink-0 rounded-lg p-2 text-[var(--quni-ink-5)] transition-colors hover:bg-[var(--quni-surface-2)] hover:text-[var(--quni-ink-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2"
             aria-label="Close"
           >
             <CloseIcon />

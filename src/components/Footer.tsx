@@ -25,17 +25,17 @@ function IconMail(props: { className?: string }) {
 }
 
 const linkClass =
-  'text-[#333] text-sm hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded'
+  'text-[var(--quni-ink-2)] text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-surface-1)]/60 rounded'
 
 const GUIDE_NAV_ITEMS = listGuideNavItems()
 
 export default function Footer() {
   return (
-    <footer className="bg-[var(--quni-coral)] text-[#333] font-footer mt-auto">
+    <footer className="bg-[var(--quni-coral)] text-[var(--quni-ink-2)] font-footer mt-auto">
       <div className={`${SITE_CONTENT_MAX_CLASS} py-14 md:py-16`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link to="/" className="inline-flex items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80">
+            <Link to="/" className="inline-flex items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-surface-1)]/80">
               <img
                 src="/quni-logo-white.png"
                 srcSet="/quni-logo-white.png 1x, /quni-logo-white@2x.png 2x"
@@ -209,7 +209,7 @@ export default function Footer() {
             <h2 className="font-display font-bold text-lg text-white mb-4">Contact Us</h2>
             <ul className="space-y-3 text-sm">
               <li className="flex gap-2.5 items-start">
-                <IconMail className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
+                <IconMail className="w-5 h-5 shrink-0 mt-0.5 text-[var(--quni-ink-2)]" />
                 <a href="mailto:hello@quni.com.au" className={linkClass}>
                   hello@quni.com.au
                 </a>
@@ -218,8 +218,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-[#333]/35 pt-6 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs sm:text-sm text-[#333]">
+        <div className="mt-12 border-t border-[var(--quni-ink-2)]/35 pt-6 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs sm:text-sm text-[var(--quni-ink-2)]">
             <p>© {new Date().getFullYear()} Quni. All rights reserved.</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <Link to="/privacy" className={`${linkClass} text-xs sm:text-sm`}>
@@ -236,7 +236,7 @@ export default function Footer() {
               </Link>
             </div>
           </div>
-          <LegalFooter className="text-[#333]/85" />
+          <LegalFooter className="text-[var(--quni-ink-2)]/85" />
         </div>
       </div>
     </footer>

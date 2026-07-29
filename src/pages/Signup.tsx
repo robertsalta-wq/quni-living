@@ -86,7 +86,7 @@ function formatSignupErrorForDisplay(raw: string, err?: unknown): ReactNode {
       <>
         We couldn&apos;t send your confirmation email. Please check the address is correct and try again in a few
         minutes. If it keeps happening,{' '}
-        <Link to="/contact" className="font-medium text-red-900 underline underline-offset-2">
+        <Link to="/contact" className="font-medium text-[var(--quni-danger-fg)] underline underline-offset-2">
           contact support
         </Link>
         .
@@ -622,20 +622,20 @@ export default function Signup({
         </div>
 
         {keyMisuse && (
-          <div className="mb-3 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="mb-3 mt-3 rounded-lg border border-[var(--quni-warning)]/30 bg-[var(--quni-warning-bg)] px-4 py-3 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-warning-fg)]">
             <p className="font-semibold">Wrong API key type</p>
-            <p className="mt-2 text-amber-900/90">{keyMisuse}</p>
+            <p className="mt-2 opacity-90">{keyMisuse}</p>
           </div>
         )}
 
         {error && (
-          <div className="mb-3 mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="mb-3 mt-3 rounded-lg border border-[var(--quni-danger)]/25 bg-[var(--quni-danger-bg)] px-4 py-3 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-danger-fg)]">
             {secretKeyError && !keyMisuse ? (
               <>
                 <p>Wrong API key: use the Publishable key, not a Secret key.</p>
-                <p className="text-red-700/90 text-xs mt-2">
+                <p className="mt-2 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] opacity-90">
                   Supabase → Project Settings → API → <strong>Publishable keys</strong> → copy into{' '}
-                  <code className="bg-red-100/80 px-1 rounded">VITE_SUPABASE_ANON_KEY</code>.
+                  <code className="rounded bg-[var(--quni-surface-3)] px-1">VITE_SUPABASE_ANON_KEY</code>.
                 </p>
               </>
             ) : typeof error === 'string' ? (
@@ -647,8 +647,7 @@ export default function Signup({
         )}
 
         {googleButton(
-          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-base font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
-          { multicolorIcon: true },
+          'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 py-3.5 text-[length:var(--text-body-size)] font-bold leading-[var(--text-body-lh)] text-[var(--quni-surface-1)] shadow-[0_2px_0_var(--quni-coral-active)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral)]/35 focus:ring-offset-2 disabled:opacity-50',
         )}
 
         <SignupImpliedConsentNotice includeLandlordAgreement={showLandlordAgreement} />
@@ -684,7 +683,7 @@ export default function Signup({
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3.5 py-2.5 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-[var(--quni-coral)]/20"
                   />
                 </div>
                 <div>
@@ -707,14 +706,17 @@ export default function Signup({
                     placeholder="you@email.com"
                     aria-invalid={emailFormatError}
                     aria-describedby={emailFormatError ? 'invite-su-email-error' : undefined}
-                    className={`w-full rounded-[9px] border bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
+                    className={`w-full rounded-[var(--radius-md)] border bg-[var(--quni-surface-1)] px-3.5 py-2.5 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
                       emailFormatError
-                        ? 'border-red-500 focus:ring-red-400/30'
-                        : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-admin-coral/20'
+                        ? 'border-[var(--quni-danger)] focus:ring-[var(--quni-danger)]/30'
+                        : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-[var(--quni-coral)]/20'
                     }`}
                   />
                   {emailFormatError ? (
-                    <p id="invite-su-email-error" className="mt-1 text-sm text-red-600">
+                    <p
+                      id="invite-su-email-error"
+                      className="mt-1 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-danger)]"
+                    >
                       {SIGNUP_EMAIL_INVALID_MESSAGE}
                     </p>
                   ) : null}
@@ -735,13 +737,13 @@ export default function Signup({
                     required
                     minLength={6}
                     placeholder="Create a password"
-                    className="w-full rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3.5 py-2.5 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-[var(--quni-coral)]/20"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 w-full rounded-[10px] border border-[var(--quni-line)] bg-transparent py-3 text-base font-semibold text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
+                  className="mt-1 w-full rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-transparent py-3 text-[length:var(--text-body-size)] font-semibold leading-[var(--text-body-lh)] text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
                 >
                   {submitting ? 'Creating account…' : 'Sign up with email'}
                 </button>

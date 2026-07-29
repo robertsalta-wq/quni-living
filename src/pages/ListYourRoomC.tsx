@@ -277,7 +277,7 @@ export default function ListYourRoomC() {
 
       {/* Mobile sticky CTA — hidden while signup card is on screen */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[var(--quni-line)] bg-[var(--quni-surface-1)]/95 shadow-[0_-8px_24px_-12px_rgba(8,6,13,0.18)] backdrop-blur-md transition-transform duration-200 md:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-[var(--quni-line)] bg-[var(--quni-surface-1)]/95 shadow-[var(--shadow-2)] backdrop-blur-md transition-transform duration-200 md:hidden ${
           signupInView ? 'pointer-events-none translate-y-full' : 'translate-y-0'
         }`}
         aria-hidden={signupInView}
@@ -289,7 +289,7 @@ export default function ListYourRoomC() {
           <button
             type="button"
             onClick={scrollToSignup}
-            className="shrink-0 rounded-lg bg-[var(--quni-coral)] px-3.5 py-2 text-[length:var(--text-body-sm-size)] font-semibold leading-[var(--text-body-sm-lh)] text-white shadow-sm transition-colors hover:bg-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            className="shrink-0 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-3.5 py-2 text-[length:var(--text-body-sm-size)] font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-surface-1)] shadow-sm transition-colors hover:bg-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
           >
             List Your Property
           </button>
