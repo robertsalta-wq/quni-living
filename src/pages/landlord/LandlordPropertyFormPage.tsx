@@ -98,6 +98,7 @@ import LandlordPropertyFt6600ComplianceFields, {
   ft6600ComplianceFormStateFromProperty,
   missingFt6600ComplianceFieldLabelsFromForm,
   type LandlordFt6600ComplianceFormState,
+  type TriState,
 } from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
 import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
@@ -125,6 +126,7 @@ import {
   landlordPropertyUtilitiesFormStateFromProperty,
   missingLandlordPropertyUtilitiesFormMessages,
   type LandlordPropertyUtilitiesFormState,
+  type PerServiceUtilitiesFormState,
 } from '../../components/landlord/LandlordPropertyUtilitiesFields'
 import {
   WATER_SEPARATELY_METERED_ATTESTATION_BULLETS,
@@ -264,6 +266,90 @@ type LandlordPropertyDraftV1 = {
   selectedRules: Partial<Record<string, RulePermitted>>
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
+  utilitiesForm?: LandlordPropertyUtilitiesFormState
+  ft6600Compliance?: LandlordFt6600ComplianceFormState
+}
+
+function parseDraftTriState(raw: unknown): TriState {
+  return raw === 'yes' || raw === 'no' || raw === '' ? raw : ''
+}
+
+function parseDraftPerServiceUtilities(raw: unknown): PerServiceUtilitiesFormState {
+  if (!raw || typeof raw !== 'object') {
+    return { tenantPays: '', individuallyMetered: '', apportionmentPercent: '', howMustBePaid: '' }
+  }
+  const o = raw as Record<string, unknown>
+  return {
+    tenantPays: parseDraftTriState(o.tenantPays),
+    individuallyMetered: parseDraftTriState(o.individuallyMetered),
+    apportionmentPercent: typeof o.apportionmentPercent === 'string' ? o.apportionmentPercent : '',
+    howMustBePaid: typeof o.howMustBePaid === 'string' ? o.howMustBePaid : '',
+  }
+}
+
+function parseDraftUtilitiesForm(raw: unknown): LandlordPropertyUtilitiesFormState {
+  if (!raw || typeof raw !== 'object') return emptyLandlordPropertyUtilitiesFormState()
+  const o = raw as Record<string, unknown>
+  return {
+    waterUsageChargedSeparately: parseDraftTriState(o.waterUsageChargedSeparately),
+    waterSeparatelyMeteredAgreed: Boolean(o.waterSeparatelyMeteredAgreed),
+    electricity: parseDraftPerServiceUtilities(o.electricity),
+    gas: parseDraftPerServiceUtilities(o.gas),
+  }
+}
+
+function parseDraftFt6600Compliance(raw: unknown): LandlordFt6600ComplianceFormState {
+  if (!raw || typeof raw !== 'object') return emptyLandlordFt6600ComplianceFormState()
+  const o = raw as Record<string, unknown>
+  const smoke =
+    o.smokeAlarmType === 'hardwired' || o.smokeAlarmType === 'battery' || o.smokeAlarmType === ''
+      ? o.smokeAlarmType
+      : ''
+  return {
+    smokeAlarmType: smoke,
+    smokeAlarmBatteryTenantReplaceable: parseDraftTriState(o.smokeAlarmBatteryTenantReplaceable),
+    smokeAlarmBatteryType: typeof o.smokeAlarmBatteryType === 'string' ? o.smokeAlarmBatteryType : '',
+    smokeAlarmBackupTenantReplaceable: parseDraftTriState(o.smokeAlarmBackupTenantReplaceable),
+    smokeAlarmBackupBatteryType:
+      typeof o.smokeAlarmBackupBatteryType === 'string' ? o.smokeAlarmBackupBatteryType : '',
+    isStrataScheme: parseDraftTriState(o.isStrataScheme),
+    strataOcResponsibleForAlarms: parseDraftTriState(o.strataOcResponsibleForAlarms),
+    waterUsageChargedSeparately: parseDraftTriState(o.waterUsageChargedSeparately),
+    electricityEmbeddedNetwork: parseDraftTriState(o.electricityEmbeddedNetwork),
+    gasEmbeddedNetwork: parseDraftTriState(o.gasEmbeddedNetwork),
+    strataBylawsApplicable: parseDraftTriState(o.strataBylawsApplicable),
+  }
+}
+
+function isUtilitiesFormMeaningful(u: LandlordPropertyUtilitiesFormState): boolean {
+  return (
+    u.waterUsageChargedSeparately !== '' ||
+    u.waterSeparatelyMeteredAgreed ||
+    u.electricity.tenantPays !== '' ||
+    u.electricity.individuallyMetered !== '' ||
+    u.electricity.apportionmentPercent.trim() !== '' ||
+    u.electricity.howMustBePaid.trim() !== '' ||
+    u.gas.tenantPays !== '' ||
+    u.gas.individuallyMetered !== '' ||
+    u.gas.apportionmentPercent.trim() !== '' ||
+    u.gas.howMustBePaid.trim() !== ''
+  )
+}
+
+function isFt6600ComplianceMeaningful(c: LandlordFt6600ComplianceFormState): boolean {
+  return (
+    c.smokeAlarmType !== '' ||
+    c.smokeAlarmBatteryTenantReplaceable !== '' ||
+    c.smokeAlarmBatteryType.trim() !== '' ||
+    c.smokeAlarmBackupTenantReplaceable !== '' ||
+    c.smokeAlarmBackupBatteryType.trim() !== '' ||
+    c.isStrataScheme !== '' ||
+    c.strataOcResponsibleForAlarms !== '' ||
+    c.waterUsageChargedSeparately !== '' ||
+    c.electricityEmbeddedNetwork !== '' ||
+    c.gasEmbeddedNetwork !== '' ||
+    c.strataBylawsApplicable !== ''
+  )
 }
 
 function parseDraftSelectedRules(raw: unknown): Partial<Record<string, RulePermitted>> {
@@ -363,6 +449,8 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
         d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
           ? d.headTenantLandlordConsent
           : null,
+      utilitiesForm: parseDraftUtilitiesForm(d.utilitiesForm),
+      ft6600Compliance: parseDraftFt6600Compliance(d.ft6600Compliance),
     }
     return draft
   } catch {
@@ -395,7 +483,15 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.showAddAnotherUniversity ||
     d.serviceTier !== 'listing' ||
     d.houseRules.trim() !== '' ||
-    Object.keys(d.selectedRules).length > 0
+    Object.keys(d.selectedRules).length > 0 ||
+    (d.utilitiesForm != null && isUtilitiesFormMeaningful(d.utilitiesForm)) ||
+    (d.ft6600Compliance != null && isFt6600ComplianceMeaningful(d.ft6600Compliance)) ||
+    d.roomsRentedToResidents !== '1' ||
+    d.maxOccupants !== '1' ||
+    d.coupleSurchargePerWeek.trim() !== '' ||
+    d.parkingSurchargePerWeek.trim() !== '' ||
+    d.parkingAvailable ||
+    Boolean(d.listerRole && d.listerRole !== 'owner')
   )
 }
 
@@ -965,6 +1061,8 @@ export default function LandlordPropertyFormPage() {
         selectedRules: { ...selectedRules },
         listerRole,
         headTenantLandlordConsent,
+        utilitiesForm,
+        ft6600Compliance,
       }),
     [
       title,
@@ -1005,6 +1103,8 @@ export default function LandlordPropertyFormPage() {
       selectedRules,
       listerRole,
       headTenantLandlordConsent,
+      utilitiesForm,
+      ft6600Compliance,
     ],
   )
 
@@ -1088,6 +1188,7 @@ export default function LandlordPropertyFormPage() {
     setShowRoomingHouseValidation(false)
     setBedrooms('1')
     setBathrooms('1')
+    setRoomsRentedToResidents('1')
     setRoomType('apartment')
     setPropertyListingType('entire_property')
     setServiceTier('listing')
@@ -1125,11 +1226,20 @@ export default function LandlordPropertyFormPage() {
     setNearbyCampusError(null)
     setShowAddAnotherUniversity(false)
     setRentPerWeek('')
+    setMaxOccupants('1')
+    setCoupleSurchargePerWeek('')
+    setParkingSurchargePerWeek('')
+    setParkingAvailable(false)
     setBondWeeks(String(DEFAULT_BOND_WEEKS))
+    setQldBondRemittancePreference('tenant_choice')
     setLeaseLength('Flexible')
     setAvailableFrom('')
     setImages([])
     setAdminLandlordId('')
+    setListerRole('owner')
+    setHeadTenantLandlordConsent(null)
+    setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
+    setFt6600Compliance(emptyLandlordFt6600ComplianceFormState())
     setDraftSavedVisible(false)
     if (draftSavedHideTimerRef.current) {
       window.clearTimeout(draftSavedHideTimerRef.current)
@@ -1444,6 +1554,8 @@ export default function LandlordPropertyFormPage() {
       if (parsed.listerRole === 'head_tenant' && parsed.headTenantLandlordConsent != null) {
         setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
       }
+      if (parsed.utilitiesForm) setUtilitiesForm(parsed.utilitiesForm)
+      if (parsed.ft6600Compliance) setFt6600Compliance(parsed.ft6600Compliance)
 
       const addrDirty =
         Boolean(parsed.address.trim()) ||
@@ -1505,6 +1617,18 @@ export default function LandlordPropertyFormPage() {
     window.addEventListener('pagehide', onPageHide)
     return () => window.removeEventListener('pagehide', onPageHide)
   }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+
+  /** SPA leave (Cancel / hub back) does not fire pagehide — flush draft on unmount. */
+  const draftSaveEnabledRef = useRef(draftSaveEnabled)
+  draftSaveEnabledRef.current = draftSaveEnabled
+  const loadingPageRef = useRef(loadingPage)
+  loadingPageRef.current = loadingPage
+  useEffect(() => {
+    return () => {
+      if (isEdit || !draftSaveEnabledRef.current || loadingPageRef.current) return
+      persistLandlordPropertyDraft()
+    }
+  }, [isEdit, persistLandlordPropertyDraft])
 
   useEffect(() => {
     if (!isEdit || loadingPage || refsLoading) return
@@ -2536,16 +2660,48 @@ export default function LandlordPropertyFormPage() {
     }
   }
 
+  const flashDraftSavedIndicator = useCallback(() => {
+    setDraftSavedVisible(true)
+    if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+    draftSavedHideTimerRef.current = window.setTimeout(() => {
+      setDraftSavedVisible(false)
+      draftSavedHideTimerRef.current = null
+    }, 2200)
+  }, [])
+
+  const handleSaveDraftAndLeave = useCallback(() => {
+    if (isEdit) return
+    persistLandlordPropertyDraft()
+    flashDraftSavedIndicator()
+    if (isHubSectionMode) {
+      navigate(hubReturnPath)
+    } else {
+      navigate('/landlord/dashboard?tab=listings')
+    }
+  }, [
+    isEdit,
+    persistLandlordPropertyDraft,
+    flashDraftSavedIndicator,
+    isHubSectionMode,
+    navigate,
+    hubReturnPath,
+  ])
+
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
-      listingSectionDrillInActionBarItemSpecs({ saving: submitting }).map((spec) => ({
+      listingSectionDrillInActionBarItemSpecs({
+        saving: submitting,
+        isNewListing: !isEdit,
+      }).map((spec) => ({
         ...spec,
         icon: spec.primary ? Check : X,
         ...(spec.id === 'cancel'
           ? { to: hubReturnPath }
-          : { onClick: () => formRef.current?.requestSubmit() }),
+          : spec.id === 'draft'
+            ? { onClick: handleSaveDraftAndLeave }
+            : { onClick: () => formRef.current?.requestSubmit() }),
       })),
-    [submitting, hubReturnPath],
+    [submitting, hubReturnPath, isEdit, handleSaveDraftAndLeave],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -2641,11 +2797,18 @@ export default function LandlordPropertyFormPage() {
               <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[var(--quni-ink)]">
                 {hubSectionMeta?.title ?? 'Edit section'}
               </h1>
-              {hubSectionMeta ? (
-                <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
-                  Step {hubSectionMeta.step} of 8
-                </span>
-              ) : null}
+              <div className="flex shrink-0 items-baseline gap-2">
+                {!isEdit && draftSavedVisible ? (
+                  <p className="text-xs text-[var(--quni-ink-5)] tabular-nums" aria-live="polite">
+                    Draft saved
+                  </p>
+                ) : null}
+                {hubSectionMeta ? (
+                  <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
+                    Step {hubSectionMeta.step} of 8
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : (
@@ -4067,17 +4230,43 @@ export default function LandlordPropertyFormPage() {
                 {submitting
                   ? 'Saving…'
                   : isHubSectionMode
-                    ? 'Save'
+                    ? isEdit
+                      ? 'Save'
+                      : 'Publish'
                     : isEdit
                       ? 'Save changes'
                       : 'Publish listing'}
               </button>
-              <Link
-                to={isHubSectionMode ? hubReturnPath : '/landlord/dashboard?tab=listings'}
-                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
-              >
-                Cancel
-              </Link>
+              {!isEdit ? (
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={handleSaveDraftAndLeave}
+                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                >
+                  Save draft
+                </button>
+              ) : null}
+              {isEdit || isHubSectionMode ? (
+                <Link
+                  to={isHubSectionMode ? hubReturnPath : '/landlord/dashboard?tab=listings'}
+                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                >
+                  Cancel
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => {
+                    persistLandlordPropertyDraft()
+                    navigate('/landlord/dashboard?tab=listings')
+                  }}
+                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
           </div>

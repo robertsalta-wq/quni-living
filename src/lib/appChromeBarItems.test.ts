@@ -51,9 +51,10 @@ describe('Listing hub action bar — ‹ Listings · Health · Preview', () => {
 })
 
 describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', () => {
-  it('setup mode → Draft · Next', () => {
+  it('setup mode → Save draft · Next', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: false, canSubmit: true })
     expect(items.map((i) => i.id)).toEqual(['draft', 'next'])
+    expect(items[0]).toMatchObject({ label: 'Save draft' })
     expect(items[1]).toMatchObject({ label: 'Next', primary: true })
   })
 
@@ -83,10 +84,17 @@ describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', 
 })
 
 describe('AppActionBar — section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
-  it('always Cancel · Save — no distinct draft/next intent exists on this page', () => {
+  it('edit listing → Cancel · Save', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: false })
     expect(items.map((i) => i.id)).toEqual(['cancel', 'save'])
     expect(items[1]).toMatchObject({ label: 'Save', primary: true })
+  })
+
+  it('new listing → Save draft · Publish', () => {
+    const items = listingSectionDrillInActionBarItemSpecs({ saving: false, isNewListing: true })
+    expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
+    expect(items[0]).toMatchObject({ label: 'Save draft' })
+    expect(items[1]).toMatchObject({ label: 'Publish', primary: true })
   })
 
   it('saving disables both and relabels the primary item', () => {

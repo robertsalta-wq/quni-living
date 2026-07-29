@@ -40,7 +40,7 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in — Cancel · Save / setup: Draft · Next. Cancel → hub (fixed). */
+/** Basic-info drill-in — Cancel · Save / setup: Save draft · Next. Cancel → hub (fixed). */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
@@ -49,7 +49,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
   const primaryLabel = opts.saving ? 'Saving…' : opts.isSetupMode ? 'Next' : 'Save'
   return opts.isSetupMode
     ? [
-        { id: 'draft', label: 'Draft', disabled: opts.saving },
+        { id: 'draft', label: 'Save draft', disabled: opts.saving },
         { id: 'next', label: primaryLabel, primary: true, disabled: opts.saving || !opts.canSubmit },
       ]
     : [
@@ -58,8 +58,25 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
       ]
 }
 
-/** Section drill-in — Cancel · Save. Cancel → hub (fixed). */
-export function listingSectionDrillInActionBarItemSpecs(opts: { saving: boolean }): AppChromeBarItemSpec[] {
+/**
+ * Section drill-in — new listing: Save draft · Publish; edit: Cancel · Save.
+ * Cancel / Save draft → hub (caller wires navigation).
+ */
+export function listingSectionDrillInActionBarItemSpecs(opts: {
+  saving: boolean
+  isNewListing?: boolean
+}): AppChromeBarItemSpec[] {
+  if (opts.isNewListing) {
+    return [
+      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      {
+        id: 'save',
+        label: opts.saving ? 'Saving…' : 'Publish',
+        primary: true,
+        disabled: opts.saving,
+      },
+    ]
+  }
   return [
     { id: 'cancel', label: 'Cancel', disabled: opts.saving },
     { id: 'save', label: opts.saving ? 'Saving…' : 'Save', primary: true, disabled: opts.saving },
