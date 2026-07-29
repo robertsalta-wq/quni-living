@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
@@ -9,6 +9,7 @@ import {
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
+import { patchLandlordPropertyDraftBasic } from '../../../lib/listingHubDraft'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
 
@@ -116,6 +117,70 @@ export default function ListingBasicInfoDrillIn({
     initial.isRegisteredRoomingHouse,
   ])
 
+  /** New-listing Basic info: debounce + leave/unmount flush so leaving for photos never drops fields. */
+  const isNewListingDraft = !propertyId
+  const valuesRef = useRef(values)
+  valuesRef.current = values
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const suppressInitialDraftFlashRef = useRef(true)
+
+  const persistBasicDraft = () => {
+    if (!isNewListingDraft) return
+    const v = valuesRef.current
+    patchLandlordPropertyDraftBasic({
+      title: v.title,
+      headline: v.headline,
+      availableFrom: v.availableFrom,
+      openToNonStudents: v.openToNonStudents,
+      propertyListingType: v.propertyListingType,
+      roomType: v.roomType || 'apartment',
+      isRegisteredRoomingHouse: v.isRegisteredRoomingHouse,
+    })
+  }
+
+  const flashDraftSaved = () => {
+    setDraftSavedVisible(true)
+    if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+    draftSavedHideTimerRef.current = window.setTimeout(() => {
+      setDraftSavedVisible(false)
+      draftSavedHideTimerRef.current = null
+    }, 2200)
+  }
+
+  useEffect(() => {
+    if (!isNewListingDraft) return
+    const id = window.setTimeout(() => {
+      persistBasicDraft()
+      if (suppressInitialDraftFlashRef.current) {
+        suppressInitialDraftFlashRef.current = false
+        return
+      }
+      flashDraftSaved()
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [values, isNewListingDraft])
+
+  useEffect(() => {
+    if (!isNewListingDraft) return
+    const onVisibility = () => {
+      if (document.visibilityState !== 'hidden') return
+      persistBasicDraft()
+    }
+    const onPageHide = () => persistBasicDraft()
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', onPageHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', onPageHide)
+      persistBasicDraft()
+      if (draftSavedHideTimerRef.current) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
+    }
+  }, [isNewListingDraft])
+
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
 
@@ -156,7 +221,14 @@ export default function ListingBasicInfoDrillIn({
         </Link>
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[var(--quni-ink)]">Basic info</h1>
-          <span className="text-xs font-semibold text-[var(--quni-ink-5)]">Step 1 of 8</span>
+          <div className="flex shrink-0 items-baseline gap-2">
+            {isNewListingDraft && draftSavedVisible ? (
+              <p className="text-xs text-[var(--quni-ink-5)] tabular-nums" aria-live="polite">
+                Draft saved
+              </p>
+            ) : null}
+            <span className="text-xs font-semibold text-[var(--quni-ink-5)]">Step 1 of 8</span>
+          </div>
         </div>
       </div>
 
