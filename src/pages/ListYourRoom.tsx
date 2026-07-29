@@ -179,7 +179,7 @@ export default function ListYourRoom() {
               {/* TODO: replace with final approved Quinnie photo */}
               <img
                 src={QUINNIE_IMG}
-                alt="Quinnie Le, co-founder of Quni"
+                alt="Quinnie Lee, co-founder of Quni"
                 width={88}
                 height={88}
                 loading="lazy"
@@ -191,7 +191,7 @@ export default function ListYourRoom() {
                   spare room is easy money, not a headache. It takes a few minutes to set up, and you can message me
                   anytime — you&apos;ll get me, not a bot.
                 </p>
-                <p className="mt-2 text-[12.5px] font-semibold text-[var(--quni-navy)]">Quinnie Le, co-founder.</p>
+                <p className="mt-2 text-[12.5px] font-semibold text-[var(--quni-navy)]">Quinnie Lee, co-founder.</p>
               </div>
             </div>
 
