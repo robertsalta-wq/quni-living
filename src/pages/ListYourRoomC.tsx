@@ -152,7 +152,7 @@ export default function ListYourRoomC() {
               {/* TODO: replace with final approved Quinnie photo */}
               <img
                 src={QUINNIE_IMG}
-                alt="Quinnie Lee, co-founder of Quni"
+                alt="Quinnie Le, co-founder of Quni"
                 width={88}
                 height={88}
                 loading="lazy"
@@ -171,7 +171,7 @@ export default function ListYourRoomC() {
                 you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
               </p>
               <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
-                Quinnie Lee, co-founder.
+                Quinnie Le, co-founder.
               </p>
             </div>
           </div>
