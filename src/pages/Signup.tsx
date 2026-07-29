@@ -609,7 +609,7 @@ export default function Signup({
     const showEmailFields = !collapsedEmail || emailFieldsOpen
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-2xl font-bold leading-[var(--text-h2-lh)] tracking-[var(--text-h2-track)] text-[var(--quni-ink)] !mt-0 !mb-0">
+        <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-0">
           {embedInviteTitle ?? 'Put your room up'}
         </h2>
         <div className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">

@@ -63,8 +63,8 @@ function OfferLineItem({
 }) {
   const valueCls =
     valueKind === 'coralLg'
-      ? 'font-lora text-lg font-semibold text-[var(--quni-rust)]'
-      : 'font-lora text-sm font-semibold text-[var(--quni-rust)]'
+      ? 'font-lora text-[length:var(--text-body-lg-size)] font-semibold text-[var(--quni-rust)]'
+      : 'font-lora text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-rust)]'
 
   return (
     <div className="mb-[18px] grid grid-cols-[22px_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 last:mb-0">
@@ -74,9 +74,13 @@ function OfferLineItem({
       >
         {icon}
       </div>
-      <div className="text-sm font-medium text-[var(--quni-ink)]">{name}</div>
+      <div className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
+        {name}
+      </div>
       <div className={`whitespace-nowrap leading-none ${valueCls}`}>{value}</div>
-      <p className="col-span-2 col-start-2 text-[13px] leading-snug text-[var(--quni-ink-4)]">{description}</p>
+      <p className="col-span-2 col-start-2 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
+        {description}
+      </p>
     </div>
   )
 }
@@ -165,7 +169,7 @@ export default function ListYourRoomC() {
               />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)] sm:text-base sm:leading-[var(--text-body-lh)]">
+              <p className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)] sm:text-[length:var(--text-body-size)] sm:leading-[var(--text-body-lh)]">
                 &ldquo;<strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built
                 Quni with my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and
                 you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
@@ -185,7 +189,7 @@ export default function ListYourRoomC() {
         <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:grid-cols-2 md:gap-5 md:pb-0 xl:grid-cols-3 xl:gap-6">
           {/* Smart tools — functional icons only (no AI sparkles) */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
-            <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-4">
+            <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-4">
               Smart tools that save you hours
             </h2>
             <ul className="flex flex-col gap-3.5">
@@ -198,7 +202,7 @@ export default function ListYourRoomC() {
                     <Icon className="h-4 w-4" strokeWidth={2.25} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
+                    <p className="text-[length:var(--text-body-sm-size)] font-semibold leading-[var(--text-body-sm-lh)] text-[var(--quni-ink)]">
                       {title}
                     </p>
                     <p className="mt-0.5 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-3)]">
@@ -212,7 +216,7 @@ export default function ListYourRoomC() {
 
           {/* Offer lines — Pricing Listing pattern + paperwork */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
-            <h2 className="font-display text-xl font-bold leading-[var(--text-h3-lh)] tracking-tight text-[var(--quni-ink)] !mt-0 !mb-5">
+            <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-5">
               Safe and Simple
             </h2>
             <div>
@@ -285,7 +289,7 @@ export default function ListYourRoomC() {
           <button
             type="button"
             onClick={scrollToSignup}
-            className="shrink-0 rounded-lg bg-[var(--quni-coral)] px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            className="shrink-0 rounded-lg bg-[var(--quni-coral)] px-3.5 py-2 text-[length:var(--text-body-sm-size)] font-semibold leading-[var(--text-body-sm-lh)] text-white shadow-sm transition-colors hover:bg-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
           >
             List Your Property
           </button>
