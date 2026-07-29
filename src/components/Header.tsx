@@ -374,7 +374,7 @@ export default function Header({ embedded = false }: HeaderProps) {
       embedded={embedded}
       data-chrome-header="marketing"
       className={
-        embedded
+        embedded || inviteMinimalChrome
           ? 'relative'
           : dashboardMobileChrome
             ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'

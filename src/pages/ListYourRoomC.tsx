@@ -259,7 +259,6 @@ export default function ListYourRoomC() {
           >
             <Signup
               embedLandlordInvite
-              collapsedEmail
               embedInviteTitle="List your property"
               embedInviteSub={
                 <OfferLineItem

@@ -158,7 +158,6 @@ export default function ListYourRoomB() {
           <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:max-h-[min(58dvh,26rem)] max-md:overflow-y-auto max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-8px_30px_-12px_rgba(8,6,13,0.2)] max-md:pb-[max(1rem,env(safe-area-inset-bottom))] md:order-2 md:max-h-none md:overflow-visible md:shadow-none xl:order-3">
             <Signup
               embedLandlordInvite
-              collapsedEmail
               embedInviteTitle="List your property"
               embedInviteSub={
                 <>
