@@ -193,7 +193,7 @@ function SignupImpliedConsentLine({ showLandlordAgreement }: { showLandlordAgree
 
   return (
     <>
-      <p className="mt-2.5 text-center text-[10.5px] leading-relaxed text-[var(--quni-ink-5)]">
+      <p className="mt-2.5 text-center text-[length:var(--text-micro-size)] leading-relaxed text-[var(--quni-ink-5)]">
         By continuing you agree to our{' '}
         <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
           Terms
@@ -245,6 +245,8 @@ type SignupProps = {
   embedInviteEyebrow?: string
   /** Place implied consent after the email form (mobile sheet order). */
   embedConsentAfterForm?: boolean
+  /** Sheet wrapper supplies its own ink title and fee header. */
+  embedHideHeading?: boolean
 }
 
 export default function Signup({
@@ -254,6 +256,7 @@ export default function Signup({
   embedInviteSub,
   embedInviteEyebrow,
   embedConsentAfterForm = false,
+  embedHideHeading = false,
 }: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -623,25 +626,27 @@ export default function Signup({
     const consentLine = <SignupImpliedConsentLine showLandlordAgreement={showLandlordAgreement} />
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        {embedInviteEyebrow ? (
+        {!embedHideHeading && embedInviteEyebrow ? (
           <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
             {embedInviteEyebrow}
           </p>
         ) : null}
-        <h2
-          className={[
-            'font-display text-[22px] font-bold text-[var(--quni-ink)] !mb-0',
-            embedInviteEyebrow ? '!mt-1.5' : '!mt-0',
-          ].join(' ')}
-        >
-          {embedInviteTitle ?? 'Put your room up'}
-        </h2>
-        {embedInviteSub ?? (
-          <p className="mt-1 text-[13.5px] text-[var(--quni-ink-4)]">
+        {!embedHideHeading ? (
+          <h2
+            className={[
+              'font-display text-[length:var(--text-h2-size)] font-bold text-[var(--quni-ink)] !mb-0',
+              embedInviteEyebrow ? '!mt-1.5' : '!mt-0',
+            ].join(' ')}
+          >
+            {embedInviteTitle ?? 'Put your room up'}
+          </h2>
+        ) : null}
+        {!embedHideHeading && (embedInviteSub ?? (
+          <p className="mt-1 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink-4)]">
             Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
             minutes.
           </p>
-        )}
+        ))}
 
         {keyMisuse && (
           <div className="mb-3 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
@@ -669,7 +674,7 @@ export default function Signup({
         )}
 
         {googleButton(
-          'mt-3 flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3.5 text-[15px] font-bold text-white shadow-[0_2px_0_rgba(204,74,60,0.35)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
+          'flex w-full items-center justify-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 py-3 text-[length:var(--text-body-size)] font-bold text-white shadow-[var(--shadow-1)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus:outline-none focus:ring-2 focus:ring-admin-coral/35 focus:ring-offset-2 disabled:opacity-50',
           { multicolorIcon: true, primaryCta: true },
         )}
 
@@ -679,13 +684,13 @@ export default function Signup({
           <button
             type="button"
             onClick={() => setEmailFieldsOpen(true)}
-            className="mt-2.5 w-full text-center text-[12.5px] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
+            className="mt-2.5 w-full text-center text-[length:var(--text-caption-size)] font-medium text-[var(--quni-ink-5)] underline-offset-2 hover:text-[var(--quni-ink-3)] hover:underline"
           >
             or continue with email
           </button>
         ) : (
           <>
-            <p className="mt-3 text-center text-[12px] text-[var(--quni-ink-5)]">
+            <p className="mt-3 text-center text-[length:var(--text-caption-size)] text-[var(--quni-ink-5)]">
               {collapsedEmail ? 'or continue with email' : 'or sign up with email'}
             </p>
 
@@ -694,7 +699,7 @@ export default function Signup({
                 <div>
                   <label
                     htmlFor="invite-su-name"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Full name
                   </label>
@@ -706,13 +711,13 @@ export default function Signup({
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full scroll-mt-16 rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-admin-coral/20"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="invite-su-email"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Email
                   </label>
@@ -729,7 +734,7 @@ export default function Signup({
                     placeholder="you@email.com"
                     aria-invalid={emailFormatError}
                     aria-describedby={emailFormatError ? 'invite-su-email-error' : undefined}
-                    className={`w-full scroll-mt-16 rounded-[9px] border bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:outline-none focus:ring-[3px] ${
+                    className={`w-full scroll-mt-16 rounded-[var(--radius-md)] border bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:outline-none focus:ring-2 ${
                       emailFormatError
                         ? 'border-red-500 focus:ring-red-400/30'
                         : 'border-[var(--quni-line)] focus:border-[var(--quni-coral)] focus:ring-admin-coral/20'
@@ -744,7 +749,7 @@ export default function Signup({
                 <div>
                   <label
                     htmlFor="invite-su-password"
-                    className="mb-1.5 block text-[13px] font-semibold text-[var(--quni-ink-2)]"
+                    className="mb-1 block text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-ink-2)]"
                   >
                     Password
                   </label>
@@ -757,13 +762,13 @@ export default function Signup({
                     required
                     minLength={6}
                     placeholder="Create a password"
-                    className="w-full scroll-mt-16 rounded-[9px] border border-[var(--quni-line)] bg-white px-3.5 py-2.5 text-[14.5px] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-[3px] focus:ring-admin-coral/20"
+                    className="w-full scroll-mt-16 rounded-[var(--radius-md)] border border-[var(--quni-line)] bg-white px-3 py-2.5 text-[length:var(--text-body-sm-size)] text-[var(--quni-ink)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-admin-coral/20"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 w-full rounded-[10px] border border-[var(--quni-line)] bg-transparent py-3 text-[15px] font-semibold text-[var(--quni-ink)] transition-colors hover:border-[var(--quni-ink)] disabled:opacity-50"
+                  className="mt-1 w-full rounded-[var(--radius-md)] border border-[var(--quni-ink)] bg-transparent py-3 text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] disabled:opacity-50"
                 >
                   {submitting ? 'Creating account…' : 'Sign up with email'}
                 </button>
