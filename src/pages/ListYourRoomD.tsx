@@ -10,7 +10,8 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
-import AiSparkleIcon from '../components/AiSparkleIcon'
+import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
+import SiteSocialLinks from '../components/SiteSocialLinks'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import Signup from './Signup'
@@ -519,9 +520,20 @@ function PapersFooter() {
     <footer className="mt-6 bg-[var(--quni-navy)]">
       <div className="mx-auto flex max-w-site flex-wrap items-start justify-between gap-7 px-5 py-7 md:px-6">
         <div>
-          <span className="font-display text-[length:var(--text-h2-size)] font-bold text-[var(--quni-coral)]">
-            Quni
-          </span>
+          <Link
+            to="/"
+            className="inline-flex items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+            aria-label="Quni home"
+          >
+            <img
+              src="/quni-logo-white.png"
+              srcSet="/quni-logo-white.png 1x, /quni-logo-white@2x.png 2x"
+              alt="Quni"
+              width={120}
+              height={40}
+              className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
+            />
+          </Link>
           <p className="mt-2.5 max-w-md font-footer text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-white/55">
             {legalLine}
           </p>
@@ -530,10 +542,10 @@ function PapersFooter() {
           <nav className="flex flex-wrap gap-5" aria-label="Footer">
             {(
               [
-                { to: '/privacy', label: 'Privacy Policy' },
-                { to: '/terms', label: 'Terms of Service' },
-                { to: '/refunds', label: 'Refund Policy' },
-                { to: '/about', label: 'About Quni' },
+                { to: '/terms', label: 'Terms' },
+                { to: '/privacy', label: 'Privacy' },
+                { to: '/refunds', label: 'Refunds' },
+                { to: '/non-discrimination', label: 'Non-Discrimination' },
               ] as const
             ).map(({ to, label }) => (
               <Link
@@ -545,6 +557,7 @@ function PapersFooter() {
               </Link>
             ))}
           </nav>
+          <SiteSocialLinks variant="footer" className="justify-start sm:justify-end" />
           <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-white/20 bg-[var(--quni-success-bg)] px-2.5 py-1.5 text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-success-fg)]">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden>
               <path d="M20 6L9 17l-5-5" />
@@ -584,8 +597,8 @@ export default function ListYourRoomD() {
       />
 
       <div className="mx-auto max-w-site px-5 pt-4 md:px-6 md:pt-5">
-        {/* Fold: 2fr left / 1fr dark pen */}
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* Fold: 2fr left / 1fr dark pen — stretch so pen bottom matches preview desk */}
+        <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-5">
             {/* Quinnie band — letterhead opens the page (no marketing header) */}
             <section className="relative rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)]">
@@ -596,25 +609,15 @@ export default function ListYourRoomD() {
                 Log in
               </Link>
               <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:gap-5 sm:pr-20">
-                <div className="flex shrink-0 flex-col items-center gap-2">
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--quni-coral-border)] bg-[var(--quni-coral-tint)] text-[var(--quni-coral-active)]"
-                      aria-hidden
-                    >
-                      <AiSparkleIcon className="h-3 w-3" />
-                    </span>
-                    <span className="font-display text-[length:var(--text-h2-size)] font-bold leading-none text-[var(--quni-coral)]">
-                      Quni
-                    </span>
-                  </span>
+                <div className="flex shrink-0 flex-col items-center gap-2.5">
+                  <QuniLogoHomeLink />
                   <img
                     src={QUINNIE_IMG}
                     alt="Quinnie Le, co-founder of Quni"
-                    width={70}
-                    height={70}
+                    width={88}
+                    height={88}
                     loading="lazy"
-                    className="h-16 w-16 rounded-full border border-[var(--quni-line)] object-cover object-[center_16%] sm:h-20 sm:w-20"
+                    className="h-[88px] w-[88px] rounded-full border border-[var(--quni-line)] object-cover object-[center_16%]"
                   />
                 </div>
                 <div className="min-w-0">
@@ -638,11 +641,11 @@ export default function ListYourRoomD() {
             <PreviewDesk property={previewProperty} />
           </div>
 
-          {/* Dark sticky pen */}
+          {/* Dark pen — full left-column height so bottom aligns with preview desk */}
           <aside
             id="list-your-room-d-signup"
             className={[
-              'rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-5 text-white lg:sticky lg:top-4',
+              'flex h-full min-h-0 flex-col rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-ink)] p-5 text-white',
               /* Token-only dark overrides for the light Signup embed */
               '[&_h2]:!text-white',
               '[&_label]:!text-white/80',
@@ -654,9 +657,6 @@ export default function ListYourRoomD() {
               '[&_.mt-3.text-center]:!text-white/50',
             ].join(' ')}
           >
-            <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-white/55">
-              For landlords
-            </p>
             <Signup
               embedLandlordInvite
               embedInviteTitle="List your property"
