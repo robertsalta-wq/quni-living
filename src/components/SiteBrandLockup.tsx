@@ -92,7 +92,7 @@ export default function SiteBrandLockup({ variant = 'default' }: { variant?: Log
       )}
       <Link
         to="/landlords/ai"
-        className={`items-center justify-center rounded-xl border border-admin-coral/25 bg-admin-coral-tint p-2 text-[var(--quni-coral)] hover:bg-admin-coral/15 hover:border-admin-coral/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] transition-colors ${
+        className={`items-center justify-center rounded-xl border border-[var(--quni-ai-border)] bg-[var(--quni-ai-tint)] p-2 text-[var(--quni-ai)] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-ai)] ${
           isAi ? 'inline-flex' : 'hidden md:inline-flex'
         }`}
         aria-label="Landlord AI features"

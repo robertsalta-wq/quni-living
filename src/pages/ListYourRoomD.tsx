@@ -7,7 +7,7 @@ import ListYourRoomDPreviewDrawer, {
   type ListYourRoomDPreviewMode,
 } from '../components/listYourRoom/ListYourRoomDPreviewDrawer'
 import ListYourRoomDSignupSheet from '../components/listYourRoom/ListYourRoomDSignupSheet'
-import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
+import SiteBrandLockup from '../components/SiteBrandLockup'
 import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
 import {
@@ -19,6 +19,7 @@ import { LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
 import type { Property } from '../lib/listings'
 import { formatAustralianAbn } from '../lib/platformIdentity'
 import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
+import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 const INVITE_ABN_FALLBACK = '65675990968'
@@ -168,10 +169,10 @@ function EarningsCard() {
 
   return (
     <section
-      className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5"
+      className="max-w-4xl rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-4"
       aria-labelledby="lyrd-earnings-title"
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 md:flex-nowrap">
         <span className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--quni-ink)]">
           What could it earn?
         </span>
@@ -180,7 +181,7 @@ function EarningsCard() {
         </h2>
       </div>
 
-      <div className="mt-4 grid items-center gap-5 md:grid-cols-2">
+      <div className="mt-3 grid items-center gap-4 md:grid-cols-2">
         <div>
           <p className="text-sm text-[var(--quni-ink-3)]">
             Pick the campus your room is near — we&apos;ll show what similar rooms are renting for right now.
@@ -219,7 +220,7 @@ function EarningsCard() {
                     setRoomKind(kind)
                   }}
                   className={[
-                    'px-3 py-2 text-sm font-semibold transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
+                    'whitespace-nowrap px-3 py-2 text-sm font-semibold transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]',
                     roomKind === kind
                       ? 'bg-[var(--quni-ink)] text-white'
                       : 'bg-[var(--quni-surface-1)] text-[var(--quni-ink-3)] hover:bg-[var(--quni-surface-2)]',
@@ -232,7 +233,7 @@ function EarningsCard() {
           </div>
         </div>
 
-        <div className="border-t border-[var(--quni-line)] pt-4 md:border-l md:border-t-0 md:pl-5 md:pt-0">
+        <div className="border-t border-[var(--quni-line)] pt-3 md:border-l md:border-t-0 md:pl-4 md:pt-0">
           {guide.status === 'ok' ? (
             <>
               <p className="text-sm text-[var(--quni-ink-3)]">
@@ -257,19 +258,21 @@ function EarningsCard() {
 
 function QuinnieBand() {
   return (
-    <section className="relative border-b border-[var(--quni-line)] px-1 pb-5 pt-4">
-      <Link
-        to="/login"
-        className="absolute right-4 top-4 text-sm font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
-      >
-        Log in
-      </Link>
-      <div className="flex flex-col items-start gap-2 pr-12 md:flex-row md:items-baseline md:gap-3">
-        <QuniLogoHomeLink />
-        <h1 className="m-0 min-w-0 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] md:-translate-y-2.5 md:text-2xl">
-          The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
-          students.
-        </h1>
+    <section className="pb-5">
+      <div className="flex items-start justify-between gap-3 md:items-baseline">
+        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
+          <SiteBrandLockup />
+          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-tight text-[var(--quni-ink)] md:text-2xl">
+            The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
+            students.
+          </h1>
+        </div>
+        <Link
+          to="/login"
+          className="shrink-0 text-sm font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
+        >
+          Log in
+        </Link>
       </div>
       <div className="mt-3 flow-root md:flex md:items-start md:gap-3">
         <img
@@ -399,28 +402,29 @@ function PapersFooter() {
   const legalName = entity.legalName.trim() || LEGAL_ENTITY_NAME
 
   return (
-    <footer className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
-      <div className="min-w-0 flex-1 font-footer text-xs text-[var(--quni-ink-3)]">
-        <p>{legalName} t/a Quni Living</p>
-        <p>ABN {formatAustralianAbn(abn)}</p>
+    <footer className="mt-5 flex flex-col items-stretch gap-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
+      <p className="w-full font-footer text-xs text-[var(--quni-ink-3)]">
+        {legalName} t/a Quni Living · ABN {formatAustralianAbn(abn)}
+      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">
+          <Link to="/privacy" className="hover:text-[var(--quni-ink)] hover:underline">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
+            Terms
+          </Link>
+          <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
+            Refunds
+          </Link>
+          <Link to="/about" className="hover:text-[var(--quni-ink)] hover:underline">
+            About
+          </Link>
+        </nav>
+        <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] px-2 py-1 text-xs font-semibold text-[var(--quni-trust)]">
+          ✓ Verified marketplace
+        </span>
       </div>
-      <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">
-        <Link to="/privacy" className="hover:text-[var(--quni-ink)] hover:underline">
-          Privacy
-        </Link>
-        <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
-          Terms
-        </Link>
-        <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
-          Refunds
-        </Link>
-        <Link to="/about" className="hover:text-[var(--quni-ink)] hover:underline">
-          About
-        </Link>
-      </nav>
-      <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] px-2 py-1 text-xs font-semibold text-[var(--quni-trust)]">
-        ✓ Verified marketplace
-      </span>
     </footer>
   )
 }
@@ -466,12 +470,12 @@ export default function ListYourRoomD() {
     <div className="bg-[var(--quni-surface-2)] [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
       <Seo
         title="List your property"
-        description="The safest way to rent your spare room to university students. See the going rate, preview your room, and list free until someone moves in."
+        description="The safest way to rent your spare room to university students. See the going rate, preview a room, and list free until someone moves in."
         canonicalPath="/list-your-room-d"
         noindex
       />
 
-      <main className="mx-auto max-w-site px-5 pt-4">
+      <main className={`${SITE_CONTENT_MAX_CLASS} pt-4`}>
         <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1 space-y-5">
             <QuinnieBand />
@@ -481,7 +485,7 @@ export default function ListYourRoomD() {
               onClick={(event) => openOverlay('preview', event.currentTarget)}
               className="w-full rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] md:hidden"
             >
-              Preview your room on Quni →
+              Preview a room on Quni →
             </button>
             <div className="grid gap-5 md:grid-cols-2">
               <SmartToolsPanel />

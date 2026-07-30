@@ -59,7 +59,7 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
 
   return (
     <aside className="hidden w-12 shrink-0 self-stretch md:block" aria-label="Property preview">
-      <div className="lyrd-preview-height group sticky top-4 z-50 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
+      <div className="lyrd-preview-height group sticky top-4 z-40 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
         <button
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
@@ -72,9 +72,9 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
           className="flex min-h-0 flex-1 items-center justify-center px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          aria-label="Preview your room, slide out"
+          aria-label="Preview a room, slide out"
         >
-          <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
+          <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview a room</span>
         </button>
         <button
           type="button"
@@ -268,7 +268,7 @@ export default function ListYourRoomDPreviewDrawer({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Preview your room"
+      aria-label="Preview a room"
       onCancel={(event) => {
         event.preventDefault()
         onClose()
@@ -319,7 +319,7 @@ export default function ListYourRoomDPreviewDrawer({
             ].join(' ')}
             aria-hidden
           >
-            Preview your room
+            Preview a room
           </span>
           <span
             className={[
@@ -350,9 +350,9 @@ export default function ListYourRoomDPreviewDrawer({
             </button>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Preview your room</h2>
+                <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Preview a room</h2>
                 <p className="mt-1 text-xs text-[var(--quni-ink-3)]">
-                  Exactly how your room appears the day it goes live.
+                  A real Quni listing — this is exactly how yours will look.
                 </p>
               </div>
               <button
@@ -393,16 +393,25 @@ export default function ListYourRoomDPreviewDrawer({
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 [padding-bottom:max(var(--space-5),env(safe-area-inset-bottom,0px))]">
             {!property ? (
               <p className="text-sm text-[var(--quni-ink-3)]">Loading property preview…</p>
-            ) : mode === 'listing' ? (
-              <div className="mx-auto max-w-sm">
-                <PropertyCard property={property} staticDisplay />
-                <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
-                  The exact card a verified student sees while browsing. It is the same live component used by every
-                  listing.
-                </p>
-              </div>
             ) : (
-              <FullPropertyPreview property={property} />
+              <div>
+                <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2 py-1 text-xs font-semibold text-[var(--quni-ink-3)]">
+                  Sample listing
+                </span>
+                {mode === 'listing' ? (
+                  <div className="mx-auto mt-3 max-w-sm">
+                    <PropertyCard property={property} staticDisplay />
+                    <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
+                      The exact card a verified student sees while browsing. It is the same live component used by
+                      every listing.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <FullPropertyPreview property={property} />
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </section>

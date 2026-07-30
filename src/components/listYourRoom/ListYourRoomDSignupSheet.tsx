@@ -72,21 +72,23 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   return (
     <>
       <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-[var(--quni-ink)] text-white"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/20 bg-[var(--quni-ink)] text-white"
         role="region"
         aria-label="List your room"
       >
         <div className="mx-auto flex max-w-site items-center gap-3 px-5 pt-3 [padding-bottom:max(var(--space-3),env(safe-area-inset-bottom,0px))]">
-          <Link
-            to="/"
-            className="hidden shrink-0 font-display text-xl font-bold leading-none text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:block"
-            aria-label="Quni home"
-          >
-            Quni
-          </Link>
-          <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-white sm:text-sm">
-            Free to list · Verified students · No subscription · $99 only when someone moves in
-          </p>
+          <div className="flex min-w-0 flex-1 items-baseline gap-3">
+            <Link
+              to="/"
+              className="hidden shrink-0 font-display text-xl font-bold leading-none text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:block"
+              aria-label="Quni home"
+            >
+              Quni
+            </Link>
+            <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-white sm:text-sm">
+              Free to list · Verified students · No subscription · $99 only when someone moves in
+            </p>
+          </div>
           <button
             type="button"
             onClick={(event) => onOpen(event.currentTarget)}

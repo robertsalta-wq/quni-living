@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import AiSparkleIcon from '../AiSparkleIcon'
 import { useOpenAiChat } from '../../context/AiChatOpenContext'
 import { isAppShellPath } from '../../lib/appShell'
+import { isLandlordInvitePapersFooterPath } from '../../lib/site'
 import { ASK_AI_BUTTON_LABEL } from './chatAiLabels'
 
 /** Property detail mobile sticky CTA — FAB sits above it. */
@@ -26,7 +27,7 @@ export default function AskAiFab() {
     return 'bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))]'
   }, [pathname])
 
-  if (isAppShellPath(pathname)) return null
+  if (isAppShellPath(pathname) || isLandlordInvitePapersFooterPath(pathname)) return null
 
   return (
     <button
