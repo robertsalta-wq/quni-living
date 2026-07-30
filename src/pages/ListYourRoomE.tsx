@@ -131,6 +131,20 @@ function QuinnieBand() {
   )
 }
 
+function FinishHereNote() {
+  return (
+    <section className="px-1">
+      <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">
+        Found on Quni or somewhere else? Finish it here.
+      </h2>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--quni-ink-3)]">
+        List with us or bring a tenant from Facebook, Flatmates, or word of mouth. Quni handles ID verification, digital
+        leases, and bond lodging—so it&apos;s done properly, not on a handshake.
+      </p>
+    </section>
+  )
+}
+
 function SmartToolsPanel() {
   return (
     <section className="px-1 py-5">
@@ -316,6 +330,7 @@ export default function ListYourRoomE() {
         <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1 space-y-5 [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
             <QuinnieBand />
+            <FinishHereNote />
             <button
               type="button"
               onClick={(event) => openOverlay('preview', event.currentTarget)}
