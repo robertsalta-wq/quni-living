@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Signup from '../../pages/Signup'
 
 type ListYourRoomDSignupSheetProps = {
@@ -15,7 +16,7 @@ function CloseIcon() {
   )
 }
 
-/** Sticky v8 signup bar and native slide-up dialog, shared across breakpoints. */
+/** Sticky v13 signup bar and native slide-up dialog, shared across breakpoints. */
 export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: ListYourRoomDSignupSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const scrollBodyRef = useRef<HTMLDivElement>(null)
@@ -71,28 +72,27 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   return (
     <>
       <div
-        className="fixed bottom-0 left-1/2 z-40 w-full max-w-site -translate-x-1/2 border-t border-white/20 bg-[var(--quni-ink)] px-4 pt-3 text-white [padding-bottom:max(var(--space-3),env(safe-area-inset-bottom,0px))]"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-[var(--quni-ink)] text-white"
         role="region"
-        aria-label="List your property"
+        aria-label="List your room"
       >
-        <div className="mx-auto flex max-w-site items-center gap-3">
-          <button
-            type="button"
-            onClick={(event) => onOpen(event.currentTarget)}
-            className="min-w-0 flex-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        <div className="mx-auto flex max-w-site items-center gap-3 px-5 pt-3 [padding-bottom:max(var(--space-3),env(safe-area-inset-bottom,0px))]">
+          <Link
+            to="/"
+            className="hidden shrink-0 font-display text-xl font-bold leading-none text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:block"
+            aria-label="Quni home"
           >
-            <span className="block text-sm font-bold text-white sm:inline">List your property</span>
-            <span className="hidden text-sm text-white/70 sm:inline"> · Free to list · verified students · </span>
-            <span className="block text-xs text-white/70 sm:hidden">Free to list · verified students</span>
-            <span className="hidden text-sm font-bold text-white sm:inline">$99 only when someone moves in</span>
-          </button>
-          <span className="hidden shrink-0 text-xl font-bold tabular-nums text-white sm:block">$99.00</span>
+            Quni
+          </Link>
+          <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-white sm:text-sm">
+            Free to list · Verified students · No subscription · $99 only when someone moves in
+          </p>
           <button
             type="button"
             onClick={(event) => onOpen(event.currentTarget)}
             className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
-            List my property →
+            List my room →
           </button>
         </div>
       </div>
@@ -118,12 +118,12 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
           if (event.target === event.currentTarget) onClose()
         }}
         className={[
-          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60',
+          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-dvh w-full max-w-none overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60',
           'transition-transform duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
           entered ? 'translate-y-0' : 'translate-y-full',
         ].join(' ')}
       >
-        <div className="flex max-h-[90dvh] flex-col">
+        <div className="flex max-h-dvh flex-col">
           <header className="shrink-0 bg-[var(--quni-ink)] px-5 pb-4 pt-3 text-white">
             <div className="flex justify-center">
               <button

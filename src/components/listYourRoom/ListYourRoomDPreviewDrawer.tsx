@@ -2,6 +2,7 @@ import { useEffect, useState, type RefObject } from 'react'
 import { ListingAccommodationStats } from '../ListingAccommodationStats'
 import { PropertyCard } from '../PropertyCard'
 import { VerifiedLandlordBadge } from '../VerifiedLandlordBadge'
+import { CollapsibleProse } from '../CollapsibleProse'
 import type { Property } from '../../lib/listings'
 import { formatListingDetailAccommodation } from '../../lib/listingAccommodationDisplay'
 import { getListingRentDisplay } from '../../lib/pricing/listingRentDisplay'
@@ -13,7 +14,6 @@ type ListYourRoomDPreviewDrawerProps = {
   open: boolean
   mode: ListYourRoomDPreviewMode
   property: Property | null
-  isMobile: boolean
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
   onModeChange: (mode: ListYourRoomDPreviewMode) => void
@@ -58,7 +58,7 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
   const openFromControl = (control: HTMLElement) => onOpen(control)
 
   return (
-    <aside className="hidden w-12 shrink-0 self-stretch sm:block" aria-label="Property preview">
+    <aside className="hidden w-12 shrink-0 self-stretch md:block" aria-label="Property preview">
       <div className="lyrd-preview-height group sticky top-4 z-50 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
         <button
           type="button"
@@ -100,9 +100,7 @@ function FullPropertyPreview({ property }: { property: Property }) {
     .filter((name): name is string => Boolean(name))
     .slice(0, 8)
   const houseRuleRows = property.property_house_rules ?? []
-  const aboutSummary = property.description
-    ?.trim()
-    .replace(/\s+/g, ' ')
+  const aboutSummary = property.description?.trim()
 
   return (
     <div className="space-y-5">
@@ -191,7 +189,13 @@ function FullPropertyPreview({ property }: { property: Property }) {
               >
                 About this room
               </h4>
-              <p className="mt-2 line-clamp-6 text-sm leading-relaxed text-[var(--quni-ink-2)]">{aboutSummary}</p>
+              <CollapsibleProse
+                id={`lyrd-preview-description-${property.id}`}
+                sectionHeadingId="lyrd-preview-about"
+                text={aboutSummary}
+                preWrap
+                className="mt-2 text-sm leading-relaxed text-[var(--quni-ink-2)]"
+              />
             </section>
           ) : null}
 
@@ -229,7 +233,6 @@ export default function ListYourRoomDPreviewDrawer({
   open,
   mode,
   property,
-  isMobile,
   dialogRef,
   onClose,
   onModeChange,
@@ -295,7 +298,7 @@ export default function ListYourRoomDPreviewDrawer({
           type="button"
           onClick={onClose}
           className={[
-            'lyrd-preview-height absolute right-5 top-4 z-20 hidden overflow-hidden rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:flex sm:flex-col sm:items-center sm:justify-between',
+            'lyrd-preview-height absolute right-5 top-4 z-20 hidden overflow-hidden rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] md:flex md:flex-col md:items-center md:justify-between',
             entered ? 'w-1.5' : 'w-12',
           ].join(' ')}
           aria-label="Retract property preview"
@@ -330,13 +333,9 @@ export default function ListYourRoomDPreviewDrawer({
         </button>
         <section
           className={[
-            'lyrd-preview-height lyrd-preview-panel absolute right-0 top-0 flex w-full flex-col overflow-hidden border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] sm:right-5 sm:top-4 sm:rounded-[var(--radius-sm)]',
-            entered
-              ? 'lyrd-preview-panel-open translate-y-0'
-              : isMobile
-                ? 'translate-y-full'
-                : '',
-            mode === 'listing' ? 'sm:max-w-md' : 'sm:max-w-4xl',
+            'lyrd-preview-height lyrd-preview-panel absolute right-0 top-0 flex w-full flex-col overflow-hidden border border-[var(--quni-line)] bg-[var(--quni-surface-1)] shadow-[var(--shadow-3)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] md:right-5 md:top-4 md:rounded-[var(--radius-sm)]',
+            entered ? 'lyrd-preview-panel-open translate-y-0' : 'translate-y-full',
+            mode === 'listing' ? 'md:max-w-md' : 'md:max-w-3xl',
           ].join(' ')}
           onClick={(event) => event.stopPropagation()}
         >
@@ -344,7 +343,7 @@ export default function ListYourRoomDPreviewDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="mx-auto flex w-full justify-center py-1 sm:hidden"
+              className="mx-auto flex w-full justify-center py-1 md:hidden"
               aria-label="Close preview drawer"
             >
               <span className="h-1 w-10 rounded-[var(--radius-pill)] bg-[var(--quni-line)]" aria-hidden />

@@ -10,7 +10,6 @@ import ListYourRoomDSignupSheet from '../components/listYourRoom/ListYourRoomDSi
 import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
 import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
-import { useIsMobile } from '../hooks/useIsMobile'
 import {
   LIST_YOUR_ROOM_D_CAMPUSES,
   LIST_YOUR_ROOM_D_PREVIEW_SLUG,
@@ -24,7 +23,7 @@ import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 const INVITE_ABN_FALLBACK = '65675990968'
 
-type ActiveOverlay = 'preview' | 'signup' | null
+type ActiveOverlay = 'preview' | 'signup' | 'verification' | null
 
 type SmartTool = {
   title: string
@@ -67,14 +66,14 @@ const SAFE_ITEMS = [
   },
   {
     name: 'See them before you pay',
-    description: 'Full request review before the $99. Accept or decline with no fee.',
+    description: 'Full request review before the $99 — accept or decline with no fee.',
   },
   {
     name: 'Your details stay private',
     description: 'Email and phone stay masked until you accept.',
   },
   {
-    name: 'The paperwork signs itself.',
+    name: 'The paperwork signs itself',
     description: 'NSW and QLD tenancy agreements generated and e-signed in-platform.',
   },
 ] as const
@@ -169,7 +168,7 @@ function EarningsCard() {
 
   return (
     <section
-      className="rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] p-5"
+      className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5"
       aria-labelledby="lyrd-earnings-title"
     >
       <div className="flex flex-wrap items-center gap-3">
@@ -184,9 +183,9 @@ function EarningsCard() {
       <div className="mt-4 grid items-center gap-5 md:grid-cols-2">
         <div>
           <p className="text-sm text-[var(--quni-ink-3)]">
-            Pick the campus your room is near, and we&apos;ll show what similar rooms are renting for right now.
+            Pick the campus your room is near — we&apos;ll show what similar rooms are renting for right now.
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2 sm:flex-nowrap">
             <label htmlFor={selectId} className="sr-only">
               Nearest university
             </label>
@@ -258,35 +257,37 @@ function EarningsCard() {
 
 function QuinnieBand() {
   return (
-    <section className="relative rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] px-5 py-4">
+    <section className="relative border-b border-[var(--quni-line)] px-1 pb-5 pt-4">
       <Link
         to="/login"
         className="absolute right-4 top-4 text-sm font-semibold text-[var(--quni-ink-3)] hover:text-[var(--quni-ink)]"
       >
         Log in
       </Link>
-      <div className="flex items-end gap-3 pr-12">
+      <div className="flex flex-col items-start gap-2 pr-12 md:flex-row md:items-baseline md:gap-3">
         <QuniLogoHomeLink />
-        <h1 className="m-0 min-w-0 -translate-y-1 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] sm:text-2xl">
+        <h1 className="m-0 min-w-0 font-display text-xl font-semibold leading-tight text-[var(--quni-ink)] md:-translate-y-2.5 md:text-2xl">
           The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
           students.
         </h1>
       </div>
-      <div className="mt-3 flex items-start gap-3">
+      <div className="mt-3 flow-root md:flex md:items-start md:gap-3">
         <img
           src={QUINNIE_IMG}
           alt="Quinnie Le, co-founder of Quni"
           width={72}
           height={72}
-          className="lyrd-quinnie-thumbnail -translate-y-1 shrink-0 rounded-full border border-[var(--quni-line)] object-cover object-top"
+          className="lyrd-quinnie-thumbnail float-left mb-2 mr-3 shrink-0 rounded-full border border-[var(--quni-line)] object-cover object-top md:float-none md:m-0"
         />
         <div className="min-w-0">
           <p className="text-sm leading-relaxed text-[var(--quni-ink-2)]">
             <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
             my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
-            message me anytime. You&apos;ll get me, not a bot.
+            message me anytime — you&apos;ll get me, not a bot.
           </p>
-          <p className="mt-1 text-xs font-semibold text-[var(--quni-ink-3)]">Quinnie Le, co-founder.</p>
+          <p className="mt-1 clear-both text-xs font-semibold text-[var(--quni-ink-3)] md:clear-none">
+            Quinnie Le, co-founder.
+          </p>
         </div>
       </div>
     </section>
@@ -295,7 +296,7 @@ function QuinnieBand() {
 
 function SmartToolsPanel() {
   return (
-    <section className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-5">
+    <section className="px-1 py-5">
       <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Smart tools that save you hours</h2>
       <ul className="mt-4">
         {SMART_TOOLS.map(({ title, body, Icon }, index) => (
@@ -320,7 +321,7 @@ function SmartToolsPanel() {
   )
 }
 
-function TrustPanel({ onOpenVerification }: { onOpenVerification: () => void }) {
+function TrustPanel({ onOpenVerification }: { onOpenVerification: (opener: HTMLElement) => void }) {
   return (
     <section className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] p-5">
       <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-surface-1)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--quni-trust)]">
@@ -342,7 +343,7 @@ function TrustPanel({ onOpenVerification }: { onOpenVerification: () => void }) 
       </ul>
       <button
         type="button"
-        onClick={onOpenVerification}
+        onClick={(event) => onOpenVerification(event.currentTarget)}
         className="mt-2 text-sm font-semibold text-[var(--quni-trust)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-trust)]"
       >
         How verification works →
@@ -399,25 +400,22 @@ function PapersFooter() {
 
   return (
     <footer className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
-      <Link to="/" className="font-display text-lg font-bold text-[var(--quni-coral)]" aria-label="Quni home">
-        Quni
-      </Link>
       <div className="min-w-0 flex-1 font-footer text-xs text-[var(--quni-ink-3)]">
         <p>{legalName} t/a Quni Living</p>
         <p>ABN {formatAustralianAbn(abn)}</p>
       </div>
       <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">
-        <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
-          Terms
-        </Link>
         <Link to="/privacy" className="hover:text-[var(--quni-ink)] hover:underline">
           Privacy
+        </Link>
+        <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
+          Terms
         </Link>
         <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
           Refunds
         </Link>
-        <Link to="/non-discrimination" className="hover:text-[var(--quni-ink)] hover:underline">
-          Non-Discrimination
+        <Link to="/about" className="hover:text-[var(--quni-ink)] hover:underline">
+          About
         </Link>
       </nav>
       <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] px-2 py-1 text-xs font-semibold text-[var(--quni-trust)]">
@@ -428,14 +426,12 @@ function PapersFooter() {
 }
 
 export default function ListYourRoomD() {
-  const isMobile = useIsMobile()
   const previewDialogRef = useRef<HTMLDialogElement>(null)
   const lastOpenerRef = useRef<HTMLElement | null>(null)
   const hadOverlayRef = useRef(false)
   const [property, setProperty] = useState<Property | null>(null)
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null)
   const [previewMode, setPreviewMode] = useState<ListYourRoomDPreviewMode>('listing')
-  const [verificationOpen, setVerificationOpen] = useState(false)
 
   const loadPreview = useCallback(() => {
     void loadPropertyDetailBySlug(LIST_YOUR_ROOM_D_PREVIEW_SLUG).then((nextProperty) => {
@@ -483,13 +479,13 @@ export default function ListYourRoomD() {
             <button
               type="button"
               onClick={(event) => openOverlay('preview', event.currentTarget)}
-              className="w-full rounded-[var(--radius-sm)] border border-[var(--quni-ink)] bg-[var(--quni-surface-1)] px-4 py-3 text-sm font-semibold text-[var(--quni-ink)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:hidden"
+              className="w-full rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] md:hidden"
             >
-              Preview your room →
+              Preview your room on Quni →
             </button>
             <div className="grid gap-5 md:grid-cols-2">
               <SmartToolsPanel />
-              <TrustPanel onOpenVerification={() => setVerificationOpen(true)} />
+              <TrustPanel onOpenVerification={(opener) => openOverlay('verification', opener)} />
             </div>
             <PapersFooter />
           </div>
@@ -501,7 +497,6 @@ export default function ListYourRoomD() {
         open={activeOverlay === 'preview'}
         mode={previewMode}
         property={property}
-        isMobile={isMobile}
         dialogRef={previewDialogRef}
         onClose={() => setActiveOverlay((current) => (current === 'preview' ? null : current))}
         onModeChange={setPreviewMode}
@@ -511,7 +506,10 @@ export default function ListYourRoomD() {
         onOpen={(opener) => openOverlay('signup', opener)}
         onClose={() => setActiveOverlay((current) => (current === 'signup' ? null : current))}
       />
-      <VerificationExplainerModal open={verificationOpen} onClose={() => setVerificationOpen(false)} />
+      <VerificationExplainerModal
+        open={activeOverlay === 'verification'}
+        onClose={() => setActiveOverlay((current) => (current === 'verification' ? null : current))}
+      />
     </div>
   )
 }
