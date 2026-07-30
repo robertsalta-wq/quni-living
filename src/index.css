@@ -17,7 +17,10 @@
 
   @media (min-width: 768px) {
     .lyrd-preview-height {
-      height: calc(100dvh - (2 * var(--space-4)));
+      height: calc(
+        100dvh - (2 * var(--space-20)) - var(--space-24) - var(--space-6) - (2 * var(--space-2)) -
+          (2 * var(--space-4))
+      );
     }
 
     .lyrd-preview-panel {

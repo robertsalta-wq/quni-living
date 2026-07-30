@@ -106,7 +106,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   return (
     <>
       <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-[var(--quni-ink)] text-white"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/20 bg-[var(--quni-ink)] text-white"
         role="region"
         aria-label="List your room"
       >
@@ -126,7 +126,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
           <button
             type="button"
             onClick={(event) => onOpen(event.currentTarget)}
-            className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:mr-16"
+            className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             List my room →
           </button>

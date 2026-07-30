@@ -479,9 +479,9 @@ export default function ListYourRoomD() {
       />
 
       <main className={`${SITE_CONTENT_MAX_CLASS} pt-4`}>
-        <div className="flex items-start gap-4">
+        <QuinnieBand />
+        <div className="mt-5 flex items-start gap-4">
           <div className="min-w-0 flex-1 space-y-5">
-            <QuinnieBand />
             <EarningsCard />
             <button
               type="button"
