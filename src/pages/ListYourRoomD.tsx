@@ -470,7 +470,7 @@ export default function ListYourRoomD() {
   }
 
   return (
-    <div className="bg-[var(--quni-surface-2)] [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
+    <div className="bg-[var(--quni-surface-2)]">
       <Seo
         title="List your property"
         description="The safest way to rent your spare room to university students. See the going rate, preview your room, and list free until someone moves in."
@@ -480,7 +480,7 @@ export default function ListYourRoomD() {
 
       <main className={`${SITE_CONTENT_MAX_CLASS} pt-4`}>
         <div className="flex items-start gap-4">
-          <div className="min-w-0 flex-1 space-y-5">
+          <div className="min-w-0 flex-1 space-y-5 [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
             <QuinnieBand />
             <EarningsCard />
             <button
