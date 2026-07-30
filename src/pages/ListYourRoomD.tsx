@@ -262,7 +262,7 @@ function QuinnieBand() {
       <div className="flex items-start justify-between gap-3 md:items-baseline">
         <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
           <QuniLogoHomeLink />
-          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-tight text-[var(--quni-ink)] md:text-2xl">
+          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-none text-[var(--quni-ink)] md:text-2xl">
             The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
             students.
           </h1>
@@ -479,9 +479,9 @@ export default function ListYourRoomD() {
       />
 
       <main className={`${SITE_CONTENT_MAX_CLASS} pt-4`}>
-        <QuinnieBand />
-        <div className="mt-5 flex items-start gap-4">
+        <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1 space-y-5">
+            <QuinnieBand />
             <EarningsCard />
             <button
               type="button"

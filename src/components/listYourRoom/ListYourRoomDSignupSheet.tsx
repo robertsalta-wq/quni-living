@@ -61,8 +61,14 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
     if (open) {
       closingRef.current = false
       if (!dialog.open) dialog.showModal()
-      const frame = requestAnimationFrame(() => setEntered(true))
-      return () => cancelAnimationFrame(frame)
+      let enterFrame: number | null = null
+      const paintFrame = requestAnimationFrame(() => {
+        enterFrame = requestAnimationFrame(() => setEntered(true))
+      })
+      return () => {
+        cancelAnimationFrame(paintFrame)
+        if (enterFrame !== null) cancelAnimationFrame(enterFrame)
+      }
     }
     if (!open && dialog.open) {
       dialog.close()
@@ -135,6 +141,8 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
 
       <dialog
         ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
         aria-label="List your property"
         onCancel={(event) => {
           event.preventDefault()
