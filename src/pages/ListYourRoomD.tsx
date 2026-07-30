@@ -7,7 +7,7 @@ import ListYourRoomDPreviewDrawer, {
   type ListYourRoomDPreviewMode,
 } from '../components/listYourRoom/ListYourRoomDPreviewDrawer'
 import ListYourRoomDSignupSheet from '../components/listYourRoom/ListYourRoomDSignupSheet'
-import SiteBrandLockup from '../components/SiteBrandLockup'
+import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
 import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
 import {
@@ -259,9 +259,9 @@ function EarningsCard() {
 function QuinnieBand() {
   return (
     <section className="pb-5">
-      <div className="flex items-start justify-between gap-3 md:items-baseline">
-        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
-          <SiteBrandLockup />
+      <div className="flex items-start justify-between gap-3 md:items-center">
+        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+          <QuniLogoHomeLink />
           <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-tight text-[var(--quni-ink)] md:text-2xl">
             The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
             students.
