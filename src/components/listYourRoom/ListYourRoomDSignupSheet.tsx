@@ -1,6 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type TransitionEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Signup from '../../pages/Signup'
+
+const SIGNUP_EXIT_DELAY_MS = 340
 
 type ListYourRoomDSignupSheetProps = {
   open: boolean
@@ -20,12 +22,44 @@ function CloseIcon() {
 export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: ListYourRoomDSignupSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const scrollBodyRef = useRef<HTMLDivElement>(null)
+  const closingRef = useRef(false)
+  const closeTimerRef = useRef<number | null>(null)
   const [entered, setEntered] = useState(false)
+
+  function completeClose() {
+    if (!closingRef.current) return
+    closingRef.current = false
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    onClose()
+  }
+
+  function requestClose() {
+    if (closingRef.current) return
+    closingRef.current = true
+    setEntered(false)
+    closeTimerRef.current = window.setTimeout(completeClose, SIGNUP_EXIT_DELAY_MS)
+  }
+
+  function finishClose(event: TransitionEvent<HTMLDialogElement>) {
+    if (event.target !== event.currentTarget || !closingRef.current) return
+    completeClose()
+  }
+
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current)
+    },
+    [],
+  )
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
     if (open) {
+      closingRef.current = false
       if (!dialog.open) dialog.showModal()
       const frame = requestAnimationFrame(() => setEntered(true))
       return () => cancelAnimationFrame(frame)
@@ -72,7 +106,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   return (
     <>
       <div
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/20 bg-[var(--quni-ink)] text-white"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-[var(--quni-ink)] text-white"
         role="region"
         aria-label="List your room"
       >
@@ -92,7 +126,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
           <button
             type="button"
             onClick={(event) => onOpen(event.currentTarget)}
-            className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:mr-16"
           >
             List my room →
           </button>
@@ -104,23 +138,29 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
         aria-label="List your property"
         onCancel={(event) => {
           event.preventDefault()
-          onClose()
+          requestClose()
         }}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             event.preventDefault()
-            onClose()
+            requestClose()
           }
         }}
         onClose={() => {
+          closingRef.current = false
+          if (closeTimerRef.current !== null) {
+            window.clearTimeout(closeTimerRef.current)
+            closeTimerRef.current = null
+          }
           setEntered(false)
           onClose()
         }}
         onClick={(event) => {
-          if (event.target === event.currentTarget) onClose()
+          if (event.target === event.currentTarget) requestClose()
         }}
+        onTransitionEnd={finishClose}
         className={[
-          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-dvh w-full overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60 md:mx-auto md:max-w-xl',
+          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-dvh w-full max-w-none overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60 md:mx-auto md:max-w-xl',
           'transition-transform duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
           entered ? 'translate-y-0' : 'translate-y-full',
         ].join(' ')}
@@ -130,7 +170,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="flex w-full justify-center py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 aria-label="Close signup sheet"
               >
@@ -147,7 +187,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
                 <span className="text-2xl font-bold tabular-nums text-white">$99.00</span>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={requestClose}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   aria-label="Close"
                 >

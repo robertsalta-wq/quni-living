@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject, type TransitionEvent } from 'react'
 import { ListingAccommodationStats } from '../ListingAccommodationStats'
 import { PropertyCard } from '../PropertyCard'
 import { VerifiedLandlordBadge } from '../VerifiedLandlordBadge'
@@ -9,6 +9,8 @@ import { getListingRentDisplay } from '../../lib/pricing/listingRentDisplay'
 import { normalizePropertyImages } from '../../lib/propertyImages'
 
 export type ListYourRoomDPreviewMode = 'listing' | 'full'
+
+const PREVIEW_EXIT_DELAY_MS = 340
 
 type ListYourRoomDPreviewDrawerProps = {
   open: boolean
@@ -59,7 +61,7 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
 
   return (
     <aside className="hidden w-12 shrink-0 self-stretch md:block" aria-label="Property preview">
-      <div className="lyrd-preview-height group sticky top-4 z-40 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
+      <div className="lyrd-preview-height group sticky top-4 z-50 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
         <button
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
@@ -72,9 +74,9 @@ export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
           className="flex min-h-0 flex-1 items-center justify-center px-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          aria-label="Preview a room, slide out"
+          aria-label="Preview your room, slide out"
         >
-          <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview a room</span>
+          <span className="-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide">Preview your room</span>
         </button>
         <button
           type="button"
@@ -238,13 +240,50 @@ export default function ListYourRoomDPreviewDrawer({
   onModeChange,
 }: ListYourRoomDPreviewDrawerProps) {
   const [entered, setEntered] = useState(false)
+  const [spineThin, setSpineThin] = useState(false)
+  const closingRef = useRef(false)
+  const closeTimerRef = useRef<number | null>(null)
+
+  function completeClose() {
+    if (!closingRef.current) return
+    closingRef.current = false
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    setSpineThin(false)
+    onClose()
+  }
+
+  function requestClose() {
+    if (closingRef.current) return
+    closingRef.current = true
+    setEntered(false)
+    closeTimerRef.current = window.setTimeout(completeClose, PREVIEW_EXIT_DELAY_MS)
+  }
+
+  function finishClose(event: TransitionEvent<HTMLElement>) {
+    if (event.target !== event.currentTarget || !closingRef.current) return
+    completeClose()
+  }
+
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
     if (open) {
+      closingRef.current = false
       if (!dialog.open) dialog.showModal()
-      const frame = requestAnimationFrame(() => setEntered(true))
+      const frame = requestAnimationFrame(() => {
+        setSpineThin(true)
+        setEntered(true)
+      })
       return () => cancelAnimationFrame(frame)
     }
     if (dialog.open) dialog.close()
@@ -268,45 +307,51 @@ export default function ListYourRoomDPreviewDrawer({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Preview a room"
+      aria-label="Preview your room"
       onCancel={(event) => {
         event.preventDefault()
-        onClose()
+        requestClose()
       }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault()
-          onClose()
+          requestClose()
         }
       }}
       onClose={() => {
+        closingRef.current = false
+        if (closeTimerRef.current !== null) {
+          window.clearTimeout(closeTimerRef.current)
+          closeTimerRef.current = null
+        }
         setEntered(false)
+        setSpineThin(false)
         onClose()
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose()
+        if (event.target === event.currentTarget) requestClose()
       }}
       className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-hidden bg-transparent p-0 text-[var(--quni-ink)] backdrop:bg-[var(--quni-ink)]/60"
     >
       <div
         className="relative mx-auto h-dvh max-w-site"
         onClick={(event) => {
-          if (event.target === event.currentTarget) onClose()
+          if (event.target === event.currentTarget) requestClose()
         }}
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={requestClose}
           className={[
             'lyrd-preview-height absolute right-5 top-4 z-20 hidden overflow-hidden rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-standard)] md:flex md:flex-col md:items-center md:justify-between',
-            entered ? 'w-1.5' : 'w-12',
+            spineThin ? 'w-1.5' : 'w-12',
           ].join(' ')}
           aria-label="Retract property preview"
         >
           <span
             className={[
               'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] transition-opacity duration-[var(--dur-base)]',
-              entered ? 'opacity-0' : 'opacity-100',
+              spineThin ? 'opacity-0' : 'opacity-100',
             ].join(' ')}
             aria-hidden
           >
@@ -315,16 +360,16 @@ export default function ListYourRoomDPreviewDrawer({
           <span
             className={[
               '-rotate-90 whitespace-nowrap text-sm font-semibold tracking-wide transition-opacity duration-[var(--dur-base)]',
-              entered ? 'opacity-0' : 'opacity-100',
+              spineThin ? 'opacity-0' : 'opacity-100',
             ].join(' ')}
             aria-hidden
           >
-            Preview a room
+            Preview your room
           </span>
           <span
             className={[
               'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] transition-opacity duration-[var(--dur-base)]',
-              entered ? 'opacity-0' : 'opacity-100',
+              spineThin ? 'opacity-0' : 'opacity-100',
             ].join(' ')}
             aria-hidden
           >
@@ -338,11 +383,12 @@ export default function ListYourRoomDPreviewDrawer({
             mode === 'listing' ? 'md:max-w-md' : 'md:max-w-3xl',
           ].join(' ')}
           onClick={(event) => event.stopPropagation()}
+          onTransitionEnd={finishClose}
         >
           <header className="shrink-0 border-b border-[var(--quni-line)] px-5 pb-4 pt-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="mx-auto flex w-full justify-center py-1 md:hidden"
               aria-label="Close preview drawer"
             >
@@ -350,14 +396,14 @@ export default function ListYourRoomDPreviewDrawer({
             </button>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Preview a room</h2>
+                <h2 className="font-display text-xl font-semibold text-[var(--quni-ink)]">Preview your room</h2>
                 <p className="mt-1 text-xs text-[var(--quni-ink-3)]">
-                  A real Quni listing — this is exactly how yours will look.
+                  Exactly how your room appears the day it goes live.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                 aria-label="Close"
               >
@@ -393,25 +439,16 @@ export default function ListYourRoomDPreviewDrawer({
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 [padding-bottom:max(var(--space-5),env(safe-area-inset-bottom,0px))]">
             {!property ? (
               <p className="text-sm text-[var(--quni-ink-3)]">Loading property preview…</p>
-            ) : (
-              <div>
-                <span className="inline-flex rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-2 py-1 text-xs font-semibold text-[var(--quni-ink-3)]">
-                  Sample listing
-                </span>
-                {mode === 'listing' ? (
-                  <div className="mx-auto mt-3 max-w-sm">
-                    <PropertyCard property={property} staticDisplay />
-                    <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
-                      The exact card a verified student sees while browsing. It is the same live component used by
-                      every listing.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-3">
-                    <FullPropertyPreview property={property} />
-                  </div>
-                )}
+            ) : mode === 'listing' ? (
+              <div className="mx-auto max-w-sm">
+                <PropertyCard property={property} staticDisplay />
+                <p className="mt-4 text-sm leading-relaxed text-[var(--quni-ink-3)]">
+                  The exact card a verified student sees while browsing. It is the same live component used by every
+                  listing.
+                </p>
               </div>
+            ) : (
+              <FullPropertyPreview property={property} />
             )}
           </div>
         </section>

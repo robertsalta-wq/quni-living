@@ -258,9 +258,9 @@ function EarningsCard() {
 
 function QuinnieBand() {
   return (
-    <section className="pb-5">
-      <div className="flex items-start justify-between gap-3 md:items-center">
-        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+    <section className="border-b border-[var(--quni-line)] pb-5">
+      <div className="flex items-start justify-between gap-3 md:items-baseline">
+        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
           <QuniLogoHomeLink />
           <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-tight text-[var(--quni-ink)] md:text-2xl">
             The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
@@ -473,7 +473,7 @@ export default function ListYourRoomD() {
     <div className="bg-[var(--quni-surface-2)] [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
       <Seo
         title="List your property"
-        description="The safest way to rent your spare room to university students. See the going rate, preview a room, and list free until someone moves in."
+        description="The safest way to rent your spare room to university students. See the going rate, preview your room, and list free until someone moves in."
         canonicalPath="/list-your-room-d"
         noindex
       />
@@ -488,7 +488,7 @@ export default function ListYourRoomD() {
               onClick={(event) => openOverlay('preview', event.currentTarget)}
               className="w-full rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] md:hidden"
             >
-              Preview a room on Quni →
+              Preview your room on Quni →
             </button>
             <div className="grid gap-5 md:grid-cols-2">
               <SmartToolsPanel />
