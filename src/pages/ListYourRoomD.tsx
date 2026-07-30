@@ -169,7 +169,7 @@ function EarningsCard() {
 
   return (
     <section
-      className="max-w-4xl rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-4"
+      className="rounded-[var(--radius-sm)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-4"
       aria-labelledby="lyrd-earnings-title"
     >
       <div className="flex flex-wrap items-center gap-3 md:flex-nowrap">
@@ -404,7 +404,10 @@ function PapersFooter() {
   return (
     <footer className="mt-5 flex flex-col items-stretch gap-3 border-t border-[var(--quni-line)] px-1 pb-1 pt-4">
       <p className="w-full font-footer text-xs text-[var(--quni-ink-3)]">
-        {legalName} t/a Quni Living · ABN {formatAustralianAbn(abn)}
+        {legalName} t/a Quni Living
+        <span className="block md:inline">
+          <span className="hidden md:inline"> · </span>ABN {formatAustralianAbn(abn)}
+        </span>
       </p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex flex-wrap gap-4 text-xs font-medium text-[var(--quni-ink-3)]" aria-label="Footer">

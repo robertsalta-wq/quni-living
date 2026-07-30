@@ -120,7 +120,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
           if (event.target === event.currentTarget) onClose()
         }}
         className={[
-          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-dvh w-full overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60 sm:mx-auto sm:max-w-xl',
+          'fixed inset-x-0 bottom-0 top-auto m-0 max-h-dvh w-full overflow-hidden rounded-t-[var(--radius-lg)] border border-b-0 border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-0 text-[var(--quni-ink)] shadow-[var(--shadow-3)] backdrop:bg-[var(--quni-ink)]/60 md:mx-auto md:max-w-xl',
           'transition-transform duration-[var(--dur-slow)] ease-[var(--ease-standard)]',
           entered ? 'translate-y-0' : 'translate-y-full',
         ].join(' ')}
