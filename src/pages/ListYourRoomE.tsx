@@ -63,7 +63,7 @@ const SAFE_ITEMS = [
   },
   {
     name: 'See them before you pay',
-    description: 'Full request review before the $99 — accept or decline with no fee.',
+    description: 'Full request review before the $99. Accept or decline with no fee.',
   },
   {
     name: 'Your details stay private',
@@ -120,7 +120,7 @@ function QuinnieBand() {
           <p className="text-sm leading-relaxed text-[var(--quni-ink-2)]">
             <strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built Quni with
             my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and you can
-            message me anytime — you&apos;ll get me, not a bot.
+            message me anytime. You&apos;ll get me, not a bot.
           </p>
           <p className="mt-1 clear-both text-xs font-semibold text-[var(--quni-ink-3)] md:clear-none">
             Quinnie Le, co-founder.
@@ -139,7 +139,7 @@ function FinishHereNote() {
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-[var(--quni-ink-3)]">
         List with us or bring a tenant from Facebook, Flatmates, or word of mouth. Quni handles ID verification, digital
-        leases, and bond lodging—so it&apos;s done properly, not on a handshake.
+        leases, and bond lodging, so it&apos;s done properly, not on a handshake.
       </p>
     </section>
   )
