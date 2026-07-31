@@ -93,10 +93,10 @@ function TrustTick() {
 function QuinnieBand() {
   return (
     <section className="border-b border-[var(--quni-line)] pb-5">
-      <div className="flex items-start justify-between gap-3 md:items-baseline">
+      <div className="flex items-baseline justify-between gap-3">
         <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
-          <QuniLogoHomeLink />
-          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-none text-[var(--quni-ink)] md:text-2xl">
+          <QuniLogoHomeLink className="leading-none" />
+          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-none text-[var(--quni-ink)] md:text-2xl md:leading-none">
             The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
             students.
           </h1>
@@ -327,24 +327,26 @@ export default function ListYourRoomE() {
       />
 
       <main className={`${SITE_CONTENT_MAX_CLASS} pt-4`}>
-        <div className="flex items-start gap-4">
-          <div className="min-w-0 flex-1 space-y-5 [padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
-            <QuinnieBand />
-            <FinishHereNote />
-            <button
-              type="button"
-              onClick={(event) => openOverlay('preview', event.currentTarget)}
-              className="w-full rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] md:hidden"
-            >
-              Preview your room on Quni →
-            </button>
-            <div className="grid gap-5 md:grid-cols-2">
-              <SmartToolsPanel />
-              <TrustPanel onOpenVerification={(opener) => openOverlay('verification', opener)} />
+        <div className="[padding-bottom:calc(var(--space-24)+env(safe-area-inset-bottom,0px))]">
+          <QuinnieBand />
+          <div className="mt-5 flex items-stretch gap-4">
+            <div className="min-w-0 flex-1 space-y-5">
+              <FinishHereNote />
+              <button
+                type="button"
+                onClick={(event) => openOverlay('preview', event.currentTarget)}
+                className="w-full rounded-[var(--radius-sm)] bg-[var(--quni-ink)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-ink-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] md:hidden"
+              >
+                Preview your room on Quni →
+              </button>
+              <div className="grid gap-5 md:grid-cols-2">
+                <SmartToolsPanel />
+                <TrustPanel onOpenVerification={(opener) => openOverlay('verification', opener)} />
+              </div>
             </div>
-            <PapersFooter />
+            <ListYourRoomDPreviewRail bounded onOpen={(opener) => openOverlay('preview', opener)} />
           </div>
-          <ListYourRoomDPreviewRail onOpen={(opener) => openOverlay('preview', opener)} />
+          <PapersFooter />
         </div>
       </main>
 
