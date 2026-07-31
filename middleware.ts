@@ -14,6 +14,10 @@ import {
   isListYourRoomCGatedPath,
   resolveListYourRoomCEnabled,
 } from './src/lib/listYourRoomCGateCore.js'
+import {
+  isListYourRoomEGatedPath,
+  resolveListYourRoomEEnabled,
+} from './src/lib/listYourRoomEGateCore.js'
 
 export const config = {
   matcher: [
@@ -60,6 +64,16 @@ function isListYourRoomCEnabledOnEdge(): boolean {
   const override =
     process.env.LIST_YOUR_ROOM_C_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_C_ENABLED ?? ''
   return resolveListYourRoomCEnabled({
+    override,
+    vercelEnv: process.env.VERCEL_ENV,
+    treatUnknownAsEnabled: false,
+  })
+}
+
+function isListYourRoomEEnabledOnEdge(): boolean {
+  const override =
+    process.env.LIST_YOUR_ROOM_E_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_E_ENABLED ?? ''
+  return resolveListYourRoomEEnabled({
     override,
     vercelEnv: process.env.VERCEL_ENV,
     treatUnknownAsEnabled: false,
@@ -120,6 +134,18 @@ export default async function middleware(request: Request): Promise<Response> {
 
   // Landlord invite C (`/list-your-room-c`): Preview ON / Production OFF.
   if (isListYourRoomCGatedPath(pathname) && !isListYourRoomCEnabledOnEdge()) {
+    const dest = new URL('/services/landlord-partnerships', url.origin)
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: dest.toString(),
+        'Cache-Control': 'private, no-store',
+      },
+    })
+  }
+
+  // Landlord invite E (`/list-your-room-e` desk): Preview ON / Production ON.
+  if (isListYourRoomEGatedPath(pathname) && !isListYourRoomEEnabledOnEdge()) {
     const dest = new URL('/services/landlord-partnerships', url.origin)
     return new Response(null, {
       status: 302,

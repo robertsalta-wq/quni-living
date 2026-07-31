@@ -92,7 +92,7 @@ export function isFocusFormFlowPath(pathname: string): boolean {
   return FOCUS_FORM_FLOW_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix))
 }
 
-/** Landlord invite landing — logo + Log in only (no marketing nav). */
+/** Landlord invite landing: logo + Log in only (no marketing nav). */
 export function isLandlordInviteMinimalChromePath(pathname: string): boolean {
   const p = pathname.startsWith('/') ? pathname : `/${pathname}`
   return (
@@ -101,8 +101,16 @@ export function isLandlordInviteMinimalChromePath(pathname: string): boolean {
     p === '/list-your-room-b' ||
     p.startsWith('/list-your-room-b/') ||
     p === '/list-your-room-c' ||
-    p.startsWith('/list-your-room-c/')
+    p.startsWith('/list-your-room-c/') ||
+    p === '/list-your-room-e' ||
+    p.startsWith('/list-your-room-e/')
   )
+}
+
+/** Desk invite with in-page papers footer: skip FocusFormLegalStrip and marketing header. */
+export function isLandlordInvitePapersFooterPath(pathname: string): boolean {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  return p === '/list-your-room-e' || p.startsWith('/list-your-room-e/')
 }
 
 export function absoluteUrl(path: string): string {

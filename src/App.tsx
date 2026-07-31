@@ -295,6 +295,7 @@ function App() {
                 <Route path="/list-your-room" element={<Lazy.ListYourRoom />} />
                 <Route path="/list-your-room-b" element={<Lazy.ListYourRoomB />} />
                 <Route path="/list-your-room-c" element={<Lazy.ListYourRoomC />} />
+                <Route path="/list-your-room-e" element={<Lazy.ListYourRoomE />} />
                 <Route
                   path="/landlord/onboarding"
                   element={<Navigate to="/landlord/dashboard?tab=profile" replace />}

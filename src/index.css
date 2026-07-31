@@ -5,6 +5,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .lyrd-quinnie-thumbnail {
+    width: calc(var(--space-16) + var(--space-2));
+    height: calc(var(--space-16) + var(--space-2));
+  }
+
+  .lyrd-preview-height {
+    height: 100dvh;
+  }
+
+  @media (min-width: 768px) {
+    .lyrd-preview-height {
+      height: calc(100dvh - var(--space-4));
+    }
+
+    .lyrd-preview-panel {
+      clip-path: inset(0 0 0 100%);
+      transform: none;
+    }
+
+    .lyrd-preview-panel.lyrd-preview-panel-open {
+      clip-path: inset(0);
+    }
+  }
+}
+
 :root {
   /* Set to 48px on native Android only (see nativeStatusBarInsetFallback.ts). */
   --quni-status-bar-fallback: 0px;
