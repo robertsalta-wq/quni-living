@@ -93,10 +93,10 @@ function TrustTick() {
 function QuinnieBand() {
   return (
     <section className="border-b border-[var(--quni-line)] pb-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-baseline md:gap-3">
-          <QuniLogoHomeLink className="leading-none" />
-          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-none text-[var(--quni-ink)] md:text-2xl md:leading-none">
+      <div className="flex items-start justify-between gap-3 md:items-center">
+        <div className="flex min-w-0 flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+          <QuniLogoHomeLink />
+          <h1 className="m-0 min-w-0 font-lora text-xl font-semibold leading-tight text-[var(--quni-ink)] md:text-2xl">
             The <span className="text-[var(--quni-coral-active)]">safest way</span> to rent your spare room to university
             students.
           </h1>
