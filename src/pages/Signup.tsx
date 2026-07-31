@@ -240,6 +240,12 @@ type SignupProps = {
   embedInviteTitle?: string
   /** Override embed subcopy under the heading. */
   embedInviteSub?: ReactNode
+  /** Optional eyebrow above the embed title (e.g. mobile sheet "For landlords"). */
+  embedInviteEyebrow?: string
+  /** Place implied consent after the email form (mobile sheet order). */
+  embedConsentAfterForm?: boolean
+  /** Sheet wrapper supplies its own ink title and fee header. */
+  embedHideHeading?: boolean
 }
 
 export default function Signup({
@@ -247,6 +253,9 @@ export default function Signup({
   collapsedEmail = false,
   embedInviteTitle,
   embedInviteSub,
+  embedInviteEyebrow,
+  embedConsentAfterForm = false,
+  embedHideHeading = false,
 }: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -381,11 +390,16 @@ export default function Signup({
     clearTermsError: () => setTermsError(false),
   }
 
-  function googleButton(className: string, opts?: { multicolorIcon?: boolean }) {
+  function googleButton(className: string, opts?: { multicolorIcon?: boolean; primaryCta?: boolean }) {
     const multicolor = opts?.multicolorIcon === true
     return (
-      <button type="button" onClick={handleGoogleSignup} disabled={!accountKind} className={className}>
-        <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
+      <button
+        type="button"
+        onClick={handleGoogleSignup}
+        disabled={!accountKind}
+        className={className}
+        data-invite-primary-cta={opts?.primaryCta ? 'true' : undefined}
+      >        <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path
             fill={multicolor ? '#4285F4' : 'currentColor'}
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -607,19 +621,34 @@ export default function Signup({
 
   if (embedLandlordInvite && accountKind === 'landlord') {
     const showEmailFields = !collapsedEmail || emailFieldsOpen
+    const consentLine = <SignupImpliedConsentNotice includeLandlordAgreement={showLandlordAgreement} />
     return (
       <div ref={formTopRef} className="flex h-full min-h-0 flex-col scroll-mt-below-header">
-        <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-0">
-          {embedInviteTitle ?? 'Put your room up'}
-        </h2>
-        <div className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
-          {embedInviteSub ?? (
-            <>
-              Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
-              minutes.
-            </>
-          )}
-        </div>
+        {!embedHideHeading && embedInviteEyebrow ? (
+          <p className="text-[length:var(--text-micro-size)] font-semibold uppercase tracking-[var(--text-micro-track)] text-[var(--quni-ink-3)]">
+            {embedInviteEyebrow}
+          </p>
+        ) : null}
+        {!embedHideHeading ? (
+          <h2
+            className={[
+              'font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mb-0',
+              embedInviteEyebrow ? '!mt-1.5' : '!mt-0',
+            ].join(' ')}
+          >
+            {embedInviteTitle ?? 'Put your room up'}
+          </h2>
+        ) : null}
+        {!embedHideHeading ? (
+          <div className="mt-1 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
+            {embedInviteSub ?? (
+              <>
+                Joining as a <strong className="font-semibold text-[var(--quni-ink)]">landlord</strong>. Takes a few
+                minutes.
+              </>
+            )}
+          </div>
+        ) : null}
 
         {keyMisuse && (
           <div className="mb-3 mt-3 rounded-lg border border-[var(--quni-warning)]/30 bg-[var(--quni-warning-bg)] px-4 py-3 text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-warning-fg)]">
@@ -648,9 +677,10 @@ export default function Signup({
 
         {googleButton(
           'mt-4 flex w-full items-center justify-center gap-2.5 rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 py-3.5 text-[length:var(--text-body-size)] font-bold leading-[var(--text-body-lh)] text-[var(--quni-surface-1)] shadow-[0_2px_0_var(--quni-coral-active)] transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral)]/35 focus:ring-offset-2 disabled:opacity-50',
+          { primaryCta: true },
         )}
 
-        <SignupImpliedConsentNotice includeLandlordAgreement={showLandlordAgreement} />
+        {embedConsentAfterForm ? null : consentLine}
 
         {collapsedEmail && !emailFieldsOpen ? (
           <button
@@ -751,6 +781,8 @@ export default function Signup({
             ) : null}
           </>
         )}
+
+        {embedConsentAfterForm ? consentLine : null}
 
         {verificationModalFocus !== null ? (
           <VerificationChecklistModal
