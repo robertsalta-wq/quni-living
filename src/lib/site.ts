@@ -110,7 +110,12 @@ export function isLandlordInviteMinimalChromePath(pathname: string): boolean {
 /** Desk invite with in-page papers footer: skip FocusFormLegalStrip and marketing header. */
 export function isLandlordInvitePapersFooterPath(pathname: string): boolean {
   const p = pathname.startsWith('/') ? pathname : `/${pathname}`
-  return p === '/list-your-room-e' || p.startsWith('/list-your-room-e/')
+  return (
+    p === '/list-your-room' ||
+    p.startsWith('/list-your-room/') ||
+    p === '/list-your-room-e' ||
+    p.startsWith('/list-your-room-e/')
+  )
 }
 
 export function absoluteUrl(path: string): string {
