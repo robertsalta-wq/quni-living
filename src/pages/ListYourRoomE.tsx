@@ -322,7 +322,7 @@ export default function ListYourRoomE() {
       <Seo
         title="List your property"
         description="The safest way to rent your spare room to university students. See the going rate, preview your room, and list free until someone moves in."
-        canonicalPath="/list-your-room-e"
+        canonicalPath="/list-your-room"
         noindex
       />
 

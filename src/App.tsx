@@ -292,10 +292,13 @@ function App() {
                   element={<Lazy.ServicePropertyManagement />}
                 />
                 <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
-                <Route path="/list-your-room" element={<Lazy.ListYourRoom />} />
+                <Route path="/list-your-room" element={<Lazy.ListYourRoomE />} />
                 <Route path="/list-your-room-b" element={<Lazy.ListYourRoomB />} />
                 <Route path="/list-your-room-c" element={<Lazy.ListYourRoomC />} />
-                <Route path="/list-your-room-e" element={<Lazy.ListYourRoomE />} />
+                <Route
+                  path="/list-your-room-e"
+                  element={<Navigate to="/list-your-room" replace />}
+                />
                 <Route
                   path="/landlord/onboarding"
                   element={<Navigate to="/landlord/dashboard?tab=profile" replace />}
