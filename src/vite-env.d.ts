@@ -33,6 +33,10 @@ interface ImportMetaEnv {
    * `/list-your-room-d` desk invite. When unset: ON in Preview, OFF in Production.
    */
   readonly VITE_LIST_YOUR_ROOM_D_ENABLED?: string
+  /**
+   * `/list-your-room-e` desk invite. When unset: ON in Preview, OFF in Production.
+   */
+  readonly VITE_LIST_YOUR_ROOM_E_ENABLED?: string
   /** AES key for encrypting vendor credentials in admin (Apps modal) before Supabase update */
   readonly VITE_CREDENTIALS_ENC_KEY?: string
 }

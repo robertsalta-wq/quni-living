@@ -23,6 +23,7 @@ type ListYourRoomDPreviewDrawerProps = {
 
 type PreviewRailProps = {
   onOpen: (opener: HTMLElement) => void
+  bounded?: boolean
 }
 
 function CloseIcon() {
@@ -56,12 +57,17 @@ function TrustTick() {
   )
 }
 
-export function ListYourRoomDPreviewRail({ onOpen }: PreviewRailProps) {
+export function ListYourRoomDPreviewRail({ onOpen, bounded = false }: PreviewRailProps) {
   const openFromControl = (control: HTMLElement) => onOpen(control)
 
   return (
     <aside className="hidden w-12 shrink-0 self-stretch md:block" aria-label="Property preview">
-      <div className="lyrd-preview-height group sticky top-4 z-40 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]">
+      <div
+        className={[
+          'group z-40 flex w-12 flex-col items-center justify-between rounded-[var(--radius-sm)] bg-[var(--quni-ink)] py-4 text-white shadow-[var(--shadow-2)] transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-x-1 hover:bg-[var(--quni-ink-2)]',
+          bounded ? 'h-full' : 'lyrd-preview-height sticky top-4',
+        ].join(' ')}
+      >
         <button
           type="button"
           onClick={(event) => openFromControl(event.currentTarget)}
