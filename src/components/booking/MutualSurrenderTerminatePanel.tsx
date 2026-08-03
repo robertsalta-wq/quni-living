@@ -24,7 +24,9 @@ type Props = {
   serviceTierFinal: string | null
   terminationEffectiveDate?: string | null
   terminationAcknowledgedAt?: string | null
+  terminationReasonNote?: string | null
   bondOutcome?: string | null
+  bondOutcomeNote?: string | null
   onUpdated: () => void
 }
 
@@ -34,12 +36,20 @@ export function MutualSurrenderTerminatePanel({
   serviceTierFinal,
   terminationEffectiveDate,
   terminationAcknowledgedAt,
+  terminationReasonNote,
   bondOutcome,
+  bondOutcomeNote,
   onUpdated,
 }: Props) {
   const [effectiveDate, setEffectiveDate] = useState('')
-  const [bond, setBond] = useState<BondOutcome>('never_lodged')
-  const [note, setNote] = useState('')
+  const [reasonNote, setReasonNote] = useState('')
+  const [bond, setBond] = useState<BondOutcome>(
+    (bondOutcome as BondOutcome | null | undefined) &&
+      BOND_OPTIONS.some((o) => o.value === bondOutcome)
+      ? (bondOutcome as BondOutcome)
+      : 'never_lodged',
+  )
+  const [bondNote, setBondNote] = useState(bondOutcomeNote ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [okMsg, setOkMsg] = useState<string | null>(null)
@@ -48,6 +58,8 @@ export function MutualSurrenderTerminatePanel({
     serviceTierFinal === 'listing' && (status === 'confirmed' || status === 'active')
   const isTerminating = status === 'terminating'
   const isTerminated = status === 'terminated'
+  const reasonTrimmed = reasonNote.trim()
+  const canSubmit = Boolean(effectiveDate && reasonTrimmed.length >= 3)
 
   if (serviceTierFinal !== 'listing') return null
   if (!canInitiate && !isTerminating && !isTerminated) return null
@@ -60,6 +72,7 @@ export function MutualSurrenderTerminatePanel({
   }
 
   async function onInitiate() {
+    if (!canSubmit) return
     setBusy(true)
     setError(null)
     setOkMsg(null)
@@ -71,10 +84,10 @@ export function MutualSurrenderTerminatePanel({
         body: JSON.stringify({
           bookingId,
           terminationEffectiveDate: effectiveDate,
+          reasonNote: reasonTrimmed,
           bondOutcome: bond,
-          bondOutcomeNote: note || null,
+          bondOutcomeNote: bondNote.trim() || null,
           continueInSamePremises: true,
-          reasonNote: 'Mutual surrender — tenant converting / ending by agreement',
         }),
       })
       const body = await res.json().catch(() => ({}))
@@ -104,7 +117,7 @@ export function MutualSurrenderTerminatePanel({
         body: JSON.stringify({
           bookingId,
           bondOutcome: bond,
-          bondOutcomeNote: note || null,
+          bondOutcomeNote: bondNote.trim() || null,
         }),
       })
       const body = await res.json().catch(() => ({}))
@@ -121,92 +134,23 @@ export function MutualSurrenderTerminatePanel({
     }
   }
 
-  return (
-    <section className="mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg/40 p-4">
-      <h3 className="text-sm font-semibold text-admin-ink">End agreement (mutual surrender)</h3>
-      <p className="mt-1 text-xs text-admin-ink-3">
-        Ends a live Listing agreement by written agreement — distinct from cancelling an application.
-        Both parties e-sign a mutual termination acknowledgment.
-      </p>
-
-      {isTerminated ? (
-        <p className="mt-3 text-sm text-admin-ink-2">
-          Agreement terminated
-          {terminationEffectiveDate ? ` (effective ${terminationEffectiveDate})` : ''}. Bond outcome:{' '}
+  if (isTerminated) {
+    return (
+      <section className="mt-6 border-t border-admin-line pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
+          Agreement ended
+        </p>
+        <p className="mt-1 text-sm text-admin-ink-2">
+          Terminated
+          {terminationEffectiveDate ? ` effective ${terminationEffectiveDate}` : ''}. Bond outcome:{' '}
           {bondOutcome || 'not recorded'}.
         </p>
-      ) : null}
-
-      {isTerminating ? (
-        <div className="mt-3 space-y-2 text-sm text-admin-ink-2">
-          <p>
-            Status: <strong>terminating</strong> — effective{' '}
-            {terminationEffectiveDate || '—'}. Room remains reserved until that date.
-          </p>
-          <p>
-            Acknowledgments:{' '}
-            {terminationAcknowledgedAt
-              ? `both parties signed (${terminationAcknowledgedAt.slice(0, 10)})`
-              : 'waiting for landlord + tenant e-sign'}
-          </p>
-        </div>
-      ) : null}
-
-      {canInitiate ? (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-medium text-admin-ink-2">
-            Effective date
-            <input
-              type="date"
-              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
-              value={effectiveDate}
-              onChange={(e) => setEffectiveDate(e.target.value)}
-            />
-          </label>
-          <label className="block text-xs font-medium text-admin-ink-2">
-            Bond outcome (ops note)
-            <select
-              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
-              value={bond}
-              onChange={(e) => setBond(e.target.value as BondOutcome)}
-            >
-              {BOND_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <span className="mt-1 block font-normal text-admin-ink-4">
-              Checklist only — does not file anything with RBO. Leave as Never lodged if the bond was
-              never lodged.
-            </span>
-          </label>
-          <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">
-            Note (optional)
-            <input
-              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="RBO ref or context"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy || !effectiveDate}
-            onClick={() => void onInitiate()}
-            className="sm:col-span-2 inline-flex min-h-[2.75rem] items-center justify-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {busy ? 'Starting…' : 'Confirm & send for e-sign'}
-          </button>
-          {!effectiveDate ? (
-            <p className="sm:col-span-2 text-xs text-admin-ink-4">
-              Pick an effective date to enable confirm.
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
-      {(isTerminating || isTerminated) && (
+        {terminationReasonNote ? (
+          <p className="mt-1 text-sm text-admin-ink-3">Reason: {terminationReasonNote}</p>
+        ) : null}
+        {bondOutcomeNote ? (
+          <p className="mt-1 text-sm text-admin-ink-3">Bond note: {bondOutcomeNote}</p>
+        ) : null}
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="block text-xs font-medium text-admin-ink-2">
             Update bond outcome
@@ -222,6 +166,15 @@ export function MutualSurrenderTerminatePanel({
               ))}
             </select>
           </label>
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Bond note (optional)
+            <input
+              className="mt-1 block w-56 rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={bondNote}
+              onChange={(e) => setBondNote(e.target.value)}
+              placeholder="RBO ref or context"
+            />
+          </label>
           <button
             type="button"
             disabled={busy}
@@ -231,10 +184,151 @@ export function MutualSurrenderTerminatePanel({
             Save bond outcome
           </button>
         </div>
-      )}
+        {error ? <p className="mt-2 text-sm text-admin-danger-fg">{error}</p> : null}
+        {okMsg ? <p className="mt-2 text-sm text-admin-success-fg">{okMsg}</p> : null}
+      </section>
+    )
+  }
 
-      {error ? <p className="mt-2 text-sm text-admin-danger-fg">{error}</p> : null}
-      {okMsg ? <p className="mt-2 text-sm text-admin-success-fg">{okMsg}</p> : null}
-    </section>
+  if (isTerminating) {
+    return (
+      <section className="mt-6 space-y-3 border-t border-admin-line pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
+          Ending agreement
+        </p>
+        <div className="space-y-1 text-sm text-admin-ink-2">
+          <p>
+            Status: <strong>terminating</strong> — effective {terminationEffectiveDate || '—'}. Room
+            remains reserved until that date.
+          </p>
+          <p>
+            Acknowledgments:{' '}
+            {terminationAcknowledgedAt
+              ? `both parties signed (${terminationAcknowledgedAt.slice(0, 10)})`
+              : 'waiting for landlord + tenant e-sign'}
+          </p>
+          {terminationReasonNote ? <p>Reason: {terminationReasonNote}</p> : null}
+        </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Bond outcome
+            <select
+              className="mt-1 block rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={bond}
+              onChange={(e) => setBond(e.target.value as BondOutcome)}
+            >
+              {BOND_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Bond note (optional)
+            <input
+              className="mt-1 block w-56 rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={bondNote}
+              onChange={(e) => setBondNote(e.target.value)}
+              placeholder="RBO ref or context"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onSaveBondOutcome()}
+            className="rounded-admin-md border border-admin-line bg-white px-3 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+          >
+            Save bond outcome
+          </button>
+        </div>
+        {error ? <p className="mt-2 text-sm text-admin-danger-fg">{error}</p> : null}
+        {okMsg ? <p className="mt-2 text-sm text-admin-success-fg">{okMsg}</p> : null}
+      </section>
+    )
+  }
+
+  // Rare path: collapsed by default so it does not dominate Tenancy agreement.
+  return (
+    <details className="mt-6 border-t border-admin-line pt-4 group">
+      <summary className="cursor-pointer list-none text-sm font-medium text-admin-ink-4 hover:text-admin-ink-2 [&::-webkit-details-marker]:hidden">
+        <span className="underline-offset-2 group-open:underline">End agreement (mutual surrender)</span>
+        <span className="ml-2 font-normal text-admin-ink-5">— rarely needed</span>
+      </summary>
+      <div className="mt-3 space-y-3">
+        <p className="text-xs text-admin-ink-4">
+          Ends a live Listing agreement by written agreement (not the same as cancelling an
+          application). Both parties e-sign a mutual termination acknowledgment.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Effective date
+            <input
+              type="date"
+              required
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={effectiveDate}
+              onChange={(e) => setEffectiveDate(e.target.value)}
+            />
+          </label>
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Bond outcome
+            <select
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={bond}
+              onChange={(e) => setBond(e.target.value as BondOutcome)}
+            >
+              {BOND_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block font-normal text-admin-ink-5">
+              Ops checklist only — does not file with RBO.
+            </span>
+          </label>
+          <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">
+            Reason for ending
+            <textarea
+              required
+              rows={3}
+              maxLength={2000}
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={reasonNote}
+              onChange={(e) => setReasonNote(e.target.value)}
+              placeholder="e.g. Tenant converting from room to whole-unit tenancy by agreement"
+            />
+            <span className="mt-1 block font-normal text-admin-ink-5">
+              Saved on the booking as the termination reason (required).
+            </span>
+          </label>
+          <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">
+            Bond note (optional)
+            <input
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
+              value={bondNote}
+              onChange={(e) => setBondNote(e.target.value)}
+              placeholder="RBO reference or bond context"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busy || !canSubmit}
+            onClick={() => void onInitiate()}
+            className="sm:col-span-2 inline-flex min-h-[2.75rem] items-center justify-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? 'Starting…' : 'Confirm & send for e-sign'}
+          </button>
+          {!canSubmit ? (
+            <p className="sm:col-span-2 text-xs text-admin-ink-5">
+              Enter an effective date and a reason (at least a few words) to enable confirm.
+            </p>
+          ) : null}
+        </div>
+        {error ? <p className="text-sm text-admin-danger-fg">{error}</p> : null}
+        {okMsg ? <p className="text-sm text-admin-success-fg">{okMsg}</p> : null}
+      </div>
+    </details>
   )
 }

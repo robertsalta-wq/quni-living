@@ -52,10 +52,20 @@ export default async function handler(req, res) {
   const newPremisesLine = typeof body.newPremisesLine === 'string' ? body.newPremisesLine : null
   const continueInSamePremises = body.continueInSamePremises !== false
 
+  const reasonTrimmed = typeof reasonNote === 'string' ? reasonNote.trim() : ''
+
   if (!bookingId || !terminationEffectiveDate) {
     return corsJson(
       res,
       { error: 'bookingId and terminationEffectiveDate are required' },
+      400,
+      origin,
+    )
+  }
+  if (reasonTrimmed.length < 3) {
+    return corsJson(
+      res,
+      { error: 'reasonNote is required (why this agreement is ending)' },
       400,
       origin,
     )
@@ -95,7 +105,7 @@ export default async function handler(req, res) {
       landlordProfileId: landlord.id,
       bookingId,
       terminationEffectiveDate,
-      reasonNote,
+      reasonNote: reasonTrimmed,
       bondOutcome,
       bondOutcomeNote,
       newPremisesLine,

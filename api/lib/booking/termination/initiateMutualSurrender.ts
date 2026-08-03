@@ -111,6 +111,15 @@ export async function runInitiateMutualSurrender(args: {
   const reasonTrim =
     typeof args.reasonNote === 'string' ? args.reasonNote.trim().slice(0, 2000) : ''
 
+  if (!alreadyTerminating && reasonTrim.length < 3) {
+    return {
+      ok: false,
+      status: 400,
+      code: 'reason_required',
+      message: 'A reason for ending the agreement is required.',
+    }
+  }
+
   // Patch termination fields first (keep confirmed/active until DocuSeal succeeds), then flip status.
   if (!alreadyTerminating) {
     const { error: patchErr } = await admin

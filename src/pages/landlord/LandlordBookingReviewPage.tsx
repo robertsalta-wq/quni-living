@@ -1695,25 +1695,11 @@ export default function LandlordBookingReviewPage() {
                 onToggle={() => setAgreementExpanded((v) => !v)}
               >
                 <div className="space-y-5">
-                  <MutualSurrenderTerminatePanel
-                    bookingId={booking.id}
-                    status={booking.status}
-                    serviceTierFinal={booking.service_tier_final}
-                    terminationEffectiveDate={
-                      (booking as { termination_effective_date?: string | null })
-                        .termination_effective_date
-                    }
-                    terminationAcknowledgedAt={
-                      (booking as { termination_acknowledged_at?: string | null })
-                        .termination_acknowledged_at
-                    }
-                    bondOutcome={(booking as { bond_outcome?: string | null }).bond_outcome}
-                    onUpdated={() => void reload()}
-                  />
                   {(booking.status === 'bond_pending' ||
                     booking.status === 'confirmed' ||
                     booking.status === 'active' ||
-                    booking.status === 'terminating') &&
+                    booking.status === 'terminating' ||
+                    booking.status === 'terminated') &&
                     property && (
                     <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
                       <TenancyAgreementExplainer
@@ -1758,6 +1744,28 @@ export default function LandlordBookingReviewPage() {
                       )}
                     </div>
                   )}
+                  <MutualSurrenderTerminatePanel
+                    bookingId={booking.id}
+                    status={booking.status}
+                    serviceTierFinal={booking.service_tier_final}
+                    terminationEffectiveDate={
+                      (booking as { termination_effective_date?: string | null })
+                        .termination_effective_date
+                    }
+                    terminationAcknowledgedAt={
+                      (booking as { termination_acknowledged_at?: string | null })
+                        .termination_acknowledged_at
+                    }
+                    terminationReasonNote={
+                      (booking as { termination_reason_note?: string | null })
+                        .termination_reason_note
+                    }
+                    bondOutcome={(booking as { bond_outcome?: string | null }).bond_outcome}
+                    bondOutcomeNote={
+                      (booking as { bond_outcome_note?: string | null }).bond_outcome_note
+                    }
+                    onUpdated={() => void reload()}
+                  />
                 </div>
               </Section>
             )}
