@@ -33,6 +33,7 @@ export type TenancyDocumentSyncRow = {
   student_signed_at: string | null
   co_tenant_signed_at: string | null
   file_path: string | null
+  document_type?: string | null
 }
 
 export type BookingReinstateRow = {
@@ -502,6 +503,13 @@ export async function syncFullySignedDocusealSubmission(args: {
         .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
       if (upStorageErr) throw upStorageErr
     }
+  } else if (docRow.document_type === 'mutual_termination') {
+    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
+    signedPath = `${docRow.tenancy_id}/mutual_termination/mutual_termination_signed.pdf`
+    const { error: upStorageErr } = await admin.storage
+      .from('tenancy-documents')
+      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+    if (upStorageErr) throw upStorageErr
   } else {
     const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
     signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
@@ -533,20 +541,23 @@ export async function syncFullySignedDocusealSubmission(args: {
 
   // Listing: confirmed → active when bond + signature both done (order-independent).
   // Soft-fail — do not break webhook / reconcile if advance fails.
-  try {
-    if (docRow.tenancy_id) {
-      const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
-      if (bookingIds?.bookingId) {
-        const { maybeAdvanceListingBookingToActive } = await import(
-          '../booking/maybeAdvanceListingBookingToActive.js'
-        )
-        await maybeAdvanceListingBookingToActive(admin, bookingIds.bookingId, {
-          assumeLeaseFullySigned: true,
-        })
+  // Skip for mutual_termination (ending an agreement, not advancing into active).
+  if (docRow.document_type !== 'mutual_termination') {
+    try {
+      if (docRow.tenancy_id) {
+        const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
+        if (bookingIds?.bookingId) {
+          const { maybeAdvanceListingBookingToActive } = await import(
+            '../booking/maybeAdvanceListingBookingToActive.js'
+          )
+          await maybeAdvanceListingBookingToActive(admin, bookingIds.bookingId, {
+            assumeLeaseFullySigned: true,
+          })
+        }
       }
+    } catch (advErr) {
+      console.warn('[syncFullySignedDocusealSubmission] maybeAdvanceListingBookingToActive', advErr)
     }
-  } catch (advErr) {
-    console.warn('[syncFullySignedDocusealSubmission] maybeAdvanceListingBookingToActive', advErr)
   }
 
   return {

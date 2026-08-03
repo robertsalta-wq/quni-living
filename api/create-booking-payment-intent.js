@@ -57,6 +57,7 @@ import {
 } from './lib/booking/occupancyBooking.js'
 import { TENANT_BOOKING_PIPELINE_STATUSES } from './lib/booking/tenantBookingPipelineStatuses.js'
 import { checkPropertyAvailableForNewApplication } from './lib/booking/propertyAvailability.js'
+import { assertNoPropertyGroupDoubleHold } from './lib/booking/termination/propertyGroupOverlap.js'
 import {
   buildListingAcknowledgmentColumns,
   buildListingApplyBookingRow,
@@ -237,6 +238,29 @@ async function assertStudentPipelineFree(admin, studentId, propertyId, origin) {
     )
   }
   return null
+}
+
+async function assertStudentPropertyGroupFree(admin, studentId, propertyId, moveInDate, origin) {
+  const newStart =
+    typeof moveInDate === 'string' && moveInDate.trim()
+      ? moveInDate.trim().slice(0, 10)
+      : null
+  const result = await assertNoPropertyGroupDoubleHold({
+    admin,
+    studentId,
+    propertyId,
+    newStartDate: newStart,
+  })
+  if (result.ok) return null
+  return json(
+    {
+      error: result.code || 'property_group_double_hold',
+      message: result.message,
+      conflicting_booking_id: result.conflictingBookingId,
+    },
+    result.status,
+    origin,
+  )
 }
 
 /** @param {{ stripe?: import('stripe').default; paymentIntentId?: string }} [releaseOpts] Commit: cancel/refund PI if blocked. */
@@ -434,6 +458,15 @@ async function handleListingBookingCommit(request, origin, body) {
   const block2 = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
   const blocked2 = await rejectIfBlocked(block2, listingVis, 'duplicate_booking')
   if (blocked2) return blocked2
+  const block2b = await assertStudentPropertyGroupFree(
+    admin,
+    student.id,
+    propertyId,
+    moveInDate,
+    origin,
+  )
+  const blocked2b = await rejectIfBlocked(block2b, listingVis, 'property_group_double_hold')
+  if (blocked2b) return blocked2b
   const block3 = await assertNoCrossPropertyDateOverlap(
     admin,
     student.id,
@@ -783,6 +816,23 @@ async function handlePaymentIntentCommit(request, origin, body) {
     await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'duplicate_booking_precheck', managedVis)
     const blocked2 = await rejectIfBlocked(block2, managedVis, 'duplicate_booking')
     if (blocked2) return blocked2
+  }
+  const block2b = await assertStudentPropertyGroupFree(
+    admin,
+    student.id,
+    propertyId,
+    moveInDate,
+    origin,
+  )
+  if (block2b) {
+    await releaseAuthorisedDepositIntent(
+      stripe,
+      paymentIntentId,
+      'property_group_double_hold_precheck',
+      managedVis,
+    )
+    const blocked2b = await rejectIfBlocked(block2b, managedVis, 'property_group_double_hold')
+    if (blocked2b) return blocked2b
   }
   const block3 = await assertNoCrossPropertyDateOverlap(
     admin,
@@ -1189,6 +1239,15 @@ export default async function handler(request) {
   const blockB = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
   const blockedB = await rejectIfBlocked(blockB, previewVis, 'duplicate_booking')
   if (blockedB) return blockedB
+  const blockBb = await assertStudentPropertyGroupFree(
+    admin,
+    student.id,
+    propertyId,
+    moveInDate,
+    origin,
+  )
+  const blockedBb = await rejectIfBlocked(blockBb, previewVis, 'property_group_double_hold')
+  if (blockedBb) return blockedBb
   const blockC = await assertNoCrossPropertyDateOverlap(
     admin,
     student.id,

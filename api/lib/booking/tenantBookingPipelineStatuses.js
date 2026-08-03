@@ -8,6 +8,7 @@ export const TENANT_BOOKING_PIPELINE_STATUSES = [
   'bond_pending',
   'confirmed',
   'active',
+  'terminating',
 ]
 
 /** Property is taken for new bookings once a stay is fully confirmed on-platform. */
@@ -22,4 +23,6 @@ export const PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES = [
   'confirmed',
   'active',
   'bond_pending',
+  /** Live terminate in progress — room must not be offered until effective date. */
+  'terminating',
 ]

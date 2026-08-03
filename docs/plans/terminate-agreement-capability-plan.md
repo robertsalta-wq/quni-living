@@ -1,6 +1,6 @@
 # Terminate-Agreement Capability — Build Plan
 
-**Status:** Draft for implementation · no code written yet
+**Status:** Implementation in progress (Listing mutual-surrender) · migration `20260803120000_terminate_agreement_primitive.sql` must be applied to prod before deploy
 **Author:** Rob (via Cowork)  ·  **Date:** 2026-07-23
 **Related:** `docs/legal/questions-for-jenny.md` Q-022 · Quni-Whole-Unit-Single-Tenant playbook (Claude project)
 

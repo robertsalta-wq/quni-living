@@ -11,6 +11,8 @@ export type TenantBookingStatus =
   | 'bond_pending'
   | 'confirmed'
   | 'active'
+  | 'terminating'
+  | 'terminated'
   | 'cancelled'
   | 'declined'
   | 'expired'
@@ -32,22 +34,25 @@ const TERMINAL: ReadonlySet<TenantBookingStatus> = new Set([
   'expired',
   'payment_failed',
   'completed',
+  'terminated',
 ])
 
 /** Lower number = higher priority on dashboard. */
 function statusPriority(status: TenantBookingStatus, stayRelevant: boolean): number | null {
   if (TERMINAL.has(status)) return null
   switch (status) {
-    case 'active':
+    case 'terminating':
       return stayRelevant ? 1 : 80
-    case 'confirmed':
+    case 'active':
       return stayRelevant ? 2 : 81
+    case 'confirmed':
+      return stayRelevant ? 3 : 82
     case 'bond_pending':
-      return 3
-    case 'pending_payment':
       return 4
-    case 'pending_confirmation':
+    case 'pending_payment':
       return 5
+    case 'pending_confirmation':
+      return 6
     case 'awaiting_info':
       return 6
     case 'pending':

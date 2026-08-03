@@ -103,6 +103,8 @@ const STATUS_META: Record<BookingStatus, { tone: PillTone; label: string }> = {
   bond_pending: { tone: 'warning', label: 'Bond pending' },
   confirmed: { tone: 'success', label: 'Confirmed' },
   active: { tone: 'success', label: 'Active' },
+  terminating: { tone: 'warning', label: 'Terminating' },
+  terminated: { tone: 'neutral', label: 'Terminated' },
   completed: { tone: 'navy', label: 'Completed' },
   cancelled: { tone: 'neutral', label: 'Cancelled' },
   declined: { tone: 'danger', label: 'Declined' },

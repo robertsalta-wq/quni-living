@@ -70,6 +70,8 @@ function pageTitleFor(role: BookingReviewRole, status: BookingReviewStatus): str
   if (status === 'declined') return 'Request declined'
   if (status === 'cancelled') return 'Booking cancelled'
   if (status === 'expired') return 'Request expired'
+  if (status === 'terminating') return 'Ending agreement'
+  if (status === 'terminated') return 'Agreement ended'
   // Managed deposit-auth PI failure — landlord waits on the renter; only the renter retries.
   if (status === 'payment_failed') {
     return role === 'landlord' ? 'Waiting on payment' : 'Payment failed'
@@ -122,6 +124,8 @@ function shellFor(status: BookingReviewStatus): BookingReviewShell {
       return 'confirmed'
     case 'active':
     case 'completed':
+    case 'terminating':
+    case 'terminated':
       return 'active'
     default: {
       const _exhaustive: never = status
@@ -156,7 +160,12 @@ export function resolveBookingReviewLayout(
   const shell = shellFor(status)
   const stepperIndex = stepperIndexFor(status)
   const stepperComplete = status === 'active' || status === 'completed'
-  const inputsDisabled = status === 'expired' || status === 'cancelled' || status === 'declined'
+  const inputsDisabled =
+    status === 'expired' ||
+    status === 'cancelled' ||
+    status === 'declined' ||
+    status === 'terminated' ||
+    status === 'terminating'
 
   const isPreish = status === 'pending_confirmation' || status === 'awaiting_info' ||
     status === 'pending' || status === 'pending_payment' || status === 'payment_failed' ||
@@ -167,7 +176,11 @@ export function resolveBookingReviewLayout(
     role === 'landlord' &&
     (status === 'pending_confirmation' || status === 'pending' || status === 'pending_payment')
 
-  const showAgreement = !isPreish && shell !== 'declined' && shell !== 'expired'
+  // Keep agreement visible for terminating/terminated so mutual-surrender panel remains reachable.
+  const showAgreement =
+    (!isPreish && shell !== 'declined' && shell !== 'expired') ||
+    status === 'terminating' ||
+    status === 'terminated'
   // Keep agreement/activity available on accepted+ shells; declined/expired hide them.
   const showActivity = showAgreement
 

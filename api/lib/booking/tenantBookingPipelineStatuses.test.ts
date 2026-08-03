@@ -27,10 +27,12 @@ describe('TENANT_BOOKING_CONFIRMED_STATUSES', () => {
 })
 
 describe('PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES', () => {
-  it('includes bond_pending for Listing property reservation', () => {
+  it('includes bond_pending and terminating for Listing property reservation', () => {
     expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).toContain('bond_pending')
     expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).toContain('confirmed')
     expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).toContain('active')
+    expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).toContain('terminating')
+    expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).not.toContain('terminated')
   })
 
   it('is a superset of confirmed stay statuses', () => {

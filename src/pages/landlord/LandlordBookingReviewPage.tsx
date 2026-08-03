@@ -41,6 +41,7 @@ import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listing
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 import BookingReinstatementPanel from '../../components/booking/BookingReinstatementPanel'
+import { MutualSurrenderTerminatePanel } from '../../components/booking/MutualSurrenderTerminatePanel'
 import {
   BookingReadinessDriver,
   BookingReadinessReadyRibbon,
@@ -1694,9 +1695,25 @@ export default function LandlordBookingReviewPage() {
                 onToggle={() => setAgreementExpanded((v) => !v)}
               >
                 <div className="space-y-5">
+                  <MutualSurrenderTerminatePanel
+                    bookingId={booking.id}
+                    status={booking.status}
+                    serviceTierFinal={booking.service_tier_final}
+                    terminationEffectiveDate={
+                      (booking as { termination_effective_date?: string | null })
+                        .termination_effective_date
+                    }
+                    terminationAcknowledgedAt={
+                      (booking as { termination_acknowledged_at?: string | null })
+                        .termination_acknowledged_at
+                    }
+                    bondOutcome={(booking as { bond_outcome?: string | null }).bond_outcome}
+                    onUpdated={() => void reload()}
+                  />
                   {(booking.status === 'bond_pending' ||
                     booking.status === 'confirmed' ||
-                    booking.status === 'active') &&
+                    booking.status === 'active' ||
+                    booking.status === 'terminating') &&
                     property && (
                     <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
                       <TenancyAgreementExplainer

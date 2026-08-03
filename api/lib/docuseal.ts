@@ -781,7 +781,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   const { data: docRow, error: findErr } = await admin
     .from('tenancy_documents')
     .select(
-      'id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at',
+      'id, tenancy_id, document_type, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path',
     )
     .eq('docuseal_submission_id', submissionId)
     .maybeSingle()
@@ -858,6 +858,22 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   if (!fullySigned) {
     return { ok: true, message: 'Webhook stored; awaiting remaining signatures' }
+  }
+
+  if (docRow.document_type === 'mutual_termination' && tenancyForBooking?.booking_id) {
+    try {
+      const { markMutualSurrenderAcknowledged } = await import(
+        './booking/termination/markMutualSurrenderAcknowledged.js'
+      )
+      await markMutualSurrenderAcknowledged({
+        admin,
+        bookingId: tenancyForBooking.booking_id,
+        documentId: docRow.id,
+      })
+    } catch (ackErr) {
+      console.error('[docuseal-webhook] mutual_termination ack', ackErr)
+    }
+    return { ok: true, message: 'Mutual termination fully signed' }
   }
 
   const { data: tny } = await admin

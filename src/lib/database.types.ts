@@ -1633,6 +1633,8 @@ export interface Database {
             | 'bond_pending'
             | 'confirmed'
             | 'active'
+            | 'terminating'
+            | 'terminated'
             | 'cancelled'
             | 'declined'
             | 'expired'
@@ -1676,6 +1678,27 @@ export interface Database {
           cancelled_at: string | null
           cancelled_by: string | null
           cancellation_reason: string | null
+          termination_type:
+            | 'mutual_surrender'
+            | 'tenant_notice'
+            | 'landlord_grounds'
+            | 'breach'
+            | 'end_of_term'
+            | null
+          termination_effective_date: string | null
+          termination_reason_note: string | null
+          termination_initiated_by: 'landlord' | 'tenant' | 'admin' | null
+          termination_acknowledged_at: string | null
+          termination_initiated_at: string | null
+          bond_outcome:
+            | 'pending'
+            | 'transferred'
+            | 'refunded'
+            | 'retained_by_agreement'
+            | 'never_lodged'
+            | 'na'
+            | null
+          bond_outcome_note: string | null
           housemates_count: number | null
           conversation_id: string | null
           occupant_count: number
@@ -1703,6 +1726,8 @@ export interface Database {
             | 'bond_pending'
             | 'confirmed'
             | 'active'
+            | 'terminating'
+            | 'terminated'
             | 'cancelled'
             | 'declined'
             | 'expired'
@@ -1746,6 +1771,27 @@ export interface Database {
           cancelled_at?: string | null
           cancelled_by?: string | null
           cancellation_reason?: string | null
+          termination_type?:
+            | 'mutual_surrender'
+            | 'tenant_notice'
+            | 'landlord_grounds'
+            | 'breach'
+            | 'end_of_term'
+            | null
+          termination_effective_date?: string | null
+          termination_reason_note?: string | null
+          termination_initiated_by?: 'landlord' | 'tenant' | 'admin' | null
+          termination_acknowledged_at?: string | null
+          termination_initiated_at?: string | null
+          bond_outcome?:
+            | 'pending'
+            | 'transferred'
+            | 'refunded'
+            | 'retained_by_agreement'
+            | 'never_lodged'
+            | 'na'
+            | null
+          bond_outcome_note?: string | null
           housemates_count?: number | null
           conversation_id?: string | null
           occupant_count?: number
@@ -1773,6 +1819,8 @@ export interface Database {
             | 'bond_pending'
             | 'confirmed'
             | 'active'
+            | 'terminating'
+            | 'terminated'
             | 'cancelled'
             | 'declined'
             | 'expired'
@@ -1816,6 +1864,27 @@ export interface Database {
           cancelled_at?: string | null
           cancelled_by?: string | null
           cancellation_reason?: string | null
+          termination_type?:
+            | 'mutual_surrender'
+            | 'tenant_notice'
+            | 'landlord_grounds'
+            | 'breach'
+            | 'end_of_term'
+            | null
+          termination_effective_date?: string | null
+          termination_reason_note?: string | null
+          termination_initiated_by?: 'landlord' | 'tenant' | 'admin' | null
+          termination_acknowledged_at?: string | null
+          termination_initiated_at?: string | null
+          bond_outcome?:
+            | 'pending'
+            | 'transferred'
+            | 'refunded'
+            | 'retained_by_agreement'
+            | 'never_lodged'
+            | 'na'
+            | null
+          bond_outcome_note?: string | null
           housemates_count?: number | null
           conversation_id?: string | null
           occupant_count?: number
@@ -2497,6 +2566,7 @@ export interface Database {
             | 'condition_report_outgoing'
             | 'breach_notice'
             | 'termination_notice'
+            | 'mutual_termination'
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'
@@ -2528,6 +2598,7 @@ export interface Database {
             | 'condition_report_outgoing'
             | 'breach_notice'
             | 'termination_notice'
+            | 'mutual_termination'
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'
@@ -2559,6 +2630,7 @@ export interface Database {
             | 'condition_report_outgoing'
             | 'breach_notice'
             | 'termination_notice'
+            | 'mutual_termination'
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'

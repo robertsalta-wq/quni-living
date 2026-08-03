@@ -14,6 +14,8 @@ const ALL_STATUSES: BookingReviewStatus[] = [
   'bond_pending',
   'confirmed',
   'active',
+  'terminating',
+  'terminated',
   'cancelled',
   'declined',
   'expired',
