@@ -122,15 +122,15 @@ export function MutualSurrenderTerminatePanel({
   }
 
   return (
-    <section className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
-      <h3 className="text-sm font-semibold text-ink">End agreement (mutual surrender)</h3>
-      <p className="mt-1 text-xs text-ink/70">
+    <section className="mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg/40 p-4">
+      <h3 className="text-sm font-semibold text-admin-ink">End agreement (mutual surrender)</h3>
+      <p className="mt-1 text-xs text-admin-ink-3">
         Ends a live Listing agreement by written agreement — distinct from cancelling an application.
         Both parties e-sign a mutual termination acknowledgment.
       </p>
 
       {isTerminated ? (
-        <p className="mt-3 text-sm text-ink">
+        <p className="mt-3 text-sm text-admin-ink-2">
           Agreement terminated
           {terminationEffectiveDate ? ` (effective ${terminationEffectiveDate})` : ''}. Bond outcome:{' '}
           {bondOutcome || 'not recorded'}.
@@ -138,7 +138,7 @@ export function MutualSurrenderTerminatePanel({
       ) : null}
 
       {isTerminating ? (
-        <div className="mt-3 space-y-2 text-sm text-ink">
+        <div className="mt-3 space-y-2 text-sm text-admin-ink-2">
           <p>
             Status: <strong>terminating</strong> — effective{' '}
             {terminationEffectiveDate || '—'}. Room remains reserved until that date.
@@ -154,19 +154,19 @@ export function MutualSurrenderTerminatePanel({
 
       {canInitiate ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs">
+          <label className="block text-xs font-medium text-admin-ink-2">
             Effective date
             <input
               type="date"
-              className="mt-1 w-full rounded border border-ink/20 bg-white px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
               value={effectiveDate}
               onChange={(e) => setEffectiveDate(e.target.value)}
             />
           </label>
-          <label className="block text-xs">
-            Bond outcome (checklist)
+          <label className="block text-xs font-medium text-admin-ink-2">
+            Bond outcome (ops note)
             <select
-              className="mt-1 w-full rounded border border-ink/20 bg-white px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
               value={bond}
               onChange={(e) => setBond(e.target.value as BondOutcome)}
             >
@@ -176,11 +176,15 @@ export function MutualSurrenderTerminatePanel({
                 </option>
               ))}
             </select>
+            <span className="mt-1 block font-normal text-admin-ink-4">
+              Checklist only — does not file anything with RBO. Leave as Never lodged if the bond was
+              never lodged.
+            </span>
           </label>
-          <label className="block text-xs sm:col-span-2">
+          <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">
             Note (optional)
             <input
-              className="mt-1 w-full rounded border border-ink/20 bg-white px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="RBO ref or context"
@@ -190,19 +194,24 @@ export function MutualSurrenderTerminatePanel({
             type="button"
             disabled={busy || !effectiveDate}
             onClick={() => void onInitiate()}
-            className="sm:col-span-2 rounded bg-ink px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="sm:col-span-2 inline-flex min-h-[2.75rem] items-center justify-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy ? 'Starting…' : 'Start mutual surrender'}
+            {busy ? 'Starting…' : 'Confirm & send for e-sign'}
           </button>
+          {!effectiveDate ? (
+            <p className="sm:col-span-2 text-xs text-admin-ink-4">
+              Pick an effective date to enable confirm.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
       {(isTerminating || isTerminated) && (
         <div className="mt-3 flex flex-wrap items-end gap-2">
-          <label className="block text-xs">
+          <label className="block text-xs font-medium text-admin-ink-2">
             Update bond outcome
             <select
-              className="mt-1 block rounded border border-ink/20 bg-white px-2 py-1.5 text-sm"
+              className="mt-1 block rounded-admin-sm border border-admin-input-border bg-white px-2 py-1.5 text-sm text-admin-ink-2"
               value={bond}
               onChange={(e) => setBond(e.target.value as BondOutcome)}
             >
@@ -217,15 +226,15 @@ export function MutualSurrenderTerminatePanel({
             type="button"
             disabled={busy}
             onClick={() => void onSaveBondOutcome()}
-            className="rounded border border-ink/30 bg-white px-3 py-2 text-sm"
+            className="rounded-admin-md border border-admin-line bg-white px-3 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
           >
             Save bond outcome
           </button>
         </div>
       )}
 
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-      {okMsg ? <p className="mt-2 text-sm text-emerald-800">{okMsg}</p> : null}
+      {error ? <p className="mt-2 text-sm text-admin-danger-fg">{error}</p> : null}
+      {okMsg ? <p className="mt-2 text-sm text-admin-success-fg">{okMsg}</p> : null}
     </section>
   )
 }
