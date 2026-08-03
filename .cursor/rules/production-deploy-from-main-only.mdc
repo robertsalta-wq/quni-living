@@ -22,7 +22,36 @@ Preview Ready is **not** shipped.
 
 - One change → one branch off the latest `origin/main` → one PR into `main`.
 - After a PR merges, its branch is **dead** — never add commits to it. New commits on a merged tip deploy to Preview only and never reach Production.
-- The next change always starts from a fresh branch off updated `origin/main` (`git fetch origin && git switch -c <new-branch> origin/main`).
+- The next change always starts from a fresh branch off updated `origin/main`:
+
+  ```text
+  git fetch origin
+  git switch -c fix/<short-name> origin/main
+  ```
+
+  If `git switch` fails because `main` is checked out in another worktree, **do not** keep committing on the old feature branch. Create the new branch from the remote tip without checking out local `main`:
+
+  ```text
+  git fetch origin
+  git branch -f fix/<short-name> origin/main
+  git switch fix/<short-name>
+  ```
+
+### Why PRs show DIRTY (and how we keep causing it)
+
+`mergeStateStatus: DIRTY` means GitHub cannot merge the PR tip into current `main` without conflicts. On this repo the usual cause is **not** real code conflicts — it is **reusing a squash-merged branch**:
+
+1. PR A squash-merges → `main` gets a new squash commit.
+2. The feature branch tip is **not** an ancestor of that squash commit (different SHA history).
+3. Agent adds a follow-up commit on the same branch and opens PR B → GitHub reports **DIRTY**.
+4. Fix is rebase onto `origin/main` — but the **prevention** is never reopen the dead branch.
+
+Hard bans that caused tonight’s thrash:
+
+- Do **not** push to an already-merged branch name (`feat/terminate-agreement-…` after #251/#252).
+- Do **not** `git push origin HEAD:main` (branch protection rejects it; use a PR).
+- Do **not** leave the primary workspace on a merged feature branch “for convenience.”
+- Prefer deleting the remote branch when the PR merges (`gh pr merge --delete-branch`) so reuse is harder.
 
 ### Close-the-loop check (before calling a task done)
 
