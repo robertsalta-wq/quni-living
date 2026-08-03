@@ -1,5 +1,5 @@
 /**
- * Mutual termination acknowledgment (NSW Tier 2) — DRAFT for legal review.
+ * Mutual termination acknowledgment (NSW Tier 2).
  * Not a prescribed Fair Trading form; platform-facilitated mutual surrender.
  */
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
@@ -15,8 +15,6 @@ export type MutualTerminationAcknowledgmentProps = {
   bondOutcomeLabel: string
   newPremisesLine?: string | null
   continueInSamePremises: boolean
-  /** Shown in footer — draft watermark for lawyer review */
-  draftBanner?: boolean
 }
 
 const styles = StyleSheet.create({
@@ -31,14 +29,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 13, fontFamily: 'Helvetica-Bold', marginBottom: 6 },
   subtitle: { fontSize: 9, color: '#444', marginBottom: 16 },
-  banner: {
-    backgroundColor: '#FFF3CD',
-    borderWidth: 1,
-    borderColor: '#E0C36A',
-    padding: 8,
-    marginBottom: 14,
-    fontSize: 8,
-  },
   h: { fontFamily: 'Helvetica-Bold', marginTop: 10, marginBottom: 4 },
   p: { marginBottom: 6 },
   sigRow: { marginTop: 18, flexDirection: 'row', gap: 24 },
@@ -71,21 +61,11 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
     bondOutcomeLabel,
     newPremisesLine,
     continueInSamePremises,
-    draftBanner = true,
   } = props
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {draftBanner ? (
-          <View style={styles.banner}>
-            <Text>
-              DRAFT — for legal review, not for execution until counsel signs off. Facilitated via
-              Quni Living.
-            </Text>
-          </View>
-        ) : null}
-
         <Text style={styles.title}>
           MUTUAL TERMINATION OF RESIDENTIAL TENANCY AGREEMENT (BY AGREEMENT)
         </Text>

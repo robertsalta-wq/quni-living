@@ -178,7 +178,6 @@ export async function generateAndSendMutualTerminationDoc(args: {
         bondOutcomeLabel: bondOutcomeLabel(bondOutcome, newPremisesLine),
         newPremisesLine,
         continueInSamePremises,
-        draftBanner: true,
       }),
     )
   } catch (e) {

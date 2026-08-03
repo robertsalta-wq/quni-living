@@ -126,7 +126,7 @@ export function MutualSurrenderTerminatePanel({
       <h3 className="text-sm font-semibold text-ink">End agreement (mutual surrender)</h3>
       <p className="mt-1 text-xs text-ink/70">
         Ends a live Listing agreement by written agreement — distinct from cancelling an application.
-        Draft acknowledgment is for legal review until counsel signs off.
+        Both parties e-sign a mutual termination acknowledgment.
       </p>
 
       {isTerminated ? (
