@@ -210,6 +210,19 @@ Scope verified read-only against prod (23 July 2026) — Listing-tier `residenti
 
 ---
 
+### Q-022 — Single tenant taking every room in a unit (whole-unit conversion)
+**Status:** Open
+**Area:** RTA characterisation · exclusive possession · bond · conversion sequence
+**Tier/scope:** NSW Tier 2 (landlord off-site / `entire_property`) · live case (Kim, Liverpool)
+
+**Context.** A tenant currently occupies one bedroom under a Tier 2 room agreement in a self-contained 2-bedroom unit and wants the second bedroom as well — i.e. sole occupation of the whole unit. Platform instinct was a second per-room agreement. Internal read (aligned with *Radaich v Smith*): exclusive possession of the whole premises → one residential tenancy of the entire unit; NCAT substance-over-form would collapse two room agreements. Proposed path: terminate/surrender the room agreement, issue one FT6600 for the whole unit at combined rent, one RBO bond (≤ 4 weeks combined rent), pause sibling room listing. Whole-unit listing already exists. Related build plan: `docs/plans/terminate-agreement-capability-plan.md`.
+
+**Question.** Confirm that one person occupying both rooms of a self-contained unit is a single whole-unit residential tenancy (not two per-room agreements), and that converting mid-tenancy (end room agreement → new whole-unit agreement + one bond) is the correct instrument rather than stacking a second room agreement. Please confirm or correct the working cites — RTA 2010 (NSW) **s 159(1)** (bond ≤ 4 weeks), **s 161** (one bond per agreement), **s 219** (contracting out / evasion), **s 21** (void inconsistent terms) — and bless the surrender/convert sequence (continuity, re-characterisation risk, RBO transfer vs refund+re-lodge). Any other compliance flags?
+
+**Answer.** _(pending)_
+
+---
+
 ## STANDING ITEMS ALREADY WITH JENNY
 _(pre-existing, tracked here so there's one register)_
 
