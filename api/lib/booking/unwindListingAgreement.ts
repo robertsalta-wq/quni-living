@@ -4,7 +4,7 @@ import { archiveDocusealSubmission } from '../docusealArchive.js'
 import { stripDocusealEmbedSrcFromMetadata } from './listingAgreementMetadata.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
 
-const TENANCY_DOC_TYPES = ['residential_tenancy', 'lease'] as const
+const TENANCY_DOC_TYPES = ['residential_tenancy', 'lease', 'mutual_termination'] as const
 
 export type UnwindListingAgreementContext = {
   bookingId: string
@@ -12,7 +12,7 @@ export type UnwindListingAgreementContext = {
   landlordId?: string | null
   studentId?: string | null
   serviceTier?: string | null
-  unwindReason: 'cancelled' | 'expired' | 'regenerate'
+  unwindReason: 'cancelled' | 'expired' | 'regenerate' | 'terminated'
 }
 
 async function emitDocusealArchiveAnomaly(

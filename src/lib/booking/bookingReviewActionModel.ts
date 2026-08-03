@@ -162,6 +162,24 @@ export function resolveLandlordBookingReviewActionCopy(
         deadlineLabel: null,
         deadlineTone: 'info',
       }
+    case 'terminating':
+      return {
+        eyebrow: 'Status',
+        eyebrowTone: 'status',
+        title: 'Ending agreement',
+        sub: 'Mutual surrender in progress. The room stays reserved until the effective date after both parties sign.',
+        deadlineLabel: null,
+        deadlineTone: 'info',
+      }
+    case 'terminated':
+      return {
+        eyebrow: 'Status',
+        eyebrowTone: 'status',
+        title: 'Agreement ended',
+        sub: 'This live agreement has been terminated. It cannot be reinstated.',
+        deadlineLabel: null,
+        deadlineTone: 'info',
+      }
     default: {
       const _exhaustive: never = input.status
       return _exhaustive
@@ -269,6 +287,24 @@ export function resolveRenterBookingReviewActionCopy(
         sub: "Your deposit authorisation didn't go through. Retry to keep your request active.",
         deadlineLabel: null,
         deadlineTone: 'warning',
+      }
+    case 'terminating':
+      return {
+        eyebrow: 'Status',
+        eyebrowTone: 'status',
+        title: 'Ending agreement',
+        sub: 'Please sign the mutual termination acknowledgment. Your stay continues until the effective date.',
+        deadlineLabel: null,
+        deadlineTone: 'info',
+      }
+    case 'terminated':
+      return {
+        eyebrow: 'Status',
+        eyebrowTone: 'status',
+        title: 'Agreement ended',
+        sub: 'This agreement has ended and cannot be reinstated.',
+        deadlineLabel: null,
+        deadlineTone: 'info',
       }
     default: {
       const _exhaustive: never = input.status

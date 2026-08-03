@@ -45,6 +45,10 @@ export function tenantBookingStatusLabel(status: TenantBookingStatus): string {
       return 'Confirmed'
     case 'active':
       return 'Active stay'
+    case 'terminating':
+      return 'Ending agreement'
+    case 'terminated':
+      return 'Agreement ended'
     case 'completed':
       return 'Completed'
     case 'declined':

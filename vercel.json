@@ -23,6 +23,16 @@
     "api/booking-listing-cancel.ts": {
       "maxDuration": 30
     },
+    "api/booking-terminate-mutual-surrender.ts": {
+      "maxDuration": 60,
+      "includeFiles": "src/lib/documents/{MutualTerminationAcknowledgment,platformAddendumDocusealTags}.{ts,tsx}"
+    },
+    "api/booking-record-bond-outcome.ts": {
+      "maxDuration": 30
+    },
+    "api/cron/finalize-terminations.js": {
+      "maxDuration": 60
+    },
     "api/booking-resend-payment-instructions.ts": {
       "maxDuration": 30
     },
@@ -137,6 +147,7 @@
   ],
   "crons": [
     { "path": "/api/cron/expire-bookings", "schedule": "0 * * * *" },
+    { "path": "/api/cron/finalize-terminations", "schedule": "10 * * * *" },
     { "path": "/api/cron/release-deposits", "schedule": "0 0 * * *" },
     { "path": "/api/cron/docuseal-health", "schedule": "30 * * * *" },
     { "path": "/api/cron/github-health", "schedule": "45 * * * *" },

@@ -19,6 +19,8 @@ export type BookingStatus =
   | 'bond_pending'
   | 'confirmed'
   | 'active'
+  | 'terminating'
+  | 'terminated'
   | 'completed'
   | 'cancelled'
   | 'declined'
@@ -55,12 +57,14 @@ export const STATUS_LIFECYCLE = {
       'bond_pending',
       'confirmed',
       'active',
+      'terminating',
+      'terminated',
       'cancelled',
       'declined',
       'expired',
       'completed',
     ],
-    terminalOrUnused: ['completed'],
+    terminalOrUnused: ['completed', 'terminated'],
     edges: [
       {
         from: 'pending_confirmation',
@@ -92,6 +96,21 @@ export const STATUS_LIFECYCLE = {
         from: 'bond_pending',
         to: 'expired',
         writer: 'expireListingBondPending',
+      },
+      {
+        from: 'confirmed',
+        to: 'terminating',
+        writer: 'initiateMutualSurrender',
+      },
+      {
+        from: 'active',
+        to: 'terminating',
+        writer: 'initiateMutualSurrender',
+      },
+      {
+        from: 'terminating',
+        to: 'terminated',
+        writer: 'finalizeTerminatedBooking',
       },
     ],
   } satisfies TierLifecycle,
@@ -136,6 +155,8 @@ export const UI_BOOKING_REVIEW_STATUSES: BookingStatus[] = [
   'bond_pending',
   'confirmed',
   'active',
+  'terminating',
+  'terminated',
   'completed',
   'declined',
   'cancelled',

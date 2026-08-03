@@ -20,6 +20,14 @@ export function assertReinstatementRequestEligibility(
       code: 'withdrawn',
     }
   }
+  if (booking.status === 'terminated' || booking.status === 'terminating') {
+    return {
+      ok: false,
+      status: 409,
+      error: 'Ended agreements cannot be reinstated.',
+      code: 'terminated',
+    }
+  }
   if (booking.status !== 'expired') {
     return {
       ok: false,
