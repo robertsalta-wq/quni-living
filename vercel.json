@@ -30,6 +30,9 @@
     "api/booking-record-bond-outcome.ts": {
       "maxDuration": 30
     },
+    "api/booking-mutual-termination-signing.ts": {
+      "maxDuration": 30
+    },
     "api/cron/finalize-terminations.js": {
       "maxDuration": 60
     },

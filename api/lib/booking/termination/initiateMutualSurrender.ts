@@ -15,6 +15,7 @@ export type InitiateMutualSurrenderResult =
       status: 'terminating'
       documentId: string | null
       submissionId: string | null
+      landlordSigningUrl: string | null
       idempotent: boolean
     }
   | { ok: false; status: number; code: string; message: string }
@@ -209,6 +210,7 @@ export async function runInitiateMutualSurrender(args: {
     status: 'terminating',
     documentId: gen.documentId,
     submissionId: gen.submissionId,
+    landlordSigningUrl: gen.landlordSigningUrl ?? null,
     idempotent: alreadyTerminating,
   }
 }

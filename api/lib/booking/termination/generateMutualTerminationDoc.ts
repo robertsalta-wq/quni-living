@@ -34,7 +34,13 @@ function bondOutcomeLabel(outcome: BondOutcome | null | undefined, newPremises: 
 }
 
 export type GenerateMutualTerminationResult =
-  | { ok: true; documentId: string; submissionId: string | null }
+  | {
+      ok: true
+      documentId: string
+      submissionId: string | null
+      landlordSigningUrl?: string | null
+      tenantSigningUrl?: string | null
+    }
   | { ok: false; status: number; code: string; message: string }
 
 export async function generateAndSendMutualTerminationDoc(args: {
@@ -142,7 +148,13 @@ export async function generateAndSendMutualTerminationDoc(args: {
     .maybeSingle()
 
   if (existing?.status === 'signed') {
-    return { ok: true, documentId: existing.id, submissionId: existing.docuseal_submission_id }
+    return {
+      ok: true,
+      documentId: existing.id,
+      submissionId: existing.docuseal_submission_id,
+      landlordSigningUrl: null,
+      tenantSigningUrl: null,
+    }
   }
 
   let documentId = existing?.id
@@ -212,7 +224,13 @@ export async function generateAndSendMutualTerminationDoc(args: {
     (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
 
   if (!hasDocuseal) {
-    return { ok: true, documentId, submissionId: null }
+    return {
+      ok: true,
+      documentId,
+      submissionId: null,
+      landlordSigningUrl: null,
+      tenantSigningUrl: null,
+    }
   }
 
   const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
@@ -228,6 +246,7 @@ export async function generateAndSendMutualTerminationDoc(args: {
       pdfBase64,
       documentPdfName: 'Mutual Termination of Residential Tenancy.pdf',
       removeTags: true,
+      sendEmail: true,
       landlordRole: 'First Party',
       tenantRole: 'Second Party',
       landlord: { name: landlordName, email: landlordEmail },
@@ -239,6 +258,21 @@ export async function generateAndSendMutualTerminationDoc(args: {
       return { ok: false, status: 500, code: 'docuseal', message: 'DocuSeal missing submission id.' }
     }
 
+    const landlordSigningUrl =
+      submission.submitters?.find((s) => {
+        const r = (s.role || '').toLowerCase()
+        return r.includes('first') || r.includes('landlord')
+      })?.embed_src ||
+      submission.submitters?.[0]?.embed_src ||
+      null
+    const tenantSigningUrl =
+      submission.submitters?.find((s) => {
+        const r = (s.role || '').toLowerCase()
+        return r.includes('second') || r.includes('tenant')
+      })?.embed_src ||
+      submission.submitters?.[1]?.embed_src ||
+      null
+
     await admin
       .from('tenancy_documents')
       .update({
@@ -248,6 +282,8 @@ export async function generateAndSendMutualTerminationDoc(args: {
           kind: 'mutual_surrender',
           bond_outcome: bondOutcome,
           docuseal_response: submission as unknown as Json,
+          landlord_signing_url: landlordSigningUrl,
+          tenant_signing_url: tenantSigningUrl,
         } as Json,
       })
       .eq('id', documentId)
@@ -270,7 +306,14 @@ export async function generateAndSendMutualTerminationDoc(args: {
       console.error('[mutual-termination] sent_for_signing event', evErr)
     }
 
-    return { ok: true, documentId, submissionId }
+    return {
+      ok: true,
+      documentId,
+      submissionId,
+      landlordSigningUrl:
+        typeof landlordSigningUrl === 'string' ? landlordSigningUrl : null,
+      tenantSigningUrl: typeof tenantSigningUrl === 'string' ? tenantSigningUrl : null,
+    }
   } catch (e) {
     console.error('[mutual-termination] docuseal', e)
     return {

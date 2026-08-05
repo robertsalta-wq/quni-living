@@ -125,6 +125,7 @@ export default async function handler(req, res) {
         status: result.status,
         documentId: result.documentId,
         submissionId: result.submissionId,
+        landlordSigningUrl: result.landlordSigningUrl,
         idempotent: result.idempotent,
       },
       200,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiUrl } from '../../lib/apiUrl'
 import { supabase } from '../../lib/supabase'
 
@@ -53,6 +53,10 @@ export function MutualSurrenderTerminatePanel({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [okMsg, setOkMsg] = useState<string | null>(null)
+  const [signingUrl, setSigningUrl] = useState<string | null>(null)
+  const [viewerSigned, setViewerSigned] = useState(false)
+  const [otherSigned, setOtherSigned] = useState(false)
+  const [signingLoading, setSigningLoading] = useState(false)
 
   const canInitiate =
     serviceTierFinal === 'listing' && (status === 'confirmed' || status === 'active')
@@ -61,15 +65,43 @@ export function MutualSurrenderTerminatePanel({
   const reasonTrimmed = reasonNote.trim()
   const canSubmit = Boolean(effectiveDate && reasonTrimmed.length >= 3)
 
-  if (serviceTierFinal !== 'listing') return null
-  if (!canInitiate && !isTerminating && !isTerminated) return null
-
   async function authHeaders(): Promise<Record<string, string>> {
     const { data } = await supabase.auth.getSession()
     const token = data.session?.access_token
     if (!token) throw new Error('Not signed in')
     return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
   }
+
+  async function loadSigningLink() {
+    setSigningLoading(true)
+    try {
+      const headers = await authHeaders()
+      const res = await fetch(apiUrl('/api/booking-mutual-termination-signing'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ bookingId }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) return
+      setViewerSigned(Boolean(body.viewerSigned))
+      setOtherSigned(Boolean(body.otherSigned))
+      setSigningUrl(typeof body.signingUrl === 'string' ? body.signingUrl : null)
+    } catch {
+      /* non-blocking */
+    } finally {
+      setSigningLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (serviceTierFinal !== 'listing') return
+    if (status !== 'terminating' && status !== 'terminated') return
+    void loadSigningLink()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when booking status changes
+  }, [bookingId, status, serviceTierFinal])
+
+  if (serviceTierFinal !== 'listing') return null
+  if (!canInitiate && !isTerminating && !isTerminated) return null
 
   async function onInitiate() {
     if (!canSubmit) return
@@ -101,10 +133,14 @@ export function MutualSurrenderTerminatePanel({
         setError(msg)
         return
       }
+      if (typeof body.landlordSigningUrl === 'string' && body.landlordSigningUrl.trim()) {
+        setSigningUrl(body.landlordSigningUrl.trim())
+      }
       setOkMsg(
-        'Mutual surrender started. Both parties must e-sign the acknowledgment. The room stays reserved until the effective date.',
+        'Mutual surrender started. Sign the acknowledgment below (or via email). The room stays reserved until the effective date.',
       )
       onUpdated()
+      void loadSigningLink()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Request failed')
     } finally {
@@ -211,10 +247,41 @@ export function MutualSurrenderTerminatePanel({
             Acknowledgments:{' '}
             {terminationAcknowledgedAt
               ? `both parties signed (${terminationAcknowledgedAt.slice(0, 10)})`
-              : 'waiting for landlord + tenant e-sign'}
+              : viewerSigned && otherSigned
+                ? 'both parties signed'
+                : viewerSigned
+                  ? 'you signed — waiting for the other party'
+                  : otherSigned
+                    ? 'other party signed — your signature still needed'
+                    : 'waiting for landlord + tenant e-sign'}
           </p>
           {terminationReasonNote ? <p>Reason: {terminationReasonNote}</p> : null}
         </div>
+        {!terminationAcknowledgedAt && !viewerSigned ? (
+          <div className="rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-4 py-3 space-y-2">
+            <p className="text-sm font-semibold text-admin-ink-2">Sign mutual termination</p>
+            <p className="text-xs text-admin-ink-3">
+              Both parties must e-sign the acknowledgment. Open your signing page, then ask the tenant
+              to use the DocuSeal email link (or their booking page once available).
+            </p>
+            {signingUrl ? (
+              <a
+                href={signingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover"
+              >
+                Open signing page
+              </a>
+            ) : (
+              <p className="text-xs text-admin-warning-fg">
+                {signingLoading
+                  ? 'Loading signing link…'
+                  : 'Signing link not available yet. Check DocuSeal email, or refresh this page.'}
+              </p>
+            )}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-end gap-2">
           <label className="block text-xs font-medium text-admin-ink-2">
             Bond outcome
