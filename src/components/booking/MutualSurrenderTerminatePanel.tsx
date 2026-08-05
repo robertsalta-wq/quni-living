@@ -92,7 +92,13 @@ export function MutualSurrenderTerminatePanel({
       })
       const body = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(typeof body.error === 'string' ? body.error : 'Could not start mutual surrender')
+        const msg =
+          typeof body.error === 'string'
+            ? body.error
+            : typeof body.message === 'string'
+              ? body.message
+              : `Could not start mutual surrender (HTTP ${res.status})`
+        setError(msg)
         return
       }
       setOkMsg(

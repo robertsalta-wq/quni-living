@@ -2,11 +2,13 @@
  * Hourly: finalize Listing mutual-surrender bookings past termination_effective_date
  * when both parties have acknowledged.
  * Secure with Authorization: Bearer CRON_SECRET
+ *
+ * Edge runtime — same Fetch Request/Response shape as other crons (expire-bookings).
  */
 import { createClient } from '@supabase/supabase-js'
 import { runFinalizeDueTerminations } from '../lib/booking/termination/finalizeTerminatedBooking.js'
 
-export const config = { runtime: 'nodejs', maxDuration: 60 }
+export const config = { runtime: 'edge', maxDuration: 60 }
 
 export default async function handler(request) {
   if (request.method !== 'GET' && request.method !== 'POST') {
