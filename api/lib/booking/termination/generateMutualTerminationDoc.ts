@@ -246,7 +246,8 @@ export async function generateAndSendMutualTerminationDoc(args: {
       pdfBase64,
       documentPdfName: 'Mutual Termination of Residential Tenancy.pdf',
       removeTags: true,
-      sendEmail: true,
+      // Lease path: DocuSeal send_email stays off; Quni/Resend delivers signing links.
+      sendEmail: false,
       landlordRole: 'First Party',
       tenantRole: 'Second Party',
       landlord: { name: landlordName, email: landlordEmail },
@@ -304,6 +305,24 @@ export async function generateAndSendMutualTerminationDoc(args: {
       }
     } catch (evErr) {
       console.error('[mutual-termination] sent_for_signing event', evErr)
+    }
+
+    try {
+      const { sendMutualTerminationSigningEmails } = await import(
+        './sendMutualTerminationSigningEmails.js'
+      )
+      await sendMutualTerminationSigningEmails({
+        landlordName,
+        landlordEmail,
+        landlordSigningUrl,
+        tenantName,
+        tenantEmail,
+        tenantSigningUrl,
+        premisesLine: premisesLine || 'the Premises',
+        terminationEffectiveDate,
+      })
+    } catch (mailErr) {
+      console.error('[mutual-termination] quni sign emails', mailErr)
     }
 
     return {
