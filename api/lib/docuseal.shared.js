@@ -80,9 +80,11 @@ async function readErrorBody(res) {
  *   submitterSignReason?: boolean,
  *   documentPdfName?: string
  *   removeTags?: boolean
+ *   sendEmail?: boolean
  * }} params
  * `*Fields` pre-fill and (when readonly) lock field values so the signer never has to enter them.
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
+ * `sendEmail: true` forces DocuSeal email; otherwise uses DOCUSEAL_SEND_EMAIL (default false).
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
  */
 export async function createDocusealSubmissionFromPdf(params) {
@@ -136,7 +138,8 @@ export async function createDocusealSubmissionFromPdf(params) {
   const body = {
     name: params.name,
     order: 'preserved',
-    send_email: asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
+    send_email:
+      params.sendEmail === true ? true : params.sendEmail === false ? false : asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
     ...(params.removeTags ? { remove_tags: true } : {}),
     documents,
     submitters,
