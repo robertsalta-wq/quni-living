@@ -25,7 +25,7 @@
     },
     "api/booking-terminate-mutual-surrender.ts": {
       "maxDuration": 60,
-      "includeFiles": "src/lib/documents/{MutualTerminationAcknowledgment,platformAddendumDocusealTags}.{ts,tsx}"
+      "includeFiles": "api/documents/{MutualTerminationAcknowledgment,platformAddendumDocusealTags}.ts"
     },
     "api/booking-record-bond-outcome.ts": {
       "maxDuration": 30
