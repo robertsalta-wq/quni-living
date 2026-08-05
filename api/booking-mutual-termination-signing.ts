@@ -1,7 +1,8 @@
-// @ts-nocheck - Return mutual-termination DocuSeal signing URL for the viewer.
+// @ts-nocheck - Return mutual-termination DocuSeal signing URL; optional Quni email resend.
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { resolveSigningLinkUrl } from './lib/docuseal/signLinkWrap.js'
+import { sendMutualTerminationSigningEmails } from './lib/booking/termination/sendMutualTerminationSigningEmails.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 30 }
 
@@ -23,6 +24,15 @@ function pickSubmitter(submitters, viewerRole) {
     if (!wantLandlord && (r.includes('second') || r.includes('tenant'))) return s
   }
   return wantLandlord ? submitters[0] : submitters[1] || submitters[0]
+}
+
+function resolvePartyUrl(meta, submitters, role) {
+  const cachedKey = role === 'landlord' ? 'landlord_signing_url' : 'tenant_signing_url'
+  const cached = typeof meta[cachedKey] === 'string' ? meta[cachedKey].trim() : ''
+  if (cached) return cached
+  const matched = pickSubmitter(submitters, role)
+  if (!matched) return null
+  return resolveSigningLinkUrl(matched, false) || matched.embed_src || null
 }
 
 export default async function handler(req, res) {
@@ -52,6 +62,7 @@ export default async function handler(req, res) {
   }
 
   const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
+  const resendEmails = body.resendEmails === true
   if (!bookingId) {
     return corsJson(res, { error: 'bookingId is required' }, 400, origin)
   }
@@ -71,14 +82,16 @@ export default async function handler(req, res) {
     const admin = createClient(supabaseUrl, serviceRole)
     const { data: booking } = await admin
       .from('bookings')
-      .select('id, landlord_id, student_id, status')
+      .select(
+        'id, landlord_id, student_id, status, termination_effective_date, property_id, properties ( address, suburb, state, postcode )',
+      )
       .eq('id', bookingId)
       .maybeSingle()
     if (!booking) return corsJson(res, { error: 'Booking not found' }, 404, origin)
 
     const { data: landlord } = await admin
       .from('landlord_profiles')
-      .select('id')
+      .select('id, full_name, first_name, last_name, email')
       .eq('user_id', user.id)
       .maybeSingle()
     const { data: student } = await admin
@@ -91,6 +104,10 @@ export default async function handler(req, res) {
     if (landlord && booking.landlord_id === landlord.id) viewerRole = 'landlord'
     else if (student && booking.student_id === student.id) viewerRole = 'tenant'
     if (!viewerRole) return corsJson(res, { error: 'Forbidden' }, 403, origin)
+
+    if (resendEmails && viewerRole !== 'landlord') {
+      return corsJson(res, { error: 'Only the landlord can resend signing emails' }, 403, origin)
+    }
 
     const { data: tenancy } = await admin
       .from('tenancies')
@@ -113,19 +130,70 @@ export default async function handler(req, res) {
     }
 
     const meta = doc.metadata && typeof doc.metadata === 'object' && !Array.isArray(doc.metadata) ? doc.metadata : {}
-    const cached =
-      viewerRole === 'landlord'
-        ? typeof meta.landlord_signing_url === 'string'
-          ? meta.landlord_signing_url.trim()
-          : ''
-        : typeof meta.tenant_signing_url === 'string'
-          ? meta.tenant_signing_url.trim()
-          : ''
+    const docusealResp =
+      meta.docuseal_response && typeof meta.docuseal_response === 'object' ? meta.docuseal_response : null
+    const submitters = docusealResp && Array.isArray(docusealResp.submitters) ? docusealResp.submitters : []
+
+    const landlordSigningUrl = resolvePartyUrl(meta, submitters, 'landlord')
+    const tenantSigningUrl = resolvePartyUrl(meta, submitters, 'tenant')
+    const signingUrl = viewerRole === 'landlord' ? landlordSigningUrl : tenantSigningUrl
 
     const viewerSigned =
       viewerRole === 'landlord' ? Boolean(doc.landlord_signed_at) : Boolean(doc.student_signed_at)
     const otherSigned =
       viewerRole === 'landlord' ? Boolean(doc.student_signed_at) : Boolean(doc.landlord_signed_at)
+
+    let emails = null
+    if (resendEmails && doc.status !== 'signed') {
+      const { data: lp } = await admin
+        .from('landlord_profiles')
+        .select('full_name, first_name, last_name, email')
+        .eq('id', booking.landlord_id)
+        .maybeSingle()
+      const { data: sp } = await admin
+        .from('student_profiles')
+        .select('full_name, first_name, last_name, email')
+        .eq('id', booking.student_id)
+        .maybeSingle()
+
+      const landlordName =
+        [lp?.first_name, lp?.last_name].filter(Boolean).join(' ').trim() ||
+        (typeof lp?.full_name === 'string' ? lp.full_name.trim() : '') ||
+        'Landlord'
+      const tenantName =
+        [sp?.first_name, sp?.last_name].filter(Boolean).join(' ').trim() ||
+        (typeof sp?.full_name === 'string' ? sp.full_name.trim() : '') ||
+        'Tenant'
+      const landlordEmail = typeof lp?.email === 'string' ? lp.email.trim() : ''
+      const tenantEmail = typeof sp?.email === 'string' ? sp.email.trim() : ''
+      const prop = booking.properties
+      const premisesLine = [prop?.address, prop?.suburb, prop?.state, prop?.postcode]
+        .filter(Boolean)
+        .join(', ')
+
+      if (!landlordEmail || !tenantEmail || !landlordSigningUrl || !tenantSigningUrl) {
+        return corsJson(
+          res,
+          { error: 'Missing party email or signing link for resend', code: 'resend_incomplete' },
+          409,
+          origin,
+        )
+      }
+
+      emails = await sendMutualTerminationSigningEmails({
+        landlordName,
+        landlordEmail,
+        landlordSigningUrl,
+        tenantName,
+        tenantEmail,
+        tenantSigningUrl,
+        premisesLine: premisesLine || 'the Premises',
+        terminationEffectiveDate:
+          typeof booking.termination_effective_date === 'string'
+            ? booking.termination_effective_date
+            : '',
+      })
+    }
 
     if (doc.status === 'signed' || (viewerSigned && otherSigned)) {
       return corsJson(
@@ -136,38 +204,11 @@ export default async function handler(req, res) {
           viewerSigned: true,
           otherSigned: true,
           signingUrl: null,
+          emails,
         },
         200,
         origin,
       )
-    }
-
-    if (viewerSigned) {
-      return corsJson(
-        res,
-        {
-          ok: true,
-          documentStatus: doc.status,
-          viewerSigned: true,
-          otherSigned,
-          signingUrl: null,
-        },
-        200,
-        origin,
-      )
-    }
-
-    let signingUrl = cached || null
-    if (!signingUrl) {
-      const docusealResp =
-        meta.docuseal_response && typeof meta.docuseal_response === 'object'
-          ? meta.docuseal_response
-          : null
-      const submitters = docusealResp && Array.isArray(docusealResp.submitters) ? docusealResp.submitters : []
-      const matched = pickSubmitter(submitters, viewerRole)
-      if (matched) {
-        signingUrl = resolveSigningLinkUrl(matched, false) || matched.embed_src || null
-      }
     }
 
     return corsJson(
@@ -175,10 +216,14 @@ export default async function handler(req, res) {
       {
         ok: true,
         documentStatus: doc.status,
-        viewerSigned: false,
+        viewerSigned,
         otherSigned,
-        signingUrl: typeof signingUrl === 'string' && signingUrl.trim() ? signingUrl.trim() : null,
+        signingUrl:
+          !viewerSigned && typeof signingUrl === 'string' && signingUrl.trim()
+            ? signingUrl.trim()
+            : null,
         submissionId: doc.docuseal_submission_id,
+        emails,
       },
       200,
       origin,

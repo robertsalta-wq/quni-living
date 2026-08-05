@@ -425,6 +425,32 @@ ${bondObligationsBlock}
   }
 }
 
+/** Mutual termination acknowledgment — ready to sign (Quni/Resend + DocuSeal link). */
+export function mutualTerminationReadyToSign(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || 'the premises')
+  const signUrl = escapeHtml(data.sign_url || '#')
+  const effectiveDate = escapeHtml(data.effective_date || '')
+  const roleLabel = escapeHtml(data.role_label || 'party')
+
+  const effectiveLine = effectiveDate
+    ? `<p>Agreed effective date: <strong>${effectiveDate}</strong>.</p>`
+    : ''
+
+  const inner = `<h2 style="color: #1A1A2E;">Mutual termination ready to sign</h2>
+<p>Hi ${name},</p>
+<p>A mutual termination acknowledgment for <strong>${propertyAddress}</strong> is ready for electronic signing (${roleLabel}).</p>
+${effectiveLine}
+<p>Both landlord and tenant must sign before the agreement ends on the effective date.</p>
+<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open signing page →</a>
+<p style="margin-top:16px;font-size:13px;color:#666;">If the button does not work, copy this link:<br>${signUrl}</p>`
+
+  return {
+    subject: `Sign mutual termination - ${data.property_address || 'your tenancy'}`,
+    html: wrapContent(inner),
+  }
+}
+
 /** Listing tier - landlord: agreement ready to sign (Quni/Resend + booking review). */
 export function listingAgreementReadyLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')

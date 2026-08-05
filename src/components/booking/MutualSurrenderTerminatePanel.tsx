@@ -72,25 +72,51 @@ export function MutualSurrenderTerminatePanel({
     return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
   }
 
-  async function loadSigningLink() {
+  async function loadSigningLink(opts?: { resendEmails?: boolean }) {
     setSigningLoading(true)
+    if (opts?.resendEmails) setBusy(true)
+    setError(null)
     try {
       const headers = await authHeaders()
       const res = await fetch(apiUrl('/api/booking-mutual-termination-signing'), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ bookingId, resendEmails: Boolean(opts?.resendEmails) }),
       })
       const body = await res.json().catch(() => ({}))
-      if (!res.ok) return
+      if (!res.ok) {
+        if (opts?.resendEmails) {
+          setError(typeof body.error === 'string' ? body.error : 'Could not resend signing emails')
+        }
+        return
+      }
       setViewerSigned(Boolean(body.viewerSigned))
       setOtherSigned(Boolean(body.otherSigned))
       setSigningUrl(typeof body.signingUrl === 'string' ? body.signingUrl : null)
-    } catch {
-      /* non-blocking */
+      if (opts?.resendEmails) {
+        const emails = body.emails as { landlordSent?: boolean; tenantSent?: boolean } | null
+        if (emails?.landlordSent || emails?.tenantSent) {
+          setOkMsg(
+            `Signing emails sent${emails.landlordSent ? ' to landlord' : ''}${
+              emails.landlordSent && emails.tenantSent ? ' and' : ''
+            }${emails.tenantSent ? ' tenant' : ''}.`,
+          )
+        } else {
+          setOkMsg('Resend requested — check that signing links exist for both parties.')
+        }
+      }
+    } catch (e) {
+      if (opts?.resendEmails) {
+        setError(e instanceof Error ? e.message : 'Could not resend signing emails')
+      }
     } finally {
       setSigningLoading(false)
+      if (opts?.resendEmails) setBusy(false)
     }
+  }
+
+  async function onResendSigningEmails() {
+    await loadSigningLink({ resendEmails: true })
   }
 
   useEffect(() => {
@@ -137,7 +163,7 @@ export function MutualSurrenderTerminatePanel({
         setSigningUrl(body.landlordSigningUrl.trim())
       }
       setOkMsg(
-        'Mutual surrender started. Sign the acknowledgment below (or via email). The room stays reserved until the effective date.',
+        'Mutual surrender started. Signing emails sent to landlord and tenant (same as tenancy agreement). Sign below or from your inbox. Room stays reserved until the effective date.',
       )
       onUpdated()
       void loadSigningLink()
@@ -261,25 +287,35 @@ export function MutualSurrenderTerminatePanel({
           <div className="rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-4 py-3 space-y-2">
             <p className="text-sm font-semibold text-admin-ink-2">Sign mutual termination</p>
             <p className="text-xs text-admin-ink-3">
-              Both parties must e-sign the acknowledgment. Open your signing page, then ask the tenant
-              to use the DocuSeal email link (or their booking page once available).
+              Same process as the tenancy agreement: Quni emails both parties a signing link, and you
+              can open yours here.
             </p>
-            {signingUrl ? (
-              <a
-                href={signingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover"
+            <div className="flex flex-wrap gap-2">
+              {signingUrl ? (
+                <a
+                  href={signingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover"
+                >
+                  Open signing page
+                </a>
+              ) : (
+                <p className="text-xs text-admin-warning-fg self-center">
+                  {signingLoading
+                    ? 'Loading signing link…'
+                    : 'Signing link not available yet — try Resend signing emails.'}
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={busy || signingLoading}
+                onClick={() => void onResendSigningEmails()}
+                className="inline-flex items-center rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
               >
-                Open signing page
-              </a>
-            ) : (
-              <p className="text-xs text-admin-warning-fg">
-                {signingLoading
-                  ? 'Loading signing link…'
-                  : 'Signing link not available yet. Check DocuSeal email, or refresh this page.'}
-              </p>
-            )}
+                {busy ? 'Sending…' : 'Resend signing emails'}
+              </button>
+            </div>
           </div>
         ) : null}
         <div className="flex flex-wrap items-end gap-2">
