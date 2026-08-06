@@ -34,11 +34,13 @@ describe('termination status semantics', () => {
     expect(PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES).not.toContain('cancelled')
   })
 
-  it('declares listing lifecycle edges for terminate', () => {
+  it('declares listing lifecycle edges for terminate and withdraw', () => {
     const edges = STATUS_LIFECYCLE.listing.edges
     expect(edges.some((e) => e.from === 'active' && e.to === 'terminating')).toBe(true)
     expect(edges.some((e) => e.from === 'confirmed' && e.to === 'terminating')).toBe(true)
     expect(edges.some((e) => e.from === 'terminating' && e.to === 'terminated')).toBe(true)
+    expect(edges.some((e) => e.from === 'terminating' && e.to === 'active')).toBe(true)
+    expect(edges.some((e) => e.from === 'terminating' && e.to === 'confirmed')).toBe(true)
   })
 })
 
