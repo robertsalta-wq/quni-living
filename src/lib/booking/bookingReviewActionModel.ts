@@ -176,7 +176,7 @@ export function resolveLandlordBookingReviewActionCopy(
         eyebrow: 'Status',
         eyebrowTone: 'status',
         title: 'Agreement ended',
-        sub: 'This live agreement has been terminated. It cannot be reinstated.',
+        sub: 'Both parties signed the mutual termination acknowledgment. This room agreement is ended and cannot be reinstated.',
         deadlineLabel: null,
         deadlineTone: 'info',
       }
@@ -302,7 +302,7 @@ export function resolveRenterBookingReviewActionCopy(
         eyebrow: 'Status',
         eyebrowTone: 'status',
         title: 'Agreement ended',
-        sub: 'This agreement has ended and cannot be reinstated.',
+        sub: 'You and your landlord both signed the mutual termination acknowledgment. This room agreement is ended.',
         deadlineLabel: null,
         deadlineTone: 'info',
       }

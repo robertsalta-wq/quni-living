@@ -861,18 +861,87 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   }
 
   if (docRow.document_type === 'mutual_termination' && tenancyForBooking?.booking_id) {
+    const bookingId = tenancyForBooking.booking_id
     try {
       const { markMutualSurrenderAcknowledged } = await import(
         './booking/termination/markMutualSurrenderAcknowledged.js'
       )
       await markMutualSurrenderAcknowledged({
         admin,
-        bookingId: tenancyForBooking.booking_id,
+        bookingId,
         documentId: docRow.id,
       })
     } catch (ackErr) {
       console.error('[docuseal-webhook] mutual_termination ack', ackErr)
     }
+
+    try {
+      const { data: bookingRow } = await admin
+        .from('bookings')
+        .select(
+          'landlord_id, student_id, termination_effective_date, properties ( address, suburb, state, postcode )',
+        )
+        .eq('id', bookingId)
+        .maybeSingle()
+      const { data: lp } = bookingRow?.landlord_id
+        ? await admin
+            .from('landlord_profiles')
+            .select('email, full_name, first_name, last_name')
+            .eq('id', bookingRow.landlord_id)
+            .maybeSingle()
+        : { data: null }
+      const { data: sp } = bookingRow?.student_id
+        ? await admin
+            .from('student_profiles')
+            .select('email, full_name, first_name, last_name')
+            .eq('id', bookingRow.student_id)
+            .maybeSingle()
+        : { data: null }
+
+      const landlordName =
+        [lp?.first_name, lp?.last_name].filter(Boolean).join(' ').trim() ||
+        (typeof lp?.full_name === 'string' ? lp.full_name.trim() : '') ||
+        'Landlord'
+      const tenantName =
+        [sp?.first_name, sp?.last_name].filter(Boolean).join(' ').trim() ||
+        (typeof sp?.full_name === 'string' ? sp.full_name.trim() : '') ||
+        'Tenant'
+      const landlordEmail = typeof lp?.email === 'string' ? lp.email.trim() : ''
+      const tenantEmail = typeof sp?.email === 'string' ? sp.email.trim() : ''
+      const prop = bookingRow?.properties as
+        | { address?: string | null; suburb?: string | null; state?: string | null; postcode?: string | null }
+        | null
+        | undefined
+      const premisesLine = [prop?.address, prop?.suburb, prop?.state, prop?.postcode]
+        .filter(Boolean)
+        .join(', ')
+      const site = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni.com.au')
+        .trim()
+        .replace(/\/$/, '')
+
+      if (landlordEmail || tenantEmail) {
+        const { sendMutualTerminationFullySignedEmails } = await import(
+          './booking/termination/sendMutualTerminationFullySignedEmails.js'
+        )
+        await sendMutualTerminationFullySignedEmails({
+          landlordName,
+          landlordEmail,
+          tenantName,
+          tenantEmail,
+          premisesLine: premisesLine || 'the Premises',
+          terminationEffectiveDate:
+            typeof bookingRow?.termination_effective_date === 'string'
+              ? bookingRow.termination_effective_date
+              : '',
+          downloadUrl: link,
+          landlordReviewUrl: `${site}/landlord/bookings/${bookingId}/review`,
+          tenantReviewUrl: `${site}/student/dashboard?tab=bookings`,
+        })
+      }
+    } catch (mailErr) {
+      console.error('[docuseal-webhook] mutual_termination fully-signed emails', mailErr)
+    }
+
     return { ok: true, message: 'Mutual termination fully signed' }
   }
 

@@ -226,6 +226,12 @@ function internalTitle(event: BookingEventRow, meta: Record<string, unknown>): s
       return 'Agreement reconciled from DocuSeal'
     case 'document.archive_failed':
       return 'Agreement archive failed'
+    case 'booking.termination_initiated':
+      return 'Mutual termination started'
+    case 'booking.termination_acknowledged':
+      return 'Mutual termination signed by both parties'
+    case 'booking.agreement_terminated':
+      return 'Agreement ended'
     case 'booking.confirmed':
       return 'Booking accepted · bond pending'
     case 'booking.created':
@@ -376,6 +382,12 @@ function renterTitle(event: BookingEventRow, meta: Record<string, unknown>): str
     }
     case 'document.sent_for_signing':
       return 'Your tenancy agreement is ready to sign'
+    case 'booking.termination_initiated':
+      return 'Ending your agreement by mutual surrender'
+    case 'booking.termination_acknowledged':
+      return 'Mutual termination signed by both parties'
+    case 'booking.agreement_terminated':
+      return 'Your room agreement has ended'
     case 'booking.confirmed':
       return 'Your booking was accepted'
     case 'booking.created':
