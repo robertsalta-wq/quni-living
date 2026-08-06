@@ -42,6 +42,13 @@ export default defineConfig(({ mode }) => {
     base: process.env.CAPACITOR_BUILD === 'true' ? './' : '/',
     build: {
       sourcemap: uploadSourceMaps ? 'hidden' : false,
+      /**
+       * Do not inject <link rel="modulepreload"> for the whole sync graph.
+       * Homepage HTML was shipping 80+ modulepreloads (including route chunks),
+       * which contended with CSS/fonts and drove multi-second LCP element render delay.
+       * The entry script still loads its imports normally.
+       */
+      modulePreload: false,
       rollupOptions: {
         output: {
           manualChunks(id) {

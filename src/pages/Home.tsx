@@ -408,7 +408,7 @@ export default function Home() {
                 <span className="block">Live well</span>
                 <span className="block">near campus.</span>
               </h1>
-              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
+              <p className="home-hero-lead text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal font-sans">
                 Browse verified listings near your university or workplace - enquire and book on one
                 marketplace.
               </p>
