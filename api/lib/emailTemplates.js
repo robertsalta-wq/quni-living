@@ -451,6 +451,39 @@ ${effectiveLine}
   }
 }
 
+/** Mutual termination acknowledgment - both parties signed (Quni/Resend). */
+export function mutualTerminationFullySigned(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || 'the premises')
+  const effectiveDate = escapeHtml(data.effective_date || '')
+  const downloadUrl = typeof data.download_url === 'string' ? data.download_url.trim() : ''
+  const reviewUrl = typeof data.review_url === 'string' ? data.review_url.trim() : ''
+
+  const effectiveLine = effectiveDate
+    ? `<p>Effective date: <strong>${effectiveDate}</strong>.</p>`
+    : ''
+  const downloadBlock = downloadUrl
+    ? `<p><a href="${escapeHtml(downloadUrl)}" style="display:inline-block;margin-top:12px;background-color:#FF6F61;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">Download signed acknowledgment →</a></p>
+<p style="margin-top:12px;font-size:13px;color:#666;">Link expires in 7 days. Open your booking on Quni anytime for status.</p>`
+    : ''
+  const reviewBlock = reviewUrl
+    ? `<p style="margin-top:16px;"><a href="${escapeHtml(reviewUrl)}" style="color:#FF6F61;font-weight:600;">Open booking on Quni →</a></p>`
+    : ''
+
+  const inner = `<h2 style="color: #1A1A2E;">Mutual termination signed</h2>
+<p>Hi ${name},</p>
+<p>Both landlord and tenant have signed the mutual termination acknowledgment for <strong>${propertyAddress}</strong>.</p>
+${effectiveLine}
+<p>The previous room agreement is ended. You can set up a new whole-unit booking on Quni when ready.</p>
+${downloadBlock}
+${reviewBlock}`
+
+  return {
+    subject: `Mutual termination signed - ${data.property_address || 'your tenancy'}`,
+    html: wrapContent(inner),
+  }
+}
+
 /** Listing tier - landlord: agreement ready to sign (Quni/Resend + booking review). */
 export function listingAgreementReadyLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')

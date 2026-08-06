@@ -212,14 +212,25 @@ export function MutualSurrenderTerminatePanel({
 
   if (isTerminated) {
     return (
-      <section className="mt-6 border-t border-admin-line pt-4">
+      <section className="mt-6 border-t border-admin-line pt-4 space-y-3">
+        <div className="rounded-admin-md border border-admin-success bg-admin-success-bg px-4 py-3">
+          <p className="text-sm font-semibold text-admin-success-fg">
+            Mutual termination signed by both parties
+          </p>
+          <p className="mt-1 text-sm text-admin-ink-2">
+            Acknowledgments complete
+            {terminationAcknowledgedAt
+              ? ` on ${terminationAcknowledgedAt.slice(0, 10)}`
+              : ''}
+            . Agreement ended
+            {terminationEffectiveDate ? ` effective ${terminationEffectiveDate}` : ''}.
+          </p>
+        </div>
         <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
           Agreement ended
         </p>
         <p className="mt-1 text-sm text-admin-ink-2">
-          Terminated
-          {terminationEffectiveDate ? ` effective ${terminationEffectiveDate}` : ''}. Bond outcome:{' '}
-          {bondOutcome || 'not recorded'}.
+          Bond outcome: {bondOutcome || 'not recorded'}.
         </p>
         {terminationReasonNote ? (
           <p className="mt-1 text-sm text-admin-ink-3">Reason: {terminationReasonNote}</p>
