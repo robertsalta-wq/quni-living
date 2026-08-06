@@ -6,6 +6,7 @@ import type { Database, Json } from '../../../../src/lib/database.types.js'
 import { MutualTerminationAcknowledgment } from '../../../documents/MutualTerminationAcknowledgment.js'
 import { createDocusealSubmissionFromPdf } from '../../docuseal.shared.js'
 import { wrapSubmissionSubmitters } from '../../docuseal/signLinkWrap.js'
+import { tryArchiveDocusealSubmissionBestEffort } from '../unwindListingAgreement.js'
 import { assertStudentLegalNameForSigning } from '../assertStudentLegalNameForSigning.js'
 import {
   legacyStudentNameFromProfile,
@@ -239,6 +240,27 @@ export async function generateAndSendMutualTerminationDoc(args: {
     return { ok: false, status: 409, code: 'missing_email', message: 'Landlord or tenant email missing.' }
   }
 
+  // Replace any prior in-flight DocuSeal package (broken tags / re-issue).
+  if (existing?.docuseal_submission_id) {
+    await tryArchiveDocusealSubmissionBestEffort(admin, existing.docuseal_submission_id, {
+      bookingId,
+      propertyId: booking.property_id,
+      landlordId: booking.landlord_id,
+      studentId: booking.student_id,
+      serviceTier: 'listing',
+      unwindReason: 'regenerate',
+    })
+    await admin
+      .from('tenancy_documents')
+      .update({
+        docuseal_submission_id: null,
+        landlord_signed_at: null,
+        student_signed_at: null,
+        status: 'draft',
+      })
+      .eq('id', documentId)
+  }
+
   try {
     const pdfBase64 = pdfBuffer.toString('base64')
     const submissionRaw = await createDocusealSubmissionFromPdf({
@@ -248,6 +270,9 @@ export async function generateAndSendMutualTerminationDoc(args: {
       removeTags: true,
       // Lease path: DocuSeal send_email stays off; Quni/Resend delivers signing links.
       sendEmail: false,
+      submitterSignReason: false,
+      // Both parties get usable links immediately (Quni emails both).
+      order: 'random',
       landlordRole: 'First Party',
       tenantRole: 'Second Party',
       landlord: { name: landlordName, email: landlordEmail },

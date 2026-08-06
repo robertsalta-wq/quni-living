@@ -81,10 +81,12 @@ async function readErrorBody(res) {
  *   documentPdfName?: string
  *   removeTags?: boolean
  *   sendEmail?: boolean
+ *   order?: 'preserved' | 'random'
  * }} params
  * `*Fields` pre-fill and (when readonly) lock field values so the signer never has to enter them.
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
  * `sendEmail: true` forces DocuSeal email; otherwise uses DOCUSEAL_SEND_EMAIL (default false).
+ * `order` defaults to `preserved` (DocuSeal default). Pass `random` so both parties can sign without waiting.
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
  */
 export async function createDocusealSubmissionFromPdf(params) {
@@ -135,9 +137,10 @@ export async function createDocusealSubmissionFromPdf(params) {
     submitters.push(submitterFields(co.email.trim(), co.name.trim(), coTenantRole, params.coTenantFields))
   }
 
+  const order = params.order === 'random' ? 'random' : 'preserved'
   const body = {
     name: params.name,
-    order: 'preserved',
+    order,
     send_email:
       params.sendEmail === true ? true : params.sendEmail === false ? false : asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
     ...(params.removeTags ? { remove_tags: true } : {}),
