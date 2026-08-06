@@ -27,6 +27,9 @@
       "maxDuration": 60,
       "includeFiles": "api/documents/{MutualTerminationAcknowledgment,platformAddendumDocusealTags}.ts"
     },
+    "api/booking-withdraw-mutual-surrender.ts": {
+      "maxDuration": 30
+    },
     "api/booking-record-bond-outcome.ts": {
       "maxDuration": 30
     },

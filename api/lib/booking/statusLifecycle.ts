@@ -112,6 +112,16 @@ export const STATUS_LIFECYCLE = {
         to: 'terminated',
         writer: 'finalizeTerminatedBooking',
       },
+      {
+        from: 'terminating',
+        to: 'confirmed',
+        writer: 'withdrawMutualSurrender',
+      },
+      {
+        from: 'terminating',
+        to: 'active',
+        writer: 'withdrawMutualSurrender',
+      },
     ],
   } satisfies TierLifecycle,
 

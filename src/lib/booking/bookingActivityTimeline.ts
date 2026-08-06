@@ -230,6 +230,8 @@ function internalTitle(event: BookingEventRow, meta: Record<string, unknown>): s
       return 'Mutual termination started'
     case 'booking.termination_acknowledged':
       return 'Mutual termination signed by both parties'
+    case 'booking.termination_withdrawn':
+      return 'Mutual termination withdrawn'
     case 'booking.agreement_terminated':
       return 'Agreement ended'
     case 'booking.confirmed':
@@ -386,6 +388,8 @@ function renterTitle(event: BookingEventRow, meta: Record<string, unknown>): str
       return 'Ending your agreement by mutual surrender'
     case 'booking.termination_acknowledged':
       return 'Mutual termination signed by both parties'
+    case 'booking.termination_withdrawn':
+      return 'Mutual termination was withdrawn - your agreement continues'
     case 'booking.agreement_terminated':
       return 'Your room agreement has ended'
     case 'booking.confirmed':

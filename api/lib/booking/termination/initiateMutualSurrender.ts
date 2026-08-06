@@ -197,6 +197,8 @@ export async function runInitiateMutualSurrender(args: {
           bond_outcome: bondOutcome,
           service_tier: 'listing',
           document_id: gen.documentId,
+          // Used by withdraw to restore confirmed vs active without a schema column.
+          status_before_termination: booking.status,
         },
       })
     } catch (evErr) {

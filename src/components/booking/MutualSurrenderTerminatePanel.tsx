@@ -127,6 +127,41 @@ export function MutualSurrenderTerminatePanel({
     await loadSigningLink({ resendEmails: true })
   }
 
+  async function onWithdraw() {
+    const ok = window.confirm(
+      'Withdraw this mutual termination? The agreement stays live, the surrender document is voided, and both parties will need a new termination if you end it later.',
+    )
+    if (!ok) return
+    setBusy(true)
+    setError(null)
+    setOkMsg(null)
+    try {
+      const headers = await authHeaders()
+      const res = await fetch(apiUrl('/api/booking-withdraw-mutual-surrender'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ bookingId }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(
+          typeof body.error === 'string' ? body.error : `Could not withdraw termination (HTTP ${res.status})`,
+        )
+        return
+      }
+      setOkMsg(
+        `Termination withdrawn. Booking restored to ${
+          typeof body.restoredStatus === 'string' ? body.restoredStatus : 'live'
+        }.`,
+      )
+      onUpdated()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Request failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   useEffect(() => {
     if (serviceTierFinal !== 'listing') return
     if (status !== 'terminating' && status !== 'terminated') return
@@ -301,6 +336,21 @@ export function MutualSurrenderTerminatePanel({
                     : 'waiting for landlord + tenant e-sign'}
           </p>
           {terminationReasonNote ? <p>Reason: {terminationReasonNote}</p> : null}
+        </div>
+        <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-admin-ink-2">Withdraw termination</p>
+          <p className="text-xs text-admin-ink-3">
+            Cancel this pending mutual surrender and keep the current agreement live. Available until
+            the booking is finalized as terminated.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onWithdraw()}
+            className="inline-flex items-center rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+          >
+            {busy ? 'Withdrawing…' : 'Withdraw termination'}
+          </button>
         </div>
         {!terminationAcknowledgedAt && !viewerSigned ? (
           <div className="rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-4 py-3 space-y-2">
