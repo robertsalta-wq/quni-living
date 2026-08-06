@@ -1,6 +1,6 @@
 /**
  * One-off / admin historical DocuSeal signature reconcile.
- * Signatures only — does not reinstate booking status.
+ * Signatures only - does not reinstate booking status.
  * Emits the same document.signature_recorded / document.fully_signed shapes as the live webhook.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'

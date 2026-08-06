@@ -701,7 +701,7 @@ export function RenterProfileSetup({
         summary={
           prefsHasContent
             ? 'Budget, room type, move-in and lifestyle'
-            : 'Budget, room type, move-in & lifestyle — optional details'
+            : 'Budget, room type, move-in & lifestyle - optional details'
         }
         expanded={expanded === 'prefs'}
         onToggle={() => toggleSection('prefs')}

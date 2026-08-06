@@ -1,5 +1,5 @@
 /**
- * Booking review v3 — status → layout / title / stepper mapping.
+ * Booking review v3 - status → layout / title / stepper mapping.
  * Visual SoT: Booking review v3.html (not the MD where they diverge).
  * payment_failed → pre-acceptance shell (Managed deposit PI webhook; Listing fee is 402).
  */
@@ -25,7 +25,7 @@ export type BookingReviewStepperIndex = 0 | 1 | 2 | 3
 
 export type BookingReviewLayout = {
   shell: BookingReviewShell
-  /** Page `<h1>` — state reflected in the title; no status pill. */
+  /** Page `<h1>` - state reflected in the title; no status pill. */
   pageTitle: string
   /** Current stepper index (0 = Request). awaiting_info stays on Request. */
   stepperIndex: BookingReviewStepperIndex
@@ -39,9 +39,9 @@ export type BookingReviewLayout = {
    */
   showTierChooser: boolean
   showBackupsWarning: boolean
-  /** Agreement panel — bond-state onward (§2.8 / HTML `!isPreish`). */
+  /** Agreement panel - bond-state onward (§2.8 / HTML `!isPreish`). */
   showAgreement: boolean
-  /** Activity section — same gate as agreement (accepted density onward). */
+  /** Activity section - same gate as agreement (accepted density onward). */
   showActivity: boolean
   /** AI + Fit default open in pre/bond; auto-collapsed in confirmed/active. */
   evaluationDefaultOpen: boolean
@@ -72,7 +72,7 @@ function pageTitleFor(role: BookingReviewRole, status: BookingReviewStatus): str
   if (status === 'expired') return 'Request expired'
   if (status === 'terminating') return 'Ending agreement'
   if (status === 'terminated') return 'Agreement ended'
-  // Managed deposit-auth PI failure — landlord waits on the renter; only the renter retries.
+  // Managed deposit-auth PI failure - landlord waits on the renter; only the renter retries.
   if (status === 'payment_failed') {
     return role === 'landlord' ? 'Waiting on payment' : 'Payment failed'
   }
@@ -151,7 +151,7 @@ function stepperIndexFor(status: BookingReviewStatus): BookingReviewStepperIndex
 
 /**
  * Maps booking status (+ role) to v3 review layout flags.
- * Does not inspect account gates, QLD, or tier — those remain separate.
+ * Does not inspect account gates, QLD, or tier - those remain separate.
  */
 export function resolveBookingReviewLayout(
   status: BookingReviewStatus,
@@ -170,7 +170,7 @@ export function resolveBookingReviewLayout(
   const isPreish = status === 'pending_confirmation' || status === 'awaiting_info' ||
     status === 'pending' || status === 'pending_payment' || status === 'payment_failed' ||
     status === 'expired'
-  // Strict "pre only" for tier/backups — awaiting_info + payment_failed hide them
+  // Strict "pre only" for tier/backups - awaiting_info + payment_failed hide them
   // (nothing to accept until the renter's deposit auth succeeds).
   const isLandlordPreOnly =
     role === 'landlord' &&
@@ -207,7 +207,7 @@ export function resolveBookingReviewLayout(
   }
 }
 
-/** Convenience — payment_failed must reuse the pre-acceptance shell. */
+/** Convenience - payment_failed must reuse the pre-acceptance shell. */
 export function bookingReviewShellForStatus(status: BookingReviewStatus): BookingReviewShell {
   return shellFor(status)
 }

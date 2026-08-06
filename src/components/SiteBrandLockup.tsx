@@ -7,12 +7,12 @@ const LOGO = {
 
 type LogoVariant = keyof typeof LOGO
 
-/** Same focus ring as marketing header — no coral dashboard-only outline. */
+/** Same focus ring as marketing header - no coral dashboard-only outline. */
 export const quniLogoHomeLinkClassName =
   'flex min-w-0 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900'
 
 /**
- * "Dashboard" next to the logo — optically matched to the Quni letterforms
+ * "Dashboard" next to the logo - optically matched to the Quni letterforms
  * (not the 36/40px logo image box). Pair with `items-center` on the parent
  * (baseline alignment with an <img> sits the word too high).
  */

@@ -27,7 +27,7 @@ function body(text: string, key: string): ReactNode {
 }
 
 /**
- * Shared Section 5 — Utilities & bills.
+ * Shared Section 5 - Utilities & bills.
  * Managed all-inclusive + quarterly cap only when tier/resolver/cap conditions hold.
  */
 export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumProps) {

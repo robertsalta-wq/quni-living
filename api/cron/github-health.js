@@ -178,7 +178,7 @@ export default async function handler(request) {
 
   if (result.kind === 'auth') {
     captureSentryMessageEdge(
-      'GitHub Actions API returned 401/403: GITHUB_STATUS_TOKEN is stale or lacks Actions read access — CI status dot will be hidden until the token is rotated on Vercel.',
+      'GitHub Actions API returned 401/403: GITHUB_STATUS_TOKEN is stale or lacks Actions read access - CI status dot will be hidden until the token is rotated on Vercel.',
       { status: result.status },
       {
         level: 'error',
@@ -197,7 +197,7 @@ export default async function handler(request) {
   captureSentryMessageEdge(
     result.kind === 'misconfigured'
       ? 'GitHub healthcheck misconfigured: GITHUB_STATUS_TOKEN missing on Vercel.'
-      : 'GitHub Actions API unreachable — CI status dot hidden until the next successful probe.',
+      : 'GitHub Actions API unreachable - CI status dot hidden until the next successful probe.',
     extra,
     {
       level: 'error',

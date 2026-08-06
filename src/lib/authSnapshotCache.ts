@@ -37,7 +37,7 @@ export function writeAuthSnapshot(snapshot: AuthSnapshot): void {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
   } catch {
-    // Quota or private browsing — ignore.
+    // Quota or private browsing - ignore.
   }
 }
 

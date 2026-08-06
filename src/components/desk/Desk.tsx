@@ -28,7 +28,7 @@ const toneClass: Record<DeskTone, string> = {
 }
 
 /**
- * Desk shell — fixed slot order. Slots 1–2 required; 3–6 optional.
+ * Desk shell - fixed slot order. Slots 1–2 required; 3–6 optional.
  * Hover may lift 2px; never opens anything.
  */
 export default function Desk({

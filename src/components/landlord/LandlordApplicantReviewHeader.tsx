@@ -9,7 +9,7 @@ type Props = {
   displayName: string
   /** Short free-text bio from profile */
   bio?: string | null
-  /** Strip outer card chrome — for embedding in the right summary card. */
+  /** Strip outer card chrome - for embedding in the right summary card. */
   embedded?: boolean
   /** Opens the full-profile drawer (commit 7). Hidden when omitted. */
   onOpenFullProfile?: () => void
@@ -95,7 +95,7 @@ export default function LandlordApplicantReviewHeader({
               onClick={() => setBioOpen(false)}
             />
             <div className="quni-modal relative z-10 w-full max-w-md p-5">
-              <h3 className="text-base font-semibold text-admin-ink">Bio — {displayName}</h3>
+              <h3 className="text-base font-semibold text-admin-ink">Bio - {displayName}</h3>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-admin-ink-2">{bioText}</p>
               <button
                 type="button"

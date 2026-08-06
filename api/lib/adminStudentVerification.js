@@ -1,5 +1,5 @@
 /**
- * Server mirror of src/lib/adminStudentVerification.ts — keep patch builders in sync.
+ * Server mirror of src/lib/adminStudentVerification.ts - keep patch builders in sync.
  */
 
 /** @typedef {'id_document' | 'enrolment_doc' | 'identity_supporting_doc' | 'visa_doc' | 'uni_email' | 'work_email'} AdminVerificationItem */

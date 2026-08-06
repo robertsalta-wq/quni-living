@@ -68,7 +68,7 @@ export function listingPrerenderPaths(slugs: string[]): string[] {
   for (const raw of slugs) {
     const s = raw.trim()
     if (!s) continue
-    // Both route aliases — trailing-slash variants are normalized by Vercel trailingSlash:false.
+    // Both route aliases - trailing-slash variants are normalized by Vercel trailingSlash:false.
     paths.push(`/listings/${s}`, `/properties/${s}`)
   }
   return paths

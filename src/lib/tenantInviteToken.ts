@@ -7,7 +7,7 @@ export async function hashTenantInviteToken(rawToken: string): Promise<string> {
     .join('')
 }
 
-/** 32-byte random token (64 hex chars) — shown once in the copyable invite link. */
+/** 32-byte random token (64 hex chars) - shown once in the copyable invite link. */
 export function generateTenantInviteRawToken(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)

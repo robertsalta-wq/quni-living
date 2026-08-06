@@ -48,7 +48,7 @@ function archiveToleratedMessage(message: string): boolean {
 
 /**
  * Archive a DocuSeal submission (best-effort, idempotent).
- * Never throws — callers treat booking transition as authoritative.
+ * Never throws - callers treat booking transition as authoritative.
  */
 export async function archiveDocusealSubmission(
   submissionIdRaw: string | null | undefined,

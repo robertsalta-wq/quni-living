@@ -1,5 +1,5 @@
 /**
- * Pure, framework-agnostic item specs for `AppActionBar` — and for desktop
+ * Pure, framework-agnostic item specs for `AppActionBar` - and for desktop
  * in-page footers (same source, two targets). See docs/app-chrome-brief.md.
  */
 export type AppChromeBarItemSpec = {
@@ -10,10 +10,10 @@ export type AppChromeBarItemSpec = {
   disabled?: boolean
 }
 
-/** Fixed hub exit — listings tab. */
+/** Fixed hub exit - listings tab. */
 export const LANDLORD_LISTINGS_EXIT_HREF = '/landlord/dashboard?tab=listings'
 
-/** Nav bar — landlord browse. */
+/** Nav bar - landlord browse. */
 export const LANDLORD_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'listings', label: 'Listings' },
@@ -22,7 +22,7 @@ export const LANDLORD_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'profile', label: 'Profile' },
 ]
 
-/** Nav bar — renter browse. */
+/** Nav bar - renter browse. */
 export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'bookings', label: 'Bookings' },
@@ -31,7 +31,7 @@ export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'profile', label: 'Profile' },
 ]
 
-/** Listing hub — mobile action bar: exit · Health · Preview. */
+/** Listing hub - mobile action bar: exit · Health · Preview. */
 export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChromeBarItemSpec[] {
   return [
     { id: 'exit-listings', label: '‹ Listings' },
@@ -40,7 +40,7 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in — Save draft · Next (setup) / Save (edit). Always persists on leave. */
+/** Basic-info drill-in - Save draft · Next (setup) / Save (edit). Always persists on leave. */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
@@ -59,7 +59,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
 }
 
 /**
- * Section drill-in — Save draft · Publish (new) / Save (edit).
+ * Section drill-in - Save draft · Publish (new) / Save (edit).
  * Save draft → hub (caller wires); never discard without persisting.
  */
 export function listingSectionDrillInActionBarItemSpecs(opts: {

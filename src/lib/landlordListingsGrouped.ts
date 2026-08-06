@@ -199,7 +199,7 @@ export function groupLandlordListings(
 
     if (visibleListings.length === 0 && !(statusFilter === 'all' && !search)) {
       // Vacant-only filter: show group if vacant slots exist and filter is not a room status mismatch.
-      // Vacant is roll-up only — no chip filter for it.
+      // Vacant is roll-up only - no chip filter for it.
       continue
     }
     if (visibleListings.length === 0 && (search || statusFilter !== 'all')) continue

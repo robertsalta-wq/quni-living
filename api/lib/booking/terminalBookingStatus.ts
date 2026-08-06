@@ -1,5 +1,5 @@
 /** Booking statuses where the platform must not treat tenancy agreements as live or executed. */
-/** Pre-tenancy teardown + live-agreement end (not `terminating` — still occupies until effective date). */
+/** Pre-tenancy teardown + live-agreement end (not `terminating` - still occupies until effective date). */
 export const TERMINAL_BOOKING_STATUSES = ['cancelled', 'expired', 'declined', 'terminated'] as const
 
 export type TerminalBookingStatus = (typeof TERMINAL_BOOKING_STATUSES)[number]

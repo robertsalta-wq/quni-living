@@ -1,6 +1,6 @@
 /**
  * Single source for /for-landlords human drawer HTML + structured-data twins (Gate 6).
- * NSW/QLD Listing product only — no Managed, no national claims, no yield figures.
+ * NSW/QLD Listing product only - no Managed, no national claims, no yield figures.
  */
 
 export const FOR_LANDLORDS_PATH = '/for-landlords'
@@ -55,7 +55,7 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
       '@type': 'WebPage',
       '@id': `${pageUrl}#webpage`,
       url: pageUrl,
-      name: 'List a room with Quni — for landlords',
+      name: 'List a room with Quni - for landlords',
       description: PAGE_DESCRIPTION,
       isPartOf: { '@type': 'WebSite', name: 'Quni Living', url: siteUrl },
       about: { '@id': `${pageUrl}#service` },

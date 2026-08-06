@@ -5,5 +5,5 @@ export const LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF =
 /** Post-sign-off: shown after legal sign-off. */
 export const LICENCE_OCCUPY_WATERMARK_POST_SIGNOFF = 'Subject to periodic review and update'
 
-/** Active watermark for licence-to-occupy PDFs — switch between pre- and post-sign-off here. */
+/** Active watermark for licence-to-occupy PDFs - switch between pre- and post-sign-off here. */
 export const LICENCE_OCCUPY_WATERMARK = LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF

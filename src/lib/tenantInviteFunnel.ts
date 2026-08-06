@@ -21,7 +21,7 @@ export function resolveTenantInviteTokenForFunnel(redirect?: string | null): str
   return getQuniTenantInviteToken() || inviteTokenFromBookingRedirect(redirect) || null
 }
 
-/** Fire-and-forget funnel telemetry — failures are logged only. */
+/** Fire-and-forget funnel telemetry - failures are logged only. */
 export function recordTenantInviteFunnelEvent(
   token: string | null | undefined,
   event: TenantInviteFunnelEvent,

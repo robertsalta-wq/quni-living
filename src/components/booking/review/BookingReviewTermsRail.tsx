@@ -26,7 +26,7 @@ export type BookingReviewTermsRailProps = {
   bondDisplayAud: number | null
   serviceTierTitle: string
   leaseHolderName: string
-  /** True on expired / cancelled / declined shells — hides Edit entirely. */
+  /** True on expired / cancelled / declined shells - hides Edit entirely. */
   inputsDisabled: boolean
   onSaved: () => void
 }
@@ -44,7 +44,7 @@ function initialsFor(name: string): string {
 }
 
 /**
- * Zone 3 rail — "Terms" card. Landlord-only. Edit opens a modal (the editor forms are too wide
+ * Zone 3 rail - "Terms" card. Landlord-only. Edit opens a modal (the editor forms are too wide
  * for the 356px rail); summary + disclosure render inline. HTML visual SoT ~1217-1269.
  */
 export default function BookingReviewTermsRail({

@@ -12,7 +12,7 @@ function cn(...parts: (string | false | undefined)[]) {
 export type CollapsibleProseProps = {
   /** Stable id for aria-controls (required when multiple instances on one page) */
   id: string
-  /** Section heading element id — scrolled into view when collapsing (e.g. "About this place"). */
+  /** Section heading element id - scrolled into view when collapsing (e.g. "About this place"). */
   sectionHeadingId: string
   className?: string
   collapsedLines?: number

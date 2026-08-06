@@ -26,7 +26,7 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
       >
         <p className="font-semibold leading-snug">No bond required for this stay</p>
         <p className="text-xs leading-relaxed text-admin-success-fg">
-          Sign your tenancy agreement on Quni when you receive the signing email — you do not need to pay or lodge a
+          Sign your tenancy agreement on Quni when you receive the signing email - you do not need to pay or lodge a
           bond for this booking.
         </p>
       </div>
@@ -103,7 +103,7 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
       <p className="text-xs leading-relaxed text-admin-warning-fg">
         Under {guidance.stateLabel} law, your host must let you choose how to pay
         {guidance.preferLandlordCollection
-          ? ' — they prefer to collect and lodge, but you can still lodge directly with the RTA.'
+          ? ' - they prefer to collect and lodge, but you can still lodge directly with the RTA.'
           : '. These are your options, in the order they must be offered:'}
       </p>
       <ol className="list-decimal list-inside space-y-2 text-xs leading-relaxed text-admin-warning-fg">

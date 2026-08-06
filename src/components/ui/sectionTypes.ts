@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 export type SectionStatus = 'todo' | 'done' | 'optional' | 'locked'
 
-/** `ai` = purple chrome (AI assessment only — design-system rule). */
+/** `ai` = purple chrome (AI assessment only - design-system rule). */
 export type SectionTone = 'default' | 'warning' | 'danger' | 'ai'
 
 export type SectionProps = {
@@ -15,7 +15,7 @@ export type SectionProps = {
   /** Omit to hide the status pill (e.g. booking history). */
   status?: SectionStatus
   summary?: ReactNode
-  /** Ignored when `collapsible={false}` — body always shown when children are present. */
+  /** Ignored when `collapsible={false}` - body always shown when children are present. */
   expanded?: boolean
   onToggle?: () => void
   editLabel?: string

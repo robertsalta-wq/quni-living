@@ -1,4 +1,4 @@
-/** Renter profile deep-link helpers — hub uses ?section=; hashes still redirect. */
+/** Renter profile deep-link helpers - hub uses ?section=; hashes still redirect. */
 
 export type RenterProfileExpandKey =
   | 'situation'

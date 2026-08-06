@@ -1,0 +1,20 @@
+---
+description: Never use em dashes (—) in product copy or code comments.
+alwaysApply: true
+---
+
+# No em dashes
+
+Do **not** use the Unicode em dash character `—` (U+2014) anywhere in this repo's product UI, emails, docs we ship, or source comments.
+
+Use instead:
+
+- A hyphen with spaces: ` - ` (mid-sentence separator)
+- A period or comma to break the sentence
+- Remove trailing decorative dashes after links/labels
+
+Wrong: `End agreement (mutual surrender) — rarely needed`  
+Right: `End agreement (mutual surrender)`
+
+Wrong: `Connected & verified — paid out within 2 business days.`  
+Right: `Connected and verified. Paid out within 2 business days.`

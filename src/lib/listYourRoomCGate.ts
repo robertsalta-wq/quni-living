@@ -1,5 +1,5 @@
 /**
- * `/list-your-room-c` Preview gate — browser bundle.
+ * `/list-your-room-c` Preview gate - browser bundle.
  * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
  * Override: `VITE_LIST_YOUR_ROOM_C_ENABLED=true|false`
  */

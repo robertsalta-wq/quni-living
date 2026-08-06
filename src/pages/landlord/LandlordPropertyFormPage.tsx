@@ -1650,7 +1650,7 @@ export default function LandlordPropertyFormPage() {
     return () => window.removeEventListener('pagehide', onPageHide)
   }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
-  /** SPA leave (Cancel / hub back) does not fire pagehide — flush draft on unmount. */
+  /** SPA leave (Cancel / hub back) does not fire pagehide - flush draft on unmount. */
   const draftSaveEnabledRef = useRef(draftSaveEnabled)
   draftSaveEnabledRef.current = draftSaveEnabled
   const loadingPageRef = useRef(loadingPage)
@@ -1727,7 +1727,7 @@ export default function LandlordPropertyFormPage() {
     return () => observer.disconnect()
   }, [isSupabaseConfigured, loadingPage, pageError, role, landlordProfile])
 
-  // Desktop redirects from hub `/section/:id` land as `#section-…` — scroll once loaded.
+  // Desktop redirects from hub `/section/:id` land as `#section-…` - scroll once loaded.
   useEffect(() => {
     if (loadingPage || pageError) return
     const id = location.hash.replace(/^#/, '').trim()
@@ -2352,7 +2352,7 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
-    // Hash must resolve before the accuracy gate decides — do not write without awaiting.
+    // Hash must resolve before the accuracy gate decides - do not write without awaiting.
     const accommodationForHash = normalizeAccommodationForSave(propertyListingType, roomType)
     const serializedImages = images.length ? serializePropertyImages(images) : null
     const structuredHouseRules = Object.entries(selectedRules)
@@ -2789,8 +2789,8 @@ export default function LandlordPropertyFormPage() {
           console.error('[LandlordPropertyFormPage] server draft save failed', err)
           setDraftPersistError(
             err instanceof Error
-              ? `Saved on this device only — account draft failed: ${err.message}`
-              : 'Saved on this device only — could not create account draft.',
+              ? `Saved on this device only - account draft failed: ${err.message}`
+              : 'Saved on this device only - could not create account draft.',
           )
         } finally {
           setSubmitting(false)
@@ -4241,7 +4241,7 @@ export default function LandlordPropertyFormPage() {
                 <fieldset className="space-y-3">
                   <legend className="text-sm font-semibold text-gray-900">QLD bond payment preference</legend>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    How do you prefer the renter to pay bond? This steers booking instructions — renters can still lodge
+                    How do you prefer the renter to pay bond? This steers booking instructions - renters can still lodge
                     directly with the RTA. Quni never holds or remits bond.
                   </p>
                   <div className="space-y-2">
@@ -4275,7 +4275,7 @@ export default function LandlordPropertyFormPage() {
                                 rel="noopener noreferrer"
                                 className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
                               >
-                                RTA Queensland — rental bonds
+                                RTA Queensland - rental bonds
                               </a>
                               .
                             </span>
@@ -4285,7 +4285,7 @@ export default function LandlordPropertyFormPage() {
                     ))}
                   </div>
                   <p className="text-xs text-sky-900/90">
-                    Tip: a bond is not compulsory under Queensland law — rent in advance is a lawful alternative.
+                    Tip: a bond is not compulsory under Queensland law - rent in advance is a lawful alternative.
                   </p>
                 </fieldset>
               ) : null}

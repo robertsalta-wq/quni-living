@@ -14,7 +14,7 @@ type Props = {
 }
 
 /**
- * Canonical Listing Health hub row — icon tile + title + subtitle + filled-circle
+ * Canonical Listing Health hub row - icon tile + title + subtitle + filled-circle
  * check + chevron. Only difference: subtitle shows the member's values.
  */
 export default function LandlordProfileSectionRow({ id, title, subtitleLines, status, href }: Props) {

@@ -1,5 +1,5 @@
 /**
- * Sync auth routing helpers — no supabase client import.
+ * Sync auth routing helpers - no supabase client import.
  * Safe for marketing chrome (Header / OnboardingResumeBanner) on the homepage critical path.
  */
 import type { User } from '@supabase/supabase-js'
@@ -129,7 +129,7 @@ export function resolvePostAuthOneShotDestination(
   return opts.consumeStoredRedirect() ?? getPostLoginRedirectDestination(user, role, profile)
 }
 
-/** After email confirm or verify-email continue — onboarding when incomplete, else safe return path. */
+/** After email confirm or verify-email continue - onboarding when incomplete, else safe return path. */
 export function getPostAuthEntryDestination(
   user: User,
   role: UserRole,

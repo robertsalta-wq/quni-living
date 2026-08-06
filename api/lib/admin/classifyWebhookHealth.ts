@@ -2,12 +2,12 @@
  * Living Console platform tile: classify `provider_webhook_health` rows.
  *
  * Never invents a green "all providers" stub. Handles `last_received_at = null`
- * as "no events recorded yet" — watch, not alarm.
+ * as "no events recorded yet" - watch, not alarm.
  *
  * All three providers are wired to `touchProviderWebhookHealth`:
  * DocuSeal (`api/webhooks/docuseal.ts`), Resend (`api/webhooks/resend.ts`),
  * Stripe (`api/stripe-webhook.js`). A persistent Stripe null means receipts
- * are not landing (ops), not that the write path is missing — keep the row.
+ * are not landing (ops), not that the write path is missing - keep the row.
  */
 
 export type WebhookHealthRow = {
@@ -28,7 +28,7 @@ export type WebhookAttentionItem = {
   fixHref: string
 }
 
-/** Thresholds in days. Sparse event-driven feeds — DocuSeal can be quiet for weeks. */
+/** Thresholds in days. Sparse event-driven feeds - DocuSeal can be quiet for weeks. */
 export const WEBHOOK_THRESHOLDS_DAYS = {
   docuseal: { watch: 14, action: 30 },
   resend: { watch: 7, action: 14 },
@@ -88,7 +88,7 @@ function classifyOne(row: WebhookHealthRow, nowMs: number): ClassifiedProvider {
     return {
       provider: row.provider,
       tone: 'watch',
-      text: `${label} — no events recorded yet`,
+      text: `${label} - no events recorded yet`,
       // null is not an alarm (Stripe never wired); do not raise AttentionItem
       escalate: false,
     }
@@ -128,8 +128,8 @@ export type ClassifyWebhookHealthResult = {
 }
 
 /**
- * @param rows — rows from `provider_webhook_health`
- * @param now — injectable clock for tests (Date or ms)
+ * @param rows - rows from `provider_webhook_health`
+ * @param now - injectable clock for tests (Date or ms)
  */
 export function classifyWebhookHealth(
   rows: WebhookHealthRow[],
@@ -171,7 +171,7 @@ export function classifyWebhookHealth(
         escalated.length === 1
           ? `${names} webhook needs attention`
           : `Webhook health: ${names}`,
-      // No dedicated webhook-health admin page yet — land on Living Console.
+      // No dedicated webhook-health admin page yet - land on Living Console.
       fixHref: '/admin',
     })
   }

@@ -76,7 +76,7 @@ const STUDENT_LEGAL_DOC_MODAL: Record<StudentLegalDocumentKind, { title: string;
   privacy: { title: 'Privacy Policy', content: <PrivacyContent /> },
 }
 
-/** Update if row exists (trigger at signup); insert bootstrap row if missing — avoids silent no-op UPDATE. */
+/** Update if row exists (trigger at signup); insert bootstrap row if missing - avoids silent no-op UPDATE. */
 async function saveStudentProfileByUserId(
   user: User,
   patch: Record<string, unknown>,
@@ -1257,7 +1257,7 @@ export default function StudentOnboarding() {
                 >
                   <span className="font-semibold text-stone-900">Non-student</span>
                   <p className="text-sm text-stone-600 mt-1">
-                    I&apos;m not a student — verify with photo ID and a supporting document instead.
+                    I&apos;m not a student - verify with photo ID and a supporting document instead.
                   </p>
                 </button>
               </div>

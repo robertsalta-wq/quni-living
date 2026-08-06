@@ -5,7 +5,7 @@ type DeskPaperweightProps = {
   className?: string
 }
 
-/** Slot 6 — small quiet trust mark / stamp. Omit when vacant. */
+/** Slot 6 - small quiet trust mark / stamp. Omit when vacant. */
 export default function DeskPaperweight({ children, className = '' }: DeskPaperweightProps) {
   return (
     <div

@@ -8,10 +8,10 @@ import { recordBookingEvent } from './events/recordBookingEvent.js'
  * Background: the DocuSeal completion webhook was mis-pointed for ~a month, so
  * Quni recorded zero signatures. The hourly expiry sweep keys only off
  * `bond_window_expires_at` + `bond_received_by_landlord_at` and has no idea a
- * binding lease exists — it expired a fully-executed, occupied tenancy
+ * binding lease exists - it expired a fully-executed, occupied tenancy
  * (Geonho Lee, booking d414f981) and archived/voided the signed agreement.
  *
- * This guard reads local signature state (no DocuSeal round-trip — it must not
+ * This guard reads local signature state (no DocuSeal round-trip - it must not
  * depend on the same webhook that failed) and blocks expiry when the lease
  * looks executed, emitting `bond.expiry_blocked_signed_lease` so it surfaces
  * loudly instead of failing silent.
@@ -41,7 +41,7 @@ function isSet(value: unknown): boolean {
 /**
  * Conservative "is this lease executed enough that a cron must not expire it?"
  * Blocks when the document is marked signed, OR both landlord and student have
- * signed. Co-tenant absence never *unblocks* — erring toward keeping the
+ * signed. Co-tenant absence never *unblocks* - erring toward keeping the
  * booking alive and surfacing it for a human is the safe direction.
  */
 export function leaseDocBlocksBondExpiry(doc: LeaseSignatureRow | null | undefined): boolean {

@@ -48,7 +48,7 @@ export type LicenceOccupyContent = {
   conditionReportOutgoing: string
   /** When set, renders instead of the three condition-report fields. */
   conditionReportParagraphs?: readonly string[]
-  /** Clause 13 — continuation after fixed period (NSW). */
+  /** Clause 13 - continuation after fixed period (NSW). */
   continuationParagraphs?: readonly string[]
   feeFreeBankTransfer: string
   bankDetailsTemplate: string

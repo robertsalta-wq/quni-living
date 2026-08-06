@@ -7,7 +7,7 @@ export type LandlordListingBillingSnapshot = {
   card: { brand: string; last4: string } | null
 }
 
-/** Normalize API card payload — reject nullish/non-string brand or last4. */
+/** Normalize API card payload - reject nullish/non-string brand or last4. */
 export function normalizeListingBillingCard(
   card: unknown,
 ): { brand: string; last4: string } | null {

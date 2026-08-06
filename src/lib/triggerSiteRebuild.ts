@@ -1,6 +1,6 @@
 /**
  * Fire-and-forget: ask the server to queue a Vercel redeploy (listing prerender refresh).
- * Uses the caller's Supabase session — no deploy secrets in the browser.
+ * Uses the caller's Supabase session - no deploy secrets in the browser.
  */
 import { supabase, isSupabaseConfigured } from './supabase'
 
@@ -24,7 +24,7 @@ export function requestSiteRebuild(): void {
         },
       })
     } catch {
-      /* ignore — rebuild is best-effort */
+      /* ignore - rebuild is best-effort */
     }
   })()
 }

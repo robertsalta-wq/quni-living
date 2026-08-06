@@ -8,7 +8,7 @@ export type ListingDocGenSkipReason =
   | 'tenancy_unsupported'
   | 'no_generator'
 
-/** Result of listing tenancy document work — callers must branch on `ok`. */
+/** Result of listing tenancy document work - callers must branch on `ok`. */
 export type ListingDocGenResult =
   | { ok: true; skipped?: false; tenancyId: string; documentId: string; docusealSubmissionId?: string | null }
   | { ok: true; skipped: true; reason: ListingDocGenSkipReason }

@@ -46,7 +46,7 @@ export default function QldRtaLodgementGuidance({ className, compact = false, em
       {!compact ? (
         <p className="mt-2 text-sky-900/85 border-t border-sky-200/70 pt-2">
           Not lodging within 10 days, or keeping bond in a personal account, is an offence under Queensland law. A bond
-          is not compulsory — rent in advance is a lawful alternative.
+          is not compulsory - rent in advance is a lawful alternative.
         </p>
       ) : null}
     </div>

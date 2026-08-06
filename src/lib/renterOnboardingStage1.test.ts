@@ -12,7 +12,7 @@ import type { User } from '@supabase/supabase-js'
 import { renterOnboardingIncomplete } from './studentOnboarding'
 
 describe('resolvePendingAccommodationVerificationRoute (Stage 1)', () => {
-  it('always returns null — route deferred to profile', () => {
+  it('always returns null - route deferred to profile', () => {
     expect(resolvePendingAccommodationVerificationRoute(undefined, 'student', 'non_student')).toBeNull()
     expect(resolvePendingAccommodationVerificationRoute('2026-05-31T11:50:00Z', 'non_student', null)).toBeNull()
   })

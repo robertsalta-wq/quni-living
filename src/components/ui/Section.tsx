@@ -70,7 +70,7 @@ function iconTileClass(tone: SectionTone): string {
  * Layout rule (enforce in review): Section never contains another bordered/
  * tinted card. Children may include plain content, tables, dividers, and
  * non-card chrome only. Panels that own their own border+background must
- * accept `embedded` (or equivalent) and strip that chrome when nested here —
+ * accept `embedded` (or equivalent) and strip that chrome when nested here -
  * same rule as BookingReviewActionCard.
  */
 export default function Section({

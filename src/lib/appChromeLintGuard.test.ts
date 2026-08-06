@@ -1,5 +1,5 @@
 /**
- * Unit tests for scripts/appChromeLint.mjs — planted fail + allowlist pass cases.
+ * Unit tests for scripts/appChromeLint.mjs - planted fail + allowlist pass cases.
  * See docs/app-chrome-brief.md §6.
  */
 import { describe, expect, it } from 'vitest'
@@ -216,7 +216,7 @@ describe('findChromeViolations', () => {
 
   it('allowlists primitive card wrappers; empty containerLegacy means pages are locked', () => {
     const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
-    // containerLegacy.json is empty — formerly grandfathered pages are actively locked.
+    // containerLegacy.json is empty - formerly grandfathered pages are actively locked.
     expect(
       findChromeViolations('src/pages/LandlordDashboard.tsx', dirty).some(
         (x) => x.id === 'hand-rolled-card',

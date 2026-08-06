@@ -1,6 +1,6 @@
 /**
  * Landlord Bookings scheduling helpers: Timeline occupancy, Calendar events, Next 7 days.
- * Pure derivation from listings + bookings — no UI.
+ * Pure derivation from listings + bookings - no UI.
  */
 
 import {

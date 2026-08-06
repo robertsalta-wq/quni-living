@@ -599,7 +599,7 @@ export async function sendResidentialTenancyPackageForSigning(
 
   const coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
 
-  // NSW FT6600 execution dates are stamped read-only so signers only sign — never type the date.
+  // NSW FT6600 execution dates are stamped read-only so signers only sign - never type the date.
   // QLD Form 18a and VIC Form 1 use different date fields and are left untouched.
   const isNswFt6600 = !isQldResidential && !isVicResidential
   const nswReadonlyDates = isNswFt6600

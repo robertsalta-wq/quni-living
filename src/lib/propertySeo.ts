@@ -62,7 +62,7 @@ export function propertyListingJsonLd(
     }
   }
 
-  // Only emit when DB fields are present — never invent room counts.
+  // Only emit when DB fields are present - never invent room counts.
   if (typeof p.bedrooms === 'number' && Number.isFinite(p.bedrooms) && p.bedrooms > 0) {
     accommodation.numberOfRooms = p.bedrooms
   }

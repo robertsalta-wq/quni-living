@@ -1,7 +1,7 @@
 /**
  * Pure landlord booking-review primary-action derivation.
  * Behavior-preserving extract from LandlordBookingReviewPage (showMarkBondReceived /
- * primaryActionKind / actionCopyStatus override). Unit-testable — #55 lived in page JSX.
+ * primaryActionKind / actionCopyStatus override). Unit-testable - #55 lived in page JSX.
  */
 import type { BookingReviewActionStatus } from './bookingReviewActionModel'
 import { landlordListingBondReceivedPrimaryVisible } from '../landlordListingBondReceivedGate'
@@ -72,7 +72,7 @@ export function deriveLandlordPrimaryAction(
         ? 'accept-decline-info'
         : 'none'
 
-  // mark-bond borrows bond_pending copy ("Confirm the bond") — the #55 override.
+  // mark-bond borrows bond_pending copy ("Confirm the bond") - the #55 override.
   const copyStatus: BookingReviewActionStatus =
     kind === 'mark-bond' ? 'bond_pending' : (input.bookingStatus as BookingReviewActionStatus)
 

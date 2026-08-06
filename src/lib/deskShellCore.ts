@@ -12,7 +12,7 @@ export function isDeskShellGatedPath(pathname: string): boolean {
   return (DESK_SHELL_GATED_ROUTES as readonly string[]).includes(path)
 }
 
-/** Shared resolver — browser env bag or Edge `process.env`. */
+/** Shared resolver - browser env bag or Edge `process.env`. */
 export function resolveDeskShellEnabled(opts: {
   override?: string | null
   vercelEnv?: string | null

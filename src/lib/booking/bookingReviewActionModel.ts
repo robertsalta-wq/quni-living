@@ -1,5 +1,5 @@
 /**
- * Booking review v3 — action-card copy by role × status (commit 5b).
+ * Booking review v3 - action-card copy by role × status (commit 5b).
  * Pure copy resolution only; buttons/handlers stay wired in the page (existing API calls).
  * Visual SoT: Booking-review-v3-unpacked.html ACTION MODEL (~1538-1612) + MD §6/§11/§17.
  */
@@ -31,7 +31,7 @@ export type LandlordAwaitingInfoQuestion = {
   askedAtLabel: string
 }
 
-/** en-AU, no year — matches HTML deadline pill copy ("Asked 8 Jul"). */
+/** en-AU, no year - matches HTML deadline pill copy ("Asked 8 Jul"). */
 export function formatBookingReviewShortDate(iso: string | null | undefined): string | null {
   const t = iso?.trim()
   if (!t) return null
@@ -44,7 +44,7 @@ export function formatBookingReviewShortDate(iso: string | null | undefined): st
   }
 }
 
-/** Latest landlord-authored message in the (legacy, read-only) booking_messages thread — the "question you sent". */
+/** Latest landlord-authored message in the (legacy, read-only) booking_messages thread - the "question you sent". */
 export function resolveLandlordAwaitingInfoQuestion(
   messages: MessageLike[] | null | undefined,
 ): LandlordAwaitingInfoQuestion | null {
@@ -62,14 +62,14 @@ export type LandlordBookingReviewActionCopyInput = {
   studentDisplayName: string
   /** Pre-formatted "Asked 8 Jul" style label, or null if no request-info message on record. */
   askedAtLabel: string | null
-  /** Pre-formatted bond deadline label (existing page logic — may include a full date). */
+  /** Pre-formatted bond deadline label (existing page logic - may include a full date). */
   bondDeadlineLabel: string | null
   /** True when the readiness driver / non-gate blocker is showing (drives eyebrow tone for pre). */
   hasActionRequired: boolean
 }
 
 /**
- * Landlord action-card copy for every real booking status — HTML SoT §6/§11/§17.
+ * Landlord action-card copy for every real booking status - HTML SoT §6/§11/§17.
  * Callers still own which buttons/children render below this copy (existing handlers).
  */
 export function resolveLandlordBookingReviewActionCopy(
@@ -121,7 +121,7 @@ export function resolveLandlordBookingReviewActionCopy(
         eyebrow: 'Status',
         eyebrowTone: 'status',
         title: 'Tenancy is active',
-        sub: "Everything is done — nothing needs your attention right now.",
+        sub: "Everything is done - nothing needs your attention right now.",
         deadlineLabel: null,
         deadlineTone: 'info',
       }
@@ -148,7 +148,7 @@ export function resolveLandlordBookingReviewActionCopy(
       return {
         eyebrow: 'Status',
         eyebrowTone: 'status',
-        title: 'Request expired — room stays listed',
+        title: 'Request expired - room stays listed',
         sub: 'This request expired before it was accepted. If you both still want to proceed, you can request reinstatement within 30 days.',
         deadlineLabel: null,
         deadlineTone: 'info',
@@ -193,11 +193,11 @@ export type RenterBookingReviewActionCopyInput = {
   askedAtLabel: string | null
   sentAtLabel: string | null
   bondDeadlineLabel: string | null
-  /** From `renterBookingObligation` — takes precedence over the generic sub when present. */
+  /** From `renterBookingObligation` - takes precedence over the generic sub when present. */
   obligationSub: string | null
 }
 
-/** Renter action-card copy — HTML SoT §6/§8/§11/§17 (role-flipped mirror of the landlord model). */
+/** Renter action-card copy - HTML SoT §6/§8/§11/§17 (role-flipped mirror of the landlord model). */
 export function resolveRenterBookingReviewActionCopy(
   input: RenterBookingReviewActionCopyInput,
 ): BookingReviewActionCopy {

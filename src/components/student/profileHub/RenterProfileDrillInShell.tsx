@@ -10,7 +10,7 @@ type Props = {
   children: ReactNode
 }
 
-/** Profile section drill-in — matches landlord hub shell (back + title + card). */
+/** Profile section drill-in - matches landlord hub shell (back + title + card). */
 export default function RenterProfileDrillInShell({ title, icon, error = null, children }: Props) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">

@@ -23,7 +23,7 @@ export function getAuthCallbackUrl() {
   return `${window.location.origin}/auth/callback`
 }
 
-/** Same allow-listed URL as signup/OAuth — AuthCallback routes recovery sessions to `/reset-password`. */
+/** Same allow-listed URL as signup/OAuth - AuthCallback routes recovery sessions to `/reset-password`. */
 export function getPasswordResetRedirectUrl() {
   return getAuthCallbackUrl()
 }
@@ -74,7 +74,7 @@ export function getGoogleOAuthOptions(signupContext?: GoogleOAuthSignupContext) 
     })
   }
   return {
-    // Must match Supabase Redirect URLs exactly — query params on redirectTo fall back to Site URL (/).
+    // Must match Supabase Redirect URLs exactly - query params on redirectTo fall back to Site URL (/).
     redirectTo: getAuthCallbackUrl(),
     scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     // Forces Google to show the account picker so "Log out → Log in with a different Gmail"

@@ -15,7 +15,7 @@ const INVITE_ABN_FALLBACK = '65675990968'
 const ROOM_IMG = '/landlord-invite/room.jpg'
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-/** Sample listing for the live PropertyCard preview — no named places. */
+/** Sample listing for the live PropertyCard preview - no named places. */
 const SAMPLE_LISTING_BASE = {
   id: 'list-your-room-sample',
   title: 'Furnished private room in a share house',
@@ -34,7 +34,7 @@ const SAMPLE_LISTING_BASE = {
   listing_type: 'rent',
   featured: false,
   address: null,
-  suburb: '—',
+  suburb: '-',
   state: null,
   postcode: null,
   latitude: null,
@@ -140,12 +140,12 @@ export default function ListYourRoom() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your room"
-        description="Fill your room with a verified student. Quni is free until you accept — keep your Facebook ad running too."
+        description="Fill your room with a verified student. Quni is free until you accept - keep your Facebook ad running too."
         canonicalPath="/list-your-room"
       />
 
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-5 py-4 md:gap-5 md:px-6 md:py-5 lg:py-6">
-        {/* Row 1 — full-width hero */}
+        {/* Row 1 - full-width hero */}
         <header className="max-w-3xl">
           <span className="eyebrow inline-block rounded-md border border-[var(--quni-coral-border)] bg-[var(--quni-coral-soft)] px-2.5 py-1.5 !font-bold text-[var(--quni-coral-active)]">
             For landlords
@@ -154,14 +154,14 @@ export default function ListYourRoom() {
             Fill your room with a verified student.
           </h1>
           <p className="mt-2.5 text-base leading-[var(--text-body-lh)] text-[var(--quni-ink-3)]">
-            An empty room is rent you&apos;re not earning. Quni fills it —{' '}
+            An empty room is rent you&apos;re not earning. Quni fills it -{' '}
             <strong className="font-semibold text-[var(--quni-ink)]">fast, verified, and free until you accept</strong>.
             Keep your Facebook ad running too.
           </p>
         </header>
 
         {/*
-          Row 2 — three matched cards:
+          Row 2 - three matched cards:
           mobile: signup first; md+: listing | trust | signup
         */}
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.25fr)] xl:gap-6">
@@ -169,7 +169,7 @@ export default function ListYourRoom() {
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1 xl:order-1 [&_.h-48]:!h-[136px] [&_.quni-card]:border-0 [&_.quni-card]:shadow-none">
             <PropertyCard property={sampleListing} staticDisplay />
             <p className="mt-3 text-[length:var(--text-caption-size)] leading-[var(--text-caption-lh)] text-[var(--quni-ink-4)]">
-              This is what your room looks like on Quni — photo, price, verified badge and all.
+              This is what your room looks like on Quni - photo, price, verified badge and all.
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export default function ListYourRoom() {
                 <p className="text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)]">
                   <strong className="font-semibold">Hi, I&apos;m Quinnie.</strong> I built Quni with my partner so a
                   spare room is easy money, not a headache. It takes a few minutes to set up, and you can message me
-                  anytime — you&apos;ll get me, not a bot.
+                  anytime - you&apos;ll get me, not a bot.
                 </p>
                 <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
                   Quinnie Le, co-founder.

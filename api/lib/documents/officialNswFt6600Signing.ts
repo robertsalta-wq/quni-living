@@ -34,13 +34,13 @@ export const OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST = [
   'sig_tenant_tis',
 ] as const
 
-/** Human page 18 (0-based index 17) — TIS signature row. */
+/** Human page 18 (0-based index 17) - TIS signature row. */
 export const OFFICIAL_FT6600_TIS_PAGE_INDEX = 17
 
-/** Human page 17 (0-based index 16) — landlord/tenant signature spread. */
+/** Human page 17 (0-based index 16) - landlord/tenant signature spread. */
 export const OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX = 16
 
-/** @deprecated Spanning dates removed — use OFFICIAL_FT6600_DATE_COMPONENT_DEFS. */
+/** @deprecated Spanning dates removed - use OFFICIAL_FT6600_DATE_COMPONENT_DEFS. */
 export const OFFICIAL_FT6600_DATE_FORMAT = 'DD/MM/YYYY' as const
 
 /** Target ink height class on executed PDFs (submission 146 browser baseline). */
@@ -49,7 +49,7 @@ export const OFFICIAL_FT6600_SIGNATURE_INK_HEIGHT_PT = 32.4 as const
 /** Dry-run test signature raster aspect (400×143px canvas in nsw-ft6600-execution-dry-run.mjs). */
 export const OFFICIAL_FT6600_SPIKE_TEST_SIGNATURE_IMAGE_ASPECT = 400 / 143
 
-/** Left edge of day/month/year boxes — signature ink must not extend past this. */
+/** Left edge of day/month/year boxes - signature ink must not extend past this. */
 export const OFFICIAL_FT6600_DATE_COLUMN_X_PT = 251.9 as const
 
 /** DocuSeal text field sized for drawn inner box (not full AcroForm widget height). */
@@ -78,7 +78,7 @@ export type Ft6600DateRowDef = {
   components: readonly Ft6600DateComponentDef[]
 }
 
-/** Three text fields per execution date row — day numeral, month name, 2-digit year. */
+/** Three text fields per execution date row - day numeral, month name, 2-digit year. */
 export const OFFICIAL_FT6600_DATE_ROW_DEFS: readonly Ft6600DateRowDef[] = [
   {
     dateRowKey: 'landlord_sig_date',
@@ -189,10 +189,10 @@ export function officialFt6600SigningDateParts(date: Date = new Date()): {
 }
 
 /**
- * Read-only, pre-filled execution-date field values so signers only sign — the
+ * Read-only, pre-filled execution-date field values so signers only sign - the
  * date is stamped for them. Keyed by DocuSeal party (First Party = landlord,
  * Second Party = tenant, Co-tenant). Covers all four FT6600 rows plus the
- * addendum date on each party's side. Geometry is untouched — this only supplies
+ * addendum date on each party's side. Geometry is untouched - this only supplies
  * values for the existing frozen fields.
  */
 export function officialFt6600ReadonlyDateFieldValues(
@@ -248,7 +248,7 @@ export const OFFICIAL_FT6600_DATE_FIELD_TRIPLETS: Record<string, readonly [strin
   )
 
 /**
- * DocuSeal parser unlock anchors — sole 14pt tag for primary landlord/tenant signatures.
+ * DocuSeal parser unlock anchors - sole 14pt tag for primary landlord/tenant signatures.
  * One-off PDF submissions render every tag area; never duplicate names at different coords.
  */
 export const OFFICIAL_FT6600_PARSER_ANCHOR_STYLE = {
@@ -504,7 +504,7 @@ function placementKindForField(fieldName: string): 'signature' | 'date_component
   return DATE_COMPONENT_ACROS.has(fieldName) ? 'date_component' : 'signature'
 }
 
-/** Widget-level tags — placements must come from collectOfficialNswFt6600SigningPlacements. */
+/** Widget-level tags - placements must come from collectOfficialNswFt6600SigningPlacements. */
 export function buildWidgetTagPlacements(
   widgets: SignatureWidgetPlacement[],
   includeCoTenantSignatureTags: boolean,

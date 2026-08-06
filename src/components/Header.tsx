@@ -77,7 +77,7 @@ function warmListingsNav() {
 
 type HeaderProps = {
   /**
-   * Inside the app-shell sticky chrome stack — parent owns stickiness.
+   * Inside the app-shell sticky chrome stack - parent owns stickiness.
    * Also kills the bogus vertical scrollbar from overflow-x-clip alone.
    */
   embedded?: boolean
@@ -426,7 +426,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <SiteBrandLockup />
               </div>
               <span className="h-6 w-px shrink-0 bg-[var(--quni-line)] sm:h-8" aria-hidden />
-              {/* Locked chrome row is h-11 — larger type, clamp to two lines so Log in stays clear. */}
+              {/* Locked chrome row is h-11 - larger type, clamp to two lines so Log in stays clear. */}
               <p className="min-w-0 font-display text-[length:var(--text-caption-size)] font-extrabold leading-[var(--text-caption-lh)] tracking-[-0.02em] text-[var(--quni-ink)] line-clamp-2 sm:text-[length:var(--text-body-sm-size)] sm:leading-[var(--text-body-sm-lh)] md:text-[length:var(--text-body-size)] md:leading-[var(--text-body-lh)] lg:text-[length:var(--text-body-lg-size)] lg:leading-[var(--text-body-lg-lh)] xl:text-[length:var(--text-h3-size)] xl:leading-[var(--text-h3-lh)]">
                 The <span className="text-[var(--quni-coral)]">safest way</span> to rent your spare room to university
                 students.

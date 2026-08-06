@@ -8,7 +8,7 @@ export function isSocialCrawler(userAgent: string | null | undefined): boolean {
 /**
  * Genuine social / link-preview bots only.
  * Googlebot family (Googlebot, Googlebot-Image, Googlebot-News, AdsBot-Google,
- * Google-InspectionTool) must NOT match — prerendered HTML is authoritative for those.
+ * Google-InspectionTool) must NOT match - prerendered HTML is authoritative for those.
  */
 const SOCIAL_CRAWLER_UA =
   /facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|whatsapp|discordbot/i

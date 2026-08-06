@@ -18,12 +18,12 @@ type Props = {
   thumbUrl: string | null
   statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
   health: ListingHubHealthResult
-  /** Public listing URL when live — otherwise Preview is disabled. */
+  /** Public listing URL when live - otherwise Preview is disabled. */
   previewHref?: string | null
 }
 
 /**
- * Listing health hub — identity row + section checklist.
+ * Listing health hub - identity row + section checklist.
  * Mobile actions (‹ Listings · Health · Preview) live in AppActionBar.
  * Desktop Preview stays in-page (max-sm:hidden).
  */
@@ -121,7 +121,7 @@ export default function ListingHealthHub({
             </span>
             <p className="text-[12.5px] leading-snug text-[#5C5326]">
               We&apos;ll walk you through each section in order. Drafts save on this device as you
-              type or leave a section. Tap Save draft to keep progress — with a title and rent, new
+              type or leave a section. Tap Save draft to keep progress - with a title and rent, new
               listings also save to your account Drafts tab.
             </p>
           </div>

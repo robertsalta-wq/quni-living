@@ -18,7 +18,7 @@ export type SendBookingEmailArgs = {
   actorId?: string | null
   actorLabel?: string | null
   metadata?: Record<string, unknown> | null
-  /** Handler device context — omit for cron/system sends. */
+  /** Handler device context - omit for cron/system sends. */
   deviceCtx?: BookingEventDeviceContext | null
 }
 
@@ -152,7 +152,7 @@ export async function sendBookingEmail(
       { required: true },
     )
   } catch (err) {
-    // Never retry send — avoid double-mailing. Gap monitor + Sentry catch the missing row.
+    // Never retry send - avoid double-mailing. Gap monitor + Sentry catch the missing row.
     await captureSentryMessageEdge('email.accepted insert failed after Resend success', {
       bookingId,
       templateKey,

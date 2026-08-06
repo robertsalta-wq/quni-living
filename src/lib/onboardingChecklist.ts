@@ -52,7 +52,7 @@ export function isLandlordStripePayoutsComplete(p: LandlordProfileRow | null | u
   return p?.stripe_charges_enabled === true && p?.stripe_payouts_enabled === true
 }
 
-/** Personal details, address, bio, and agreements — enough to create and edit property listings. */
+/** Personal details, address, bio, and agreements - enough to create and edit property listings. */
 export function canLandlordCreateListing(p: LandlordProfileRow | null | undefined): boolean {
   return isLandlordPublishComplete(p)
 }

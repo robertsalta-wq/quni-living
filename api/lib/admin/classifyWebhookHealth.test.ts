@@ -47,7 +47,7 @@ describe('classifyWebhookHealth', () => {
     const stripeRow = result.zoneRows.find((r) => r.text.includes('Stripe'))
     expect(stripeRow).toMatchObject({
       tone: 'watch',
-      text: 'Stripe — no events recorded yet',
+      text: 'Stripe - no events recorded yet',
     })
     expect(result.attention).toEqual([])
   })

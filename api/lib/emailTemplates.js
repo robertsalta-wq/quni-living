@@ -277,7 +277,7 @@ function listingRentPayeeBlockHtml(data) {
   const moveInDisplay = escapeHtml(data.move_in_date || '-')
   const bondDeadlineDisplay = escapeHtml(data.bond_deadline_display || '-')
   const paymentReference = escapeHtml(
-    data.payment_reference || `${data.student_name || ''} — ${data.property_address || ''}`.trim(),
+    data.payment_reference || `${data.student_name || ''} - ${data.property_address || ''}`.trim(),
   )
   const heading = data.rent_only_heading === true ? 'How to pay your rent' : 'How to pay your bond and rent'
   const isBondPending = data.status === 'bond_pending'
@@ -293,7 +293,7 @@ function listingRentPayeeBlockHtml(data) {
       : ''
   const upfrontTotalLine =
     isBondPending && data.rent_only_heading !== true && hasBond && hasWeeklyRent
-      ? `<p style="margin:0 0 8px;">Up front you&apos;ll need <strong>${escapeHtml(formatAudFromDollars(bondAmountNum + weeklyRentNum))} in total</strong> — bond ${escapeHtml(formatAudFromDollars(bondAmountNum))} (by <strong>${bondDeadlineDisplay}</strong>) and your first week&apos;s rent ${escapeHtml(formatAudFromDollars(weeklyRentNum))} (by <strong>${moveInDisplay}</strong>).</p>`
+      ? `<p style="margin:0 0 8px;">Up front you&apos;ll need <strong>${escapeHtml(formatAudFromDollars(bondAmountNum + weeklyRentNum))} in total</strong> - bond ${escapeHtml(formatAudFromDollars(bondAmountNum))} (by <strong>${bondDeadlineDisplay}</strong>) and your first week&apos;s rent ${escapeHtml(formatAudFromDollars(weeklyRentNum))} (by <strong>${moveInDisplay}</strong>).</p>`
       : ''
   const rentLine = `<p style="margin:0 0 8px;"><strong>Rent:</strong> ${escapeHtml(weeklyRentDisplay)} per week, paid weekly in advance from your move-in date (<strong>${moveInDisplay}</strong>).</p>`
   return `<div style="margin:16px 0;padding:16px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;">
@@ -425,7 +425,7 @@ ${bondObligationsBlock}
   }
 }
 
-/** Mutual termination acknowledgment — ready to sign (Quni/Resend + DocuSeal link). */
+/** Mutual termination acknowledgment - ready to sign (Quni/Resend + DocuSeal link). */
 export function mutualTerminationReadyToSign(data) {
   const name = escapeHtml(data.recipient_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || 'the premises')
@@ -593,7 +593,7 @@ export function listingCancelledByLandlordLandlord(data) {
   }
 }
 
-/** Self-serve reinstatement — request to other party */
+/** Self-serve reinstatement - request to other party */
 export function listingReinstatementRequested(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
   const requesterLabel = escapeHtml(data.requester_label || 'The other party')
@@ -616,7 +616,7 @@ export function listingReinstatementRequested(data) {
   }
 }
 
-/** Self-serve reinstatement — confirmed (both parties) */
+/** Self-serve reinstatement - confirmed (both parties) */
 export function listingReinstatementConfirmed(data) {
   const name = escapeHtml(data.recipient_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
@@ -625,13 +625,13 @@ export function listingReinstatementConfirmed(data) {
   let signingLine = ''
   if (data.signing_resent) {
     signingLine =
-      '<p>Signing has been re-sent — check your email for the agreement.</p>'
+      '<p>Signing has been re-sent - check your email for the agreement.</p>'
   } else if (data.signing_resend_failed) {
     signingLine =
       '<p>Signing could not be re-sent automatically. The host can regenerate the agreement from the booking page.</p>'
   }
   const feeLine = data.listing_fee_refunded
-    ? '<p><strong>Listing fee:</strong> Booking reinstated; listing fee was refunded on expiry — confirm payment separately.</p>'
+    ? '<p><strong>Listing fee:</strong> Booking reinstated; listing fee was refunded on expiry - confirm payment separately.</p>'
     : ''
   const reserveNote =
     status === 'active'
@@ -685,7 +685,7 @@ export function listingReinstatementBlockedUnavailable(data) {
   const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au/listings')
   const inner = `<h2 style="color: #1A1A2E;">Room no longer available</h2>
 <p>Hi ${name},</p>
-<p>The booking for <strong>${propertyAddress}</strong> could not be reinstated — the room was taken while this reinstatement was pending.</p>
+<p>The booking for <strong>${propertyAddress}</strong> could not be reinstated - the room was taken while this reinstatement was pending.</p>
 <a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Continue →</a>`
   return {
     subject: `Reinstatement blocked - ${data.property_address || data.property_title || 'room taken'}`,
@@ -693,7 +693,7 @@ export function listingReinstatementBlockedUnavailable(data) {
   }
 }
 
-/** Landlord-sourced tenant invite — prospect books through Quni verification flow. */
+/** Landlord-sourced tenant invite - prospect books through Quni verification flow. */
 export function tenantInviteProspectEmail(data) {
   const inviteeName = escapeHtml(data.invitee_name || 'there')
   const firstName = inviteeName === 'there' ? 'there' : inviteeName.split(/\s+/)[0]
@@ -702,7 +702,7 @@ export function tenantInviteProspectEmail(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the listing')
   const inviteUrl = escapeHtml(data.invite_url || 'https://quni.com.au')
   const studentOnlyBlock = data.student_only
-    ? `<p style="background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px 14px; color: #44403c; font-size: 14px;">This room is for <strong>students only</strong>. You&apos;ll verify as a student during signup — the same requirement as anyone booking this listing on Quni.</p>`
+    ? `<p style="background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px 14px; color: #44403c; font-size: 14px;">This room is for <strong>students only</strong>. You&apos;ll verify as a student during signup - the same requirement as anyone booking this listing on Quni.</p>`
     : ''
   const offerAud =
     data.offered_weekly_rent_aud != null && Number.isFinite(Number(data.offered_weekly_rent_aud))
@@ -710,7 +710,7 @@ export function tenantInviteProspectEmail(data) {
       : null
   const offerBlock =
     offerAud != null && offerAud > 0
-      ? `<p style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; color: #065f46; font-size: 14px;"><strong>Special rent offer:</strong> $${offerAud.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}/week${data.offer_reason ? ` — ${escapeHtml(String(data.offer_reason))}` : ''}.</p>`
+      ? `<p style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; color: #065f46; font-size: 14px;"><strong>Special rent offer:</strong> $${offerAud.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}/week${data.offer_reason ? ` - ${escapeHtml(String(data.offer_reason))}` : ''}.</p>`
       : ''
 
   const inner = `<h2 style="color: #1A1A2E;">You&apos;re invited to book on Quni</h2>

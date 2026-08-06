@@ -21,7 +21,7 @@ export async function isPropertyBlockedForReinstatement(
 
   const moveIn = (args.moveInDate || args.startDate || '').trim().slice(0, 10)
   if (!moveIn) {
-    // Without dates we cannot safely check overlap — fail closed.
+    // Without dates we cannot safely check overlap - fail closed.
     return { blocked: true, error: 'missing_move_in_date' }
   }
 

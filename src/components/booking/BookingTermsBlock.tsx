@@ -21,7 +21,7 @@ function fmtAud(n: number) {
   return n.toLocaleString('en-AU', { maximumFractionDigits: 0 })
 }
 
-/** Zone 3 shared shape — money block (§4 + §4.1) leads, then the terms `dl`. Landlord + renter mirror this. */
+/** Zone 3 shared shape - money block (§4 + §4.1) leads, then the terms `dl`. Landlord + renter mirror this. */
 export default function BookingTermsBlock({
   money,
   moveInIso,

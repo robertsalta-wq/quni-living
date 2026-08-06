@@ -110,7 +110,7 @@ export default function LandlordBookingAgreedRentEditor({
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) {
-        setError('Session expired — sign in again.')
+        setError('Session expired - sign in again.')
         return
       }
 
@@ -138,7 +138,7 @@ export default function LandlordBookingAgreedRentEditor({
       setSavedToast('Agreed rent saved.')
       onSaved()
     } catch {
-      setError('Network error — try again.')
+      setError('Network error - try again.')
     } finally {
       setBusy(false)
     }

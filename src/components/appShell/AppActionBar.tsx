@@ -41,7 +41,7 @@ const RENTER_NAV_TO: Record<string, string> = {
   profile: '/student-profile',
 }
 
-/** Invariant styling — copied from the real nav (do not invent), §1b. */
+/** Invariant styling - copied from the real nav (do not invent), §1b. */
 function itemClass(coral: boolean): string {
   return [
     'relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 select-none touch-manipulation [-webkit-touch-callout:none]',
@@ -58,7 +58,7 @@ const barContainerClass =
 const barContainerStyle = { paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }
 
 /**
- * Permanent trailing Ask AI control — coral chip + label on every surface.
+ * Permanent trailing Ask AI control - coral chip + label on every surface.
  * Same flex-1 / 44px target as nav items; no divider, label never hidden.
  */
 function AskAiBarItem() {
@@ -140,7 +140,7 @@ function ActionBarItemContent({ item }: { item: AppActionBarItem }) {
   )
 }
 
-/** Action mode — page-scoped items + permanent Ask AI trailing chip (§1b). */
+/** Action mode - page-scoped items + permanent Ask AI trailing chip (§1b). */
 function ActionBar({ items }: { items: AppActionBarItem[] }) {
   return (
     <nav className={barContainerClass} style={barContainerStyle} aria-label="Page actions">
@@ -154,7 +154,7 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
               </Link>
             )
           }
-          // Indicator-only (e.g. hub "Health" current view) — not a dead button.
+          // Indicator-only (e.g. hub "Health" current view) - not a dead button.
           if (!item.onClick && !item.to) {
             return (
               <span key={item.id} className={itemClass(coral)} aria-current={item.active ? 'page' : undefined}>
@@ -181,9 +181,9 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
 }
 
 /**
- * One bottom bar (mobile only). Contents from appChromeBarContents — independent
+ * One bottom bar (mobile only). Contents from appChromeBarContents - independent
  * of the header. Browse → nav; listing edit → page-actions from context.
- * Ask AI is chrome — always appended by this shell, never by pages.
+ * Ask AI is chrome - always appended by this shell, never by pages.
  */
 export default function AppActionBar() {
   const { role } = useAuthContext()

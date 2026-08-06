@@ -64,7 +64,7 @@ const INSURANCE_PROVIDERS = [
 ] as const
 
 const BIO_PLACEHOLDER =
-  'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
+  'Tell students about yourself - your management style, response times, and what makes your properties great to live in.'
 
 const inputClass =
   'w-full rounded-admin-md border border-admin-line px-3 py-2.5 text-sm text-admin-ink bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:border-admin-coral'
@@ -72,7 +72,7 @@ const labelClass = 'block text-[11px] font-semibold uppercase tracking-[0.04em] 
 const errClass = 'text-red-600 text-xs mt-1'
 const saveBtnClass = dashboardPrimaryBtnClass
 
-const SAVE_WRITE_FAILURE = "Couldn't save — try again"
+const SAVE_WRITE_FAILURE = "Couldn't save - try again"
 
 const FIELD_HINT_LABELS: Partial<Record<string, string>> = {
   landlordType: 'landlord type',
@@ -1112,7 +1112,7 @@ function LandlordDesktopProfileTab({
                     {photoUploading ? 'Uploading…' : 'Change photo'}
                     <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => void handlePhotoChange(e)} disabled={photoUploading} />
                   </label>
-                  <p className="mt-2 text-xs text-admin-ink-5">JPG or PNG, at least 400×400px — optional</p>
+                  <p className="mt-2 text-xs text-admin-ink-5">JPG or PNG, at least 400×400px - optional</p>
                   {photoError ? <p className="mt-1 text-xs text-red-600">{photoError}</p> : null}
                 </div>
               </div>
@@ -1237,14 +1237,14 @@ function LandlordDesktopProfileTab({
               <ShieldIcon />
               <p className="text-[13.5px] leading-relaxed text-admin-ink-3">
                 Payouts run through <strong className="text-admin-ink">Stripe Connect</strong>, which also verifies
-                your identity — <strong className="text-admin-ink">no documents to upload</strong>, and Quni never
+                your identity - <strong className="text-admin-ink">no documents to upload</strong>, and Quni never
                 stores your ID.
               </p>
             </div>
             <div className="space-y-2.5">
               <PayoutRow
                 done={readiness.accept.identityVerified}
-                title="Stripe Connect — payouts & identity"
+                title="Stripe Connect - payouts & identity"
                 subtitle="Receive rent and verify who you are."
                 statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
                 action={
@@ -1278,7 +1278,7 @@ function LandlordDesktopProfileTab({
                 />
               ) : managedTierEnabled ? (
                 <p className="text-[12.5px] text-admin-ink-5 px-1">
-                  Your <strong>Managed tier</strong> needs only Stripe Connect — no saved card required.
+                  Your <strong>Managed tier</strong> needs only Stripe Connect - no saved card required.
                 </p>
               ) : null}
             </div>
@@ -1299,7 +1299,7 @@ function LandlordDesktopProfileTab({
             id="landlord-section-insurance"
             icon={<ShieldIcon />}
             title="Insurance"
-            subtitle="Optional — for your own protection, not a Quni requirement"
+            subtitle="Optional - for your own protection, not a Quni requirement"
             status={profile.insurance_acknowledged_at ? 'done' : 'optional'}
             summary={profile.has_landlord_insurance ? 'Landlord insurance confirmed' : undefined}
             expanded={expanded === 'insurance'}
@@ -1335,7 +1335,7 @@ function LandlordDesktopProfileTab({
             expanded={expanded === 'languages'}
             onToggle={() => toggleSection('languages')}
           >
-            <p className="text-[13.5px] text-admin-ink-3 mb-3">Select any languages you speak — shown to students browsing your listings.</p>
+            <p className="text-[13.5px] text-admin-ink-3 mb-3">Select any languages you speak - shown to students browsing your listings.</p>
             <LanguagesSpokenSelector value={languagesSpoken} onChange={setLanguagesSpoken} />
             <button type="button" onClick={() => void saveLanguages()} disabled={savingSection === 'languages'} className={`${saveBtnClass} mt-4`}>
               {savingSection === 'languages' ? 'Saving…' : 'Save languages'}
@@ -1401,7 +1401,7 @@ function PublishThresholdMarker({ complete }: { complete: boolean }) {
       <div className="my-4 flex items-center gap-3 rounded-admin-lg border border-admin-success/35 bg-admin-success-bg px-4 py-3.5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-success text-white">✓</span>
         <div>
-          <p className="text-[13.5px] font-bold text-admin-success-fg">Publish threshold cleared — you can list now</p>
+          <p className="text-[13.5px] font-bold text-admin-success-fg">Publish threshold cleared - you can list now</p>
           <p className="mt-0.5 text-[12.5px] text-admin-success-fg/85">
             Finish the section below to accept bookings and generate tenancy agreements (RTA).
           </p>

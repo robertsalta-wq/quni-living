@@ -18,32 +18,32 @@ export const RENTER_SITUATION_OPTIONS = [
     value: 'student' as const,
     label: 'Student',
     description:
-      'Enrolled at an Australian university — verify with your student email, photo ID, and enrolment.',
+      'Enrolled at an Australian university - verify with your student email, photo ID, and enrolment.',
   },
   {
     value: 'working' as const,
     label: 'Working',
-    description: 'Employed in Australia — add employment details, photo ID, and a supporting document.',
+    description: 'Employed in Australia - add employment details, photo ID, and a supporting document.',
   },
   {
     value: 'working_holiday' as const,
     label: 'Working holiday',
-    description: 'On a working holiday visa — add visa details, photo ID, and a supporting document.',
+    description: 'On a working holiday visa - add visa details, photo ID, and a supporting document.',
   },
   {
     value: 'backpacker' as const,
     label: 'Backpacker',
-    description: 'Travelling — add visa details if applicable, photo ID, and a supporting document.',
+    description: 'Travelling - add visa details if applicable, photo ID, and a supporting document.',
   },
   {
     value: 'retired' as const,
     label: 'Retired',
-    description: 'Not in paid work — photo ID, supporting document, and income source.',
+    description: 'Not in paid work - photo ID, supporting document, and income source.',
   },
   {
     value: 'between_jobs' as const,
     label: 'Between jobs',
-    description: 'Between roles — photo ID, supporting document, and income source.',
+    description: 'Between roles - photo ID, supporting document, and income source.',
   },
 ] as const
 

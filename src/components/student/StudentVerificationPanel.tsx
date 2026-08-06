@@ -224,7 +224,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       aria-live="polite"
     >
       <span aria-hidden>✓</span>
-      <span>{uploadedFlash} — pending review</span>
+      <span>{uploadedFlash} - pending review</span>
     </div>
   ) : null
 

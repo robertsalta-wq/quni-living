@@ -36,7 +36,7 @@ export type LandlordPublishReadiness = {
 
 export type LandlordAcceptReadiness = {
   identityVerified: boolean
-  /** Listing billing customer id present — authoritative default PM check stays at confirm time. */
+  /** Listing billing customer id present - authoritative default PM check stays at confirm time. */
   savedCard: boolean
   complete: boolean
 }
@@ -277,7 +277,7 @@ export function buildLandlordReadinessDriverContent(
   }
 }
 
-/** Compact incomplete banner subtitle — next required action. */
+/** Compact incomplete banner subtitle - next required action. */
 export function landlordIncompleteSubtitle(readiness: LandlordReadiness): string {
   if (!readiness.publish.complete) {
     const key = readiness.publish.missing[0]
@@ -297,7 +297,7 @@ export function landlordProfileDefaultExpandedSection(
     return readiness.publish.missing[0] ?? 'personal'
   }
   if (!readiness.accept.complete) return 'payouts'
-  /** Fully set up — all section rows start collapsed. */
+  /** Fully set up - all section rows start collapsed. */
   return null
 }
 

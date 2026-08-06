@@ -7,7 +7,7 @@ const OFFERED_RENT_KEY = 'quni_tenant_invite_offered_rent'
 const OFFER_REASON_KEY = 'quni_tenant_invite_offer_reason'
 const SET_AT_KEY = 'quni_tenant_invite_set_at'
 
-/** Match tenant_invites default expiry — persisted context older than this is abandoned. */
+/** Match tenant_invites default expiry - persisted context older than this is abandoned. */
 const INVITE_CONTEXT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
 
 function readInviteSetAtMs(): number | null {
@@ -20,7 +20,7 @@ function readInviteSetAtMs(): number | null {
   }
 }
 
-/** Persisted invite from /invite/:token — still within the invite TTL window. */
+/** Persisted invite from /invite/:token - still within the invite TTL window. */
 export function hasRecentQuniTenantInviteContext(): boolean {
   const token = getQuniTenantInviteToken()
   const propertyId = getQuniTenantInvitePropertyId()

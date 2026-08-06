@@ -203,7 +203,7 @@ describe('non-student route readiness', () => {
 })
 
 describe('student route personal gate (unified with client)', () => {
-  it('profile setup complete with §01 only — uni/course/budget not in personal gate', () => {
+  it('profile setup complete with §01 only - uni/course/budget not in personal gate', () => {
     const p = lucyProfile({
       university_id: null,
       course: null,

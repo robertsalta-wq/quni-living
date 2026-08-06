@@ -2,7 +2,7 @@
  * Dual-read helpers for Stage 6 operational queries.
  *
  * New lifecycle rows land only on booking_events (no dual-write).
- * Historical STE rows remain the source for pre-cutover markers — read
+ * Historical STE rows remain the source for pre-cutover markers - read
  * booking_events first, then fall back to STE so cooldown / PI recovery /
  * expiry-refund warnings keep working across the cut.
  */

@@ -13,7 +13,7 @@ type PapersBlockProps = {
   homeReturn?: boolean
 }
 
-/** Signature strip under the bento — legal lookup + rules + social (social absent from Claude mock). */
+/** Signature strip under the bento - legal lookup + rules + social (social absent from Claude mock). */
 export default function PapersBlock({ compact = false, homeReturn = false }: PapersBlockProps) {
   const entity = useLegalEntity()
   const abn = entity.abn.trim()

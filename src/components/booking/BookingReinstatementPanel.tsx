@@ -164,7 +164,7 @@ export default function BookingReinstatementPanel({ bookingId, bookingStatus, on
           {state.viewerRole === 'landlord' ? (
             <p className="text-xs leading-relaxed text-admin-ink-4">
               Listing fee was refunded when this booking expired. Confirming reinstates without
-              re-charging — payment will be reconciled separately.
+              re-charging - payment will be reconciled separately.
             </p>
           ) : null}
           <p className="text-xs leading-relaxed text-admin-ink-4">

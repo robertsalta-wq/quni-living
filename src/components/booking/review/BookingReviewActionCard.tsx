@@ -22,13 +22,13 @@ const DEADLINE_TONE: Record<'info' | 'warning', string> = {
 }
 
 /**
- * Sticky-rail action / status card chrome — HTML visual SoT.
+ * Sticky-rail action / status card chrome - HTML visual SoT.
  *
  * Layout rule (enforce in review): ActionCard never contains another
  * bordered/tinted card. Children/footer may include plain text, buttons,
  * form controls, and non-card chrome only. Status/info/checklist panels
  * (border + filled/tinted background, or a full bordered section) must be
- * siblings of ActionCard in the rail — gating panels above, info panels below.
+ * siblings of ActionCard in the rail - gating panels above, info panels below.
  */
 export default function BookingReviewActionCard({
   eyebrow,
@@ -73,7 +73,7 @@ export default function BookingReviewActionCard({
   )
 }
 
-/** Primary coral CTA — full width. */
+/** Primary coral CTA - full width. */
 export function bookingReviewPrimaryButtonClass(disabled = false): string {
   if (disabled) {
     return 'inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-[10px] border-0 bg-[var(--quni-lifecycle-deferred-bg)] px-4 py-3 text-[14.5px] font-semibold text-[#B8B2C0]'
@@ -81,7 +81,7 @@ export function bookingReviewPrimaryButtonClass(disabled = false): string {
   return 'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-admin-coral px-4 py-3 text-[14.5px] font-semibold text-white hover:bg-admin-coral-hover'
 }
 
-/** Ghost secondary — full width or flex-1. */
+/** Ghost secondary - full width or flex-1. */
 export function bookingReviewGhostButtonClass(): string {
   return 'w-full cursor-pointer rounded-[10px] border border-admin-line bg-transparent px-4 py-[11px] text-[13.5px] font-semibold text-admin-ink-3 hover:bg-admin-surface-2'
 }

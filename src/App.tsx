@@ -75,7 +75,7 @@ function App() {
         <SeoPrivateRoutes />
         <div className="flex min-h-0 w-full flex-1 flex-col">
           <Routes>
-            {/* Authenticated app shell — section + focus destinations */}
+            {/* Authenticated app shell - section + focus destinations */}
             <Route element={<AppShellLayout />}>
               <Route
                 path="/messages/:conversationId?"
@@ -187,13 +187,13 @@ function App() {
               />
             </Route>
 
-            {/* AI landing — no marketing header; eager for prerender SEO */}
+            {/* AI landing - no marketing header; eager for prerender SEO */}
             <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
 
             {/*
-              Landlord desk — same URL in Preview (desk_shell_enabled) and Production.
+              Landlord desk - same URL in Preview (desk_shell_enabled) and Production.
               Production: Edge middleware issues HTTP 302 → partnerships; client Navigate matches.
-              Never 301 — permanent redirect caches poison the real URL.
+              Never 301 - permanent redirect caches poison the real URL.
             */}
             <Route
               path="/for-landlords"
@@ -206,7 +206,7 @@ function App() {
               }
             />
 
-            {/* Admin — own layout */}
+            {/* Admin - own layout */}
             <Route
               path="/admin"
               element={
@@ -244,7 +244,7 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
-            {/* Marketing / auth — public Header + Footer */}
+            {/* Marketing / auth - public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
               {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS / empty shells). */}
               <Route path="/" element={<Home />} />

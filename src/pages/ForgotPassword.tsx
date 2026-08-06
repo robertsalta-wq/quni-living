@@ -52,7 +52,7 @@ export default function ForgotPassword() {
         </p>
         <p className="text-sm text-gray-600 mt-4">
           Open the link in a private/incognito window if your email app previews links. The link expires after a short
-          time — request another below if it stops working.
+          time - request another below if it stops working.
         </p>
         <button
           type="button"

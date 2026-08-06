@@ -1,5 +1,5 @@
 /**
- * Server mirror of src/lib/booking/landlordResponseExpiry.ts — keep in sync.
+ * Server mirror of src/lib/booking/landlordResponseExpiry.ts - keep in sync.
  */
 
 export const BOOKING_LANDLORD_RESPONSE_EXPIRY_DAYS_LISTING = 7

@@ -31,9 +31,9 @@ export type ResolvedUtilityService = {
   individuallyMetered: boolean | null
   /** Stored apportionment share (1–100) when tenant pays and not individually metered. */
   apportionmentPercent: number | null
-  /** Form 18a Item 14 display — "{n}%". */
+  /** Form 18a Item 14 display - "{n}%". */
   apportionmentCost: string | null
-  /** Form 18a Item 15 — when tenantMustPay. */
+  /** Form 18a Item 15 - when tenantMustPay. */
   howMustBePaid: string | null
 }
 

@@ -55,7 +55,7 @@ function FeeRows({ rows, paidId }: { rows: typeof FEE_ROWS_VISIBLE; paidId?: str
 }
 
 /**
- * Live landlord front door — desk anatomy (shared slots from the /home-v2 system).
+ * Live landlord front door - desk anatomy (shared slots from the /home-v2 system).
  * No marketing header/footer; wordmark + home return live in the grand Listing desk.
  */
 export default function ForLandlords() {
@@ -66,7 +66,7 @@ export default function ForLandlords() {
   return (
     <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
-        title="List a room — for landlords"
+        title="List a room - for landlords"
         description={FOR_LANDLORDS_DESCRIPTION}
         canonicalPath={FOR_LANDLORDS_PATH}
         jsonLd={jsonLd}
@@ -75,7 +75,7 @@ export default function ForLandlords() {
 
       <main className={`${SITE_CONTENT_MAX_CLASS} flex flex-1 flex-col py-3 sm:py-4`}>
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
-          {/* 1 · LISTING — grand */}
+          {/* 1 · LISTING - grand */}
           <Desk
             tone="navy"
             className="desk-settle gap-3 md:col-span-2"
@@ -217,7 +217,7 @@ export default function ForLandlords() {
             nameplate={<DeskNameplate>Agreements</DeskNameplate>}
             letterhead={
               <DeskLetterhead className="text-[17px] text-[var(--quni-ink-2)]">
-                Accept — and the paperwork signs itself.
+                Accept - and the paperwork signs itself.
               </DeskLetterhead>
             }
             paperweight={<DeskPaperweight>✓ State-compliant</DeskPaperweight>}
@@ -225,7 +225,7 @@ export default function ForLandlords() {
               <DeskInTray>
                 <div className="quni-card mt-1 border-[var(--quni-cream-border)] px-2.5 py-2.5">
                   <p className="m-0 font-display text-[11px] font-bold text-[var(--quni-ink-2)]">
-                    Residential tenancy — room
+                    Residential tenancy - room
                   </p>
                   <div className="mt-1.5 space-y-1.5">
                     <div className="h-[3px] w-[92%] rounded-sm bg-[var(--quni-cream-border)]" />
@@ -309,7 +309,7 @@ export default function ForLandlords() {
             }
           />
 
-          {/* Related — quiet, below desks; does not compete with coral pen */}
+          {/* Related - quiet, below desks; does not compete with coral pen */}
           <nav
             aria-label="Related landlord pages"
             className="desk-settle md:col-span-3"

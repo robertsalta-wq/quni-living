@@ -83,7 +83,7 @@ export async function lazyExpireReinstatementRequest(
 
   if (error) throw error
   if (data) return data as ReinstatementRequestRow
-  // Concurrent updater already changed status — reload
+  // Concurrent updater already changed status - reload
   const again = await loadReinstatementRequestById(admin, row.id)
   return again ?? { ...row, status: 'window_expired', updated_at: nowIso }
 }

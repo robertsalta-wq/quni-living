@@ -51,7 +51,7 @@ export function useConversationPresence(
         try {
           await channel.track({ online_at: Date.now() })
         } catch {
-          /* presence unavailable — degrade to no indicator */
+          /* presence unavailable - degrade to no indicator */
         }
       })
 

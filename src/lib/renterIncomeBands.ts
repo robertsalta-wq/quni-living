@@ -1,4 +1,4 @@
-/** Weekly gross income bands (AUD) — nullable text stored in `income_band`. */
+/** Weekly gross income bands (AUD) - nullable text stored in `income_band`. */
 export const WEEKLY_INCOME_BAND_OPTIONS = [
   { value: 'under_400', label: 'Under $400 /wk' },
   { value: '400_600', label: '$400–$600 /wk' },

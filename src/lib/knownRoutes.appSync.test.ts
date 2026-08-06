@@ -24,7 +24,7 @@ export function concretePathFromRoutePattern(pattern: string): string | null {
 
 type RouteDecl = { path: string; absolute: boolean; line: number }
 
-/** Absolute `path="/..."` only — public + top-level app shells. */
+/** Absolute `path="/..."` only - public + top-level app shells. */
 export function extractAbsoluteAppRoutePatterns(appSource: string): string[] {
   const paths: string[] = []
   const re = /\bpath\s*=\s*(?:\{?"(\/[^"]*)"\}?|\{?'(\/[^']*)'\}?)/g

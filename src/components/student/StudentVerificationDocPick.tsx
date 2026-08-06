@@ -6,7 +6,7 @@ const defaultPickButtonClass =
 /**
  * Button-only picker trigger. The actual hidden <input type="file"> lives at the
  * root of StudentVerificationPanel / renter verification (hoisted with a stable key)
- * so that re-renders of the surrounding card UI never tear down / remount the input —
+ * so that re-renders of the surrounding card UI never tear down / remount the input -
  * which on Android Chrome would drop the picker's `change` event. This component just
  * invokes the panel-level click callback.
  */

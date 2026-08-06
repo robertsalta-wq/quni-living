@@ -12,7 +12,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { useAuthContext } from '../../context/AuthContext'
 
 /**
- * Authenticated app destinations — AppHeader + AppActionBar decided independently
+ * Authenticated app destinations - AppHeader + AppActionBar decided independently
  * (docs/app-chrome-brief.md). Pages never declare header geometry.
  */
 export default function AppShellLayout() {

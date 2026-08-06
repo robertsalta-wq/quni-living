@@ -40,7 +40,7 @@ describe('deriveLandlordPrimaryAction', () => {
   })
 
   it('pre-bond pin: confirmed + bond null + boarding → mark-bond / Confirm the bond', () => {
-    // mark-bond is only for confirmed|active|completed (not bond_pending — that is bond-received).
+    // mark-bond is only for confirmed|active|completed (not bond_pending - that is bond-received).
     const result = deriveLandlordPrimaryAction({
       ...base,
       bookingStatus: 'confirmed',

@@ -54,7 +54,7 @@ function minimalProps(): OccupancyAgreementProps {
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd, Brisbane QLD 4001',
+    paymentReference: 'Alex Resident - 2 Demo Rd, Brisbane QLD 4001',
     schemeApplies: true,
     qldBondRemittancePreference: 'landlord_collects_remits',
     specialConditions: [],
@@ -86,7 +86,7 @@ describe('QldLicenceToOccupyOnSite', () => {
     expect(text).not.toContain('Quni Living Pty Ltd')
     expect(text).toContain('Jane Owner Trust')
     expect(text).toContain('123-456')
-    expect(text).toContain('Bond payment — your choice')
+    expect(text).toContain('Bond payment - your choice')
     expect(text).toContain('Pay your host directly')
     expect(text).toContain('10 days')
     expect(text).toContain('lodge with')
