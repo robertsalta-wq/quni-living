@@ -46,6 +46,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   label: { fontSize: 8, color: '#555', marginBottom: 2 },
+  // Same as platform addendum: tiny white tags so DocuSeal parses a single-line
+  // {{...}} without wrapping (wrapped tags drop signature fields and block Complete).
+  docusealTag: { fontSize: 1, color: '#FFFFFF' },
 })
 
 export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowledgmentProps) {
@@ -92,7 +95,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
       React.createElement(
         Text,
         { style: styles.p },
-        `The Agreement terminates and the Tenant surrenders the Premises at the end of ${terminationDate} ("Termination Date"). Until the Termination Date the Agreement continues in full — the Tenant remains entitled to occupy the Premises and remains liable for rent and their obligations up to that date.`,
+        `The Agreement terminates and the Tenant surrenders the Premises at the end of ${terminationDate} ("Termination Date"). Until the Termination Date the Agreement continues in full - the Tenant remains entitled to occupy the Premises and remains liable for rent and their obligations up to that date.`,
       ),
       React.createElement(Text, { style: styles.h }, '3. Rent and charges'),
       React.createElement(
@@ -140,7 +143,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
             { style: styles.sigBox },
             React.createElement(
               Text,
-              null,
+              { style: styles.docusealTag },
               platformAddendumDocusealTag('LandlordSignature', 'First Party', 'signature'),
             ),
           ),
@@ -149,7 +152,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
             { style: styles.dateBox },
             React.createElement(
               Text,
-              null,
+              { style: styles.docusealTag },
               platformAddendumDocusealTag('LandlordDate', 'First Party', 'date'),
             ),
           ),
@@ -163,7 +166,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
             { style: styles.sigBox },
             React.createElement(
               Text,
-              null,
+              { style: styles.docusealTag },
               platformAddendumDocusealTag('TenantSignature', 'Second Party', 'signature'),
             ),
           ),
@@ -172,7 +175,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
             { style: styles.dateBox },
             React.createElement(
               Text,
-              null,
+              { style: styles.docusealTag },
               platformAddendumDocusealTag('TenantDate', 'Second Party', 'date'),
             ),
           ),

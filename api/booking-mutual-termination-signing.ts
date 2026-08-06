@@ -2,9 +2,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { resolveSigningLinkUrl } from './lib/docuseal/signLinkWrap.js'
-import { sendMutualTerminationSigningEmails } from './lib/booking/termination/sendMutualTerminationSigningEmails.js'
+import { generateAndSendMutualTerminationDoc } from './lib/booking/termination/generateMutualTerminationDoc.js'
+import { isBondOutcome } from './lib/booking/termination/types.js'
 
-export const config = { runtime: 'nodejs', maxDuration: 30 }
+export const config = { runtime: 'nodejs', maxDuration: 60 }
 
 function corsJson(res, body, status = 200, origin) {
   const allowOrigin = origin || '*'
@@ -83,7 +84,7 @@ export default async function handler(req, res) {
     const { data: booking } = await admin
       .from('bookings')
       .select(
-        'id, landlord_id, student_id, status, termination_effective_date, property_id, properties ( address, suburb, state, postcode )',
+        'id, landlord_id, student_id, status, termination_effective_date, termination_type, bond_outcome, bond_outcome_note, property_id, properties ( address, suburb, state, postcode )',
       )
       .eq('id', bookingId)
       .maybeSingle()
@@ -118,6 +119,44 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'No tenancy for booking', code: 'no_tenancy' }, 404, origin)
     }
 
+    // Landlord resend rebuilds PDF + DocuSeal (fixes packages that parsed dates but not signatures).
+    let emails = null
+    if (resendEmails) {
+      if (booking.status !== 'terminating' || booking.termination_type !== 'mutual_surrender') {
+        return corsJson(
+          res,
+          { error: 'Booking is not in mutual-surrender terminating state', code: 'not_terminating' },
+          409,
+          origin,
+        )
+      }
+      const effective =
+        typeof booking.termination_effective_date === 'string'
+          ? booking.termination_effective_date
+          : ''
+      if (!effective) {
+        return corsJson(res, { error: 'Missing termination effective date', code: 'no_effective' }, 409, origin)
+      }
+      const bondOutcome = isBondOutcome(booking.bond_outcome) ? booking.bond_outcome : 'pending'
+      const gen = await generateAndSendMutualTerminationDoc({
+        admin,
+        bookingId,
+        terminationEffectiveDate: effective,
+        bondOutcome,
+        bondOutcomeNote: booking.bond_outcome_note,
+        continueInSamePremises: true,
+      })
+      if (!gen.ok) {
+        return corsJson(res, { error: gen.message, code: gen.code }, gen.status, origin)
+      }
+      emails = {
+        landlordSent: Boolean(gen.landlordSigningUrl),
+        tenantSent: Boolean(gen.tenantSigningUrl),
+        regenerated: true,
+        submissionId: gen.submissionId,
+      }
+    }
+
     const { data: doc } = await admin
       .from('tenancy_documents')
       .select('id, status, landlord_signed_at, student_signed_at, metadata, docuseal_submission_id')
@@ -142,58 +181,6 @@ export default async function handler(req, res) {
       viewerRole === 'landlord' ? Boolean(doc.landlord_signed_at) : Boolean(doc.student_signed_at)
     const otherSigned =
       viewerRole === 'landlord' ? Boolean(doc.student_signed_at) : Boolean(doc.landlord_signed_at)
-
-    let emails = null
-    if (resendEmails && doc.status !== 'signed') {
-      const { data: lp } = await admin
-        .from('landlord_profiles')
-        .select('full_name, first_name, last_name, email')
-        .eq('id', booking.landlord_id)
-        .maybeSingle()
-      const { data: sp } = await admin
-        .from('student_profiles')
-        .select('full_name, first_name, last_name, email')
-        .eq('id', booking.student_id)
-        .maybeSingle()
-
-      const landlordName =
-        [lp?.first_name, lp?.last_name].filter(Boolean).join(' ').trim() ||
-        (typeof lp?.full_name === 'string' ? lp.full_name.trim() : '') ||
-        'Landlord'
-      const tenantName =
-        [sp?.first_name, sp?.last_name].filter(Boolean).join(' ').trim() ||
-        (typeof sp?.full_name === 'string' ? sp.full_name.trim() : '') ||
-        'Tenant'
-      const landlordEmail = typeof lp?.email === 'string' ? lp.email.trim() : ''
-      const tenantEmail = typeof sp?.email === 'string' ? sp.email.trim() : ''
-      const prop = booking.properties
-      const premisesLine = [prop?.address, prop?.suburb, prop?.state, prop?.postcode]
-        .filter(Boolean)
-        .join(', ')
-
-      if (!landlordEmail || !tenantEmail || !landlordSigningUrl || !tenantSigningUrl) {
-        return corsJson(
-          res,
-          { error: 'Missing party email or signing link for resend', code: 'resend_incomplete' },
-          409,
-          origin,
-        )
-      }
-
-      emails = await sendMutualTerminationSigningEmails({
-        landlordName,
-        landlordEmail,
-        landlordSigningUrl,
-        tenantName,
-        tenantEmail,
-        tenantSigningUrl,
-        premisesLine: premisesLine || 'the Premises',
-        terminationEffectiveDate:
-          typeof booking.termination_effective_date === 'string'
-            ? booking.termination_effective_date
-            : '',
-      })
-    }
 
     if (doc.status === 'signed' || (viewerSigned && otherSigned)) {
       return corsJson(

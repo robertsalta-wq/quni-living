@@ -94,15 +94,23 @@ export function MutualSurrenderTerminatePanel({
       setOtherSigned(Boolean(body.otherSigned))
       setSigningUrl(typeof body.signingUrl === 'string' ? body.signingUrl : null)
       if (opts?.resendEmails) {
-        const emails = body.emails as { landlordSent?: boolean; tenantSent?: boolean } | null
-        if (emails?.landlordSent || emails?.tenantSent) {
+        const emails = body.emails as {
+          landlordSent?: boolean
+          tenantSent?: boolean
+          regenerated?: boolean
+        } | null
+        if (emails?.regenerated) {
+          setOkMsg(
+            'Signing package rebuilt with signature fields and emails resent. Use Open signing page (old links no longer work).',
+          )
+        } else if (emails?.landlordSent || emails?.tenantSent) {
           setOkMsg(
             `Signing emails sent${emails.landlordSent ? ' to landlord' : ''}${
               emails.landlordSent && emails.tenantSent ? ' and' : ''
             }${emails.tenantSent ? ' tenant' : ''}.`,
           )
         } else {
-          setOkMsg('Resend requested — check that signing links exist for both parties.')
+          setOkMsg('Resend requested - check that signing links exist for both parties.')
         }
       }
     } catch (e) {
@@ -266,7 +274,7 @@ export function MutualSurrenderTerminatePanel({
         </p>
         <div className="space-y-1 text-sm text-admin-ink-2">
           <p>
-            Status: <strong>terminating</strong> — effective {terminationEffectiveDate || '—'}. Room
+            Status: <strong>terminating</strong> - effective {terminationEffectiveDate || '-'}. Room
             remains reserved until that date.
           </p>
           <p>
@@ -276,9 +284,9 @@ export function MutualSurrenderTerminatePanel({
               : viewerSigned && otherSigned
                 ? 'both parties signed'
                 : viewerSigned
-                  ? 'you signed — waiting for the other party'
+                  ? 'you signed - waiting for the other party'
                   : otherSigned
-                    ? 'other party signed — your signature still needed'
+                    ? 'other party signed - your signature still needed'
                     : 'waiting for landlord + tenant e-sign'}
           </p>
           {terminationReasonNote ? <p>Reason: {terminationReasonNote}</p> : null}
@@ -288,7 +296,7 @@ export function MutualSurrenderTerminatePanel({
             <p className="text-sm font-semibold text-admin-ink-2">Sign mutual termination</p>
             <p className="text-xs text-admin-ink-3">
               Same process as the tenancy agreement: Quni emails both parties a signing link, and you
-              can open yours here.
+              can open yours here. If signature boxes are missing, use Rebuild &amp; resend below.
             </p>
             <div className="flex flex-wrap gap-2">
               {signingUrl ? (
@@ -304,7 +312,7 @@ export function MutualSurrenderTerminatePanel({
                 <p className="text-xs text-admin-warning-fg self-center">
                   {signingLoading
                     ? 'Loading signing link…'
-                    : 'Signing link not available yet — try Resend signing emails.'}
+                    : 'Signing link not available yet - try Rebuild & resend.'}
                 </p>
               )}
               <button
@@ -313,7 +321,7 @@ export function MutualSurrenderTerminatePanel({
                 onClick={() => void onResendSigningEmails()}
                 className="inline-flex items-center rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
               >
-                {busy ? 'Sending…' : 'Resend signing emails'}
+                {busy ? 'Rebuilding…' : 'Rebuild & resend signing'}
               </button>
             </div>
           </div>
@@ -362,7 +370,6 @@ export function MutualSurrenderTerminatePanel({
     <details className="mt-6 border-t border-admin-line pt-4 group">
       <summary className="cursor-pointer list-none text-sm font-medium text-admin-ink-4 hover:text-admin-ink-2 [&::-webkit-details-marker]:hidden">
         <span className="underline-offset-2 group-open:underline">End agreement (mutual surrender)</span>
-        <span className="ml-2 font-normal text-admin-ink-5">— rarely needed</span>
       </summary>
       <div className="mt-3 space-y-3">
         <p className="text-xs text-admin-ink-4">
@@ -394,7 +401,7 @@ export function MutualSurrenderTerminatePanel({
               ))}
             </select>
             <span className="mt-1 block font-normal text-admin-ink-5">
-              Ops checklist only — does not file with RBO.
+              Ops checklist only - does not file with RBO.
             </span>
           </label>
           <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">
