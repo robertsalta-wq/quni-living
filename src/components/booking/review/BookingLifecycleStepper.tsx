@@ -9,7 +9,7 @@ export type BookingLifecycleStepperProps = {
 }
 
 /**
- * Horizontal booking progress — HTML visual SoT (green done, coral ring current).
+ * Horizontal booking progress - HTML visual SoT (green done, coral ring current).
  */
 export default function BookingLifecycleStepper({
   currentIndex,

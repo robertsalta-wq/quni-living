@@ -12,7 +12,7 @@ const PLATFORM_HELP_LINKS = [
 
 const SEO_TITLE = 'Guides & advice for student renters'
 const SEO_DESCRIPTION =
-  'Practical guides for students renting in Australia — your rights, fair housing, and how to search with confidence on Quni.'
+  'Practical guides for students renting in Australia - your rights, fair housing, and how to search with confidence on Quni.'
 
 export default function Guides() {
   const articles = listGuideSlugs()

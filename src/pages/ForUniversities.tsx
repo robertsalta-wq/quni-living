@@ -138,7 +138,7 @@ function PartnershipEnquiryForm() {
       `Institution: ${institution.trim()}`,
       `Your role: ${role.trim()}`,
       notesTrimmed ? `\nMessage:\n${notesTrimmed}` : '',
-      '\n—\nSubmitted via /for-universities partnership form',
+      '\n-\nSubmitted via /for-universities partnership form',
     ]
       .filter(Boolean)
       .join('\n')
@@ -293,7 +293,7 @@ function PartnershipEnquiryForm() {
               className={uniTextareaClass}
               value={notes}
               onChange={(ev) => setNotes(ev.target.value)}
-              placeholder="Optional — tell us what you're looking for or any questions."
+              placeholder="Optional - tell us what you're looking for or any questions."
             />
           </div>
 

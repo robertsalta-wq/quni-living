@@ -141,7 +141,7 @@ export function ListingHubStatusDot({
 }
 
 /**
- * Quality ring — label centred over the SVG; stroke colour is green only at 100%.
+ * Quality ring - label centred over the SVG; stroke colour is green only at 100%.
  * Ring stays 82px; type is sized so the widest label ("100%") spans ~65% of the
  * inner diameter (~57px) and never touches the stroke.
  */

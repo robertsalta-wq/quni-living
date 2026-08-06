@@ -1,5 +1,5 @@
 /**
- * Status-coverage smoke — every bookings.status must resolve layout + action copy for both roles.
+ * Status-coverage smoke - every bookings.status must resolve layout + action copy for both roles.
  * Keeps commit-1 layout tests and commit-5b action-model tests as the detailed source of truth;
  * this file only asserts the cross-cutting “no blank status” invariant for the v3 review surfaces.
  */

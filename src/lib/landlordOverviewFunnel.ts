@@ -15,7 +15,7 @@ export type LandlordOverviewFunnelStep = {
 }
 
 export type LandlordOverviewFunnel = {
-  /** Slim green confirmation — listing is live. */
+  /** Slim green confirmation - listing is live. */
   profileComplete: boolean
   /** "Step 1 of 2" / "Step 2 of 2" for the in-progress header. */
   stepOfTwoLabel: string

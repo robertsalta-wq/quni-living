@@ -108,7 +108,7 @@ export function RenterProfileAboutSection({
           rows={3}
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          placeholder="Tell landlords a bit about yourself — your course, what you're after in a place, and how you like to live."
+          placeholder="Tell landlords a bit about yourself - your course, what you're after in a place, and how you like to live."
           className={renterTextareaClass}
         />
       </div>

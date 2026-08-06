@@ -1,4 +1,4 @@
-/** Guest “save then sign in” sessionStorage helpers — no supabase import. */
+/** Guest “save then sign in” sessionStorage helpers - no supabase import. */
 
 export const PENDING_SAVE_PROPERTY_KEY = 'quni_save_property_id'
 

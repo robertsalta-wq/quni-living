@@ -1,4 +1,4 @@
-/** Basic user@domain.tld check — rejects addresses with no domain TLD (e.g. user@outlook). */
+/** Basic user@domain.tld check - rejects addresses with no domain TLD (e.g. user@outlook). */
 const EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const SIGNUP_EMAIL_INVALID_MESSAGE = 'Enter a valid email address'

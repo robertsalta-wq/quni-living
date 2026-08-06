@@ -91,7 +91,7 @@ export default function RenterProfileHub({
             </button>
             {setupExpanded ? (
               <div className="border-t border-[rgba(29,158,117,0.25)] px-[15px] py-3 text-[13px] leading-snug text-[var(--quni-success-fg)]">
-                Profile complete — you can apply for listings.
+                Profile complete - you can apply for listings.
               </div>
             ) : null}
           </div>

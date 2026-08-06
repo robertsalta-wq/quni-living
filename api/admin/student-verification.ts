@@ -1,6 +1,6 @@
 /**
  * Platform admin: update per-item renter verification state (documents + emails).
- * Uses service role — student_profiles has admin SELECT RLS only, not UPDATE.
+ * Uses service role - student_profiles has admin SELECT RLS only, not UPDATE.
  */
 import { createClient } from '@supabase/supabase-js'
 

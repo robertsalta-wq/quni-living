@@ -96,7 +96,7 @@ type PropertyBookingEmbed = Pick<
 
 type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
-  /** Derived client-side from tenancy_documents lookup — not a PostgREST embed. */
+  /** Derived client-side from tenancy_documents lookup - not a PostgREST embed. */
   hasBondReceipt?: boolean
 }
 
@@ -147,7 +147,7 @@ function ListingBondGuidanceForBooking({
   })
   if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
   const payout = normalizePropertyPayoutEmbed(property.property_payout_details)
-  const paymentReference = `${renterDisplayName.trim()} — ${propertyAddressLine(property)}`.trim()
+  const paymentReference = `${renterDisplayName.trim()} - ${propertyAddressLine(property)}`.trim()
   const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state, {
     qldBondRemittancePreference: parseQldBondRemittancePreference(property.qld_bond_remittance_preference),
     payee: propertyPayoutDetailsComplete(payout) ? payout : null,
@@ -688,7 +688,7 @@ export default function StudentDashboard() {
                           propertySuburb={prop?.suburb}
                           serviceLabel={landlordServiceTierShortLabel(serviceTier)}
                           moveInLabel={formatDate(b.start_date)}
-                          endLabel={b.end_date ? formatDate(b.end_date) : '—'}
+                          endLabel={b.end_date ? formatDate(b.end_date) : '-'}
                           weeklyRent={rent}
                           status={b.status}
                           propertySlug={slug}
@@ -765,7 +765,7 @@ export default function StudentDashboard() {
             ) : savedProperties.length === 0 ? (
               <DashboardEmpty
                 title="No saved properties yet"
-                description="Tap the heart on a listing to save it — your favourites will show up here."
+                description="Tap the heart on a listing to save it - your favourites will show up here."
                 action={
                   <Link to="/listings" className={primaryBtnClass}>
                     Browse listings

@@ -9,7 +9,7 @@ import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
  * One-shot redirect after a real sign-in (SIGNED_IN, not INITIAL_SESSION cold load):
  * incomplete onboarding → onboarding step; otherwise → stored return path or the user's dashboard.
  *
- * Exempt routes (`/login`, `/auth/callback`, …) may own navigation first — but we do **not** clear
+ * Exempt routes (`/login`, `/auth/callback`, …) may own navigation first - but we do **not** clear
  * the one-shot there. If those handlers fail or bounce the user to marketing `/`, this safety net
  * still runs. Flag clears only after we navigate (or admin / verify-email early exits).
  */

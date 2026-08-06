@@ -34,17 +34,17 @@ function event(partial: Partial<BookingEventRow> & Pick<BookingEventRow, 'event_
   }
 }
 
-describe('RenterBookingZones — privacy boundary (commit 8)', () => {
+describe('RenterBookingZones - privacy boundary (commit 8)', () => {
   it('tripwire: mounts BookingActivityTimeline in mode="renter" only, never mode="internal"', () => {
     const src = readSrc('src/components/booking/RenterBookingZones.tsx')
     expect(src).toContain('mode="renter"')
     expect(src).not.toContain('mode="internal"')
   })
 
-  it('behavioural: buildBookingActivityItems(..., "renter") surfaces only audience=both events — no internal, no email', () => {
+  it('behavioural: buildBookingActivityItems(..., "renter") surfaces only audience=both events - no internal, no email', () => {
     const items = buildBookingActivityItems(
       [
-        // internal-only, non-email — must be dropped for the renter.
+        // internal-only, non-email - must be dropped for the renter.
         event({
           id: 'ai-note',
           event_type: 'booking.ai_assessment_generated',
@@ -52,7 +52,7 @@ describe('RenterBookingZones — privacy boundary (commit 8)', () => {
           outcome: 'success',
           occurred_at: '2026-07-11T09:00:00.000Z',
         }),
-        // internal email event — must be dropped for the renter (hard privacy boundary).
+        // internal email event - must be dropped for the renter (hard privacy boundary).
         event({
           id: 'email',
           event_type: 'email.delivered',
@@ -62,7 +62,7 @@ describe('RenterBookingZones — privacy boundary (commit 8)', () => {
           metadata: { template_key: 'listing_payment_instructions', to_masked: ['sa***@gmail.com'] },
           occurred_at: '2026-07-11T09:05:00.000Z',
         }),
-        // audience=both — must surface.
+        // audience=both - must surface.
         event({
           id: 'confirm',
           event_type: 'booking.confirmed',

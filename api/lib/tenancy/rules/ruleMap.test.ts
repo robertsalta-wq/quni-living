@@ -32,7 +32,7 @@ function baseRow(overrides: Partial<RuleMapRow> = {}): RuleMapRow {
   }
 }
 
-describe('landlord rule map — structure', () => {
+describe('landlord rule map - structure', () => {
   it('has 16 rows (8 questions × NSW/QLD)', () => {
     expect(LANDLORD_RULE_MAP_ROWS).toHaveLength(16)
   })
@@ -57,7 +57,7 @@ describe('landlord rule map — structure', () => {
   })
 })
 
-describe('landlord rule map — validator invariants', () => {
+describe('landlord rule map - validator invariants', () => {
   it('fails when rule is set without sourceUrl (source-gate)', () => {
     const errors = validateRuleMapRow(
       baseRow({
@@ -110,7 +110,7 @@ describe('landlord rule map — validator invariants', () => {
   })
 })
 
-describe('landlord rule map — Q3 bond compatibility', () => {
+describe('landlord rule map - Q3 bond compatibility', () => {
   it('generates TenancyRules deep-equal to nsw.ts / qld.ts for every tier', () => {
     const tiers = ['T1', 'T2'] as const
     for (const tier of tiers) {

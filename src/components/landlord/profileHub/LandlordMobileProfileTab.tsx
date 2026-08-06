@@ -63,14 +63,14 @@ const INSURANCE_PROVIDERS = [
 ] as const
 
 const BIO_PLACEHOLDER =
-  'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
+  'Tell students about yourself - your management style, response times, and what makes your properties great to live in.'
 
 const inputClass =
   'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
 const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
 const errClass = 'text-red-600 text-xs mt-1'
 
-const SAVE_WRITE_FAILURE = "Couldn't save — try again"
+const SAVE_WRITE_FAILURE = "Couldn't save - try again"
 
 const FIELD_HINT_LABELS: Partial<Record<string, string>> = {
   landlordType: 'landlord type',
@@ -1069,7 +1069,7 @@ function PersonalSectionForm({
           className={`${inputClass} bg-[var(--quni-surface-2)] text-[var(--quni-ink-4)]`}
         />
         <p className="mt-1.5 text-xs text-[var(--quni-ink-5)]">
-          Students never see your email — messages stay inside Quni.
+          Students never see your email - messages stay inside Quni.
         </p>
       </div>
 
@@ -1311,7 +1311,7 @@ function AboutSectionForm({
               disabled={photoUploading}
             />
           </label>
-          <p className="mt-2 text-xs text-[var(--quni-ink-5)]">JPG or PNG, at least 400×400px — optional</p>
+          <p className="mt-2 text-xs text-[var(--quni-ink-5)]">JPG or PNG, at least 400×400px - optional</p>
           {photoError ? <p className="mt-1 text-xs text-red-600">{photoError}</p> : null}
         </div>
       </div>
@@ -1550,14 +1550,14 @@ function PayoutsSectionForm({
         <ShieldIcon />
         <p className="text-[13.5px] leading-relaxed text-[var(--quni-ink-3)]">
           Payouts run through <strong className="text-[var(--quni-ink)]">Stripe Connect</strong>, which also verifies
-          your identity — <strong className="text-[var(--quni-ink)]">no documents to upload</strong>, and Quni never
+          your identity - <strong className="text-[var(--quni-ink)]">no documents to upload</strong>, and Quni never
           stores your ID.
         </p>
       </div>
       <div className="space-y-2.5">
         <PayoutRow
           done={readiness.accept.identityVerified}
-          title="Stripe Connect — payouts & identity"
+          title="Stripe Connect - payouts & identity"
           subtitle="Receive rent and verify who you are."
           statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
           action={
@@ -1600,7 +1600,7 @@ function PayoutsSectionForm({
           />
         ) : managedTierEnabled ? (
           <p className="text-[12.5px] text-[var(--quni-ink-5)] px-1">
-            Your <strong>Managed tier</strong> needs only Stripe Connect — no saved card required.
+            Your <strong>Managed tier</strong> needs only Stripe Connect - no saved card required.
           </p>
         ) : null}
       </div>
@@ -1715,7 +1715,7 @@ function LanguagesSectionForm({
   return (
     <div>
       <p className="text-[13.5px] text-[var(--quni-ink-3)] mb-3">
-        Select any languages you speak — shown to students browsing your listings.
+        Select any languages you speak - shown to students browsing your listings.
       </p>
       <LanguagesSpokenSelector value={languagesSpoken} onChange={onLanguagesChange} />
     </div>

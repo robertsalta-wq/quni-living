@@ -34,7 +34,7 @@
 :root {
   /* Set to 48px on native Android only (see nativeStatusBarInsetFallback.ts). */
   --quni-status-bar-fallback: 0px;
-  /* Colour aliases — values live in quni-design-tokens.css (imported above). */
+  /* Colour aliases - values live in quni-design-tokens.css (imported above). */
   --text: var(--quni-ink-4);
   --text-h: var(--quni-ink);
   --bg: var(--quni-surface-1);
@@ -293,7 +293,7 @@ code {
 }
 
 /*
- * /for-universities print/PDF — @page + body chrome + A4 typography.
+ * /for-universities print/PDF - @page + body chrome + A4 typography.
  * Screen styles live in ForUniversities.tsx + forUniversitiesClasses.ts (Tailwind).
  * Web/print visibility uses print:hidden / hidden print:block in TSX.
  */

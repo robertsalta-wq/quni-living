@@ -81,7 +81,7 @@ export default async function handler(request) {
 
   if (result.kind === 'auth') {
     captureSentryMessageEdge(
-      'DocuSeal API returned 401: DOCUSEAL_API_TOKEN is stale or invalid — tenancy agreement signing is down until the token is rotated on Vercel and Railway.',
+      'DocuSeal API returned 401: DOCUSEAL_API_TOKEN is stale or invalid - tenancy agreement signing is down until the token is rotated on Vercel and Railway.',
       { status: result.status },
       {
         level: 'error',
@@ -100,7 +100,7 @@ export default async function handler(request) {
   captureSentryMessageEdge(
     result.kind === 'misconfigured'
       ? 'DocuSeal healthcheck misconfigured: DOCUSEAL_API_URL or DOCUSEAL_API_TOKEN missing on Vercel.'
-      : 'DocuSeal API unreachable or returned a non-auth error — signing may be down (instance down, network, or unexpected HTTP status).',
+      : 'DocuSeal API unreachable or returned a non-auth error - signing may be down (instance down, network, or unexpected HTTP status).',
     extra,
     {
       level: 'error',

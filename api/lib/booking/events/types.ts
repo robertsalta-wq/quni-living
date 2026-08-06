@@ -36,7 +36,7 @@ export const BOOKING_EVENT_TYPES = [
   'document.reconciled',
   'document.generated',
   'document.archive_failed',
-  // Email (Stage 4) — always internal
+  // Email (Stage 4) - always internal
   'email.attempt',
   'email.accepted',
   'email.failed',

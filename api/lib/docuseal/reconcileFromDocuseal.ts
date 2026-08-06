@@ -93,7 +93,7 @@ function parseDocMetadata(row: TenancyDocumentSyncRow) {
   }
 }
 
-/** Webhook event_type fallback for full submission completion only — never form.completed. */
+/** Webhook event_type fallback for full submission completion only - never form.completed. */
 export function extractSubmissionCompletedAtFromPayload(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
@@ -174,7 +174,7 @@ export async function isCoTenantRequiredForTenancy(
 /**
  * Live signing statuses may move to sent_for_signing on partial sync.
  * Terminal / void document statuses must never be resurrected to sent_for_signing
- * (historical partial reconcile of archived leases — e.g. withdrawn bookings).
+ * (historical partial reconcile of archived leases - e.g. withdrawn bookings).
  */
 const LIVE_PARTIAL_DOC_STATUSES = new Set(['draft', 'sent_for_signing'])
 
@@ -186,7 +186,7 @@ export function nextTenancyDocumentStatusAfterSync(args: {
   if (args.fullySigned) return 'signed'
   if (previous === 'signed') return 'signed'
   if (LIVE_PARTIAL_DOC_STATUSES.has(previous)) return 'sent_for_signing'
-  // archived / voided / unknown terminal states: preserve — never archived → sent_for_signing
+  // archived / voided / unknown terminal states: preserve - never archived → sent_for_signing
   return previous
 }
 
@@ -439,7 +439,7 @@ export async function syncFullySignedDocusealSubmission(args: {
   }
 
   // Always persist per-party timestamps (and keep sent_for_signing until fully signed).
-  // Do not require PDF download for partial signatures — that blocked *_signed_at writes.
+  // Do not require PDF download for partial signatures - that blocked *_signed_at writes.
   if (!fullySigned) {
     const { error: partialErr } = await admin
       .from('tenancy_documents')
@@ -540,7 +540,7 @@ export async function syncFullySignedDocusealSubmission(args: {
   await emitSyncEvents(signedPath)
 
   // Listing: confirmed → active when bond + signature both done (order-independent).
-  // Soft-fail — do not break webhook / reconcile if advance fails.
+  // Soft-fail - do not break webhook / reconcile if advance fails.
   // Skip for mutual_termination (ending an agreement, not advancing into active).
   if (docRow.document_type !== 'mutual_termination') {
     try {

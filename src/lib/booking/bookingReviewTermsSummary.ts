@@ -1,14 +1,14 @@
 /**
- * Booking review v3 — Terms rail summary helpers (landlord voice only; rail is landlord-only).
+ * Booking review v3 - Terms rail summary helpers (landlord voice only; rail is landlord-only).
  * Visual SoT: Booking-review-v3-unpacked.html ~1217-1269 + JS state (~1483-1518).
- * Bond is always its own line — never folded into "Quni holds" (§14).
+ * Bond is always its own line - never folded into "Quni holds" (§14).
  */
 import type { RentBreakdownAud } from '../pricing/resolveWeeklyRent'
 import { formatDate } from '../../pages/admin/adminUi'
 
 export type BookingReviewTermsTier = 'listing' | 'managed'
 
-/** Pre-acceptance-ish statuses — no holding deposit has been collected yet. */
+/** Pre-acceptance-ish statuses - no holding deposit has been collected yet. */
 const PRE_ACCEPT_STATUSES = new Set([
   'pending',
   'pending_payment',
@@ -38,7 +38,7 @@ export type BookingReviewHoldRowInput = {
 }
 
 export type BookingReviewHoldRow = {
-  /** False on Listing (no deposit row at all — bond stays its own line) and pre-accept Managed. */
+  /** False on Listing (no deposit row at all - bond stays its own line) and pre-accept Managed. */
   show: boolean
   valueLabel: string
   caption: string | null
@@ -48,8 +48,8 @@ export type BookingReviewHoldRow = {
 
 /**
  * "Quni holds" row visibility + value for the Terms rail (§14).
- * - Listing: never shown — bond and rent go direct; see `resolveBookingReviewHoldNote`.
- * - Managed pre/awaiting_info/payment_failed/expired: not shown — deposit is held from confirmation.
+ * - Listing: never shown - bond and rent go direct; see `resolveBookingReviewHoldNote`.
+ * - Managed pre/awaiting_info/payment_failed/expired: not shown - deposit is held from confirmation.
  * - Managed bond_pending/confirmed: shows the held deposit amount, "Until day after move-in".
  * - Managed active/completed: shows $0 (green), captioned with the release date when known.
  */
@@ -77,7 +77,7 @@ export function resolveBookingReviewHoldRow(input: BookingReviewHoldRowInput): B
   }
 }
 
-/** Beige footer note under the Terms summary — landlord voice, tier + state aware. */
+/** Beige footer note under the Terms summary - landlord voice, tier + state aware. */
 export function resolveBookingReviewHoldNote(input: BookingReviewHoldRowInput): string {
   if (input.tier !== 'managed') {
     return 'Bond and rent are paid to you directly. Quni holds $0 at any point.'
@@ -92,8 +92,8 @@ export function resolveBookingReviewHoldNote(input: BookingReviewHoldRowInput): 
   if (isReleasedPhase) {
     const releasedLabel = input.depositReleasedAt?.trim() ? formatDate(input.depositReleasedAt.slice(0, 10)) : null
     return releasedLabel
-      ? `Quni holds $0 — the ${amount} holding deposit was released ${releasedLabel}, the day after move-in. The bond is handled by Quni.`
-      : 'Quni holds $0 — the holding deposit has been released. The bond is handled by Quni.'
+      ? `Quni holds $0 - the ${amount} holding deposit was released ${releasedLabel}, the day after move-in. The bond is handled by Quni.`
+      : 'Quni holds $0 - the holding deposit has been released. The bond is handled by Quni.'
   }
 
   return `Quni is holding a ${amount} holding deposit until the day after move-in, then releases it to you. The bond is handled separately by Quni.`
@@ -107,7 +107,7 @@ export type BookingReviewBreakdownRow = {
   muted?: boolean
 }
 
-/** "Rent breakdown & occupants" disclosure table — available every state (em dash when absent). */
+/** "Rent breakdown & occupants" disclosure table - available every state (em dash when absent). */
 export function resolveBookingReviewRentBreakdownRows(input: {
   weeklyRentAud: number | null
   breakdown: RentBreakdownAud | null
@@ -119,19 +119,19 @@ export function resolveBookingReviewRentBreakdownRows(input: {
   const total = input.weeklyRentAud ?? base
 
   return [
-    { key: 'base', label: 'Base weekly rent', valueLabel: base != null ? `${fmtAud(base)} /wk` : '—' },
+    { key: 'base', label: 'Base weekly rent', valueLabel: base != null ? `${fmtAud(base)} /wk` : '-' },
     {
       key: 'additional',
       label: 'Additional occupant',
-      valueLabel: additional != null ? `+${fmtAud(additional)} /wk` : '—',
+      valueLabel: additional != null ? `+${fmtAud(additional)} /wk` : '-',
       muted: additional == null,
     },
     {
       key: 'parking',
       label: 'Parking',
-      valueLabel: parking != null ? `+${fmtAud(parking)} /wk` : '—',
+      valueLabel: parking != null ? `+${fmtAud(parking)} /wk` : '-',
       muted: parking == null,
     },
-    { key: 'total', label: 'Total rent', valueLabel: total != null ? `${fmtAud(total)} /wk` : '—', emphasis: true },
+    { key: 'total', label: 'Total rent', valueLabel: total != null ? `${fmtAud(total)} /wk` : '-', emphasis: true },
   ]
 }

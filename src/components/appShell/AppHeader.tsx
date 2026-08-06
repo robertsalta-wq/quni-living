@@ -57,7 +57,7 @@ type AccountMenuProps = {
 
 /**
  * Shared account menu: Profile + Sign out.
- * Portaled to document.body — ChromeHeaderShell clips overflow (overflow-y-hidden),
+ * Portaled to document.body - ChromeHeaderShell clips overflow (overflow-y-hidden),
  * so an in-header absolute panel is invisible.
  */
 function AccountMenu({
@@ -199,7 +199,7 @@ function AccountMenu({
 }
 
 /**
- * App dashboard header — geometry from ChromeHeaderShell (marketing reference).
+ * App dashboard header - geometry from ChromeHeaderShell (marketing reference).
  * Landlords always get dashboard-inner (brand + Dashboard). Bar contents are
  * decided separately by AppActionBar.
  */
@@ -249,7 +249,7 @@ export default function AppHeader() {
     return local.slice(0, 2).toUpperCase()
   })()
 
-  /** Same source as marketing Header — initials only when no photo. */
+  /** Same source as marketing Header - initials only when no photo. */
   const profilePhotoUrl = profile?.avatar_url?.trim() || null
 
   function goLandlordSection(section: 'overview' | 'listings' | 'bookings' | 'profile') {
@@ -272,7 +272,7 @@ export default function AppHeader() {
     navigate(studentDashboardTabPath(section))
   }
 
-  /** Fixed-URL exit only — never browser history back. */
+  /** Fixed-URL exit only - never browser history back. */
   function onBack() {
     const state = location.state as { returnTo?: string } | null
     const returnTo = typeof state?.returnTo === 'string' && state.returnTo.trim() ? state.returnTo : null

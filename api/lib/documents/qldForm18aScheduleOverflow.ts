@@ -89,7 +89,7 @@ export function resolveUtilitiesScheduleOverflow(
         binding.howPaidField,
         form,
         font,
-        `${label} — how must be paid (Item 15): ${service.howMustBePaid.trim()}`,
+        `${label} - how must be paid (Item 15): ${service.howMustBePaid.trim()}`,
       )
       if (resolved.scheduleValue) {
         scheduleAssignments.push([binding.howPaidField, resolved.scheduleValue])

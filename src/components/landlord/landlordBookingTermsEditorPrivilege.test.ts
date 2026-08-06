@@ -8,7 +8,7 @@ function readSrc(relPath: string): string {
   return readFileSync(resolve(root, relPath), 'utf8')
 }
 
-/** Student / shared renter surfaces that mount BookingLeasePanel — must never host the landlord terms editor. */
+/** Student / shared renter surfaces that mount BookingLeasePanel - must never host the landlord terms editor. */
 const RENTER_SURFACES = [
   'src/pages/StudentDashboard.tsx',
   'src/components/booking/RenterBookingZones.tsx',
@@ -43,7 +43,7 @@ describe('landlord booking terms editor privilege boundary', () => {
   it('landlord review page mounts the terms rail, which is the sole UI mount of LandlordBookingTermsEditor', () => {
     const review = readSrc('src/pages/landlord/LandlordBookingReviewPage.tsx')
     expect(review).toContain('BookingReviewTermsRail')
-    // Editors must not mount directly on the page — only via the rail modal.
+    // Editors must not mount directly on the page - only via the rail modal.
     expect(review).not.toContain('LandlordBookingTermsEditor')
     expect(review).not.toContain('LandlordBookingAgreedRentEditor')
 

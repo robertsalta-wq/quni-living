@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-/** Shared incomplete-profile chrome — matches ProfileReadinessDriver collapsed incomplete. */
+/** Shared incomplete-profile chrome - matches ProfileReadinessDriver collapsed incomplete. */
 export const PROFILE_INCOMPLETE_NUDGE_CARD_CLASS =
   'quni-card border-admin-warning/40 bg-admin-warning-bg'
 

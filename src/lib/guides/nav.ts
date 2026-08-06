@@ -2,7 +2,7 @@ import { guideSeo as seoCanLandlordRefuseInternationalStudents } from '../../../
 import { guideSeo as seoBookingAPlaceYouHaventVisited } from '../../../content/guides/booking-a-place-you-havent-visited/seo.ts'
 import { guideSeo as seoListingForRentersWhoCantVisit } from '../../../content/guides/listing-for-renters-who-cant-visit/seo.ts'
 
-/** Lightweight guide links for chrome (Footer) — SEO metadata only, no article markdown. */
+/** Lightweight guide links for chrome (Footer) - SEO metadata only, no article markdown. */
 export type GuideNavItem = {
   to: string
   label: string

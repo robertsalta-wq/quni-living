@@ -82,7 +82,7 @@ export function ProtectedRoute({
   }
 
   if (allowedRoles?.length && !isRoleAllowed(role, allowedRoles)) {
-    // Wrong app surface (e.g. landlord hit a renter route) — never dump onto marketing home.
+    // Wrong app surface (e.g. landlord hit a renter route) - never dump onto marketing home.
     return <Navigate to={getNavDashboardPath(role, profile, user.id)} replace />
   }
 

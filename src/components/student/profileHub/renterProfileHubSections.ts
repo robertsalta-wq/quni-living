@@ -143,12 +143,12 @@ export function renterProfileHubSubtitleLines(
     case 'emergency':
       return [c.emergencyComplete ? emergencySummary(profile) : 'Add an emergency contact']
     case 'about':
-      return [c.aboutHasContent ? 'A short intro and languages' : 'Optional — intro for landlords']
+      return [c.aboutHasContent ? 'A short intro and languages' : 'Optional - intro for landlords']
     case 'prefs':
       return [
         c.prefsHasContent
           ? 'Budget, room type, move-in and lifestyle'
-          : 'Optional — budget, room type, move-in',
+          : 'Optional - budget, room type, move-in',
       ]
   }
 }

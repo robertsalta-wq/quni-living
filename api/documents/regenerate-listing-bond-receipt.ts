@@ -12,7 +12,7 @@
  *
  * Auth: Bearer <admin Supabase JWT> via requireAdminUser
  *
- * Node (req, res) handler — Vercel Node runtime does not pass Fetch Request here
+ * Node (req, res) handler - Vercel Node runtime does not pass Fetch Request here
  * (Web-style handler crashed: request.headers.get is not a function).
  *
  * NFT: PDF components are .ts so `./BondReceiptPdf.js` resolves; entry imports them

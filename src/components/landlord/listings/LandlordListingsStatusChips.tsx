@@ -14,7 +14,7 @@ type Props = {
   onChange: (chip: LandlordListingFilterChip) => void
 }
 
-/** Underline text-tabs (Edit Hub / admin Tabs pattern) — not pill chips. */
+/** Underline text-tabs (Edit Hub / admin Tabs pattern) - not pill chips. */
 export default function LandlordListingsStatusChips({ active, counts, onChange }: Props) {
   return (
     <div

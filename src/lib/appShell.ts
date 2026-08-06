@@ -1,5 +1,5 @@
 /**
- * Authenticated app shell membership — section destinations + in-app focus flows.
+ * Authenticated app shell membership - section destinations + in-app focus flows.
  * Public marketing routes stay outside this tree.
  */
 import type { UserRole } from './authProfile'
@@ -9,7 +9,7 @@ import type { UserDashboardSection } from './userDashboardNav'
 
 /**
  * Approximate action-bar content height (icons+label), rem.
- * The bar is in document flow under `<main>` — do **not** add matching
+ * The bar is in document flow under `<main>` - do **not** add matching
  * bottom padding on the scroll container (that left a dead white gap after
  * the floating AI button was removed). Overlay toasts should clear ~this
  * height + safe-area, not an extra FAB band.
@@ -32,7 +32,7 @@ export const LANDLORD_BOOKINGS_TAB_HREF = '/landlord/dashboard?tab=bookings'
 /**
  * What to put *inside* the shared header shell on an app-shell route.
  * `dashboard` = brand + "Dashboard" (+ desktop tabs). `task` = back + title
- * (renter apply only this PR — landlords always `dashboard`).
+ * (renter apply only this PR - landlords always `dashboard`).
  */
 export type AppChromeHeaderInner = 'dashboard' | 'task'
 
@@ -43,7 +43,7 @@ export type AppChromeHeaderInner = 'dashboard' | 'task'
 export type AppChromeBarContents = 'nav' | 'page-actions' | 'none'
 
 /**
- * Header inner slot — independent of the bar.
+ * Header inner slot - independent of the bar.
  * Landlords in the app shell: always dashboard. Renter apply (deferred): task on mobile.
  */
 export function appChromeHeaderInner(
@@ -86,7 +86,7 @@ export function isRenterProfileSectionEditPath(pathname: string, search = ''): b
 }
 
 /**
- * Mobile action bar contents — independent of the header.
+ * Mobile action bar contents - independent of the header.
  * Landlord listing edit (hub + drill-ins) → page-actions.
  * Landlord / renter Profile section drill-in → page-actions.
  * Booking review stays `nav` this PR (inline actions unchanged).
@@ -112,7 +112,7 @@ export function appChromeBarContents(
   return 'nav'
 }
 
-/** @deprecated Coupled mode — do not use for new code. Prefer appChromeHeaderInner + appChromeBarContents. */
+/** @deprecated Coupled mode - do not use for new code. Prefer appChromeHeaderInner + appChromeBarContents. */
 export type AppChromeMode = 'map' | 'task' | 'task-header'
 
 /**
@@ -150,7 +150,7 @@ export function appShellMode(pathname: string): AppShellMode | null {
 
   if (p.startsWith('/admin')) return null
 
-  // Focus (still framed — top bar is back/close; listing edit hub hides bottom tabs)
+  // Focus (still framed - top bar is back/close; listing edit hub hides bottom tabs)
   if (/^\/landlord\/bookings\/[^/]+\/review\/?$/.test(p)) return 'focus'
   if (p === '/landlord/property/new' || p.startsWith('/landlord/property/new/')) return 'focus'
   if (p.startsWith('/landlord/property/edit/')) return 'focus'
@@ -240,7 +240,7 @@ export function isListingEditPath(pathname: string): boolean {
 }
 
 /**
- * Cream hub chrome + no bottom tabs — mobile listing edit only (`sm` breakpoint).
+ * Cream hub chrome + no bottom tabs - mobile listing edit only (`sm` breakpoint).
  * Desktop landlord listing edit uses AppHeader Map chrome (see isLandlordDesktopAppChrome).
  */
 export function isListingEditHubChromePath(pathname: string, isMobile: boolean): boolean {
@@ -261,7 +261,7 @@ export function isLandlordDesktopAppChrome(
   return isAppShellSectionPath(pathname) || isListingEditPath(pathname)
 }
 
-/** Desktop listing edit path — sticky section-pill offsets (`data-listing-edit-desktop`). */
+/** Desktop listing edit path - sticky section-pill offsets (`data-listing-edit-desktop`). */
 export function isListingEditDesktopSectionChrome(pathname: string, isMobile: boolean): boolean {
   return !isMobile && isListingEditPath(pathname)
 }
@@ -271,7 +271,7 @@ export function isListingEditHubPath(pathname: string): boolean {
   return isListingEditPath(pathname)
 }
 
-/** Default back target — fixed URL only (never history.back). */
+/** Default back target - fixed URL only (never history.back). */
 export function appShellFocusFallbackPath(role: UserRole | undefined, pathname: string): string {
   if (role === 'landlord') {
     if (pathname.startsWith('/landlord/property')) return LANDLORD_LISTINGS_TAB_HREF
@@ -285,7 +285,7 @@ export function appShellFocusFallbackPath(role: UserRole | undefined, pathname: 
   return '/'
 }
 
-/** @deprecated Prefer isAppShellPath — kept for gradual call-site migration. */
+/** @deprecated Prefer isAppShellPath - kept for gradual call-site migration. */
 export function isDashboardMobileChromePath(role: UserRole | undefined, pathname: string): boolean {
   if (!isAppShellPath(pathname)) return false
   if (role === 'landlord' || isRenterRole(role)) return true

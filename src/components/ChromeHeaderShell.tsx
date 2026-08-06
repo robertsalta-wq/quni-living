@@ -16,12 +16,12 @@ export const CHROME_HEADER_OUTER_CLASS =
 /**
  * Marketing reference content track: same max-width + px as the site, py-4.
  * With the fixed `h-11` row this yields a 76px content box (+ 1px border = 77px
- * header) — measured on production marketing at 390px width.
+ * header) - measured on production marketing at 390px width.
  */
 export const CHROME_HEADER_INNER_CLASS = `${SITE_CONTENT_MAX_CLASS} py-4`
 
 /**
- * FIXED content-row height — marketing hamburger track (`h-11` / 44px).
+ * FIXED content-row height - marketing hamburger track (`h-11` / 44px).
  * Must stay `h-11`, never `min-h-11`: a floor lets marketing grow past dashboard.
  */
 export const CHROME_HEADER_ROW_CLASS =
@@ -29,7 +29,7 @@ export const CHROME_HEADER_ROW_CLASS =
 
 type Props = {
   children: ReactNode
-  /** Extra classes on <header> (positioning only — not geometry tokens). */
+  /** Extra classes on <header> (positioning only - not geometry tokens). */
   className?: string
   /**
    * Extra classes on the padded max-width wrapper.

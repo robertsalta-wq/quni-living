@@ -16,12 +16,12 @@ function displayFileName(path: string): string {
 
 /**
  * Owner-only preview of a verification document the renter uploaded.
- * RLS allows read on student-documents/{auth.uid()}/… only — use only on the owner's profile view.
+ * RLS allows read on student-documents/{auth.uid()}/… only - use only on the owner's profile view.
  */
 export function OwnerVerificationDocPreview({
   filePath,
   submittedAt,
-  /** Instant preview from the picked file — no network round trip. */
+  /** Instant preview from the picked file - no network round trip. */
   previewUrl,
 }: {
   filePath: string
@@ -113,7 +113,7 @@ export function OwnerVerificationDocPreview({
 }
 
 /**
- * Compact "document received" tile — used for PDFs and for images the browser
+ * Compact "document received" tile - used for PDFs and for images the browser
  * can't paint inline (HEIC/WebP camera picks that nonetheless uploaded fine).
  */
 function DocReceivedTile({ name, href }: { name: string; href?: string }) {

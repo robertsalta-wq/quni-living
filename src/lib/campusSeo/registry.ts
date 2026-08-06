@@ -13,7 +13,7 @@ export type CampusSeoTipsSection = {
   tips: string[]
 }
 
-/** Sync campus identity for prerender — populated at generation time from the DB. */
+/** Sync campus identity for prerender - populated at generation time from the DB. */
 export type CampusSeoCampusMeta = {
   name: string
   suburb: string
@@ -84,7 +84,7 @@ for (const [modulePath, content] of Object.entries(campusContentModules)) {
 
 /** Strip a trailing brand suffix the generator may have added; Seo appends SITE_NAME. */
 export function stripCampusMetaBrandSuffix(title: string): string {
-  return title.replace(/\s*[|–—-]\s*Quni(?:\s+Living)?\s*$/i, '').trim()
+  return title.replace(/\s*(?:\||-|–)\s*Quni(?:\s+Living)?\s*$/i, '').trim()
 }
 
 export function getCampusSeoContent(

@@ -291,7 +291,7 @@ export default function AuthCallback() {
       navigate(
         '/login?error=missing_code&detail=' +
           encodeURIComponent(
-            'No session after sign-in. If you opened a confirmation link, it may have expired — use “Resend confirmation email” on the log-in page and open only the newest link.',
+            'No session after sign-in. If you opened a confirmation link, it may have expired - use “Resend confirmation email” on the log-in page and open only the newest link.',
           ),
         { replace: true },
       )

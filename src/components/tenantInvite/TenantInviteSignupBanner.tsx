@@ -22,7 +22,7 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
         <p className="mt-2 text-sm text-gray-700">
           Your landlord shared the official application link for{' '}
           <span className="font-medium text-gray-900">{hints.propertyTitle}</span> on quni.com.au. Create a renter
-          account to continue — the same process used for other listings on the platform.
+          account to continue - the same process used for other listings on the platform.
         </p>
       ) : (
         <p className="mt-2 text-sm text-gray-700">
@@ -32,7 +32,7 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
       )}
       {hints.studentOnly && (
         <p className="mt-3 rounded-xl border border-stone-200 bg-stone-50/80 px-3 py-2 text-sm text-gray-700">
-          This room is for students only — you&apos;ll need to verify as a student during onboarding.
+          This room is for students only - you&apos;ll need to verify as a student during onboarding.
         </p>
       )}
       {hints.offeredWeeklyRentAud != null ? (

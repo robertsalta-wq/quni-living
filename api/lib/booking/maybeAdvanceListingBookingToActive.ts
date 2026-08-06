@@ -1,6 +1,6 @@
 /**
  * Listing: advance bookings.status confirmed → active once bond AND lease are both done.
- * Order-independent — call from full-sign sync and from markBondReceived.
+ * Order-independent - call from full-sign sync and from markBondReceived.
  * Does not emit booking.status_changed (DB trigger owns that).
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -37,7 +37,7 @@ function timestampSet(v: string | null | undefined): boolean {
   return Boolean(v && String(v).trim())
 }
 
-/** Local-DB fully-signed check — aligned with sync / deriveLeaseDocState; not "signing initiated". */
+/** Local-DB fully-signed check - aligned with sync / deriveLeaseDocState; not "signing initiated". */
 export function listingLeaseDocLooksFullySigned(
   doc: {
     status: string | null | undefined

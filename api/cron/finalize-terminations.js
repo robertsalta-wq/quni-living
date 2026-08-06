@@ -3,7 +3,7 @@
  * when both parties have acknowledged.
  * Secure with Authorization: Bearer CRON_SECRET
  *
- * Edge runtime — same Fetch Request/Response shape as other crons (expire-bookings).
+ * Edge runtime - same Fetch Request/Response shape as other crons (expire-bookings).
  */
 import { createClient } from '@supabase/supabase-js'
 import { runFinalizeDueTerminations } from '../lib/booking/termination/finalizeTerminatedBooking.js'

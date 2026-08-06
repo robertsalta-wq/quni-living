@@ -28,7 +28,7 @@ export const PLATFORM_CONFIG_KEYS = {
   SERVICE_TIER_NAMING: 'service_tier_naming',
   QUNI_SERVICE_TIER_MODULE_ENABLED: 'quni_service_tier_module_enabled',
   QUNI_SERVICE_TIER_MANAGED_ENABLED: 'quni_service_tier_managed_enabled',
-  /** Utilities resolver rollout — each defaults false (legacy fill until flipped per state). */
+  /** Utilities resolver rollout - each defaults false (legacy fill until flipped per state). */
   UTILITIES_RESOLVER_QLD_ENABLED: 'utilities_resolver_qld_enabled',
   UTILITIES_RESOLVER_NSW_ENABLED: 'utilities_resolver_nsw_enabled',
   UTILITIES_RESOLVER_VIC_ENABLED: 'utilities_resolver_vic_enabled',
@@ -205,7 +205,7 @@ export function parseBooleanConfig(value: string | null | undefined, fallback = 
   return fallback
 }
 
-/** Live read — do not cache; admin flips gate in platform_config without redeploy. */
+/** Live read - do not cache; admin flips gate in platform_config without redeploy. */
 export async function fetchLegalNameSigningGateEnabled(
   client: SupabaseClient<Database>,
 ): Promise<boolean> {

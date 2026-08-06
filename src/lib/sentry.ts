@@ -7,7 +7,7 @@ import { isStaleChunkLoadError } from './chunkLoadRecovery'
 const dsn = import.meta.env.VITE_SENTRY_DSN
 const sentryEnabled = typeof dsn === 'string' && dsn.trim() !== ''
 
-/** Tie client-side Sentry events to the signed-in renter (id only — no email in Sentry user). */
+/** Tie client-side Sentry events to the signed-in renter (id only - no email in Sentry user). */
 export function syncSentryUser(user: User | null): void {
   if (!sentryEnabled) return
   if (!user) {

@@ -1,5 +1,5 @@
 /**
- * `/list-your-room-b` Preview gate — browser bundle.
+ * `/list-your-room-b` Preview gate - browser bundle.
  * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
  * Override: `VITE_LIST_YOUR_ROOM_B_ENABLED=true|false`
  */

@@ -10,7 +10,7 @@ export function isListYourRoomCGatedPath(pathname: string): boolean {
   return path === LIST_YOUR_ROOM_C_PATH
 }
 
-/** Shared resolver — browser env bag or Edge `process.env`. */
+/** Shared resolver - browser env bag or Edge `process.env`. */
 export function resolveListYourRoomCEnabled(opts: {
   override?: string | null
   vercelEnv?: string | null

@@ -1,8 +1,8 @@
 /**
- * Student booking apply — tier-branched (mirrors confirmListing / confirmManaged on accept).
+ * Student booking apply - tier-branched (mirrors confirmListing / confirmManaged on accept).
  *
  * Managed: PaymentIntent (manual capture) + commit with paymentIntentId.
- * Listing: no student Stripe call — commit inserts pending_confirmation with no deposit fields.
+ * Listing: no student Stripe call - commit inserts pending_confirmation with no deposit fields.
  *
  * POST JSON (Managed create PI): {
  *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, listingAcknowledged,
@@ -350,7 +350,7 @@ async function loadPropertyServiceTier(admin, propertyId) {
   return isListingServiceTier(data.service_tier) ? 'listing' : 'managed'
 }
 
-/** Listing apply commit — no student PI, deposit, or rent_payment_method. */
+/** Listing apply commit - no student PI, deposit, or rent_payment_method. */
 async function handleListingBookingCommit(request, origin, body) {
   const deviceCtx = requestContextFromRequest(request)
   const supabaseUrl = process.env.SUPABASE_URL

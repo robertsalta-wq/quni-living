@@ -25,7 +25,7 @@ export const config = {
 }
 
 const REFUND_WARNING =
-  'Booking reinstated; listing fee was refunded on expiry — confirm payment separately.'
+  'Booking reinstated; listing fee was refunded on expiry - confirm payment separately.'
 
 function json(body: unknown, status = 200, origin: string) {
   const allowOrigin = origin || '*'

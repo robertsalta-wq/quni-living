@@ -200,7 +200,7 @@ export function resolveAcceptanceBondOverrideAud(override, applicableWeeklyRentA
 }
 
 /**
- * @deprecated Use maxBondCapAud — kept for call-site churn during transition.
+ * @deprecated Use maxBondCapAud - kept for call-site churn during transition.
  * @param {unknown} _pkg
  * @param {number} agreedWeeklyRentAud
  * @returns {number | null}

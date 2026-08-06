@@ -40,7 +40,7 @@ export default function ScrollToTop() {
       return
     }
 
-    // Left the shell — persist last shell scroll if we had a key
+    // Left the shell - persist last shell scroll if we had a key
     if (prevKey) {
       const main = getAppShellScrollElement()
       if (main) saveAppShellScroll(prevKey, main.scrollTop)

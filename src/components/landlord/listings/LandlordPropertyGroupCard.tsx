@@ -10,7 +10,7 @@ import LandlordListingRoomRow from './LandlordListingRoomRow'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
 function formatWeeklyRent(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(Number(n))) return '— /wk'
+  if (n == null || Number.isNaN(Number(n))) return '- /wk'
   return `$${Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 })} /wk`
 }
 

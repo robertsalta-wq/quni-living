@@ -65,7 +65,7 @@ export async function tryArchiveDocusealSubmissionBestEffort(
 /**
  * After a Listing booking unwind (cancel / bond-window expiry): archive DocuSeal
  * submissions when present, then local cleanup (void agreement, archive docs, end tenancy).
- * Best-effort throughout — never throws and never rolls back the booking transition.
+ * Best-effort throughout - never throws and never rolls back the booking transition.
  */
 export async function runUnwindListingAgreementCleanup(
   admin: SupabaseClient,

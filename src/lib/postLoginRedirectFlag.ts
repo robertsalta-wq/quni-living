@@ -1,7 +1,7 @@
 /**
  * One-shot post-login redirect flag (`awaitingSignInOnboardingRedirect`).
  *
- * Arm only on a real `SIGNED_IN`. Do **not** clear on `INITIAL_SESSION` — Supabase can emit
+ * Arm only on a real `SIGNED_IN`. Do **not** clear on `INITIAL_SESSION` - Supabase can emit
  * INITIAL_SESSION after SIGNED_IN in the same OAuth boot, which previously wiped the one-shot
  * and left freshly signed-in users on marketing `/`.
  *

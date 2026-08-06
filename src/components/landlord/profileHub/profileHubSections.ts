@@ -52,7 +52,7 @@ function landlordTypeLabel(value: string | null | undefined): string {
   return LANDLORD_TYPE_LABELS[v] ?? v
 }
 
-/** Hub subtitle lines — actual values. Multi-line only when several values exist. */
+/** Hub subtitle lines - actual values. Multi-line only when several values exist. */
 export function profileHubSubtitleLines(
   id: LandlordProfileHubSectionId,
   profile: LandlordProfileRow,
@@ -85,7 +85,7 @@ export function profileHubSubtitleLines(
     case 'about': {
       const bio = profile.bio?.trim()
       if (bio) return [bio]
-      if (profile.avatar_url?.trim()) return ['Photo added — add a short bio']
+      if (profile.avatar_url?.trim()) return ['Photo added - add a short bio']
       return ['Add a photo and short bio']
     }
     case 'agreements': {
@@ -110,12 +110,12 @@ export function profileHubSubtitleLines(
     }
     case 'insurance': {
       if (profile.has_landlord_insurance) return ['Landlord cover confirmed']
-      if (profile.insurance_acknowledged_at) return ['Noted — no cover confirmed']
-      return ['Optional — confirm if you hold cover']
+      if (profile.insurance_acknowledged_at) return ['Noted - no cover confirmed']
+      return ['Optional - confirm if you hold cover']
     }
     case 'languages': {
       const codes = normalizeLanguagesSpoken(profile.languages_spoken)
-      if (codes.length === 0) return ['Optional — languages you can help in']
+      if (codes.length === 0) return ['Optional - languages you can help in']
       return [formatLanguagesSpoken(codes)]
     }
   }

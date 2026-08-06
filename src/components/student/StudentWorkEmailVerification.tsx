@@ -297,7 +297,7 @@ export function StudentWorkEmailVerification({
                     Check <strong>Spam</strong> and search your inbox for <strong>Quni</strong>.
                   </li>
                   <li>
-                    Avoid tapping <strong>Resend</strong> too often — each send creates a <strong>new</strong> code.
+                    Avoid tapping <strong>Resend</strong> too often - each send creates a <strong>new</strong> code.
                   </li>
                 </ul>
               </div>

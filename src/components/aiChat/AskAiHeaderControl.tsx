@@ -3,7 +3,7 @@ import { useOpenAiChat } from '../../context/AiChatOpenContext'
 import { ASK_AI_BUTTON_LABEL } from './chatAiLabels'
 
 /**
- * Header Ask AI control — marketing and desktop app shell.
+ * Header Ask AI control - marketing and desktop app shell.
  * Open to everyone (no auth gate); the panel handles visitor vs signed-in personas.
  */
 export default function AskAiHeaderControl({ className = '' }: { className?: string }) {

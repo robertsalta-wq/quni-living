@@ -19,7 +19,7 @@ const BOND_STRIKE_FIELD_NAMES = [
 const CONTENT_LEFT = 34
 const CONTENT_RIGHT = 561
 
-/** Small pad above bond_amount widget top (amount line only — not the “Cross out if…” instruction). */
+/** Small pad above bond_amount widget top (amount line only - not the “Cross out if…” instruction). */
 const TOP_PADDING_ABOVE_AMOUNT_PT = 8
 const BOTTOM_PADDING_PT = 4
 

@@ -288,7 +288,7 @@ export function RenterProfileLivingPreferencesSection({
       </div>
       <div>
         <label htmlFor="renter-bmin" className={renterLabelClass}>
-          Weekly budget — min
+          Weekly budget - min
         </label>
         <input
           id="renter-bmin"
@@ -307,7 +307,7 @@ export function RenterProfileLivingPreferencesSection({
       </div>
       <div>
         <label htmlFor="renter-bmax" className={renterLabelClass}>
-          Weekly budget — max
+          Weekly budget - max
         </label>
         <input
           id="renter-bmax"

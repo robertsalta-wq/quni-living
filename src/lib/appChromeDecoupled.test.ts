@@ -18,7 +18,7 @@ import { SITE_CONTENT_MAX_CLASS } from './site'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-describe('decoupled chrome — header vs bar are independent', () => {
+describe('decoupled chrome - header vs bar are independent', () => {
   it('landlord listing edit: dashboard header + page-actions bar on mobile', () => {
     const path = '/landlord/property/edit/abc'
     expect(appChromeHeaderInner(path, 'landlord', true)).toBe('dashboard')
@@ -71,7 +71,7 @@ describe('decoupled chrome — header vs bar are independent', () => {
   })
 })
 
-describe('bar item sets — browse vs edit', () => {
+describe('bar item sets - browse vs edit', () => {
   it('browse nav has the five landlord sections', () => {
     expect(LANDLORD_NAV_BAR_ITEMS.map((i) => i.id)).toEqual([
       'overview',
@@ -100,7 +100,7 @@ describe('bar item sets — browse vs edit', () => {
   })
 })
 
-describe('fixed-URL exits — never history.back', () => {
+describe('fixed-URL exits - never history.back', () => {
   it('listing edit fallback is listings tab', () => {
     expect(appShellFocusFallbackPath('landlord', '/landlord/property/edit/1')).toBe(
       LANDLORD_LISTINGS_TAB_HREF,
@@ -133,7 +133,7 @@ describe('one header geometry shell (marketing reference)', () => {
     expect(CHROME_HEADER_OUTER_CLASS).toContain('bg-[var(--brand-header-bg)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('border-[var(--brand-header-border)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('pt-safe-top')
-    // Fixed h-11 — min-h-11 is a floor and lets marketing grow past dashboard.
+    // Fixed h-11 - min-h-11 is a floor and lets marketing grow past dashboard.
     expect(CHROME_HEADER_ROW_CLASS).toMatch(/(?:^|\s)h-11(?:\s|$)/)
     expect(CHROME_HEADER_ROW_CLASS).not.toContain('min-h-11')
     expect(CHROME_HEADER_ROW_CLASS).toContain('items-center')

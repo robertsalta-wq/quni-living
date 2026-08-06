@@ -1,6 +1,6 @@
 /**
  * Shared DocuSeal → booking_events shapes (webhook, refresh, admin, historical).
- * One dialect only — callers must not invent alternate metadata keys.
+ * One dialect only - callers must not invent alternate metadata keys.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { recordBookingEvent, type RecordBookingEventOptions } from './recordBookingEvent.js'
@@ -70,7 +70,7 @@ export type EmitSignatureRecordedArgs = BookingIdsForDocusealEvent &
     oldSignedAt?: string | null
   }
 
-/** Per-party signature row — same shape for live webhook and reconcile. */
+/** Per-party signature row - same shape for live webhook and reconcile. */
 export async function emitDocumentSignatureRecorded(
   admin: SupabaseClient,
   args: EmitSignatureRecordedArgs,

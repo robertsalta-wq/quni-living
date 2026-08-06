@@ -44,7 +44,7 @@ export const LIST_YOUR_ROOM_D_CAMPUSES: readonly ListYourRoomDCampusOption[] = [
   },
 ] as const
 
-/** Live listing used for listing-card + detail preview (Option A — real `.quni-card`). */
+/** Live listing used for listing-card + detail preview (Option A - real `.quni-card`). */
 export const LIST_YOUR_ROOM_D_PREVIEW_SLUG = 'private-cosy-bedroom-in-ryde-6od8l' as const
 
 export type ListYourRoomDRoomKind = 'single' | 'ensuite'

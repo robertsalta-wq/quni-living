@@ -5,7 +5,7 @@ import {
   resolveBookingReviewRentBreakdownRows,
 } from './bookingReviewTermsSummary'
 
-describe('resolveBookingReviewHoldRow (§14 — managed deposit visibility)', () => {
+describe('resolveBookingReviewHoldRow (§14 - managed deposit visibility)', () => {
   it('never shows for Listing, regardless of status', () => {
     for (const status of ['pending_confirmation', 'bond_pending', 'confirmed', 'active', 'completed']) {
       const row = resolveBookingReviewHoldRow({
@@ -113,8 +113,8 @@ describe('resolveBookingReviewRentBreakdownRows', () => {
     })
     const byKey = Object.fromEntries(rows.map((r) => [r.key, r]))
     expect(byKey.base.valueLabel).toBe('$500 /wk')
-    expect(byKey.additional.valueLabel).toBe('—')
-    expect(byKey.parking.valueLabel).toBe('—')
+    expect(byKey.additional.valueLabel).toBe('-')
+    expect(byKey.parking.valueLabel).toBe('-')
     expect(byKey.total.valueLabel).toBe('$500 /wk')
     expect(byKey.total.emphasis).toBe(true)
   })
@@ -138,6 +138,6 @@ describe('resolveBookingReviewRentBreakdownRows', () => {
       parkingSelected: false,
     })
     const byKey = Object.fromEntries(rows.map((r) => [r.key, r]))
-    expect(byKey.parking.valueLabel).toBe('—')
+    expect(byKey.parking.valueLabel).toBe('-')
   })
 })

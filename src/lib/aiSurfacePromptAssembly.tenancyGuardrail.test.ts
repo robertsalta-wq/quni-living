@@ -10,8 +10,8 @@ describe('tenancy-law chat guardrail', () => {
       const prompt = CHAT_SYSTEM_PROMPTS[persona]
       expect(prompt).toContain('Tenancy / landlord-law claims')
       expect(prompt).toContain('recite or refer')
-      expect(prompt).toContain('Branch 1 — attributable source present')
-      expect(prompt).toContain('Branch 2 — no attributable source')
+      expect(prompt).toContain('Branch 1 - attributable source present')
+      expect(prompt).toContain('Branch 2 - no attributable source')
       expect(prompt).toContain('seek legal advice')
       expect(prompt).toContain('This is general information, not legal advice')
       expect(prompt).toContain('https://www.nsw.gov.au/housing-and-construction/renting')

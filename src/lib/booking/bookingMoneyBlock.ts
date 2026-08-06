@@ -1,5 +1,5 @@
 /**
- * Zone 3 "money block" — marketplace pattern (lead with what Quni holds / what the host gets).
+ * Zone 3 "money block" - marketplace pattern (lead with what Quni holds / what the host gets).
  * Rules are locked in docs/booking-pages-handoff.md §4 + §4.1. Do not add totals here: `lease_length`
  * is a free string and `end_date` isn't always set, so weekly × weeks is not always computable.
  */
@@ -8,7 +8,7 @@ export type BookingMoneyBlockTier = 'listing' | 'managed'
 
 export type BookingMoneyBlockInput = {
   tier: BookingMoneyBlockTier
-  /** Booking status — only used to decide the managed "Quni holds" pre-accept vs released state. */
+  /** Booking status - only used to decide the managed "Quni holds" pre-accept vs released state. */
   status: string
   weeklyRentAud: number | null
   bondAud: number | null
@@ -20,7 +20,7 @@ export type BookingMoneyBlockInput = {
   depositReleasedAt: string | null
   /** Managed only: platform fee, cents. */
   platformFeeCents: number | null
-  /** Voice for labels — landlord sees “to you”; renter sees tenant-facing wording. Default landlord. */
+  /** Voice for labels - landlord sees “to you”; renter sees tenant-facing wording. Default landlord. */
   viewer?: 'landlord' | 'renter'
 }
 
@@ -29,7 +29,7 @@ export type BookingMoneyBlockLine = {
   label: string
   valueLabel: string
   helpText?: string
-  /** "Quni holds $X" — the line the whole block leads to. */
+  /** "Quni holds $X" - the line the whole block leads to. */
   emphasis?: boolean
 }
 
@@ -69,7 +69,7 @@ export function computeBookingMoneyBlockLines(input: BookingMoneyBlockInput): Bo
       },
       {
         key: 'bond',
-        label: isRenter ? 'Bond — paid direct to your host' : 'Bond — paid direct to you',
+        label: isRenter ? 'Bond - paid direct to your host' : 'Bond - paid direct to you',
         valueLabel: input.bondAud != null ? fmtAud(input.bondAud) : 'No bond',
       },
     ]

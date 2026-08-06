@@ -36,14 +36,14 @@ export type RenterReadinessSections = {
 export type RenterReadiness = {
   route: StudentProfileRow['accommodation_verification_route']
   sections: RenterReadinessSections
-  /** Human labels for pinned driver / booking CTA — same source as API block reasons. */
+  /** Human labels for pinned driver / booking CTA - same source as API block reasons. */
   blocksBooking: string[]
   profileSetupComplete: boolean
   canRequestBooking: boolean
   canBrowseListings: boolean
   /** Tier from live field presence (promotion target). */
   verificationTierEligible: VerificationTier
-  /** Tier used for booking gates — promoted column or live eligibility. */
+  /** Tier used for booking gates - promoted column or live eligibility. */
   effectiveVerificationTier: VerificationTier
 }
 
@@ -51,7 +51,7 @@ function hasDoc(url: string | null | undefined, submittedAt: string | null | und
   return Boolean(url?.trim() && submittedAt?.trim())
 }
 
-/** Live field-presence tier — does not read `verification_type`. */
+/** Live field-presence tier - does not read `verification_type`. */
 export function computeVerificationTierEligible(
   profile: StudentProfileRow | null | undefined,
 ): VerificationTier {
@@ -181,14 +181,14 @@ export function computeRenterReadiness(
   }
 }
 
-/** Post-auth / wizard routing — field state only; never reads `onboarding_complete`. */
+/** Post-auth / wizard routing - field state only; never reads `onboarding_complete`. */
 export function renterProfileSetupIncomplete(
   profile: StudentProfileRow | null | undefined,
 ): boolean {
   return !computeRenterReadiness(profile).profileSetupComplete
 }
 
-/** Post-auth / wizard routing — field state only; never reads `onboarding_complete`. */
+/** Post-auth / wizard routing - field state only; never reads `onboarding_complete`. */
 export function renterOnboardingIncomplete(
   profile: StudentProfileRow | null | undefined,
   _userId?: string | null,
@@ -238,7 +238,7 @@ export function isRenterRouteFlowComplete(
   return !needsGuarantor || isGuarantorSectionComplete(profile)
 }
 
-/** Profile-page driver and dashboard stat card — same 4-section fraction. */
+/** Profile-page driver and dashboard stat card - same 4-section fraction. */
 export function computeRenterProfileDriverProgress(
   profile: StudentProfileRow,
   situation: RenterSituation | null,

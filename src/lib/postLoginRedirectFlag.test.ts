@@ -12,7 +12,7 @@ describe('postLoginRedirectFlag', () => {
     expect(authEventArmsPostLoginRedirect('SIGNED_OUT')).toBe(false)
   })
 
-  it('clears only on SIGNED_OUT — not INITIAL_SESSION (OAuth boot race)', () => {
+  it('clears only on SIGNED_OUT - not INITIAL_SESSION (OAuth boot race)', () => {
     expect(authEventClearsPostLoginRedirect('SIGNED_OUT')).toBe(true)
     expect(authEventClearsPostLoginRedirect('INITIAL_SESSION')).toBe(false)
     expect(authEventClearsPostLoginRedirect('SIGNED_IN')).toBe(false)

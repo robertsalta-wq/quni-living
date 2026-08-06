@@ -1,5 +1,5 @@
 /**
- * Shared left/right chat-bubble thread builder for the booking review Messages section —
+ * Shared left/right chat-bubble thread builder for the booking review Messages section -
  * used by both the landlord page (commit 6) and the renter mirror (commit 8, read-only).
  */
 

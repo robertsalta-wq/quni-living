@@ -27,7 +27,7 @@ export {
   needsOnboarding,
 } from './authProfileRouting'
 
-/** One in-flight role/profile resolution per user — shared by AuthContext and auth callback. */
+/** One in-flight role/profile resolution per user - shared by AuthContext and auth callback. */
 const profileHydrateInflightByUserId = new Map<
   string,
   Promise<{ role: UserRole; profile: AuthProfile | null }>
@@ -121,7 +121,7 @@ async function loadRoleAndProfileCore(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
-  // Never trust user_metadata for admin — always verify against platform_staff via RPC
+  // Never trust user_metadata for admin - always verify against platform_staff via RPC
   // (including staff who still have renter/landlord marketplace metadata).
   if (await fetchIsPlatformAdmin()) {
     await linkPlatformStaffUserIfNeeded(user)

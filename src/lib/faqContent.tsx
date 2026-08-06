@@ -135,10 +135,10 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'verification-docs',
         question: 'What documents do I need to verify?',
         answerText:
-          'It depends whether you are a student, working tenant, or landlord — see /verification for the full step-by-step list.',
+          'It depends whether you are a student, working tenant, or landlord - see /verification for the full step-by-step list.',
         answer: (
           <>
-            It depends whether you are a student, working tenant, or landlord — see our {verificationLink} for the
+            It depends whether you are a student, working tenant, or landlord - see our {verificationLink} for the
             full step-by-step list.
           </>
         ),

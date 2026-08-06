@@ -4,7 +4,7 @@
  * Drives real handlers (confirmListing → lease-signed sim → markBondReceived) and asserts
  * bookingReviewActionModel copy + status after each stage. Sign-then-bond order (771acf77).
  *
- * Asserts real `deriveLandlordPrimaryAction` (page-gate class / #55 extract) at each stage —
+ * Asserts real `deriveLandlordPrimaryAction` (page-gate class / #55 extract) at each stage -
  * not a by-status model alone.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -395,7 +395,7 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
       },
     ]
 
-    // Status unchanged — still bond cards (not active yet)
+    // Status unchanged - still bond cards (not active yet)
     {
       expect(store.booking.status).toBe('bond_pending')
       const { landlord: ll, renter } = cardSnapshot('bond_pending')
@@ -463,7 +463,7 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
     expect(mark.ok).toBe(true)
     if (!mark.ok) return
 
-    // Without the helper advancing, mark-bond leaves confirmed — stuck signature cards.
+    // Without the helper advancing, mark-bond leaves confirmed - stuck signature cards.
     expect(mark.booking.status).toBe('confirmed')
     expect(store.booking.status).toBe('confirmed')
     const { landlord: ll, renter } = cardSnapshot(String(store.booking.status))
@@ -473,7 +473,7 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
 })
 
 describe.skip('Managed card-model lifecycle (queued)', () => {
-  // Stage list from orient — not implemented this PR:
+  // Stage list from orient - not implemented this PR:
   // pending_confirmation → confirmed → active (release-deposits)
   // Landlord: Respond to {name} → Chase the signature → Tenancy is active
   // Renter: Request sent → Sign your agreement → You're all set

@@ -33,7 +33,7 @@ type PickerBodyProps = {
   error?: string | null
 }
 
-/** Situation tiles only — used inside hub drill-in (no accordion chrome). */
+/** Situation tiles only - used inside hub drill-in (no accordion chrome). */
 export function RenterSituationPickerBody({
   currentSituation,
   onSelect,

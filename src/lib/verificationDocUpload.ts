@@ -2,13 +2,13 @@ import { prepareProfilePhotoForUpload } from './prepareProfilePhotoForUpload'
 import { ensureDisplayableImage } from './convertHeicImage'
 
 export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
-/** Photo ID — images only; avoids Android Chrome bugs with mixed accept lists. */
+/** Photo ID - images only; avoids Android Chrome bugs with mixed accept lists. */
 export const VERIFICATION_ID_FILE_ACCEPT = 'image/*'
 /**
  * Enrolment / supporting docs accept images AND PDFs. We set NO `accept` filter:
  * Android's native picker mishandles multiple/mixed accept MIME types (only the
  * first is honored, and the photo/camera option plus the `change` event get
- * dropped). A plain input is the documented-reliable pattern — the picker offers
+ * dropped). A plain input is the documented-reliable pattern - the picker offers
  * camera / gallery / files, `change` fires for every type, and JS validates the
  * file (image or PDF) after selection.
  */
@@ -128,12 +128,12 @@ export async function prepareVerificationDocForUpload(
     }
   }
 
-  // HEIC/HEIF can't be rendered by browsers — convert to JPEG so the stored
+  // HEIC/HEIF can't be rendered by browsers - convert to JPEG so the stored
   // document is viewable (and so the resize path below can decode it).
   const displayable = await ensureDisplayableImage(file)
   const normalized = fileForVerificationImageUpload(displayable)
 
-  // Under the 15 MB client cap, upload bytes as picked — same idea as profile photos under 2 MB.
+  // Under the 15 MB client cap, upload bytes as picked - same idea as profile photos under 2 MB.
   // Avoids decode/resize passes that fail on Android gallery picks (WebP, HEIC, screenshots).
   if (normalized.size <= MAX_VERIFICATION_DOC_BYTES) {
     return {

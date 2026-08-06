@@ -30,13 +30,13 @@ export function AiChatOpenProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** Opens the AI chat panel — shared by action bar, desktop header, and marketing FAB. */
+/** Opens the AI chat panel - shared by action bar, desktop header, and marketing FAB. */
 export function useOpenAiChat(): () => void {
   const ctx = useContext(AiChatOpenContext)
   return ctx?.openChat ?? (() => {})
 }
 
-/** True while the chat panel is mounted — the FAB hides so it never floats over the panel. */
+/** True while the chat panel is mounted - the FAB hides so it never floats over the panel. */
 export function useIsAiChatOpen(): boolean {
   return useContext(AiChatOpenContext)?.isChatOpen ?? false
 }

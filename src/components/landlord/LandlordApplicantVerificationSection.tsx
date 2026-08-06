@@ -8,7 +8,7 @@ import type { LandlordSafeStudentSnapshot } from './LandlordStudentProfileModal'
 type Props = {
   student: LandlordSafeStudentSnapshot | null
   verificationAnchorId?: string
-  /** Strip outer card chrome — for embedding in the right summary card. */
+  /** Strip outer card chrome - for embedding in the right summary card. */
   embedded?: boolean
 }
 

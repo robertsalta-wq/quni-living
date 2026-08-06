@@ -264,7 +264,7 @@ export function RenterWorkingRouteSection({
 
         if (!pt) {
           setSaveNotice(
-            'Work location saved. We could not place it on the map — distance sorting may be limited until the address can be verified.',
+            'Work location saved. We could not place it on the map - distance sorting may be limited until the address can be verified.',
           )
         }
       }

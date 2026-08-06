@@ -107,7 +107,7 @@ export async function prepareProfilePhotoForUpload(
   if (!file.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }
-  // Under the client cap, upload bytes as picked — same idea as verification docs.
+  // Under the client cap, upload bytes as picked - same idea as verification docs.
   // Avoids decode/resize passes that fail on some Android gallery picks.
   if (file.size <= maxBytes) {
     return {

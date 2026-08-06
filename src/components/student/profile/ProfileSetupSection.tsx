@@ -31,7 +31,7 @@ type Props = SharedProps & {
   collapsible?: boolean
 }
 
-/** Controlled wrapper around shared `Section` — open-state owned by RenterProfileSetup. */
+/** Controlled wrapper around shared `Section` - open-state owned by RenterProfileSetup. */
 export function ProfileSetupSection({
   id,
   sectionNum,

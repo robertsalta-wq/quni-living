@@ -5,7 +5,7 @@ import {
 } from './workplaceLocationSave'
 import { renterControlClass } from './renterProfileFormClasses'
 
-export const RENTER_SAVE_WRITE_FAILURE = "Couldn't save — try again"
+export const RENTER_SAVE_WRITE_FAILURE = "Couldn't save - try again"
 
 export function buildRenterSectionSaveHint(
   fieldErrors: Record<string, string>,

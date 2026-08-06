@@ -271,7 +271,7 @@ export default function LandlordListingEditHubPage() {
   }, [previewHref])
 
   /**
-   * `null` when `isBasic` — ListingBasicInfoDrillIn owns registration.
+   * `null` when `isBasic` - ListingBasicInfoDrillIn owns registration.
    */
   useSetAppChromeActions(isBasic ? null : hubActionItems)
 

@@ -1,5 +1,5 @@
 /**
- * Env-only Supabase readiness check — no `@supabase/supabase-js` import.
+ * Env-only Supabase readiness check - no `@supabase/supabase-js` import.
  * Use this on marketing critical paths so the client chunk can stay deferred.
  */
 

@@ -3,7 +3,7 @@ import BookingLifecycleStepper from './BookingLifecycleStepper'
 import type { BookingReviewStepperIndex } from '../../../lib/booking/bookingReviewLayout'
 
 export type BookingReviewBookingSummaryProps = {
-  /** Page H1 — state title. */
+  /** Page H1 - state title. */
   title: string
   referenceLabel: string
   receivedLabel?: string | null
@@ -12,7 +12,7 @@ export type BookingReviewBookingSummaryProps = {
 }
 
 export type BookingReviewPropertySummaryProps = {
-  /** Page H2 — listing title (visual size matches H1). */
+  /** Page H2 - listing title (visual size matches H1). */
   title: string
   subtitle?: string | null
   planLabel: string

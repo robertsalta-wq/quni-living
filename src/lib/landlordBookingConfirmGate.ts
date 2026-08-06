@@ -29,7 +29,7 @@ function landlordHostIdentityReadyForConfirm(args: {
   return args.stripeChargesEnabled
 }
 
-/** Profile UI display — same predicate as confirm-time host identity (not a separate gate). */
+/** Profile UI display - same predicate as confirm-time host identity (not a separate gate). */
 export function landlordProfileHostIdentityVerified(
   profile: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
@@ -54,10 +54,10 @@ export function landlordBookingConfirmAllowed(args: {
   listingBilling: LandlordListingBillingSnapshot | null
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
-  /** When true, Listing acceptance fee is $0 — saved card is not required. */
+  /** When true, Listing acceptance fee is $0 - saved card is not required. */
   listingFeeExempt?: boolean
   /**
-   * @deprecated Occupancy no longer gates payout — Listing always needs property_payout_details.
+   * @deprecated Occupancy no longer gates payout - Listing always needs property_payout_details.
    * Kept optional so callers can still pass it without breaking.
    */
   listingUsesOccupancyAgreement?: boolean
@@ -118,7 +118,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
   listingFeeExempt?: boolean
-  /** @deprecated Occupancy no longer gates payout — Listing always needs property_payout_details. */
+  /** @deprecated Occupancy no longer gates payout - Listing always needs property_payout_details. */
   listingUsesOccupancyAgreement?: boolean
   propertyPayoutComplete?: boolean
   property?: LandlordBookingReviewProperty | null

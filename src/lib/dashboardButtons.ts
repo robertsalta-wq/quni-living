@@ -3,11 +3,11 @@
  * Prefer these over parallel renter or local saveBtnClass strings.
  */
 
-/** Coral primary — profile save, resume CTA, primary dashboard actions. */
+/** Coral primary - profile save, resume CTA, primary dashboard actions. */
 export const dashboardPrimaryBtnClass =
   'inline-flex items-center justify-center rounded-admin-md bg-admin-coral px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:cursor-not-allowed disabled:opacity-50 transition-colors'
 
-/** Bordered secondary — cancel / alternate actions. */
+/** Bordered secondary - cancel / alternate actions. */
 export const dashboardSecondaryBtnClass =
   'inline-flex items-center justify-center rounded-admin-md border border-admin-line bg-white px-3.5 py-2.5 text-sm font-semibold text-admin-ink hover:bg-admin-surface-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors'
 

@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 
 export type SendTenantInviteEmailArgs = {
   inviteId: string
-  /** Full invite URL with raw token — required on first send after create. Omit to rotate and resend. */
+  /** Full invite URL with raw token - required on first send after create. Omit to rotate and resend. */
   inviteUrl?: string
   toEmail?: string
 }

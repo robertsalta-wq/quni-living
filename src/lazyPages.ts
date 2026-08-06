@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-/** Shared dynamic import() factories — used by React.lazy and route prefetch. */
+/** Shared dynamic import() factories - used by React.lazy and route prefetch. */
 export const routeImports = {
   authCallback: () => import('./pages/auth/AuthCallback'),
   forgotPassword: () => import('./pages/ForgotPassword'),
@@ -23,9 +23,9 @@ export const routeImports = {
   landlordListingEditEntry: () => import('./pages/landlord/LandlordListingEditEntry'),
   landlordBookingReviewPage: () => import('./pages/landlord/LandlordBookingReviewPage'),
   messagesPage: () => import('./pages/MessagesPage'),
-  /** @deprecated — re-exports MessagesPage */
+  /** @deprecated - re-exports MessagesPage */
   messagesInboxPage: () => import('./pages/MessagesInboxPage'),
-  /** @deprecated — re-exports MessagesPage */
+  /** @deprecated - re-exports MessagesPage */
   conversationThreadPage: () => import('./pages/ConversationThreadPage'),
   listings: () => import('./pages/Listings'),
   propertyDetail: () => import('./pages/PropertyDetail'),

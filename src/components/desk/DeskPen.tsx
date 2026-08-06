@@ -5,9 +5,9 @@ type DeskPenProps = {
   children: ReactNode
   to: string
   /**
-   * `coral` — embossing-die CTA (max one per page).
-   * `quiet` — outline on navy desks.
-   * `ink` — text link on paper/cream desks.
+   * `coral` - embossing-die CTA (max one per page).
+   * `quiet` - outline on navy desks.
+   * `ink` - text link on paper/cream desks.
    */
   variant?: 'coral' | 'quiet' | 'ink'
   /** @deprecated Prefer `variant`. Kept so home-v2 can merge cleanly. */
@@ -16,7 +16,7 @@ type DeskPenProps = {
   onClick?: () => void
 }
 
-/** Slot 4 — one action, phrased as the user's next act. */
+/** Slot 4 - one action, phrased as the user's next act. */
 export default function DeskPen({
   children,
   to,

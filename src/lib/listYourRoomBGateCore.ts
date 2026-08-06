@@ -11,7 +11,7 @@ export function isListYourRoomBGatedPath(pathname: string): boolean {
   return path === LIST_YOUR_ROOM_B_PATH
 }
 
-/** Shared resolver — browser env bag or Edge `process.env`. */
+/** Shared resolver - browser env bag or Edge `process.env`. */
 export function resolveListYourRoomBEnabled(opts: {
   override?: string | null
   vercelEnv?: string | null

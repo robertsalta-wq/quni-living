@@ -42,7 +42,7 @@ export function assertValidRuleMap(rows: readonly RuleMapRow[]): void {
 
 /**
  * Served-eligibility: only `verified` rows may feed the assistant or guides.
- * Exported as a helper/filter — not merely a comment.
+ * Exported as a helper/filter - not merely a comment.
  */
 export function isServedEligible(row: RuleMapRow): boolean {
   return row.confidence === 'verified'

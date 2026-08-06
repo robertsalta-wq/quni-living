@@ -326,7 +326,7 @@ export default function ListingBasicInfoDrillIn({
             className="w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
           />
           <p className="mt-1.5 text-xs text-[var(--quni-ink-5)]">
-            Optional — shown on your edit hub for now until a dedicated field ships.
+            Optional - shown on your edit hub for now until a dedicated field ships.
           </p>
         </div>
 
@@ -385,13 +385,13 @@ export default function ListingBasicInfoDrillIn({
           <ListingHubStatusDot status={basicDone ? 'complete' : 'attention'} />
           <p className="text-[12.5px] leading-snug text-[var(--quni-ink-4)]">
             {basicDone
-              ? 'Looking good — saving turns Basic info green on your listing health.'
+              ? 'Looking good - saving turns Basic info green on your listing health.'
               : 'Add a listing title and listing type to complete this section and turn it green.'}
           </p>
         </div>
       </div>
 
-      {/* Desktop only — mobile uses AppActionBar (same specs). */}
+      {/* Desktop only - mobile uses AppActionBar (same specs). */}
       <div className="hidden shrink-0 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3 sm:block">
         <div className="flex gap-3">
           {footerSpecs.map((spec) => {

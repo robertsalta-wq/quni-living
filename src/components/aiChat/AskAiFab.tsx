@@ -6,13 +6,13 @@ import { isAppShellPath } from '../../lib/appShell'
 import { isLandlordInvitePapersFooterPath } from '../../lib/site'
 import { ASK_AI_BUTTON_LABEL } from './chatAiLabels'
 
-/** Property detail mobile sticky CTA — FAB sits above it. */
+/** Property detail mobile sticky CTA - FAB sits above it. */
 function propertyDetailHasStickyBar(pathname: string): boolean {
   return /^\/(listings|properties)\/[^/]+$/.test(pathname)
 }
 
 /**
- * Floating Ask AI — mobile, outside the authenticated app shell.
+ * Floating Ask AI - mobile, outside the authenticated app shell.
  * Desktop uses the header control; mobile app-shell routes use AppActionBar.
  * Open to everyone, signed in or not.
  */

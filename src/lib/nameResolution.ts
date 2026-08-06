@@ -18,7 +18,7 @@ function joinedFirstLast(p: NameProfile): string {
   return [first, last].filter(Boolean).join(' ')
 }
 
-/** Legal name for students — only when identity-verified and locked. No social fallbacks. */
+/** Legal name for students - only when identity-verified and locked. No social fallbacks. */
 export function studentLegalName(p: NameProfile): string | null {
   if (p.legal_name_locked_at == null) return null
   if (p.verification_type !== 'identity') return null
@@ -29,7 +29,7 @@ export function studentLegalName(p: NameProfile): string | null {
 }
 
 /**
- * Legal name for landlords — only when locked and individual first+last present.
+ * Legal name for landlords - only when locked and individual first+last present.
  * Company lessor path is intentionally blocked until designed.
  */
 export function landlordLegalName(p: NameProfile): string | null {

@@ -9,7 +9,7 @@
  * Structured house rules are passed the same way.
  *
  * Hash algorithm duplicates api/lib/booking/listingBookingApply.js (sortKeysDeep + SHA-256
- * via crypto.subtle) — do not import that API module from the client.
+ * via crypto.subtle) - do not import that API module from the client.
  */
 
 export const LISTING_ACCURACY_BLOCKED_MESSAGE =
@@ -27,7 +27,7 @@ export type ListingAccuracyMaterialFields = {
   available_from: string | null
   available_to: string | null
   furnished: boolean | null
-  /** Preserved order — do not sort. */
+  /** Preserved order - do not sort. */
   images: string[] | null
   house_rules: string | null
   /** Sorted by rule_id before hashing. */

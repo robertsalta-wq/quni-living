@@ -135,7 +135,7 @@ describe('resolveBookingReviewReadinessGates', () => {
       }),
     )
     expect(bookingReviewReadinessAllClear(gates)).toBe(true)
-    // canConfirm is false when module is paused — ribbon must stay off.
+    // canConfirm is false when module is paused - ribbon must stay off.
     expect(bookingReviewShowReadyRibbon({ readinessAllClear: true, canConfirm: false })).toBe(false)
     expect(bookingReviewHasNonGateBlocker({ readinessAllClear: true, canConfirm: false })).toBe(true)
     expect(landlordBookingConfirmBlockedUserMessage('listing_module_disabled', 'pending_confirmation')).toBe(

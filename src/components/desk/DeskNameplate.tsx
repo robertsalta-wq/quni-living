@@ -3,7 +3,7 @@ type DeskNameplateProps = {
   className?: string
 }
 
-/** Slot 1 — engraved brass plate. WHO the desk serves (not the topic). */
+/** Slot 1 - engraved brass plate. WHO the desk serves (not the topic). */
 export default function DeskNameplate({ children, className = '' }: DeskNameplateProps) {
   return (
     <div

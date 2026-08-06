@@ -23,7 +23,7 @@ type LedgerCalculatorProps = {
   compact?: boolean
 }
 
-/** Landlord desk in-tray — visitor-driven ledger. No market estimates. */
+/** Landlord desk in-tray - visitor-driven ledger. No market estimates. */
 export default function LedgerCalculator({
   onRentChange,
   className = '',
