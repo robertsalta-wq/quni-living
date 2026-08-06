@@ -892,7 +892,7 @@ export default function AdminSettings() {
             </p>
             {!socialLoadedFromDb ? (
               <p className="mt-2 text-[13px] leading-relaxed text-amber-800">
-                Not yet loaded from Supabase for this environment — showing browser draft (
+                Not yet loaded from Supabase for this environment - showing browser draft (
                 <span className="font-mono text-[11px]">{SOCIAL_STORAGE_KEY}</span>). Save once to publish.
               </p>
             ) : null}

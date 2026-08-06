@@ -16,7 +16,7 @@ export function isFt6600BondResolved(bondNum: number | null | undefined): bondNu
   return bondNum != null && Number.isFinite(bondNum) && bondNum > 0
 }
 
-/** Fail loud before FT6600 render — prescribed form must not emit with null bond / unticked RBO (s.159). */
+/** Fail loud before FT6600 render - prescribed form must not emit with null bond / unticked RBO (s.159). */
 export function assertFt6600BondResolved(bondNum: number | null | undefined): asserts bondNum is number {
   if (!isFt6600BondResolved(bondNum)) {
     throw new Ft6600BondUnresolvedError()

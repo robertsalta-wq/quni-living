@@ -166,7 +166,7 @@ async function applyPendingSignupRoleInMemory(
     if (marketplaceRoleForWrite(metaRole) !== writeRole) {
       const data: Record<string, string> = { role: writeRole }
       if (isRenterRole(selected)) {
-        /* Route deferred to profile section 0 — do not write accommodation_verification_route at signup. */
+        /* Route deferred to profile section 0 - do not write accommodation_verification_route at signup. */
       }
       await supabase.auth.updateUser({ data })
     }
@@ -237,7 +237,7 @@ export async function reconcileAuthCallbackProfile(
   const { afterSignupEmailConfirm, urlRoute, urlRole } = options
 
   const meta = user.user_metadata?.role
-  // Never trust user_metadata for admin — always verify against platform_staff via RPC
+  // Never trust user_metadata for admin - always verify against platform_staff via RPC
   // (including staff who still have renter/landlord marketplace metadata).
   if (await fetchIsPlatformAdmin()) {
     await linkPlatformStaffUserIfNeeded(user)

@@ -13,7 +13,7 @@ function todayIsoLocal(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-/** ISO date ~30 years before max — mobile pickers otherwise open on today and bury the year. */
+/** ISO date ~30 years before max - mobile pickers otherwise open on today and bury the year. */
 export function birthDatePickerAnchorIso(maxIso?: string, minIso?: string): string {
   const max = maxIso && isIsoDateString(maxIso) ? maxIso : todayIsoLocal()
   const [y, m, d] = max.split('-').map(Number)

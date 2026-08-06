@@ -1,5 +1,5 @@
 /**
- * Renter pinned obligation band — derived from CURRENT booking/payments state,
+ * Renter pinned obligation band - derived from CURRENT booking/payments state,
  * never reconstructed from booking_events.
  */
 

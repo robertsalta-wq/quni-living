@@ -105,7 +105,7 @@ export const renterEmailWaitBoxClass =
 
 export const renterEmailActionsClass = 'flex flex-wrap items-center gap-3'
 
-/* ——— R4 page chrome ——— */
+/* --- R4 page chrome --- */
 
 export const renterStackClass = 'mx-auto flex w-full max-w-[760px] flex-col gap-3'
 

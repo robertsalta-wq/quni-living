@@ -2064,7 +2064,7 @@ export default function Booking() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  No payment through Quni for this listing — bond and rent are arranged directly with your host.
+                  No payment through Quni for this listing - bond and rent are arranged directly with your host.
                 </p>
               )}
             </div>

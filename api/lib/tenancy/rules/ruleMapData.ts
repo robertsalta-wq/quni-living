@@ -1,10 +1,10 @@
 /**
- * Landlord rule map v0 — structure + Q3 product-bond compatibility slice only.
+ * Landlord rule map v0 - structure + Q3 product-bond compatibility slice only.
  * No external tenancy law is populated: Q1–Q2 and Q4–Q8 stay fully empty.
  */
 import type { RuleMapBondByTier, RuleMapRow, TenancyBondRules } from './types.js'
 
-/** Exact product bond facts from `nsw.ts` (compatibility bridge — not external law). */
+/** Exact product bond facts from `nsw.ts` (compatibility bridge - not external law). */
 const NSW_T1_BOND: TenancyBondRules = {
   schemeApplies: false,
   maxBondCopy: null,
@@ -36,7 +36,7 @@ const NSW_BOND_BY_TIER: RuleMapBondByTier = {
   T2: NSW_T2_BOND,
 }
 
-/** Exact product bond facts from `qld.ts` (compatibility bridge — not external law). */
+/** Exact product bond facts from `qld.ts` (compatibility bridge - not external law). */
 const QLD_T1_BOND: TenancyBondRules = {
   schemeApplies: true,
   maxBondCopy: 'Under Queensland law, bond cannot exceed 4 weeks rent.',
@@ -92,15 +92,15 @@ function emptyRow(
 }
 
 const Q1 =
-  'Q1 — Can I rent out a spare room in my own home, and how does it differ from letting a whole property?'
-const Q2 = 'Q2 — What agreement/form applies to a room let, and how do the states differ?'
-const Q3 = 'Q3 — Who lodges the bond, where does it go, and what happens at the end?'
-const Q4 = 'Q4 — How many people before it becomes something else legally? (the 4-vs-5 line)'
-const Q5 = 'Q5 — Obligations once someone moves in: entry notice, repairs, safety, records.'
-const Q6 = "Q6 — What can and can't go in house rules?"
+  'Q1 - Can I rent out a spare room in my own home, and how does it differ from letting a whole property?'
+const Q2 = 'Q2 - What agreement/form applies to a room let, and how do the states differ?'
+const Q3 = 'Q3 - Who lodges the bond, where does it go, and what happens at the end?'
+const Q4 = 'Q4 - How many people before it becomes something else legally? (the 4-vs-5 line)'
+const Q5 = 'Q5 - Obligations once someone moves in: entry notice, repairs, safety, records.'
+const Q6 = "Q6 - What can and can't go in house rules?"
 const Q7 =
-  'Q7 — Does being in a strata scheme change anything? (by-laws, occupancy, subletting)'
-const Q8 = 'Q8 — What do I need to know about tax and declaring room income?'
+  'Q7 - Does being in a strata scheme change anything? (by-laws, occupancy, subletting)'
+const Q8 = 'Q8 - What do I need to know about tax and declaring room income?'
 
 /**
  * Landlord rule map v0 rows (16). Law cells null except Q3 product bond slice for compatibility.
@@ -128,14 +128,14 @@ export const LANDLORD_RULE_MAP_ROWS: readonly RuleMapRow[] = [
     state: 'NSW',
     needsSolicitor: false,
     notes:
-      'Form identities (FT6600) near-primary and citable — mechanical. WHY the law requires the form is the interpretive part.',
+      'Form identities (FT6600) near-primary and citable - mechanical. WHY the law requires the form is the interpretive part.',
   }),
   emptyRow({
     id: 'Q2-QLD',
     question: Q2,
     state: 'QLD',
     needsSolicitor: false,
-    notes: 'Form 18a v23 Sep25 — version-pinned, verify currency.',
+    notes: 'Form 18a v23 Sep25 - version-pinned, verify currency.',
   }),
   emptyRow({
     id: 'Q3-NSW',
@@ -144,7 +144,7 @@ export const LANDLORD_RULE_MAP_ROWS: readonly RuleMapRow[] = [
     needsSolicitor: false,
     notes:
       'COMPATIBILITY TEST ROW. Existing typed bond rules (rules/nsw.ts) drop in here: authorityUrl -> sourceUrl. Mechanical figures (max weeks, 10 business days) need primary-source verify.',
-    // Product citation only — not a verified legal rule sentence.
+    // Product citation only - not a verified legal rule sentence.
     sourceUrl: NSW_T2_BOND.authorityUrl,
     sourceType: 'product',
     bondByTier: NSW_BOND_BY_TIER,
@@ -222,7 +222,7 @@ export const LANDLORD_RULE_MAP_ROWS: readonly RuleMapRow[] = [
     state: 'QLD',
     needsSolicitor: true,
     notes:
-      'Nothing in repo. Primary: Body Corporate and Community Management Act 1997 + BCCM Commissioner (verify). Clearview is a vendor summary — pointer only, never the source.',
+      'Nothing in repo. Primary: Body Corporate and Community Management Act 1997 + BCCM Commissioner (verify). Clearview is a vendor summary - pointer only, never the source.',
   }),
   emptyRow({
     id: 'Q8-NSW',
@@ -230,7 +230,7 @@ export const LANDLORD_RULE_MAP_ROWS: readonly RuleMapRow[] = [
     state: 'NSW',
     needsSolicitor: false,
     notes:
-      'ATO territory (federal, not state) — specialist/accountant rather than solicitor. Nothing in repo.',
+      'ATO territory (federal, not state) - specialist/accountant rather than solicitor. Nothing in repo.',
   }),
   emptyRow({
     id: 'Q8-QLD',
@@ -238,6 +238,6 @@ export const LANDLORD_RULE_MAP_ROWS: readonly RuleMapRow[] = [
     state: 'QLD',
     needsSolicitor: false,
     notes:
-      'Federal — same as NSW row. Tax is national; may collapse to one non-state row when populated.',
+      'Federal - same as NSW row. Tax is national; may collapse to one non-state row when populated.',
   }),
 ]

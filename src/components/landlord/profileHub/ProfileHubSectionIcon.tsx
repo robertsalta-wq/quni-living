@@ -21,7 +21,7 @@ function Svg(props: SVGProps<SVGSVGElement> & { children: ReactNode }) {
   )
 }
 
-/** Neutral glyphs for profile hub rows — same tile treatment as Listing Health. */
+/** Neutral glyphs for profile hub rows - same tile treatment as Listing Health. */
 export function ProfileHubSectionIcon({ id }: { id: LandlordProfileHubSectionId }) {
   switch (id) {
     case 'personal':

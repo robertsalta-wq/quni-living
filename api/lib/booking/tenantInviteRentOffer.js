@@ -33,7 +33,7 @@ function inviteBondProvenanceFields(invite) {
 }
 
 /**
- * @param {object} listingResolved — output of resolveWeeklyRentForBooking.resolved
+ * @param {object} listingResolved - output of resolveWeeklyRentForBooking.resolved
  * @param {object} property
  * @param {{ offered_weekly_rent?: unknown; offer_reason?: unknown; offered_bond_weeks?: unknown } | null | undefined} invite
  * @param {string | undefined} moveInDate

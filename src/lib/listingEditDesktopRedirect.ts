@@ -14,7 +14,7 @@ function formAnchorForHubSection(sectionId: ListingHubSectionId | 'basic'): stri
 }
 
 /**
- * Desktop (≥ sm) should not show hub nested routes — redirect to the long form
+ * Desktop (≥ sm) should not show hub nested routes - redirect to the long form
  * base URL with a section hash. Returns null when no redirect is needed.
  */
 export function resolveListingEditDesktopRedirect(pathname: string): string | null {

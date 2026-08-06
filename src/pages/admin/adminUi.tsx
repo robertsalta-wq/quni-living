@@ -11,7 +11,7 @@ export const adminTdClass =
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
-/** Admin list/table helper — routes through shared display resolver; blank profiles show '-'. */
+/** Admin list/table helper - routes through shared display resolver; blank profiles show '-'. */
 export function studentDisplayName(row: {
   preferred_name?: string | null
   full_name?: string | null

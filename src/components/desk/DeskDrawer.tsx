@@ -11,7 +11,7 @@ type DeskDrawerProps = {
 }
 
 /**
- * Slot 5 — ⊕ expands in place; grows the desk downward. Never overlays.
+ * Slot 5 - ⊕ expands in place; grows the desk downward. Never overlays.
  * Gate 6: panel content stays in the DOM (CSS grid-rows collapse), never
  * conditional null and never `<details>`.
  */

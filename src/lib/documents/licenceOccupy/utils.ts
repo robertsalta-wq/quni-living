@@ -45,7 +45,7 @@ export function ownerServiceFeeParagraphForTier(
   return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`
 }
 
-/** Clause 11 bank intro — populated payee or static template fallback. */
+/** Clause 11 bank intro - populated payee or static template fallback. */
 export function occupancyClause11BankDetailsIntro(
   content: LicenceOccupyContent,
   props: OccupancyAgreementProps,
@@ -77,7 +77,7 @@ export function occupancyBondSectionPayeeNote(props: OccupancyAgreementProps): s
   return 'Any security deposit under this licence is paid to the same account set out in clause 11.'
 }
 
-/** QLD §5 supplement — preference-aware bond payment routes (existing guidance copy). */
+/** QLD §5 supplement - preference-aware bond payment routes (existing guidance copy). */
 export function occupancyQldBondPaymentSupplement(props: OccupancyAgreementProps): ListingBondPaymentOccupancyProse | null {
   if (props.schemeApplies !== true) return null
   if (props.bond.amount == null || !Number.isFinite(props.bond.amount) || props.bond.amount <= 0) {

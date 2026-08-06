@@ -1,5 +1,5 @@
 /**
- * Landlord accept-readiness checklist — `pending_confirmation` only (NOT awaiting_info / payment_failed;
+ * Landlord accept-readiness checklist - `pending_confirmation` only (NOT awaiting_info / payment_failed;
  * those have no Accept action). Maps landlord account + listing + billing state to the HTML SoT's
  * "Required to accept" gate list, wired to the real confirm-gate predicates
  * (`landlordBookingConfirmGate.ts` / `landlordBookingConfirmAllowed`).
@@ -51,7 +51,7 @@ export type BookingReviewReadinessGatesInput = {
   property: BookingReviewReadinessGatesProperty | null
   booking: BookingReviewReadinessGatesBooking | null
   /**
-   * @deprecated Occupancy no longer gates the payout checklist — Listing always needs
+   * @deprecated Occupancy no longer gates the payout checklist - Listing always needs
    * property_payout_details. Kept so existing callers keep compiling.
    */
   listingUsesOccupancyAgreement: boolean
@@ -85,7 +85,7 @@ function listingActiveGate(input: BookingReviewReadinessGatesInput): GateDef {
   return {
     id: 'listing_active',
     label: 'Listing is active',
-    sub: status === 'active' ? 'Live and visible to renters' : status ? `Currently ${status} — reactivate to accept bookings` : 'Live and visible to renters',
+    sub: status === 'active' ? 'Live and visible to renters' : status ? `Currently ${status} - reactivate to accept bookings` : 'Live and visible to renters',
     done,
     actionLabel: 'Review',
     actionKind: 'review_listing',
@@ -99,7 +99,7 @@ function payoutMethodGate(input: BookingReviewReadinessGatesInput): GateDef | nu
     return {
       id: 'payout_method',
       label: 'Add a payout method',
-      sub: 'Payee bank details for bond and rent — required for Quni Listing.',
+      sub: 'Payee bank details for bond and rent - required for Quni Listing.',
       done: input.propertyPayoutComplete === true,
       actionLabel: 'Add',
       actionKind: 'add_payout_method',
@@ -111,14 +111,14 @@ function payoutMethodGate(input: BookingReviewReadinessGatesInput): GateDef | nu
   return {
     id: 'payout_method',
     label: 'Add a payout method',
-    sub: 'Where rent lands after move-in — backed by your Stripe account.',
+    sub: 'Where rent lands after move-in - backed by your Stripe account.',
     done: input.stripeChargesEnabled === true,
     actionLabel: 'Add',
     actionKind: 'verify_identity',
   }
 }
 
-/** Listing acceptance fee card — not required when fee-exempt; Managed doesn't charge a landlord card. */
+/** Listing acceptance fee card - not required when fee-exempt; Managed doesn't charge a landlord card. */
 function billingCardGate(input: BookingReviewReadinessGatesInput): GateDef | null {
   if (input.selectedConfirmTier !== 'listing' || input.listingFeeExempt === true) return null
   const done = input.listingBillingLoaded && input.listingBilling?.hasPaymentMethod === true
@@ -132,7 +132,7 @@ function billingCardGate(input: BookingReviewReadinessGatesInput): GateDef | nul
   }
 }
 
-/** NSW FT6600 (T2) schedule compliance — only when this booking/property routes to that generator. */
+/** NSW FT6600 (T2) schedule compliance - only when this booking/property routes to that generator. */
 function ft6600Gate(input: BookingReviewReadinessGatesInput): GateDef | null {
   if (!input.property || !input.booking) return null
   if (!bookingUsesNswFt6600Generator(input.booking, input.property)) return null
@@ -157,7 +157,7 @@ function resolveGateDefs(input: BookingReviewReadinessGatesInput): GateDef[] {
 }
 
 /**
- * Ordered gate list with UI state — the first incomplete gate is "current" (drives the driver's
+ * Ordered gate list with UI state - the first incomplete gate is "current" (drives the driver's
  * hint copy), later incomplete gates are "todo". Caller (landlord review page) only renders this
  * for `booking.status === 'pending_confirmation'`.
  */
@@ -179,7 +179,7 @@ export function bookingReviewReadinessAllClear(gates: BookingReviewReadinessGate
   return gates.length > 0 && gates.every((g) => g.state === 'done')
 }
 
-/** Short hint under the progress bar — mirrors the first incomplete gate's label. */
+/** Short hint under the progress bar - mirrors the first incomplete gate's label. */
 export function bookingReviewReadinessHint(gates: BookingReviewReadinessGate[]): string | null {
   const current = gates.find((g) => g.state === 'current')
   return current ? `${current.label} to unlock accepting this request.` : null

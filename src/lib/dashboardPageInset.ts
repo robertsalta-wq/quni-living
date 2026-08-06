@@ -4,7 +4,7 @@
  * (`max-sm:contents`) so the profile body owns Listing-style gutters.
  */
 
-/** Non-profile dashboard tabs — same track as Listing Health hub body (`px-3.5 py-3`). */
+/** Non-profile dashboard tabs - same track as Listing Health hub body (`px-3.5 py-3`). */
 export const dashboardPageInsetClass =
   'mx-auto w-full min-w-0 max-w-site px-3.5 py-3 sm:px-4 sm:py-6 lg:px-8 lg:pb-14'
 

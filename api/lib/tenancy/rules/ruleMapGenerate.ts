@@ -2,7 +2,7 @@ import type { RuleMapRow, RuleMapState, TenancyRules } from './types.js'
 
 /**
  * Emit product `TenancyRules` from a Q3 rule-map row's `bondByTier` slice.
- * Does not invent bond figures — only returns what the map already carries.
+ * Does not invent bond figures - only returns what the map already carries.
  */
 export function tenancyRulesFromRuleMapRow(
   row: RuleMapRow,
@@ -10,7 +10,7 @@ export function tenancyRulesFromRuleMapRow(
 ): TenancyRules {
   if (!row.bondByTier) {
     throw new Error(
-      `Rule map row ${row.id} has no bondByTier — cannot generate TenancyRules`,
+      `Rule map row ${row.id} has no bondByTier - cannot generate TenancyRules`,
     )
   }
   return { bond: row.bondByTier[tier] }

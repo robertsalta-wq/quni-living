@@ -37,7 +37,7 @@ describe('formatStripeCardOnFile', () => {
     expect(formatStripeCardOnFile({ brand: 'foo', last4: '1111' })).toBe('Foo •••• 1111')
   })
 
-  it('does not throw when brand is nullish — falls back to your saved card', () => {
+  it('does not throw when brand is nullish - falls back to your saved card', () => {
     expect(formatStripeCardOnFile({ brand: null as unknown as string, last4: '4242' })).toBe(
       'your saved card •••• 4242',
     )

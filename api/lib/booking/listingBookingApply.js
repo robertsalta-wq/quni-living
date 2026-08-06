@@ -1,5 +1,5 @@
 /**
- * Listing-tier student apply: booking request only — no student Stripe PI, deposit, or rent collection.
+ * Listing-tier student apply: booking request only - no student Stripe PI, deposit, or rent collection.
  */
 
 import { bondAmountAtApplyFromProperty } from './bookingBondAmount.js'

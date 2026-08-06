@@ -12,7 +12,7 @@ type Props = {
 
 /**
  * Pinned warning band for outstanding renter obligations.
- * Reads current booking state only — never booking_events.
+ * Reads current booking state only - never booking_events.
  */
 export default function RenterBookingObligationBand({ booking, property, className = '' }: Props) {
   const band = renterBookingObligation(booking, property)

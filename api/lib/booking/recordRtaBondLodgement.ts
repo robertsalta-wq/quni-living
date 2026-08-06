@@ -27,7 +27,7 @@ function normalizeOptionalIso(raw: unknown): string | null {
   return d.toISOString()
 }
 
-/** Optional RTA lodgement record for QLD Listing bookings — not a confirmation gate. */
+/** Optional RTA lodgement record for QLD Listing bookings - not a confirmation gate. */
 export async function runRecordRtaBondLodgement(args: {
   admin: SupabaseClient
   landlordProfileId: string

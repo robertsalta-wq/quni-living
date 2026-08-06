@@ -55,7 +55,7 @@ type BookingMessageRow = Pick<
   'id' | 'sender_role' | 'message' | 'created_at'
 >
 
-/** Loose property embed — matches StudentDashboard booking joins without over-constraining. */
+/** Loose property embed - matches StudentDashboard booking joins without over-constraining. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PropertyEmbed = Record<string, any> & {
   state?: string | null
@@ -75,7 +75,7 @@ type PropertyEmbed = Record<string, any> & {
 type Props = {
   booking: BookingRow & { properties: PropertyEmbed | null }
   property: PropertyEmbed | null
-  /** Renter's own profile — drives the read-only fit summary. */
+  /** Renter's own profile - drives the read-only fit summary. */
   studentProfile: StudentRow | null
   renterDisplayName: string
   isCurrent: boolean
@@ -108,9 +108,9 @@ function propertyAddressLine(property: PropertyEmbed): string {
 }
 
 /**
- * Renter mirror of the v3 booking review shell — same slots as the landlord page, role-flipped:
+ * Renter mirror of the v3 booking review shell - same slots as the landlord page, role-flipped:
  * rail = action card + read-only terms; main = summary strip, host, fit, messages, agreement, activity.
- * Timeline stays `mode="renter"` only (audience='both' filtering server + client) — never `internal`.
+ * Timeline stays `mode="renter"` only (audience='both' filtering server + client) - never `internal`.
  * No AI, tier chooser, backups warning, or landlord terms editor on this surface.
  */
 export default function RenterBookingZones({
@@ -228,8 +228,8 @@ export default function RenterBookingZones({
   const planLabel = tierFinal === 'managed' ? 'Managed by Quni' : 'Quni Listing'
   const planTooltip =
     tierFinal === 'managed'
-      ? 'Managed by Quni — Quni collects rent, chases signatures and handles the tenancy for a fee.'
-      : 'Quni Listing — your host manages this tenancy directly. Quni holds no money; bond and rent are paid directly.'
+      ? 'Managed by Quni - Quni collects rent, chases signatures and handles the tenancy for a fee.'
+      : 'Quni Listing - your host manages this tenancy directly. Quni holds no money; bond and rent are paid directly.'
   const listingHref = property?.slug ? `/properties/${property.slug}` : null
   const receivedLabel = booking.created_at ? `Sent ${formatDate(booking.created_at.slice(0, 10))}` : null
 
@@ -307,7 +307,7 @@ export default function RenterBookingZones({
         </button>
         {bondDownloadError ? (
           <p className="text-xs leading-relaxed text-admin-warning-fg">
-            Bond receipt isn&apos;t available yet — check back after your host records your bond payment.
+            Bond receipt isn&apos;t available yet - check back after your host records your bond payment.
           </p>
         ) : null}
       </div>
@@ -340,7 +340,7 @@ export default function RenterBookingZones({
   return (
     <div className="bg-admin-surface-2 py-6 sm:px-5" aria-current={isCurrent ? 'true' : undefined}>
       <div className="grid grid-cols-1 items-start gap-6 min-[921px]:grid-cols-[minmax(0,1fr)_320px]">
-        {/* —— Rail (first in DOM for mobile order) —— */}
+        {/* -- Rail (first in DOM for mobile order) -- */}
         <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
           <BookingReviewActionCard
             eyebrow={actionCopy.eyebrow}
@@ -353,7 +353,7 @@ export default function RenterBookingZones({
             {actionBody}
           </BookingReviewActionCard>
 
-          {/* Info siblings — below ActionCard (never nested inside it) */}
+          {/* Info siblings - below ActionCard (never nested inside it) */}
           {booking.status === 'awaiting_info' && askedQuestion ? (
             <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
@@ -427,7 +427,7 @@ export default function RenterBookingZones({
           </BookingReviewSurfaceCard>
         </div>
 
-        {/* —— Main column —— */}
+        {/* -- Main column -- */}
         <div className="flex min-w-0 flex-col gap-4">
           <BookingReviewSummaryStrip
             booking={

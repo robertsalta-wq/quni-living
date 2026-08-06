@@ -1,4 +1,4 @@
-/** Tailwind `sm` — matches LandlordMobileBottomNav / app-shell `max-sm:` (640px). */
+/** Tailwind `sm` - matches LandlordMobileBottomNav / app-shell `max-sm:` (640px). */
 export const TAILWIND_SM_PX = 640
 
 /** Mobile = below `sm` (max-width 639px). */

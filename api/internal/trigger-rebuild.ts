@@ -3,7 +3,7 @@
  * Trigger a production Vercel redeploy so listing prerender HTML stays fresh.
  *
  * Auth: Supabase session of a landlord or platform admin (Bearer token).
- * Env: VERCEL_DEPLOY_HOOK_URL (optional — no-ops with 204 when unset),
+ * Env: VERCEL_DEPLOY_HOOK_URL (optional - no-ops with 204 when unset),
  *      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY | VITE_SUPABASE_ANON_KEY
  */
 import { createClient } from '@supabase/supabase-js'
@@ -87,7 +87,7 @@ export default async function handler(
 
   const hookUrl = (process.env.VERCEL_DEPLOY_HOOK_URL || '').trim()
   if (!hookUrl) {
-    console.info('[trigger-rebuild] VERCEL_DEPLOY_HOOK_URL unset — no-op')
+    console.info('[trigger-rebuild] VERCEL_DEPLOY_HOOK_URL unset - no-op')
     res.setHeader('Access-Control-Allow-Origin', origin)
     return res.status(204).end()
   }

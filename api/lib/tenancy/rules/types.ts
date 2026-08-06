@@ -64,7 +64,7 @@ export type RuleMapState = 'NSW' | 'QLD'
 
 /**
  * Product bond facts on Q3 rows, keyed by property tier.
- * Each value is `TenancyRules['bond']` — so existing `TenancyRules` is expressible as
+ * Each value is `TenancyRules['bond']` - so existing `TenancyRules` is expressible as
  * `{ bond: row.bondByTier[tier] }`. Authority labels live here (not duplicated as URLs).
  */
 export type RuleMapBondByTier = {
@@ -83,7 +83,7 @@ export interface RuleMapRow {
   productRegime: string | null
   legalRegime: string | null
   provision: string | null
-  /** Plain-sentence rule — null until sourced. Source-gated: requires `sourceUrl`. */
+  /** Plain-sentence rule - null until sourced. Source-gated: requires `sourceUrl`. */
   rule: string | null
   /** Official or product citation URL (bond `authorityUrl` maps here). */
   sourceUrl: string | null

@@ -29,9 +29,9 @@ export function routeSectionTitle(situation: RenterSituation): string {
     case 'backpacker':
       return 'Visa & funding'
     case 'retired':
-      return 'Income — super or pension'
+      return 'Income - super or pension'
     case 'between_jobs':
-      return 'Income — savings or support'
+      return 'Income - savings or support'
   }
 }
 
@@ -39,7 +39,7 @@ export function routeSectionNumber(): string {
   return '03'
 }
 
-/** §01 Personal — design fields only (budget/living prefs are optional §06). */
+/** §01 Personal - design fields only (budget/living prefs are optional §06). */
 export function isPersonalDetailsComplete(profile: StudentProfileRow): boolean {
   return Boolean(
     profile.first_name?.trim() &&
@@ -68,7 +68,7 @@ export function emergencySummary(profile: StudentProfileRow): string {
   return parts.join(' · ') || 'Add an emergency contact'
 }
 
-/** First incomplete required section — mirrors landlordProfileDefaultExpandedSection. */
+/** First incomplete required section - mirrors landlordProfileDefaultExpandedSection. */
 export function renterProfileDefaultExpandedSection(args: {
   situation: RenterSituation | null
   personalComplete: boolean

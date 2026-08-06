@@ -282,7 +282,7 @@ function formatBondAudDisplay(amount: number): string {
   return amount.toLocaleString('en-AU', { maximumFractionDigits: 0 })
 }
 
-/** Base rent + couple surcharge — matches two-occupant booking rent (no parking). */
+/** Base rent + couple surcharge - matches two-occupant booking rent (no parking). */
 export function listingCoupleOccupancyWeeklyRentAud(property: OccupancyPricingProperty): number | null {
   const maxOcc = Math.min(10, Math.max(1, Math.floor(Number(property.max_occupants) || 1)))
   if (maxOcc < 2) return null
@@ -398,7 +398,7 @@ export default function PropertyDetail() {
 
   const isPreview = !user
   const userId = user?.id ?? null
-  /** Stable after auth bootstrap — one listing fetch per slug + viewer identity. */
+  /** Stable after auth bootstrap - one listing fetch per slug + viewer identity. */
   const viewerListingFetchKey = useMemo(() => {
     if (authLoading) return null
     return userId ? `${userId}\0${role ?? ''}` : 'guest'
@@ -441,7 +441,7 @@ export default function PropertyDetail() {
   }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
-    // Wait for profile-ready auth (hydrate finished — snapshot may paint role early but loading stays true).
+    // Wait for profile-ready auth (hydrate finished - snapshot may paint role early but loading stays true).
     if (!shouldFetch || !viewerListingFetchKey) return
 
     const fetchGen = ++propertyFetchGenRef.current

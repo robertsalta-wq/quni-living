@@ -219,7 +219,7 @@ export default function LandlordBookingReviewPage() {
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
-  /** Collapsible section overrides — null means use layout defaults for the current status. */
+  /** Collapsible section overrides - null means use layout defaults for the current status. */
   const [applicantExpandedOverride, setApplicantExpandedOverride] = useState<boolean | null>(null)
   const [aiExpandedOverride, setAiExpandedOverride] = useState<boolean | null>(null)
   const [fitExpandedOverride, setFitExpandedOverride] = useState<boolean | null>(null)
@@ -743,7 +743,7 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, listingCancelReason, reload])
 
-  // Hooks must stay above loading/error early returns — otherwise React #310 when data arrives.
+  // Hooks must stay above loading/error early returns - otherwise React #310 when data arrives.
   const chatThread = useMemo(
     () =>
       buildBookingReviewChatThread({
@@ -871,7 +871,7 @@ export default function LandlordBookingReviewPage() {
   const readinessAllClear = readinessGates.length > 0 && bookingReviewReadinessAllClear(readinessGates)
   const readinessHint = bookingReviewReadinessHint(readinessGates)
   const showReadinessDriver = booking.status === 'pending_confirmation' && readinessGates.length > 0 && !readinessAllClear
-  // Non-gate blockers (module paused / billing unavailable) keep Accept off — never show the green ribbon then.
+  // Non-gate blockers (module paused / billing unavailable) keep Accept off - never show the green ribbon then.
   const showReadinessReady =
     booking.status === 'pending_confirmation' &&
     bookingReviewShowReadyRibbon({ readinessAllClear, canConfirm })
@@ -976,8 +976,8 @@ export default function LandlordBookingReviewPage() {
     serviceTierResolved === 'managed' ? 'Managed by Quni' : 'Quni Listing'
   const planTooltip =
     serviceTierResolved === 'managed'
-      ? 'Managed by Quni — we collect rent, chase signatures and handle the tenancy for a 6% fee.'
-      : 'Quni Listing — you manage this tenancy yourself. Quni holds no money; bond and rent are paid to you directly.'
+      ? 'Managed by Quni - we collect rent, chase signatures and handle the tenancy for a 6% fee.'
+      : 'Quni Listing - you manage this tenancy yourself. Quni holds no money; bond and rent are paid to you directly.'
   const listingHref = property?.id ? `/property/${property.id}` : null
   const propertySubtitle = propertyAddressLine || propertyStreetLine || null
 
@@ -993,9 +993,9 @@ export default function LandlordBookingReviewPage() {
         <UserDashboardBreadcrumb segments={breadcrumbSegments} className="mb-[26px] text-[13px] text-admin-ink-5" />
 
         <div className="grid grid-cols-1 items-start gap-7 min-[921px]:grid-cols-[minmax(0,1fr)_356px]">
-          {/* —— Rail (first in DOM for mobile order) —— */}
+          {/* -- Rail (first in DOM for mobile order) -- */}
           <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-[calc(var(--site-header-height,5.5rem)+0.75rem)]">
-            {/* Gating / attention siblings — above ActionCard (never nested inside it) */}
+            {/* Gating / attention siblings - above ActionCard (never nested inside it) */}
             {(actionError || bondReceivedError) && (
               <div className="space-y-3.5">
                 {actionError ? (
@@ -1162,7 +1162,7 @@ export default function LandlordBookingReviewPage() {
                       <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
                         {isQldBoardingProperty ? (
                           <>
-                            Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
+                            Records off-platform bond receipt on Quni only - this is <strong>not</strong> RTA lodgement. You
                             must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
                           </>
                         ) : (
@@ -1309,7 +1309,7 @@ export default function LandlordBookingReviewPage() {
               })()}
             </BookingReviewActionCard>
 
-            {/* Info siblings — below ActionCard (never nested inside it) */}
+            {/* Info siblings - below ActionCard (never nested inside it) */}
             {isListingBondPending ? (
               <LandlordListingAcceptedSummary
                 bookingReference={bookingReferenceLabel(booking.id)}
@@ -1455,7 +1455,7 @@ export default function LandlordBookingReviewPage() {
             </BookingReviewSurfaceCard>
           </div>
 
-          {/* —— Main column —— */}
+          {/* -- Main column -- */}
           <div className="flex min-w-0 flex-col gap-4">
             <BookingReviewSummaryStrip
               booking={
@@ -1737,7 +1737,7 @@ export default function LandlordBookingReviewPage() {
                           </p>
                           {isQldBoardingProperty ? (
                             <p className="text-xs leading-relaxed text-admin-ink-5">
-                              Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
+                              Payment receipt only - not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
                             </p>
                           ) : null}
                         </div>

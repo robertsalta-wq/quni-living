@@ -17,7 +17,7 @@ export type ReadinessDriverStep = {
 
 export type ProfileReadinessDriverProps = {
   eyebrow: string
-  /** Display title — string or node (e.g. renter coral %). */
+  /** Display title - string or node (e.g. renter coral %). */
   title: ReactNode
   fraction: string
   fractionLabel: string
@@ -32,14 +32,14 @@ export type ProfileReadinessDriverProps = {
    */
   stickyTop?: number | string
   /**
-   * When set, overrides step-derived completion (needed when `steps` is empty —
-   * e.g. renter S1 — so the collapse-when-complete row still works).
+   * When set, overrides step-derived completion (needed when `steps` is empty -
+   * e.g. renter S1 - so the collapse-when-complete row still works).
    */
   complete?: boolean
   /** Collapsed-complete subtitle. Landlord default: listing copy. */
   completeSubtitle?: string
   /** Collapsed-incomplete title. Default: Finish your profile. */
   incompleteTitle?: string
-  /** Collapsed-incomplete subtitle — next required action. */
+  /** Collapsed-incomplete subtitle - next required action. */
   incompleteSubtitle?: string
 }

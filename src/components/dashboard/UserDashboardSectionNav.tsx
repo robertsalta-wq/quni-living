@@ -11,7 +11,7 @@ type Props = {
   pendingBookings?: number
   totalBookings?: number
   onSelect?: (section: Exclude<UserDashboardSection, 'messages'>) => void
-  /** Flush under site header — no outer margin; parent owns the border. */
+  /** Flush under site header - no outer margin; parent owns the border. */
   embedded?: boolean
 }
 
@@ -57,7 +57,7 @@ export default function UserDashboardSectionNav({
     const bookingsBadge =
       pendingBookings > 0 ? pendingBookings : totalBookings > 0 ? totalBookings : null
 
-    // Desktop / sm+ top strip only — mobile uses LandlordMobileBottomNav.
+    // Desktop / sm+ top strip only - mobile uses LandlordMobileBottomNav.
     return (
       <div className={embedded ? '' : 'mb-6 border-b border-gray-200'}>
         <nav

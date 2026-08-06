@@ -10,7 +10,7 @@ const INVITE_ABN_FALLBACK = '65675990968'
 /** TODO: replace with final approved Quinnie photo (same asset as `/list-your-room`). */
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 
-/** Condensed from landlord AI feature set — fits one panel. */
+/** Condensed from landlord AI feature set - fits one panel. */
 const AI_FEATURES = [
   'Write or regenerate your listing description',
   'Proofread and polish listing copy',
@@ -23,13 +23,13 @@ const AI_FEATURES = [
 const FEE_STORY = [
   {
     title: 'Free until you accept.',
-    body: 'List your room, use the AI tools, and take booking requests — no subscription. Review name, verification, profile, messages, and AI fit before you decide. Email and phone stay masked until accept.',
+    body: 'List your room, use the AI tools, and take booking requests - no subscription. Review name, verification, profile, messages, and AI fit before you decide. Email and phone stay masked until accept.',
   },
   {
-    title: '$99 once — when you say yes.',
+    title: '$99 once - when you say yes.',
     body: (
       <>
-        Charged once per accepted booking to your saved card — not for listing, browsing, or declining. Amount on{' '}
+        Charged once per accepted booking to your saved card - not for listing, browsing, or declining. Amount on{' '}
         <Link to="/pricing" className="font-semibold text-[var(--quni-coral)] hover:underline">
           Pricing
         </Link>
@@ -78,7 +78,7 @@ export default function ListYourRoomB() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your property"
-        description="More income from your spare room. Zero hassle — free to list until you accept. One-off $99 when you place a tenant."
+        description="More income from your spare room. Zero hassle - free to list until you accept. One-off $99 when you place a tenant."
         canonicalPath="/list-your-room-b"
         noindex
       />
@@ -91,7 +91,7 @@ export default function ListYourRoomB() {
             <span className="text-[var(--quni-coral)]">Zero hassle.</span>
           </h1>
 
-          {/* Quinnie — top line */}
+          {/* Quinnie - top line */}
           <div className="flex items-start gap-3.5">
             {/* TODO: replace with final approved Quinnie photo */}
             <img
@@ -106,7 +106,7 @@ export default function ListYourRoomB() {
               <p className="text-sm font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)] sm:text-base sm:leading-[var(--text-body-lh)]">
                 &ldquo;<strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built
                 Quni with my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and
-                you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
+                you can message me anytime - you&apos;ll get me, not a bot.&rdquo;
               </p>
               <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
                 Quinnie Le, co-founder.
@@ -139,7 +139,7 @@ export default function ListYourRoomB() {
             </ul>
           </div>
 
-          {/* Free → $99 — flat list, no nested cards */}
+          {/* Free → $99 - flat list, no nested cards */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <ul className="flex flex-col">
               {FEE_STORY.map((point, i) => (
@@ -154,7 +154,7 @@ export default function ListYourRoomB() {
             </ul>
           </div>
 
-          {/* Signup — docked to bottom on mobile */}
+          {/* Signup - docked to bottom on mobile */}
           <aside className="quni-card order-1 flex h-full min-h-0 flex-col p-6 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:max-h-[min(58dvh,26rem)] max-md:overflow-y-auto max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-8px_30px_-12px_rgba(8,6,13,0.2)] max-md:pb-[max(1rem,env(safe-area-inset-bottom))] md:order-2 md:max-h-none md:overflow-visible md:shadow-none xl:order-3">
             <Signup
               embedLandlordInvite
@@ -162,7 +162,7 @@ export default function ListYourRoomB() {
               embedInviteSub={
                 <>
                   Free to list. Pay <strong className="font-semibold text-[var(--quni-ink)]">$99 only when you accept</strong>{' '}
-                  — takes a few minutes.
+                  - takes a few minutes.
                 </>
               }
             />

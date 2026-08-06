@@ -2,7 +2,7 @@
 export const LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE = { width: 220, height: 72 } as const
 export const LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE = { width: 120, height: 28 } as const
 
-/** Matches occupancyMatchPdf docuseal field box background — hides 1pt anchor text on draft PDFs. */
+/** Matches occupancyMatchPdf docuseal field box background - hides 1pt anchor text on draft PDFs. */
 export const LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN = {
   fontSize: 1,
   color: '#FAF6EE',

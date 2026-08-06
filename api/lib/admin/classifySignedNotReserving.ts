@@ -5,7 +5,7 @@ import { leaseDocBlocksBondExpiry } from '../booking/guardSignedLeaseExpiry.js'
  * dead (`expired` / `cancelled` / `declined`).
  *
  * Tier 1 (`expired`) is reconcilable via admin DocuSeal reconcile.
- * Tier 2 (`cancelled` / `declined`) is investigate-only — never present as
+ * Tier 2 (`cancelled` / `declined`) is investigate-only - never present as
  * reinstatable (withdrawn-booking prohibition).
  *
  * Healthy signed states (`bond_pending`, `confirmed`, `active`) are never flagged.
@@ -28,7 +28,7 @@ export type SignedNotReservingAttentionItem = {
 
 /** Known smoke / synthetic bookings that must never raise attention. */
 export const KNOWN_SMOKE_BOOKING_IDS: ReadonlySet<string> = new Set([
-  // SMOKE three-party signing 2026-07-22 — cancelled + orphaned signed doc
+  // SMOKE three-party signing 2026-07-22 - cancelled + orphaned signed doc
   '1b07c4e6-245e-4c51-87ed-b7a5a769405c',
 ])
 
@@ -98,8 +98,8 @@ export function classifySignedNotReserving(
       tone: 'watch',
       text:
         n === 1
-          ? '1 signed lease on a withdrawn booking — investigate'
-          : `${n} signed leases on withdrawn bookings — investigate`,
+          ? '1 signed lease on a withdrawn booking - investigate'
+          : `${n} signed leases on withdrawn bookings - investigate`,
       // Single-status filter can't express cancelled|declined; deep-link the first.
       fixHref: bookingHref('cancelled', withdrawnIds),
     })

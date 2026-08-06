@@ -112,7 +112,7 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
   const hasBond = bondAmountAud != null && Number.isFinite(bondAmountAud) && bondAmountAud > 0
   const showUpfrontTotal = isBondPending && showBondSection && hasBond && hasWeeklyRent
   const addressLine = propertyAddressLine(property)
-  const paymentReference = `${renterDisplayName.trim()} — ${addressLine}`.trim()
+  const paymentReference = `${renterDisplayName.trim()} - ${addressLine}`.trim()
   const heading = showBondSection ? 'How to pay your bond and rent' : 'How to pay your rent'
 
   return (
@@ -141,7 +141,7 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
       {showUpfrontTotal ? (
         <p>
           Up front you&apos;ll need{' '}
-          <span className="font-semibold">{formatAud(bondAmountAud! + weeklyRentAud!)} in total</span> — bond{' '}
+          <span className="font-semibold">{formatAud(bondAmountAud! + weeklyRentAud!)} in total</span> - bond{' '}
           {formatAud(bondAmountAud)} (by <span className="font-semibold">{bondDeadlineLabel}</span>) and your first
           week&apos;s rent {formatAud(weeklyRentAud)} (by <span className="font-semibold">{moveInLabel}</span>).
         </p>

@@ -22,7 +22,7 @@ const UTILITIES_RESOLVER_KEYS = [
   PLATFORM_CONFIG_KEYS.UTILITIES_RESOLVER_LISTING_DISCLOSURE_ENABLED,
 ] as const
 
-/** Per-state utilities resolver rollout flags (default false — legacy hard-coded fill). */
+/** Per-state utilities resolver rollout flags (default false - legacy hard-coded fill). */
 export async function fetchUtilitiesResolverStateFlags(
   client: SupabaseClient<Database>,
 ): Promise<UtilitiesResolverStateFlags> {

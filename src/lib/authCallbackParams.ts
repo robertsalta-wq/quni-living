@@ -22,7 +22,7 @@ export type OAuthSignupCallbackParams = {
 
 const OAUTH_SIGNUP_CONTEXT_KEY = 'quni_oauth_signup_context'
 
-/** Persist signup role/route before OAuth — redirectTo must stay the bare allow-listed callback URL. */
+/** Persist signup role/route before OAuth - redirectTo must stay the bare allow-listed callback URL. */
 export function rememberOAuthSignupContext(params: OAuthSignupCallbackParams): void {
   if (typeof window === 'undefined') return
   if (!params.signupRoute && !params.signupRole) return
@@ -143,7 +143,7 @@ function hasImplicitAuthHash(hash: string): boolean {
 
 /**
  * Supabase may substitute `.RedirectTo` with Site URL (no path) when the redirect is not
- * allow-listed — links then land on `/` with `?token_hash=…` (email) or `#access_token=…`
+ * allow-listed - links then land on `/` with `?token_hash=…` (email) or `#access_token=…`
  * (implicit OAuth). Forward those to `/auth/callback` so `detectSessionInUrl` can run.
  */
 export function apexAuthTokenRedirectPath(

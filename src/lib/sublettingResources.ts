@@ -31,7 +31,7 @@ export interface SubletResource {
 }
 
 export const SUBLET_DISCLAIMER =
-  'A starting point to help you ask your landlord — edit to suit. Not legal advice. ' +
+  'A starting point to help you ask your landlord - edit to suit. Not legal advice. ' +
   "The sub-letting agreement and any bond follow your state's official process."
 
 const NSW_LETTER = `Dear [Landlord/Agent Name],
@@ -41,7 +41,7 @@ Re: Request for consent to sub-let a room at [Property Address]
 I am writing to request your written consent to sub-let a room at the above property under section 74 of the Residential Tenancies Act 2010 (NSW). I will continue to live at the property as head-tenant.
 
 For your peace of mind:
-- I remain fully responsible for the tenancy agreement, the full rent, and the condition of the premises — my obligations to you do not change.
+- I remain fully responsible for the tenancy agreement, the full rent, and the condition of the premises - my obligations to you do not change.
 - The proposed sub-tenant, [Proposed Sub-tenant Name], is a verified Quni member: their identity and current student enrolment have been confirmed. They're happy to provide proof of income and references, and to complete your usual application or tenancy-database checks.
 - If you consent, we'll record the arrangement in a written agreement and lodge any bond properly with NSW Fair Trading.
 
@@ -58,7 +58,7 @@ Re: Request for consent to sub-let a room at [Property Address]
 I am writing to request your written consent to sub-let a room at the above property under section 81 of the Residential Tenancies Act 1997 (Vic). I will continue to live at the property as the head-renter.
 
 For your peace of mind:
-- I remain fully responsible for the rental agreement and the full rent — my obligations to you do not change.
+- I remain fully responsible for the rental agreement and the full rent - my obligations to you do not change.
 - The proposed sub-tenant, [Proposed Sub-tenant Name], is a verified Quni member: their identity and current student enrolment have been confirmed. They're happy to provide proof of income and references, and to complete your usual screening.
 - If you consent, we'll record the arrangement in a written agreement and lodge any bond properly with the RTBA.
 
@@ -75,7 +75,7 @@ Re: Request for permission to sub-let a room at [Property Address]
 I am writing to request your written permission to sub-let a room at the above premises under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). I will continue to live at the property as head-tenant.
 
 For your peace of mind:
-- I remain fully responsible for the tenancy agreement and the full rent — my obligations to you do not change.
+- I remain fully responsible for the tenancy agreement and the full rent - my obligations to you do not change.
 - The proposed sub-tenant, [Proposed Sub-tenant Name], is a verified Quni member: their identity and current student enrolment have been confirmed. I'm happy for them to complete your standard tenancy application and your own TICA/database checks, and to provide proof of income and references.
 - If you approve, we'll record the arrangement in writing and lodge any bond properly with the RTA.
 

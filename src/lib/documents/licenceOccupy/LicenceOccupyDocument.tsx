@@ -350,7 +350,7 @@ export function LicenceOccupyDocument({
         ))}
         {qldBondSupplement ? (
           <>
-            <BodyParagraph>Bond payment — your choice:</BodyParagraph>
+            <BodyParagraph>Bond payment - your choice:</BodyParagraph>
             {qldBondSupplement.bullets.slice(0, 2).map((b, i) => (
               <Bullet key={`qld-route-${i}`}>{b}</Bullet>
             ))}

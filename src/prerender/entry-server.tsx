@@ -69,10 +69,10 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
   for (const pathname of pathnames) {
     const { body, head } = renderAppAt(pathname)
     // PageRouteFallback uses an ellipsis (…). Nested lazy islands may emit
-    // "Switched to client rendering" without failing the page — only reject the route shell.
+    // "Switched to client rendering" without failing the page - only reject the route shell.
     if (body.includes('Loading page…')) {
       throw new Error(
-        `prerender-routes: ${pathname} rendered Suspense route fallback — make the route eager in App.tsx`,
+        `prerender-routes: ${pathname} rendered Suspense route fallback - make the route eager in App.tsx`,
       )
     }
     const outDir = pathnameToDistDir(distDir, pathname)
@@ -81,7 +81,7 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
     console.log(`prerender-routes: wrote ${pathname}`)
   }
 
-  // Root 404.html for Edge middleware (HTTP 404) — NotFoundPage without full chrome.
+  // Root 404.html for Edge middleware (HTTP 404) - NotFoundPage without full chrome.
   {
     const { body, head } = renderNotFoundBody()
     const html = injectPrerender(template, body, head)

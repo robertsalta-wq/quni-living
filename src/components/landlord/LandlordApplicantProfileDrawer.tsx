@@ -6,7 +6,7 @@ import { formatStudentOccupancyType } from '../../lib/studentOccupancyOptions'
 
 /**
  * "Full profile →" right-edge overlay drawer (commit 7). PRIVACY: content is built only from
- * `LandlordSafeStudentSnapshot` fields — never widen this to email / phone / DOB / emergency
+ * `LandlordSafeStudentSnapshot` fields - never widen this to email / phone / DOB / emergency
  * contact / document URLs. If a section would need one of those, omit the field instead.
  */
 type Props = {
@@ -88,7 +88,7 @@ export default function LandlordApplicantProfileDrawer({ open, onClose, student,
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={`${displayName} — applicant profile`}
+        aria-label={`${displayName} - applicant profile`}
         className="animate-booking-drawer-slide relative flex h-full w-[420px] max-w-[92vw] flex-col bg-white shadow-admin-modal"
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-admin-line px-[22px] py-[18px]">

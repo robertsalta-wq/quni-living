@@ -106,7 +106,7 @@ const CHECK_ICON = (
 )
 
 /**
- * Editorial invite variant — landlord-benefit copy. Preview-gated.
+ * Editorial invite variant - landlord-benefit copy. Preview-gated.
  * Compare with `/list-your-room-b` (do not mirror C changes onto B).
  */
 export default function ListYourRoomC() {
@@ -141,7 +141,7 @@ export default function ListYourRoomC() {
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
         title="List your property"
-        description="The safest way to rent your spare room to university students. Set your terms, vet pre-screened applicants, and get paid weekly — free to list until you accept."
+        description="The safest way to rent your spare room to university students. Set your terms, vet pre-screened applicants, and get paid weekly - free to list until you accept."
         canonicalPath="/list-your-room-c"
         noindex
       />
@@ -172,7 +172,7 @@ export default function ListYourRoomC() {
               <p className="text-[length:var(--text-body-sm-size)] font-medium leading-[var(--text-body-sm-lh)] text-[var(--quni-navy)] sm:text-[length:var(--text-body-size)] sm:leading-[var(--text-body-lh)]">
                 &ldquo;<strong className="font-semibold text-[var(--quni-ink)]">Hi, I&apos;m Quinnie.</strong> I built
                 Quni with my partner so a spare room is easy money, not a headache. It takes a few minutes to set up, and
-                you can message me anytime — you&apos;ll get me, not a bot.&rdquo;
+                you can message me anytime - you&apos;ll get me, not a bot.&rdquo;
               </p>
               <p className="mt-2 text-[length:var(--text-caption-size)] font-semibold leading-[var(--text-caption-lh)] text-[var(--quni-navy)]">
                 Quinnie Le, co-founder.
@@ -187,7 +187,7 @@ export default function ListYourRoomC() {
           xl: tools | pricing | signup
         */}
         <div className="grid grid-cols-1 items-stretch gap-4 max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:grid-cols-2 md:gap-5 md:pb-0 xl:grid-cols-3 xl:gap-6">
-          {/* Smart tools — functional icons only (no AI sparkles) */}
+          {/* Smart tools - functional icons only (no AI sparkles) */}
           <div className="quni-card order-2 flex h-full min-h-0 flex-col p-6 md:order-1">
             <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-4">
               Smart tools that save you hours
@@ -214,7 +214,7 @@ export default function ListYourRoomC() {
             </ul>
           </div>
 
-          {/* Offer lines — Pricing Listing pattern + paperwork */}
+          {/* Offer lines - Pricing Listing pattern + paperwork */}
           <div className="quni-card order-3 flex h-full min-h-0 flex-col p-6 md:order-3 xl:order-2">
             <h2 className="font-display text-[length:var(--text-h3-size)] font-bold leading-[var(--text-h3-lh)] text-[var(--quni-ink)] !mt-0 !mb-5">
               Safe and Simple
@@ -231,7 +231,7 @@ export default function ListYourRoomC() {
                 icon={CHECK_ICON}
                 name="See them before you pay"
                 value="Included"
-                description="Full request review before the $99 — accept or decline with no fee."
+                description="Full request review before the $99 - accept or decline with no fee."
                 valueKind="coralSm"
               />
               <OfferLineItem
@@ -251,7 +251,7 @@ export default function ListYourRoomC() {
             </div>
           </div>
 
-          {/* Signup — first on mobile (after Quinnie), third column on xl */}
+          {/* Signup - first on mobile (after Quinnie), third column on xl */}
           <aside
             ref={signupRef}
             id="list-your-room-c-signup"
@@ -274,7 +274,7 @@ export default function ListYourRoomC() {
         </div>
       </div>
 
-      {/* Mobile sticky CTA — hidden while signup card is on screen */}
+      {/* Mobile sticky CTA - hidden while signup card is on screen */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 border-t border-[var(--quni-line)] bg-[var(--quni-surface-1)]/95 shadow-[var(--shadow-2)] backdrop-blur-md transition-transform duration-200 md:hidden ${
           signupInView ? 'pointer-events-none translate-y-full' : 'translate-y-0'

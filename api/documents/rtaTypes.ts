@@ -76,7 +76,7 @@ export type OccupancyAgreementProps = {
   term: RtaTermPdf
   rent: RtaRentPdf
   bond: RtaBondPdf
-  /** From platform_config (Business settings) — required for clause 11 entity line. */
+  /** From platform_config (Business settings) - required for clause 11 entity line. */
   platformLegalName?: string | null
   platformAcn?: string | null
   platformTradingName?: string | null
@@ -86,7 +86,7 @@ export type OccupancyAgreementProps = {
   houseRules: string | null
   /** Listing boarder/lodger payee account (property_payout_details at generation time). */
   payout?: OccupancyPayeePdf | null
-  /** Bank transfer reference: renter name — property address. */
+  /** Bank transfer reference: renter name - property address. */
   paymentReference?: string
   /** QLD T1 bond remittance preference (effective; null when not QLD). */
   qldBondRemittancePreference?: 'landlord_collects_remits' | 'tenant_choice' | null
@@ -238,9 +238,9 @@ export type QuniPlatformAddendumProps = {
    * Cap + excess paragraphs only when `managed` + `allInclusive` + `utilitiesCap > 0`.
    */
   serviceTier: 'listing' | 'managed'
-  /** From `propertyUtilitiesResolver` — bills included with no separate water charge. */
+  /** From `propertyUtilitiesResolver` - bills included with no separate water charge. */
   allInclusive: boolean
-  /** From `propertyUtilitiesResolver` — bills-included feature signal. */
+  /** From `propertyUtilitiesResolver` - bills-included feature signal. */
   billsIncluded: boolean
   /** Optional listing-style disclosure lines from the resolver. */
   listingDisclosureLabels?: string[]

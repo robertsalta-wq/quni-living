@@ -54,7 +54,7 @@ function minimalProps(): OccupancyAgreementProps {
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd, Melbourne VIC 3001',
+    paymentReference: 'Alex Resident - 2 Demo Rd, Melbourne VIC 3001',
     schemeApplies: false,
     qldBondRemittancePreference: null,
     specialConditions: [
@@ -78,7 +78,7 @@ describe('VicLicenceToOccupyOnSite', () => {
     expect(text).toContain('Jane Owner Trust')
     expect(text).toContain('123-456')
     expect(text).toContain('987654321')
-    expect(text).toContain('Alex Resident — 2 Demo Rd, Melbourne VIC 3001')
+    expect(text).toContain('Alex Resident - 2 Demo Rd, Melbourne VIC 3001')
     expect(text).toContain('paid to the account set out in clause 11')
     expect(text).toContain('paid to the same account set out in clause 11')
     expect(text).toContain('direct credit to the owner account as set out in clause 11')

@@ -5,7 +5,7 @@ type DeskLetterheadProps = {
   className?: string
 }
 
-/** Slot 2 — one serif line stating the offer. */
+/** Slot 2 - one serif line stating the offer. */
 export default function DeskLetterhead({ children, className = '' }: DeskLetterheadProps) {
   return (
     <p

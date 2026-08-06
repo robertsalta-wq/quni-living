@@ -116,7 +116,7 @@ export function SavedPropertiesProvider({ children }: { children: ReactNode }) {
           return 'unsaved'
         } catch {
           markSavedLocal(propertyId)
-          showToast('Couldn’t unsave — try again')
+          showToast('Couldn’t unsave - try again')
           return 'error'
         }
       }
@@ -128,7 +128,7 @@ export function SavedPropertiesProvider({ children }: { children: ReactNode }) {
         return 'saved'
       } catch {
         removeFromLocal(propertyId)
-        showToast('Couldn’t save — try again')
+        showToast('Couldn’t save - try again')
         return 'error'
       }
     },

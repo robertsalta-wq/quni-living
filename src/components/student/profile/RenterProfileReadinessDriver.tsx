@@ -19,7 +19,7 @@ type Props = {
 /** Pins below the fixed renter app chrome (tsc won't catch a missing string stickyTop). */
 const STICKY_TOP = 'var(--quni-fixed-header-offset, 0px)'
 
-/** Thin adapter — chrome lives in shared ProfileReadinessDriver. */
+/** Thin adapter - chrome lives in shared ProfileReadinessDriver. */
 export function RenterProfileReadinessDriver({
   readiness,
   profile,

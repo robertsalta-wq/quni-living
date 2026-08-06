@@ -169,6 +169,7 @@ function buildLandlordSigningUrlByBookingId(rows: TenancyWithDocsForSigning[] | 
     for (const item of docs) {
       if (!item || typeof item !== 'object') continue
       const doc = item as TenancyDocRow
+      if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') continue
       const url = landlordDocusealEmbedFromMetadata(doc.metadata)
       if (!url) continue
       const score = docusealSigningDocScore(doc, true)
@@ -221,6 +222,7 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
     for (const item of docs) {
       if (!item || typeof item !== 'object') continue
       const doc = item as TenancyDocRow
+      if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') continue
       const paths = signedAgreementPathsFromDoc(doc)
       if (!paths) continue
       const score = signedAgreementDocScore(doc)
@@ -304,7 +306,7 @@ function writeInviteModalToSession(property: InviteModalProperty | null): void {
     }
     sessionStorage.setItem(LANDLORD_INVITE_MODAL_SESSION_KEY, JSON.stringify(property))
   } catch {
-    // Quota or private browsing — ignore.
+    // Quota or private browsing - ignore.
   }
 }
 
@@ -339,8 +341,11 @@ function bookingStatusClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-800'
   if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
   if (s === 'confirmed' || s === 'active') return 'bg-emerald-100 text-emerald-800'
+  if (s === 'terminating') return 'bg-amber-100 text-amber-900'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
-  if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
+  if (s === 'declined' || s === 'expired' || s === 'payment_failed' || s === 'terminated') {
+    return 'bg-red-50 text-red-800'
+  }
   return 'bg-gray-100 text-gray-600'
 }
 
@@ -662,7 +667,7 @@ export default function LandlordDashboard() {
         prof = profRaw as LandlordRow | null
       }
       if (!prof) {
-        // Transient during JWT refresh — keep existing dashboard data; retry once after token settles.
+        // Transient during JWT refresh - keep existing dashboard data; retry once after token settles.
         if (isCurrent() && profileLoadRetryGenRef.current !== gen) {
           profileLoadRetryGenRef.current = gen
           window.setTimeout(() => {
@@ -767,8 +772,12 @@ export default function LandlordDashboard() {
         bookingIds.length > 0
           ? supabase
               .from('tenancies')
-              .select('booking_id, tenancy_documents ( document_type, status, metadata, file_path )')
+              // Only lease/RTA docs - mutual_termination metadata embeds full DocuSeal payloads and can stall the Bookings tab.
+              .select(
+                'booking_id, tenancy_documents!inner ( document_type, status, metadata, file_path )',
+              )
               .in('booking_id', bookingIds)
+              .in('tenancy_documents.document_type', ['lease', 'residential_tenancy'])
           : Promise.resolve({ data: [] as TenancyWithDocsForSigning[], error: null }),
       ])
 
@@ -1025,13 +1034,26 @@ export default function LandlordDashboard() {
   const activeListings = properties.filter((p) => p.status === 'active').length
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
-  const pendingBookings = bookings.filter(
+  const pendingRequestCount = bookings.filter(
     (b) =>
       b.status === 'pending' ||
       b.status === 'pending_confirmation' ||
       b.status === 'pending_payment' ||
       b.status === 'awaiting_info',
   ).length
+  const terminatingCount = bookings.filter((b) => b.status === 'terminating').length
+  /** Attention total for nav/overview badges (requests + endings needing signature). */
+  const pendingBookings = pendingRequestCount + terminatingCount
+  const bookingsAttentionLabel =
+    pendingRequestCount > 0 && terminatingCount > 0
+      ? `${pendingRequestCount} pending · ${terminatingCount} ending`
+      : terminatingCount > 0
+        ? terminatingCount === 1
+          ? '1 ending agreement'
+          : `${terminatingCount} ending agreements`
+        : pendingRequestCount > 0
+          ? `${pendingRequestCount} pending`
+          : 'Nothing pending'
 
   const pendingConfirmation = useMemo(
     () =>
@@ -1142,7 +1164,7 @@ export default function LandlordDashboard() {
     )
   }
 
-  // Profile hub/drill-in already own Listing-style padding — skip the shared inset on mobile
+  // Profile hub/drill-in already own Listing-style padding - skip the shared inset on mobile
   // so they aren't double-padded. Other tabs use dashboardPageInsetClass.
   const profileOwnsPadding = tab === 'profile'
 
@@ -1170,6 +1192,7 @@ export default function LandlordDashboard() {
               activeListings={activeListings}
               bookingsCount={bookings.length}
               pendingBookings={pendingBookings}
+              bookingsAttentionLabel={bookingsAttentionLabel}
               unreadMessageCount={unreadMessageCount}
               conversationsCount={conversations.length}
               schedulingBookings={schedulingBookings}
@@ -1239,7 +1262,7 @@ export default function LandlordDashboard() {
                 <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
                 <p className="text-xs mt-auto pt-1">
                   {pendingBookings > 0 ? (
-                    <span className="font-semibold text-amber-700">{pendingBookings} pending</span>
+                    <span className="font-semibold text-amber-700">{bookingsAttentionLabel}</span>
                   ) : (
                     <span className="text-gray-500">Nothing pending</span>
                   )}
@@ -1606,13 +1629,24 @@ export default function LandlordDashboard() {
                                 href: `/landlord/bookings/${b.id}/review`,
                               },
                             ]
-                          : [
-                              {
-                                label: 'Review request',
-                                variant: 'primary' as const,
-                                href: `/landlord/bookings/${b.id}/review`,
-                              },
-                            ]
+                          : b.status === 'terminating' || b.status === 'terminated'
+                            ? [
+                                {
+                                  label:
+                                    b.status === 'terminating'
+                                      ? 'Open termination'
+                                      : 'Booking details',
+                                  variant: 'primary' as const,
+                                  href: `/landlord/bookings/${b.id}/review`,
+                                },
+                              ]
+                            : [
+                                {
+                                  label: 'Review request',
+                                  variant: 'primary' as const,
+                                  href: `/landlord/bookings/${b.id}/review`,
+                                },
+                              ]
 
                       return (
                         <LandlordBookingMobileCard
@@ -1739,7 +1773,11 @@ export default function LandlordDashboard() {
                                   to={`/landlord/bookings/${b.id}/review`}
                                   className="text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2"
                                 >
-                                  Review request
+                                  {b.status === 'terminating'
+                                    ? 'Open termination'
+                                    : b.status === 'terminated'
+                                      ? 'Booking details'
+                                      : 'Review request'}
                                 </Link>
                               )}
                               {leaseDownloadErrorId === b.id &&

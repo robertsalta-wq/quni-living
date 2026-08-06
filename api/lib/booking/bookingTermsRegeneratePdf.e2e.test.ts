@@ -91,7 +91,7 @@ function occupancyPropsFromBooking(booking: Record<string, unknown>): OccupancyA
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd',
+    paymentReference: 'Alex Resident - 2 Demo Rd',
     schemeApplies: false,
     qldBondRemittancePreference: null,
     specialConditions: [],
@@ -121,7 +121,7 @@ describe('booking terms → regenerate PDF (integration)', () => {
     const built = await buildBookingTermsPatch(
       baseBooking,
       {
-        notes: 'Parking included — updated special condition',
+        notes: 'Parking included - updated special condition',
         lease_length: '12 months',
       },
       {
@@ -141,9 +141,9 @@ describe('booking terms → regenerate PDF (integration)', () => {
     const afterText = await pdfTextFromBooking(regeneratedBooking)
 
     expect(beforeText).toContain('Original landlord note')
-    expect(beforeText).not.toContain('Parking included — updated special condition')
+    expect(beforeText).not.toContain('Parking included - updated special condition')
 
-    expect(afterText).toContain('Parking included — updated special condition')
+    expect(afterText).toContain('Parking included - updated special condition')
     expect(afterText).toContain('12 months')
     expect(afterText).toContain(formatAuDate('2026-07-01'))
     expect(afterText).toContain(formatAuDate('2027-06-30'))

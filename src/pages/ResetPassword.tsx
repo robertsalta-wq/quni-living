@@ -47,7 +47,7 @@ export default function ResetPassword() {
         if (verifyErr) {
           setError(
             verifyErr.message ||
-              'That reset link could not be used. It may have expired — request a new one.',
+              'That reset link could not be used. It may have expired - request a new one.',
           )
           stripSensitiveAuthCallbackQueryParams()
           setBootstrapping(false)

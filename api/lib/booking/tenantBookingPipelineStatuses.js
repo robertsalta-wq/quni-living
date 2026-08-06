@@ -17,12 +17,12 @@ export const TENANT_BOOKING_CONFIRMED_STATUSES = ['confirmed', 'active']
 /**
  * Statuses that block new applications on a property (distinct from tenant "confirmed stay").
  * Includes Listing `bond_pending` so the property is reserved after landlord accept until
- * bond is received, expired, or cancelled — then the guard re-reads status and reopens.
+ * bond is received, expired, or cancelled - then the guard re-reads status and reopens.
  */
 export const PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES = [
   'confirmed',
   'active',
   'bond_pending',
-  /** Live terminate in progress — room must not be offered until effective date. */
+  /** Live terminate in progress - room must not be offered until effective date. */
   'terminating',
 ]

@@ -1,5 +1,5 @@
 /**
- * Listing-tier document generation — direct module call (no internal HTTP).
+ * Listing-tier document generation - direct module call (no internal HTTP).
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../src/lib/database.types.js'
@@ -16,7 +16,7 @@ type TriggerArgs = {
 
 /**
  * Resolve the right document generator for a Listing booking and run it directly.
- * Callers MUST branch on `result.ok` — ignored failures are a production defect.
+ * Callers MUST branch on `result.ok` - ignored failures are a production defect.
  */
 export async function triggerListingDocumentGeneration(args: TriggerArgs): Promise<ListingDocGenResult> {
   const { admin, bookingId, deferSigning = false, logger } = args

@@ -7,7 +7,7 @@ export type BookingReadinessGate = {
   label: string
   sub: string
   state: ReadinessGateState
-  /** Incomplete gates only — e.g. "Add" */
+  /** Incomplete gates only - e.g. "Add" */
   actionLabel?: string
   onAction?: () => void
 }
@@ -20,7 +20,7 @@ export type BookingReadinessDriverProps = {
 }
 
 /**
- * Landlord pre-acceptance readiness checklist — HTML visual SoT.
+ * Landlord pre-acceptance readiness checklist - HTML visual SoT.
  * Presentational only; gate wiring lands in commit 5a.
  */
 export default function BookingReadinessDriver({
@@ -138,7 +138,7 @@ export default function BookingReadinessDriver({
 
 /** Green “all checks complete” ribbon (replaces the driver when gates clear). */
 export function BookingReadinessReadyRibbon({
-  children = "All checks complete — you're ready to respond.",
+  children = "All checks complete - you're ready to respond.",
   className = '',
 }: {
   children?: ReactNode

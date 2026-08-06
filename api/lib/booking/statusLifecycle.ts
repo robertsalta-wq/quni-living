@@ -1,5 +1,5 @@
 /**
- * Declared booking status lifecycle — per-tier reachable edges and writers.
+ * Declared booking status lifecycle - per-tier reachable edges and writers.
  * Used by the invariant test so Listing confirmed→active cannot go missing silently.
  *
  * Bond-done for Listing status advance: bond_received_by_landlord_at ONLY
@@ -32,7 +32,7 @@ export type StatusLifecycleEdge = {
   to: BookingStatus
   /** Human / module label for the writer */
   writer: string
-  /** Symbol that must remain imported — deleting the helper breaks this module's load */
+  /** Symbol that must remain imported - deleting the helper breaks this module's load */
   writerFn?: (...args: never[]) => unknown
 }
 
@@ -45,7 +45,7 @@ export type TierLifecycle = {
 
 /**
  * Binding the Listing confirmed→active edge to the real helper symbol.
- * On main without this helper file, importing this module fails (import/compile) — that is the CI proof.
+ * On main without this helper file, importing this module fails (import/compile) - that is the CI proof.
  */
 const LISTING_CONFIRMED_TO_ACTIVE_WRITER = maybeAdvanceListingBookingToActive
 

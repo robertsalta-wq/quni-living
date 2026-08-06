@@ -10,7 +10,7 @@ export type BookingReviewTermsEditorMode = 'listing_terms' | 'agreed_rent_readon
  * Agreed-rent override API rejects managed (`managed_booking`); the rail must not
  * advertise an editable Managed path. Legacy agreed-rent UI is only for viewing an
  * already-applied **listing** override after the booking leaves the terms-editor window
- * (`service_tier_at_request === 'listing'` only — fail-closed).
+ * (`service_tier_at_request === 'listing'` only - fail-closed).
  */
 export function resolveBookingReviewTermsEditorMode(args: {
   status: string
@@ -29,7 +29,7 @@ export function resolveBookingReviewTermsEditorMode(args: {
   if (listingEligible) return 'listing_terms'
 
   const overrideApplied = parseRentOverrideProvenance(args.rentBreakdown).overrideApplied
-  // Fail-closed: only explicit listing tier — null/unknown must not open the editor.
+  // Fail-closed: only explicit listing tier - null/unknown must not open the editor.
   if (overrideApplied && args.serviceTierAtRequest === 'listing') return 'agreed_rent_readonly'
 
   return 'none'

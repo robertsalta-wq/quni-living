@@ -2,6 +2,6 @@
 export type RenterSectionChromeActionsProps = {
   /** Hide in-page Save; parent action bar triggers form.requestSubmit(). */
   actionsInChrome?: boolean
-  /** Called after a save attempt — false on validation/write failure, true on success. */
+  /** Called after a save attempt - false on validation/write failure, true on success. */
   onSaveAttemptEnd?: (ok: boolean) => void
 }

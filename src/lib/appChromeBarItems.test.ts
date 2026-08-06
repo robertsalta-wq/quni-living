@@ -7,7 +7,7 @@ import {
   listingSectionDrillInActionBarItemSpecs,
 } from './appChromeBarItems'
 
-describe('AppActionBar — Nav bar item sets (§3, §6 "dashboard = 5 nav")', () => {
+describe('AppActionBar - Nav bar item sets (§3, §6 "dashboard = 5 nav")', () => {
   it('landlord nav matches Overview · Listings · Messages · Bookings · Profile', () => {
     expect(LANDLORD_NAV_BAR_ITEMS.map((i) => i.id)).toEqual([
       'overview',
@@ -23,8 +23,8 @@ describe('AppActionBar — Nav bar item sets (§3, §6 "dashboard = 5 nav")', ()
   })
 })
 
-describe('Listing hub action bar — ‹ Listings · Health · Preview', () => {
-  it('has exactly three items — exit, Health, Preview', () => {
+describe('Listing hub action bar - ‹ Listings · Health · Preview', () => {
+  it('has exactly three items - exit, Health, Preview', () => {
     const items = listingHubActionBarItemSpecs(true)
     expect(items).toHaveLength(3)
     expect(items.map((i) => i.id)).toEqual(['exit-listings', 'health', 'preview'])
@@ -50,7 +50,7 @@ describe('Listing hub action bar — ‹ Listings · Health · Preview', () => {
   })
 })
 
-describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', () => {
+describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', () => {
   it('setup mode → Save draft · Next', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: false, canSubmit: true })
     expect(items.map((i) => i.id)).toEqual(['draft', 'next'])
@@ -83,7 +83,7 @@ describe('AppActionBar — Basic info drill-in (§3 row 7 edit / row 8 setup)', 
   })
 })
 
-describe('AppActionBar — section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
+describe('AppActionBar - section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
   it('edit listing → Save draft · Save', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: false })
     expect(items.map((i) => i.id)).toEqual(['draft', 'save'])

@@ -15,9 +15,9 @@ export type GuideSeoConfig = {
   ogDescription?: string
   /** BlogPosting headline when it differs from the on-page H1. */
   jsonLdHeadline?: string
-  /** ISO date YYYY-MM-DD — set at deploy. */
+  /** ISO date YYYY-MM-DD - set at deploy. */
   datePublished: string
-  /** ISO date YYYY-MM-DD — set at deploy. */
+  /** ISO date YYYY-MM-DD - set at deploy. */
   dateModified: string
   /** Optional absolute OG/Twitter image; falls back to DEFAULT_OG_IMAGE. */
   ogImage?: string

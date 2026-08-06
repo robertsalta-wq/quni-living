@@ -150,7 +150,7 @@ async function loadListingEmailContext(admin, bookingId) {
     }
   }
 
-  const paymentReference = `${tenantLegalNameForDocuments(sp, 'Student')} — ${addr || title}`.trim()
+  const paymentReference = `${tenantLegalNameForDocuments(sp, 'Student')} - ${addr || title}`.trim()
   const bondPaymentOpts = {
     qldBondRemittancePreference,
     ...(payout ? { payee: payout, paymentReference } : {}),

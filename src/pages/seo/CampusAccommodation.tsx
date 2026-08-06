@@ -273,7 +273,7 @@ export default function CampusAccommodation() {
     }
   }, [routeUniSlug, uniSlugForQuery, campusSlug])
 
-  /** Sync content — available on first render / prerender with no async dependency. */
+  /** Sync content - available on first render / prerender with no async dependency. */
   const campusContent: CampusSeoContent | null =
     uniSlugForQuery && campusSlug
       ? getCampusSeoContent(uniSlugForQuery, campusSlug)
@@ -439,7 +439,7 @@ export default function CampusAccommodation() {
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-        {/* Tier 1 — sync when content JSON exists (prerender path). */}
+        {/* Tier 1 - sync when content JSON exists (prerender path). */}
         {campusContent ? (
           <>
             <Breadcrumbs
@@ -464,7 +464,7 @@ export default function CampusAccommodation() {
           </>
         ) : null}
 
-        {/* Tier 2 — async listings / siblings / suburbs (and legacy about when no content). */}
+        {/* Tier 2 - async listings / siblings / suburbs (and legacy about when no content). */}
         {tier2Ready && university && campus ? (
           <>
             {!campusContent ? (
@@ -586,7 +586,7 @@ export default function CampusAccommodation() {
           </>
         ) : null}
 
-        {/* Tier 1 continued — body sections after listings slot so layout matches prior order when both present. */}
+        {/* Tier 1 continued - body sections after listings slot so layout matches prior order when both present. */}
         {campusContent ? (
           <>
             <section className="quni-card p-6 sm:p-8" aria-labelledby="living-heading">

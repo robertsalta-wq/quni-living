@@ -1,5 +1,5 @@
 /**
- * Desk-shell marketing experiment flag (`desk_shell_enabled`) — browser bundle.
+ * Desk-shell marketing experiment flag (`desk_shell_enabled`) - browser bundle.
  *
  * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
  * Override: `VITE_DESK_SHELL_ENABLED=true|false`

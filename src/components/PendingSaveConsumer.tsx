@@ -6,7 +6,7 @@ import { peekPendingSavePropertyId } from '../lib/savedPropertiesPending'
 
 /**
  * Central authenticated-session consumer for guest “save then sign in”.
- * Runs on any authenticated load — not tied to PropertyDetail (card saves on /listings
+ * Runs on any authenticated load - not tied to PropertyDetail (card saves on /listings
  * never visit detail).
  */
 export function PendingSaveConsumer() {

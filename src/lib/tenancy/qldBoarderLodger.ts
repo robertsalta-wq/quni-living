@@ -37,7 +37,7 @@ export function qldRoomsRentedFieldError(rooms: number | null): string | null {
 export function qldOnSiteListingCallout(): string {
   return (
     `This listing is a room in your home in Queensland (boarder/lodger style). Most of the ${QLD_RTRA_ACT_SHORT} ` +
-    `does not apply to boarders and lodgers, but if you take a bond it must be lodged with RTA Queensland within 10 days — see RTA boarders and lodgers guidance. ` +
+    `does not apply to boarders and lodgers, but if you take a bond it must be lodged with RTA Queensland within 10 days - see RTA boarders and lodgers guidance. ` +
     `Bond is not compulsory; rent in advance is a lawful alternative. ` +
     `If you live on site and rent out no more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms to residents, the rooming accommodation provisions (including Form R18) ` +
     `usually do not apply (s 43). Quni does not support registered rooming accommodation yet.`
@@ -47,7 +47,7 @@ export function qldOnSiteListingCallout(): string {
 /** Tenant-facing note for QLD on-site listings with a bond amount. */
 export function qldOnSiteTenantBondCallout(): string {
   return (
-    'This is a boarder/lodger-style stay in Queensland. If a bond is taken, it must be lodged with the RTA within 10 days — ' +
+    'This is a boarder/lodger-style stay in Queensland. If a bond is taken, it must be lodged with the RTA within 10 days - ' +
     'it cannot be kept by the landlord. You or your host can lodge via RTA Web Services or Form 2. A bond is not compulsory; rent in advance may be agreed instead.'
   )
 }

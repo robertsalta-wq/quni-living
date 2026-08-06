@@ -2,7 +2,7 @@ import type { PropertyListingType, RoomType } from './listings'
 import { accommodationChoiceFromFields, isEntirePlaceChoice } from './landlordAccommodationChoice'
 import { normalizePropertyImages } from './propertyImages'
 
-/** Hub section keys — fixed base 8 (compliance/utilities fold into property/inclusions). */
+/** Hub section keys - fixed base 8 (compliance/utilities fold into property/inclusions). */
 export const LISTING_HUB_SECTION_IDS = [
   'basic',
   'property',
@@ -91,7 +91,7 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
   {
     id: 'rules',
     title: 'Rules',
-    subtitle: 'House rules — yes, no or on approval',
+    subtitle: 'House rules - yes, no or on approval',
     formSectionIds: ['section-house-rules'],
     step: 4,
   },
@@ -177,7 +177,7 @@ export function fieldsFromHubListingTypeTile(
       isRegisteredRoomingHouse: false,
     }
   }
-  // private room — preserve on-site vs off-site when already a room listing
+  // private room - preserve on-site vs off-site when already a room listing
   if (
     current.propertyListingType === 'private_room_landlord_on_site' ||
     current.propertyListingType === 'private_room_landlord_off_site' ||
@@ -298,7 +298,7 @@ export function computeListingHubHealth(
   const nudgeCopy: Record<ListingHubSectionId, string> = {
     photos: 'Add a few more photos to reach top-listing quality and rank higher in search.',
     pricing: 'Add rent and an available-from date so students can enquire with confidence.',
-    description: 'Write a fuller description — students decide from the story of the place.',
+    description: 'Write a fuller description - students decide from the story of the place.',
     basic: 'Finish Basic info (title and listing type) to unlock a clearer listing.',
     property: 'Confirm bedrooms and bathrooms so students can filter accurately.',
     location: 'Complete the address so we can pin the map and nearby campuses.',
@@ -312,13 +312,13 @@ export function computeListingHubHealth(
     qualityHeadline = "Let's get your listing ready"
     qualitySubtext = firstIncomplete
       ? nudgeCopy[firstIncomplete]
-      : 'Complete each section — Basic info is the best place to start.'
+      : 'Complete each section - Basic info is the best place to start.'
     if (!firstIncomplete || firstIncomplete === 'basic') {
-      qualitySubtext = 'Complete each section — Basic info is the best place to start.'
+      qualitySubtext = 'Complete each section - Basic info is the best place to start.'
     }
   } else if (score >= 100) {
     qualityHeadline = 'Listing looks excellent'
-    qualitySubtext = 'Everything is green — keep photos and pricing up to date.'
+    qualitySubtext = 'Everything is green - keep photos and pricing up to date.'
   } else if (score >= 75) {
     qualityHeadline = 'Your listing is in good shape'
     qualitySubtext = firstIncomplete ? nudgeCopy[firstIncomplete] : 'One more polish and you are at 100%.'

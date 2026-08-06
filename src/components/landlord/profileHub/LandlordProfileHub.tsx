@@ -27,7 +27,7 @@ type Props = {
 }
 
 /**
- * Mobile Profile hub — Listing Health checklist chrome; subtitles show live values.
+ * Mobile Profile hub - Listing Health checklist chrome; subtitles show live values.
  */
 export default function LandlordProfileHub({
   profile,

@@ -281,7 +281,7 @@ export default function LandlordBookingTermsEditor({
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) {
-        setError('Session expired — sign in again.')
+        setError('Session expired - sign in again.')
         return
       }
 
@@ -318,12 +318,12 @@ export default function LandlordBookingTermsEditor({
       setReason('')
       setCoTenantUnverifiedWarning(body.co_tenant_unverified === true)
       setSavedNotice(
-        'Terms updated — click Regenerate agreement to reissue the PDF and signing links to all parties. The previous draft is now void.',
+        'Terms updated - click Regenerate agreement to reissue the PDF and signing links to all parties. The previous draft is now void.',
       )
       await fetchLeaseGate()
       onSaved()
     } catch {
-      setError('Network error — try again.')
+      setError('Network error - try again.')
     } finally {
       setBusy(false)
     }
@@ -595,7 +595,7 @@ export default function LandlordBookingTermsEditor({
           rows={2}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Required — e.g. Agreed longer lease with renter"
+          placeholder="Required - e.g. Agreed longer lease with renter"
           className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
         />
       </div>

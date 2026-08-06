@@ -94,7 +94,7 @@ export async function assertNoPropertyGroupDoubleHold(args: {
       hit.termination_acknowledged_at &&
       hit.termination_effective_date <= newStart
     ) {
-      // Prior agreement ends on/before new start — allowed (Kim same-day convert).
+      // Prior agreement ends on/before new start - allowed (Kim same-day convert).
       continue
     }
     return {

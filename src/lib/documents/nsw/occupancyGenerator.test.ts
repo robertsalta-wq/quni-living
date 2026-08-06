@@ -54,7 +54,7 @@ function minimalProps(): OccupancyAgreementProps {
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd, Sydney NSW 2001',
+    paymentReference: 'Alex Resident - 2 Demo Rd, Sydney NSW 2001',
     schemeApplies: false,
     qldBondRemittancePreference: null,
     specialConditions: [],
@@ -98,7 +98,7 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('Jane Principal Trust')
     expect(text).toContain('123-456')
     expect(text).toContain('987654321')
-    expect(text).toContain('Alex Resident — 2 Demo Rd, Sydney NSW 2001')
+    expect(text).toContain('Alex Resident - 2 Demo Rd, Sydney NSW 2001')
     expect(text).toContain('paid to the account set out in clause 11')
     expect(text).toContain('paid to the same account set out in clause 11')
     expect(text).not.toContain('will be provided by the Principal')

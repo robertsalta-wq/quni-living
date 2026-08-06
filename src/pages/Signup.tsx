@@ -71,7 +71,7 @@ function formatSignupErrorForDisplay(raw: string, err?: unknown): ReactNode {
     lower.includes('error sending magic link')
 
   if (isSendFailure) {
-    console.warn('[signup] confirmation email send failed — operator checklist', {
+    console.warn('[signup] confirmation email send failed - operator checklist', {
       message: raw,
       err,
       hints: [
@@ -80,7 +80,7 @@ function formatSignupErrorForDisplay(raw: string, err?: unknown): ReactNode {
       ],
     })
     if (isSignupAuthRateLimitError(raw, err)) {
-      return 'Too many signups just now — try again in a few minutes.'
+      return 'Too many signups just now - try again in a few minutes.'
     }
     return (
       <>
@@ -186,7 +186,7 @@ function SignupTermsFields({
   )
 }
 
-/** Embed invite: no checkbox barrier — continuing implies acceptance (still recorded). */
+/** Embed invite: no checkbox barrier - continuing implies acceptance (still recorded). */
 function SignupImpliedConsentNotice({ includeLandlordAgreement }: { includeLandlordAgreement: boolean }) {
   const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
   const activeLegalDoc = openLegalDoc ? LEGAL_DOC_MODAL[openLegalDoc] : null
@@ -228,7 +228,7 @@ function SignupImpliedConsentNotice({ includeLandlordAgreement }: { includeLandl
 type SignupProps = {
   /**
    * Landlord invite embed (`/list-your-room`): skip role picker, Google-first,
-   * compact chrome. Same auth handlers as `/signup` — not a second flow.
+   * compact chrome. Same auth handlers as `/signup` - not a second flow.
    */
   embedLandlordInvite?: boolean
   /**
@@ -517,7 +517,7 @@ export default function Signup({
     const authRole = accountKind === 'landlord' ? 'landlord' : 'renter'
     setQuniSelectedRole(authRole)
     // DEFERRED: duplicate-identity warning at signup (same name / near-time second Google email).
-    // Fail-closed for now — do not block signup.
+    // Fail-closed for now - do not block signup.
     const oauthSignupContext =
       accountKind === 'landlord'
         ? { signupRole: 'landlord' as const }
@@ -851,7 +851,7 @@ export default function Signup({
                 <button type="button" onClick={() => pickAccountKind('renter')} className="w-full flex-1 text-left">
                   <span className="font-semibold text-gray-900">Renter</span>
                   <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">
-                    Find housing and manage bookings — students and non-students.
+                    Find housing and manage bookings - students and non-students.
                   </p>
                 </button>
                 <button

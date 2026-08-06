@@ -18,7 +18,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/landlords/ai',
 ] as const
 
-/** Only when desk_shell_enabled (Preview / local) — Production must not ship indexable desk HTML. */
+/** Only when desk_shell_enabled (Preview / local) - Production must not ship indexable desk HTML. */
 const DESK_SHELL_PRERENDER_PATHS = ['/for-landlords'] as const
 
 function deskShellEnabledAtBuild(): boolean {

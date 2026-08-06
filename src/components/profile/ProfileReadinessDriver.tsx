@@ -7,7 +7,7 @@ import {
 import ReadinessProgressBar from './ReadinessProgressBar'
 import type { ProfileReadinessDriverProps, ReadinessDriverStep } from './types'
 
-/** Serif display line — Playfair via app `font-display` token (expanded incomplete only). */
+/** Serif display line - Playfair via app `font-display` token (expanded incomplete only). */
 const DRIVER_TITLE_CLASS =
   'font-display text-[28px] font-bold leading-[1.12] tracking-[-0.02em] text-balance text-admin-ink'
 

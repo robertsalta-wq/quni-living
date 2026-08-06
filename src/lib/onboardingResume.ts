@@ -10,7 +10,7 @@ export const ONBOARDING_RESUME_EXEMPT_PREFIXES = [
   '/admin',
 ] as const
 
-/** Dashboards that already surface profile readiness — suppress the global resume nudge. */
+/** Dashboards that already surface profile readiness - suppress the global resume nudge. */
 export const ONBOARDING_RESUME_DASHBOARD_PREFIXES = [
   '/student-dashboard',
   '/landlord/dashboard',

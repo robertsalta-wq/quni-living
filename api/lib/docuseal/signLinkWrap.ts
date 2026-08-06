@@ -3,7 +3,7 @@
 /**
  * Quni signing-link redirect wrapper: GET /api/sign/{token} refreshes NSW FT6600
  * readonly dates (Australia/Sydney) via DocuSeal PUT, then 302 to DocuSeal /s/{slug}.
- * Token carries submitter id + HMAC only — never the DocuSeal slug.
+ * Token carries submitter id + HMAC only - never the DocuSeal slug.
  */
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getDocusealApiBase, getDocusealAuthHeaders } from '../docusealClient.js'
@@ -171,7 +171,7 @@ async function putDocusealSubmitterFields(
 
 /**
  * Resolve DocuSeal embed_src for redirect. Refreshes NSW date fields when allowed.
- * Never throws — caller always redirects when embed_src is returned.
+ * Never throws - caller always redirects when embed_src is returned.
  */
 export async function resolveSignLinkRedirect(
   submitterId: number,

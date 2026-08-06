@@ -14,9 +14,9 @@ export type AppActionBarItem = {
   id: string
   label: string
   icon?: LucideIcon
-  /** Current view indicator — coral, like `primary`. */
+  /** Current view indicator - coral, like `primary`. */
   active?: boolean
-  /** Primary call to action — coral. */
+  /** Primary call to action - coral. */
   primary?: boolean
   disabled?: boolean
   /** Renders as a `Link` when set. */
@@ -31,7 +31,7 @@ type AppChromeActionsContextValue = {
 
 const AppChromeActionsContext = createContext<AppChromeActionsContextValue | null>(null)
 
-/** Wraps the app-shell `Outlet` — task pages register their `AppActionBar` items here. */
+/** Wraps the app-shell `Outlet` - task pages register their `AppActionBar` items here. */
 export function AppChromeActionsProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<AppActionBarItem[]>([])
   const value = useMemo(() => ({ items, setItems }), [items])
@@ -53,7 +53,7 @@ export function useAppChromeActions(): AppActionBarItem[] {
   return useAppChromeActionsContext().items
 }
 
-/** Stable key for bar *content* — ignores onClick/icon identity (those change every render). */
+/** Stable key for bar *content* - ignores onClick/icon identity (those change every render). */
 export function appChromeActionsSignature(items: AppActionBarItem[] | null): string | null {
   if (items == null) return null
   return items
@@ -68,7 +68,7 @@ export function appChromeActionsSignature(items: AppActionBarItem[] | null): str
 /**
  * Register this page's `AppActionBar` items.
  *
- * Depends on a content signature, not array/function identity — otherwise a parent
+ * Depends on a content signature, not array/function identity - otherwise a parent
  * re-render (new `onClick` closures) retriggers setItems → provider re-render →
  * infinite loop (React #185 / maximum update depth).
  *

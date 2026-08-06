@@ -50,14 +50,14 @@ export function parseBookingEventMetadata(raw: Json): Record<string, unknown> {
 }
 
 function formatScalar(value: unknown): string {
-  if (value == null) return '—'
+  if (value == null) return '-'
   if (typeof value === 'boolean') return value ? 'yes' : 'no'
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Number.isInteger(value) ? String(value) : value.toFixed(2)
   }
   if (typeof value === 'string') {
     const t = value.trim()
-    if (!t) return '—'
+    if (!t) return '-'
     if (/^\d{4}-\d{2}-\d{2}/.test(t)) {
       try {
         const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T12:00:00`) : new Date(t)
@@ -74,7 +74,7 @@ function formatScalar(value: unknown): string {
     try {
       return JSON.stringify(value)
     } catch {
-      return '—'
+      return '-'
     }
   }
   return String(value)
@@ -125,10 +125,10 @@ function formatClock(iso: string): string {
 export function formatTimelineDate(iso: string): string {
   try {
     const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return '—'
+    if (Number.isNaN(d.getTime())) return '-'
     return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
   } catch {
-    return '—'
+    return '-'
   }
 }
 
@@ -557,7 +557,7 @@ function presentEmailGroup(group: EmailGroup): BookingActivityItem {
   for (const e of sorted) {
     const clock = formatClock(e.occurred_at)
     if (e.event_type === 'email.bounced') {
-      outcomeBits.push(clock ? `bounced ${clock} — not delivered` : 'bounced — not delivered')
+      outcomeBits.push(clock ? `bounced ${clock} - not delivered` : 'bounced - not delivered')
       tone = 'danger'
     } else if (e.event_type === 'email.complained') {
       outcomeBits.push(clock ? `complained ${clock}` : 'complained')

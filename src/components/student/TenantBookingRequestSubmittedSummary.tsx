@@ -10,7 +10,7 @@ type Props = {
   propertySuburb: string | null
   moveInDate: string
   leaseLength: string
-  /** Quni Listing apply — no student payment or deposit hold through Quni. */
+  /** Quni Listing apply - no student payment or deposit hold through Quni. */
   isListing?: boolean
 }
 
@@ -73,7 +73,7 @@ export default function TenantBookingRequestSubmittedSummary({
             <span>
               {isListing ? (
                 <>
-                  <span className="font-semibold">No payment through Quni.</span> This is a Quni Listing property — we did
+                  <span className="font-semibold">No payment through Quni.</span> This is a Quni Listing property - we did
                   not charge your card or hold a deposit. If your host accepts, you will pay bond directly to them (or via
                   the state bond authority where required) before move-in.
                 </>

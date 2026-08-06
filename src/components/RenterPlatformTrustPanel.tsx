@@ -25,7 +25,7 @@ export default function RenterPlatformTrustPanel({ compact = false, className = 
         A legitimate Australian rental platform
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-gray-600">
-        If you arrived from a landlord link or message, this is the official application site for that listing — not a
+        If you arrived from a landlord link or message, this is the official application site for that listing - not a
         third-party form. You can review the property and how verification works before sharing ID documents.
       </p>
 

@@ -185,7 +185,7 @@ export default function AdminStudents() {
             {unchosenRouteCount > 0 ? (
               <p className="mb-4 text-[13px] text-admin-ink-5">
                 {unchosenRouteCount} profile{unchosenRouteCount === 1 ? '' : 's'} ha
-                {unchosenRouteCount === 1 ? 's' : 've'} not chosen a route yet — visible under All only.
+                {unchosenRouteCount === 1 ? 's' : 've'} not chosen a route yet - visible under All only.
               </p>
             ) : null}
           </>

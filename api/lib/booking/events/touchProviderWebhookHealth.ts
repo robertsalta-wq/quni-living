@@ -4,7 +4,7 @@ export type ProviderWebhookName = 'resend' | 'docuseal' | 'stripe'
 
 /**
  * Update provider_webhook_health via SECURITY DEFINER RPC.
- * Best-effort — never throws to callers.
+ * Best-effort - never throws to callers.
  */
 export async function touchProviderWebhookHealth(
   admin: SupabaseClient,

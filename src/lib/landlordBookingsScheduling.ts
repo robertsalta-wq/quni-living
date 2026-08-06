@@ -1,6 +1,6 @@
 /**
  * Landlord Bookings scheduling helpers: Timeline occupancy, Calendar events, Next 7 days.
- * Pure derivation from listings + bookings — no UI.
+ * Pure derivation from listings + bookings - no UI.
  */
 
 import {
@@ -23,7 +23,7 @@ export function parseBookingsScheduleView(raw: string | null | undefined): Booki
 }
 
 /** Occupying / upcoming confirmed tenancies for bars. */
-const OCCUPANCY_STATUSES = new Set(['confirmed', 'active', 'bond_pending'])
+const OCCUPANCY_STATUSES = new Set(['confirmed', 'active', 'bond_pending', 'terminating'])
 /** Awaiting landlord action. */
 const PENDING_REQUEST_STATUSES = new Set(['pending_confirmation', 'awaiting_info'])
 

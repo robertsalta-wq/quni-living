@@ -256,7 +256,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     } catch (err) {
       const msg = err instanceof Error ? err.message : messageFromSupabaseError(err)
       setCreateError(
-        created ? `${msg} The invite was created — you can still copy the link below.` : msg,
+        created ? `${msg} The invite was created - you can still copy the link below.` : msg,
       )
       if (created) setCreatedInvite(created)
       await loadPendingInvites()
@@ -563,7 +563,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                       {emailedAt ? (
                         <p className="text-xs text-indigo-700 mt-0.5">Emailed {emailedAt}</p>
                       ) : (
-                        <p className="text-xs text-gray-400 mt-0.5">Link only — not emailed yet</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Link only - not emailed yet</p>
                       )}
                       <p className={`text-xs mt-0.5 ${inv.first_opened_at ? 'text-gray-700' : 'text-amber-800'}`}>
                         {funnel}

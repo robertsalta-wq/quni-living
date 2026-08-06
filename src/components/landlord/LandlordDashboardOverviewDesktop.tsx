@@ -25,6 +25,8 @@ type Props = {
   activeListings: number
   bookingsCount: number
   pendingBookings: number
+  /** Human label for requests + ending agreements (e.g. "1 ending agreement"). */
+  bookingsAttentionLabel: string
   unreadMessageCount: number
   conversationsCount: number
   schedulingBookings: SchedulingBooking[]
@@ -111,7 +113,7 @@ function FunnelStepper({
 }
 
 /**
- * Desktop (md+) landlord overview — wider expression of the mobile dashboard.
+ * Desktop (md+) landlord overview - wider expression of the mobile dashboard.
  * Mobile overview markup stays in LandlordDashboard and must not change.
  */
 export default function LandlordDashboardOverviewDesktop({
@@ -119,6 +121,7 @@ export default function LandlordDashboardOverviewDesktop({
   activeListings,
   bookingsCount,
   pendingBookings,
+  bookingsAttentionLabel,
   unreadMessageCount,
   conversationsCount,
   schedulingBookings,
@@ -156,7 +159,7 @@ export default function LandlordDashboardOverviewDesktop({
         <p className="mb-5 text-sm text-[var(--quni-ink-4)]">{mixedServiceNote}</p>
       ) : null}
 
-      {/* Row 1 — profile + payouts */}
+      {/* Row 1 - profile + payouts */}
       <div className="mb-5 flex flex-wrap items-stretch gap-5">
         <div className="flex min-w-0 flex-[2_1_540px]">
           {funnel.profileComplete ? (
@@ -246,7 +249,7 @@ export default function LandlordDashboardOverviewDesktop({
         </div>
       </div>
 
-      {/* Row 2 — stats + need help */}
+      {/* Row 2 - stats + need help */}
       <div className="mb-4 flex flex-wrap items-stretch gap-5">
         <div className="flex min-w-0 flex-[2_1_540px]">
           <div className="grid w-full flex-1 grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3.5">
@@ -302,7 +305,7 @@ export default function LandlordDashboardOverviewDesktop({
               <p className="m-0 text-xs text-[var(--quni-ink-4)]">
                 {pendingBookings > 0 ? (
                   <span className="font-semibold text-[var(--quni-coral-active)]">
-                    {pendingBookings} pending
+                    {bookingsAttentionLabel}
                   </span>
                 ) : (
                   'Nothing pending'
@@ -325,7 +328,7 @@ export default function LandlordDashboardOverviewDesktop({
               <p className="m-0 text-[15px] font-bold text-[var(--quni-ink)]">Need help?</p>
             </div>
             <p className="m-0 mb-2.5 text-[12.5px] leading-normal text-[var(--quni-ink-4)]">
-              Our team replies within one business day — tenancy setup, bonds and payouts.
+              Our team replies within one business day - tenancy setup, bonds and payouts.
             </p>
             <span className="mt-auto text-[13px] font-semibold text-[var(--quni-coral)] transition-colors hover:text-[var(--quni-coral-active)]">
               Contact support →
@@ -334,7 +337,7 @@ export default function LandlordDashboardOverviewDesktop({
         </div>
       </div>
 
-      {/* Row 3 — agenda + secondary */}
+      {/* Row 3 - agenda + secondary */}
       <div className="flex flex-wrap items-start gap-5">
         <div className="min-w-0 flex-[2_1_540px]">
           <section className={[whiteCard, 'px-[22px] py-[18px]'].join(' ')}>

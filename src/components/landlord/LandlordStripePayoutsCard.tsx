@@ -18,8 +18,8 @@ type Props = {
   /** For deep links from profile (“open dashboard payouts”). */
   anchorId?: string
   /**
-   * `full` — existing dashboard card (mobile + legacy).
-   * `status` — compact enabled / not-set-up card for desktop overview.
+   * `full` - existing dashboard card (mobile + legacy).
+   * `status` - compact enabled / not-set-up card for desktop overview.
    */
   presentation?: 'full' | 'status'
 }
@@ -208,7 +208,7 @@ export function LandlordStripePayoutsCard({
             <p className="m-0 text-sm font-bold text-admin-success-fg">Rent payouts enabled</p>
           </div>
           <p className="m-0 mb-2.5 text-[12.5px] leading-normal text-admin-success-fg">
-            Connected & verified — paid out within 2 business days.
+            Connected & verified - paid out within 2 business days.
           </p>
           <button
             type="button"

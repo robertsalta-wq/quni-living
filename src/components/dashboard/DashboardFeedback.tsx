@@ -89,7 +89,7 @@ type WelcomeProps = {
   message: string
 }
 
-/** Login welcome toast — same chrome for landlord + renter. */
+/** Login welcome toast - same chrome for landlord + renter. */
 export function DashboardWelcomeToast({ message }: WelcomeProps) {
   return (
     <div

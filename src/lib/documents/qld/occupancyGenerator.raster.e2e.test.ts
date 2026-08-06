@@ -1,5 +1,5 @@
 /**
- * Manual visual check — run: npm run test:integration -- src/lib/documents/qld/occupancyGenerator.raster.e2e.test.ts
+ * Manual visual check - run: npm run test:integration -- src/lib/documents/qld/occupancyGenerator.raster.e2e.test.ts
  */
 import { describe, expect, it } from 'vitest'
 import React from 'react'
@@ -59,7 +59,7 @@ function minimalProps(): OccupancyAgreementProps {
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd, Brisbane QLD 4001',
+    paymentReference: 'Alex Resident - 2 Demo Rd, Brisbane QLD 4001',
     schemeApplies: true,
     qldBondRemittancePreference: 'landlord_collects_remits',
     specialConditions: [],

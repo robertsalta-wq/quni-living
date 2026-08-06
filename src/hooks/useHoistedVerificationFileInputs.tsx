@@ -27,7 +27,7 @@ export type VerificationFilePickSlot = {
 
 /**
  * Hoists hidden file inputs to a stable root so volatile card re-renders (preview
- * fetches, profile refetch) never remount the input — which on Android Chrome
+ * fetches, profile refetch) never remount the input - which on Android Chrome
  * drops the picker's change event. Native change listeners + pendingPick recovery
  * match StudentVerificationPanel (Jun 2026 mobile fix).
  */

@@ -20,7 +20,7 @@ export const RENTER_PLATFORM_TRUST_POINTS = [
   {
     id: 'agreements',
     title: 'Formal tenancy paperwork',
-    body: 'Where supported for your state and property type, agreements are generated for in-platform signing — not ad-hoc forms.',
+    body: 'Where supported for your state and property type, agreements are generated for in-platform signing - not ad-hoc forms.',
   },
 ] as const
 

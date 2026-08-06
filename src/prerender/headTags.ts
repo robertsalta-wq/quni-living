@@ -20,7 +20,7 @@ export function stripSuspenseBoundaryComments(html: string): string {
  *
  * Only real head tags may move. Hoisting anything else (e.g. the app's wrapper <div>)
  * makes the HTML parser close <head> early, which strands that markup outside #root
- * where the client render never replaces it — leaving dead, unclickable duplicate
+ * where the client render never replaces it - leaving dead, unclickable duplicate
  * chrome such as a second floating Ask AI button on top of the real one.
  */
 export function hoistHeadTags(body: string): { body: string; head: string } {

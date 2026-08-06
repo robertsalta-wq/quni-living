@@ -27,7 +27,7 @@ export function isHeicImage(file: File): boolean {
   return name.endsWith('.heic') || name.endsWith('.heif')
 }
 
-/** ISO BMFF `ftyp` brand sniff — Android gallery often clears MIME and uses .jpg. */
+/** ISO BMFF `ftyp` brand sniff - Android gallery often clears MIME and uses .jpg. */
 export async function fileLooksLikeHeic(file: File): Promise<boolean> {
   if (isHeicImage(file)) return true
   try {
@@ -52,7 +52,7 @@ export async function convertHeicToJpeg(file: File, quality = 0.85): Promise<Fil
 
 /**
  * Returns a display-safe image File: HEIC/HEIF is converted to JPEG; any other
- * file is returned unchanged. Safe to call on PDFs/JPEGs/PNGs — it only acts on
+ * file is returned unchanged. Safe to call on PDFs/JPEGs/PNGs - it only acts on
  * HEIC/HEIF input.
  */
 export async function ensureDisplayableImage(file: File): Promise<File> {

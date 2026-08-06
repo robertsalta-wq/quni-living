@@ -31,7 +31,7 @@ export type ListingBondPaymentTenantGuidance = {
   qldRemittancePreference: QldBondRemittancePreference | null
   /** When true, list pay-host option before authority (landlord preference). */
   preferLandlordCollection: boolean
-  /** Present when complete property_payout_details supplied — enriches the pay-host step. */
+  /** Present when complete property_payout_details supplied - enriches the pay-host step. */
   hostPayeeAccountName: string | null
   hostPayeeBsbDisplay: string | null
   hostPayeeAccountNumber: string | null
@@ -123,13 +123,13 @@ export function listingBondPaymentOccupancyProse(
     paragraphs.push(g.directPayNote)
   }
   if (g.stateLabel === 'QLD') {
-    paragraphs.push('QLD — after bond is received or paid:')
+    paragraphs.push('QLD - after bond is received or paid:')
   }
 
   const qldLodgementBullets = g.stateLabel === 'QLD' ? [...QLD_RTA_LODGEMENT_STEPS] : []
   const offenceNote =
     g.stateLabel === 'QLD'
-      ? 'Not lodging bond within 10 days, or keeping it in a personal account, is an offence under Queensland law. A bond is not compulsory — rent in advance is a lawful alternative.'
+      ? 'Not lodging bond within 10 days, or keeping it in a personal account, is an offence under Queensland law. A bond is not compulsory - rent in advance is a lawful alternative.'
       : undefined
 
   return {
@@ -173,8 +173,8 @@ export function listingBondPaymentTenantGuidance(
       ? 'For Rental Bonds Online, your host must send you an RBO invitation email first. You can then pay by card or BPAY. Your host cannot require you to use RBO only.'
       : st === 'QLD'
         ? preferLandlordCollection
-          ? 'Your host prefers to collect bond and lodge with the RTA on your behalf within 10 days. You can still lodge directly with the RTA (Web Services / QDI or Form 2) if you prefer — Quni does not block that.'
-          : 'You can lodge and pay bond through the RTA web service (QDI required) or paper Form 2, or pay your host directly — it is your choice.'
+          ? 'Your host prefers to collect bond and lodge with the RTA on your behalf within 10 days. You can still lodge directly with the RTA (Web Services / QDI or Form 2) if you prefer - Quni does not block that.'
+          : 'You can lodge and pay bond through the RTA web service (QDI required) or paper Form 2, or pay your host directly - it is your choice.'
         : 'You can pay bond through the state bond authority’s online service where available, or pay your host directly - it is your choice.'
 
   return {
@@ -206,7 +206,7 @@ export function listingBondPaymentLandlordObligations(
     st === 'NSW'
       ? `You must offer the renter Rental Bonds Online before accepting bond paid to you directly. You cannot require RBO only (penalties apply). If they choose RBO, send them an invitation from your RBO landlord account.`
       : qldPref === 'landlord_collects_remits'
-        ? `You prefer to collect bond and lodge with ${bond.authorityPublicLabel} on the renter's behalf within ${deadline}. The renter can still lodge directly with the RTA if they choose — you cannot block that.`
+        ? `You prefer to collect bond and lodge with ${bond.authorityPublicLabel} on the renter's behalf within ${deadline}. The renter can still lodge directly with the RTA if they choose - you cannot block that.`
         : `You must give the renter the option to pay bond through ${bond.authorityPublicLabel} before accepting payment paid to you directly. You cannot require the online authority route only.`
 
   const ifPaidToLandlord =
@@ -216,7 +216,7 @@ export function listingBondPaymentLandlordObligations(
 
   const qldRecordReceiptNote =
     st === 'QLD'
-      ? 'Recording bond received on Quni confirms off-platform payment only — you must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond. Not lodging or keeping bond in a personal account is an offence. A bond is not compulsory; rent in advance is a lawful alternative.'
+      ? 'Recording bond received on Quni confirms off-platform payment only - you must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond. Not lodging or keeping bond in a personal account is an offence. A bond is not compulsory; rent in advance is a lawful alternative.'
       : null
 
   return {
@@ -265,7 +265,7 @@ export function listingBondPaymentEmailHtmlForLandlord(
   const o = listingBondPaymentLandlordObligations(bond, stateCode, options)
   if (!o) return null
   if (resolvedBondAmountAud == null || resolvedBondAmountAud <= 0) {
-    return `<p><strong>Bond:</strong> No bond is required for this stay — you do not need to collect or lodge a bond for this booking.</p>`
+    return `<p><strong>Bond:</strong> No bond is required for this stay - you do not need to collect or lodge a bond for this booking.</p>`
   }
   const qldNote = o.qldRecordReceiptNote
     ? `<li style="margin-top:8px;">${escapeHtml(o.qldRecordReceiptNote)}</li>`

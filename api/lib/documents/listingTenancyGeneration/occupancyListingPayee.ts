@@ -52,7 +52,7 @@ export async function loadOccupancyListingPayeeFields(
   const studentName = studentDisplayName(args.sp)
   const addr = args.propertyAddressLine.trim()
   const title = typeof args.prop.title === 'string' ? args.prop.title.trim() : ''
-  const paymentReference = `${studentName} — ${addr || title}`.trim()
+  const paymentReference = `${studentName} - ${addr || title}`.trim()
 
   const qldPrefRaw =
     typeof args.prop.qld_bond_remittance_preference === 'string'

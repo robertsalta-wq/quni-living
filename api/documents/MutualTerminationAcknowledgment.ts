@@ -92,7 +92,7 @@ export function MutualTerminationAcknowledgment(props: MutualTerminationAcknowle
       React.createElement(
         Text,
         { style: styles.p },
-        `The Agreement terminates and the Tenant surrenders the Premises at the end of ${terminationDate} ("Termination Date"). Until the Termination Date the Agreement continues in full — the Tenant remains entitled to occupy the Premises and remains liable for rent and their obligations up to that date.`,
+        `The Agreement terminates and the Tenant surrenders the Premises at the end of ${terminationDate} ("Termination Date"). Until the Termination Date the Agreement continues in full - the Tenant remains entitled to occupy the Premises and remains liable for rent and their obligations up to that date.`,
       ),
       React.createElement(Text, { style: styles.h }, '3. Rent and charges'),
       React.createElement(

@@ -237,7 +237,7 @@ export default function InviteTenantPage() {
           </h1>
           <p className="mt-2 text-sm lg:text-base text-gray-600 leading-relaxed">
             Your landlord uses Quni to handle applications and tenancy paperwork for this room. Review the listing below
-            first — you can see how verification works before sharing ID documents.
+            first - you can see how verification works before sharing ID documents.
           </p>
         </div>
 
@@ -262,7 +262,7 @@ export default function InviteTenantPage() {
         <div className="mt-6 lg:mt-8 lg:col-start-1">
           {resolved.student_only && (
             <p className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-gray-700">
-              This room is for students only — you&apos;ll need to verify as a student when you sign up.
+              This room is for students only - you&apos;ll need to verify as a student when you sign up.
             </p>
           )}
 

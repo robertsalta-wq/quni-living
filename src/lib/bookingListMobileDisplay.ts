@@ -10,6 +10,8 @@ export function bookingListStatusLabel(status: string): string {
   if (status === 'confirmed') return 'Confirmed'
   if (status === 'expired') return 'Expired'
   if (status === 'active') return 'Active'
+  if (status === 'terminating') return 'Ending agreement'
+  if (status === 'terminated') return 'Ended'
   const spaced = status.replace(/_/g, ' ')
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase()
 }
@@ -20,11 +22,15 @@ export function bookingListStatusPillClass(status: string): string {
   if (status === 'confirmed' || status === 'active' || status === 'bond_pending') {
     return `${base} bg-admin-success-bg text-admin-success-fg`
   }
+  if (status === 'terminating') {
+    return `${base} bg-admin-warning-bg text-admin-warning-fg`
+  }
   if (
     status === 'expired' ||
     status === 'declined' ||
     status === 'payment_failed' ||
-    status === 'cancelled'
+    status === 'cancelled' ||
+    status === 'terminated'
   ) {
     return `${base} bg-admin-danger-bg text-admin-danger-strong`
   }

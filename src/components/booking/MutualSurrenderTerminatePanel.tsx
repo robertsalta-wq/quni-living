@@ -102,7 +102,7 @@ export function MutualSurrenderTerminatePanel({
             }${emails.tenantSent ? ' tenant' : ''}.`,
           )
         } else {
-          setOkMsg('Resend requested — check that signing links exist for both parties.')
+          setOkMsg('Resend requested - check that signing links exist for both parties.')
         }
       }
     } catch (e) {
@@ -266,7 +266,7 @@ export function MutualSurrenderTerminatePanel({
         </p>
         <div className="space-y-1 text-sm text-admin-ink-2">
           <p>
-            Status: <strong>terminating</strong> — effective {terminationEffectiveDate || '—'}. Room
+            Status: <strong>terminating</strong> - effective {terminationEffectiveDate || '-'}. Room
             remains reserved until that date.
           </p>
           <p>
@@ -276,9 +276,9 @@ export function MutualSurrenderTerminatePanel({
               : viewerSigned && otherSigned
                 ? 'both parties signed'
                 : viewerSigned
-                  ? 'you signed — waiting for the other party'
+                  ? 'you signed - waiting for the other party'
                   : otherSigned
-                    ? 'other party signed — your signature still needed'
+                    ? 'other party signed - your signature still needed'
                     : 'waiting for landlord + tenant e-sign'}
           </p>
           {terminationReasonNote ? <p>Reason: {terminationReasonNote}</p> : null}
@@ -304,7 +304,7 @@ export function MutualSurrenderTerminatePanel({
                 <p className="text-xs text-admin-warning-fg self-center">
                   {signingLoading
                     ? 'Loading signing link…'
-                    : 'Signing link not available yet — try Resend signing emails.'}
+                    : 'Signing link not available yet - try Resend signing emails.'}
                 </p>
               )}
               <button
@@ -362,7 +362,6 @@ export function MutualSurrenderTerminatePanel({
     <details className="mt-6 border-t border-admin-line pt-4 group">
       <summary className="cursor-pointer list-none text-sm font-medium text-admin-ink-4 hover:text-admin-ink-2 [&::-webkit-details-marker]:hidden">
         <span className="underline-offset-2 group-open:underline">End agreement (mutual surrender)</span>
-        <span className="ml-2 font-normal text-admin-ink-5">— rarely needed</span>
       </summary>
       <div className="mt-3 space-y-3">
         <p className="text-xs text-admin-ink-4">
@@ -394,7 +393,7 @@ export function MutualSurrenderTerminatePanel({
               ))}
             </select>
             <span className="mt-1 block font-normal text-admin-ink-5">
-              Ops checklist only — does not file with RBO.
+              Ops checklist only - does not file with RBO.
             </span>
           </label>
           <label className="block text-xs font-medium text-admin-ink-2 sm:col-span-2">

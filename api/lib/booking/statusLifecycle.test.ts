@@ -58,7 +58,7 @@ describe('STATUS_LIFECYCLE invariant', () => {
     expect(writesToCompleted).toHaveLength(0)
   })
 
-  it('Listing bond-done for status advance is bond_received_by_landlord_at only — not RTA fields', () => {
+  it('Listing bond-done for status advance is bond_received_by_landlord_at only - not RTA fields', () => {
     expect(STATUS_LIFECYCLE.listingBondDoneField).toBe(LISTING_BOND_DONE_FIELD)
     expect(STATUS_LIFECYCLE.listingBondDoneField).toBe('bond_received_by_landlord_at')
 

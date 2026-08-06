@@ -3,14 +3,14 @@
  * Photo from `profile.avatar_url`; initials only when no photo.
  * Size / crop / border: h-8 circle inside ACCOUNT_AVATAR_FRAME_CLASS.
  *
- * Desktop account trigger chrome (LOCKED — docs/account-control-alignment-brief.md):
+ * Desktop account trigger chrome (LOCKED - docs/account-control-alignment-brief.md):
  * frame wraps avatar only; name + chevron sit outside (no outer pill).
  */
 
 export const ACCOUNT_AVATAR_FRAME_CLASS =
   'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--quni-line)] bg-[var(--quni-surface-1)] p-1'
 
-/** Desktop account menu button — open layout; do not put FRAME on this. */
+/** Desktop account menu button - open layout; do not put FRAME on this. */
 export const ACCOUNT_MENU_TRIGGER_CLASS =
   'inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
 

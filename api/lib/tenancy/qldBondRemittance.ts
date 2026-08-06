@@ -25,7 +25,7 @@ export function parseQldBondRemittancePreference(raw: unknown): QldBondRemittanc
   return null
 }
 
-/** Default when unset — preserves existing tenant-first guidance. */
+/** Default when unset - preserves existing tenant-first guidance. */
 export function effectiveQldBondRemittancePreference(
   raw: QldBondRemittancePreference | null | undefined,
 ): QldBondRemittancePreference {

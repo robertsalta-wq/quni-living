@@ -12,7 +12,7 @@ type Props = {
   refreshDisabledReason?: string
   showGenerate: boolean
   /**
-   * Strip outer card chrome + title — for embedding inside `<Section>` (or any
+   * Strip outer card chrome + title - for embedding inside `<Section>` (or any
    * parent that already provides the bordered surface). Never nest a bordered
    * card inside Section / ActionCard.
    */
