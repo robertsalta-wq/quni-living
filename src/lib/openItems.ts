@@ -71,16 +71,6 @@ export const OPEN_ITEMS: OpenItem[] = [
     priority: 'P2',
     section: 'product',
   },
-  {
-    id: 'OPS-1',
-    what: 'Re-pull Sentry unresolved issues (last 7d) by events + users for renter routes',
-    whyParked: 'MCP/Sentry agent tools failed during July triage',
-    whenToDo: 'Next production incident triage or monthly health check',
-    where:
-      'Sentry org quni · project javascript-react · routes /listings, /booking, /messages, /student-profile, /student-dashboard',
-    priority: 'P3',
-    section: 'ops',
-  },
 ]
 
 /**
@@ -91,6 +81,13 @@ export const OPEN_ITEMS_TECH_EMPTY_NOTE =
   'No latent tech debt from the legal-name / onboarding residual (as of 2026-08-08). Onboarding no longer writes first_name/last_name when locked (#268). Profile personal section already skipped those fields when locked (Phase 3d).'
 
 export const OPEN_ITEMS_DONE: DoneOpenItem[] = [
+  {
+    id: 'OPS-1',
+    what: 'Re-pull Sentry unresolved issues (last 7d) by events + users for renter routes',
+    closed: '2026-08-08',
+    notes:
+      'No renter-app fires. Only /listings client hit = Instagram in-app browser webkit noise. High-volume noise is backend (signature_recorded gaps, stale Stripe/DocuSeal webhooks, Resend email_id).',
+  },
   {
     id: 'LEGAL-1–3a',
     what: 'Schema: preferred_name, legal lock columns, lock trigger',

@@ -44,7 +44,7 @@ Onboarding no longer writes `first_name`/`last_name` when locked (#268). Profile
 
 | ID | What | Why parked | When to do | Where | Priority |
 |----|------|------------|------------|-------|----------|
-| OPS-1 | Re-pull Sentry unresolved issues (last 7d) by events + users for renter routes | MCP/Sentry agent tools failed during July triage | Next production incident triage or monthly health check | Sentry org `quni` · project `javascript-react` · routes `/listings`, `/booking`, `/messages`, `/student-profile`, `/student-dashboard` | P3 |
+| *(none open)* | | | | | |
 
 ---
 
@@ -52,6 +52,7 @@ Onboarding no longer writes `first_name`/`last_name` when locked (#268). Profile
 
 | ID | What | Closed | Notes |
 |----|------|--------|-------|
+| OPS-1 | Re-pull Sentry unresolved (7d) renter routes | 2026-08-08 | No renter-app fires. `/listings` only = Instagram webkit noise. Volume is backend: signature_recorded gaps, stale Stripe/DocuSeal, Resend email_id |
 | LEGAL-1–3a | Schema: preferred_name, legal lock columns, lock trigger | 2026-07 | Manual prod apply + migration files |
 | LEGAL-3b–3c | Admin ID verify captures + locks legal name | 2026-07 | API + admin Photo ID UI |
 | LEGAL-3d | Renter profile: legal read-only when locked; preferred editable | 2026-07 | `RenterProfilePersonalSection` |
