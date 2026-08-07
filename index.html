@@ -39,12 +39,12 @@
     />
     <!-- Featured / lazy collage images may still hit Unsplash. -->
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
-    <!-- Homepage LCP: first-party AVIF (matches <picture> preference in Home.tsx). -->
+    <!-- Homepage LCP: first-party AVIF. Default href matches common mobile pick (640w). -->
     <link
       rel="preload"
       as="image"
       type="image/avif"
-      href="/hero/hero-top-800.avif"
+      href="/hero/hero-top-640.avif"
       imagesrcset="/hero/hero-top-480.avif 480w, /hero/hero-top-640.avif 640w, /hero/hero-top-800.avif 800w"
       imagesizes="(min-width: 1024px) 36vw, 75vw"
       fetchpriority="high"
