@@ -364,6 +364,7 @@ export default function StudentOnboarding() {
   // Step 1
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [preferredName, setPreferredName] = useState('')
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
   const [course, setCourse] = useState('')
@@ -467,6 +468,7 @@ export default function StudentOnboarding() {
   const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
 
+  const legalNameLocked = Boolean(profile?.legal_name_locked_at)
   const routeChoicePending = profile?.accommodation_verification_route == null
   const uniEmailPending =
     profile != null && !routeChoicePending && needsStudentUniEmailVerification(profile)
@@ -483,6 +485,7 @@ export default function StudentOnboarding() {
   const hydrateFromProfile = useCallback((p: StudentProfileRow) => {
     setFirstName(p.first_name?.trim() ?? '')
     setLastName(p.last_name?.trim() ?? '')
+    setPreferredName(p.preferred_name?.trim() ?? '')
     setUniversityId(p.university_id ?? '')
     setCampusId(p.campus_id ?? '')
     setCourse(p.course?.trim() ?? '')
@@ -798,8 +801,10 @@ export default function StudentOnboarding() {
 
   function validateStep1(): boolean {
     const e: Record<string, string> = {}
-    if (!firstName.trim()) e.firstName = 'First name is required.'
-    if (!lastName.trim()) e.lastName = 'Last name is required.'
+    if (!legalNameLocked) {
+      if (!firstName.trim()) e.firstName = 'First name is required.'
+      if (!lastName.trim()) e.lastName = 'Last name is required.'
+    }
     if (!isIdentityPath) {
       if (!universityId) e.universityId = 'Select your university.'
       if (!course.trim()) e.course = 'Enter your course or degree.'
@@ -837,12 +842,21 @@ export default function StudentOnboarding() {
     const combined = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
     const yearNum = isIdentityPath ? null : studyLevelToYear(studyLevel)
 
-    const corePayload = isIdentityPath
+    // When legal name is locked, never write first_name/last_name/full_name (DB trigger rejects).
+    const nameFields = legalNameLocked
       ? {
+          preferred_name: preferredName.trim() || null,
+        }
+      : {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           full_name: combined,
           preferred_name: combined,
+        }
+
+    const corePayload = isIdentityPath
+      ? {
+          ...nameFields,
           university_id: null,
           campus_id: null,
           course: null,
@@ -854,10 +868,7 @@ export default function StudentOnboarding() {
           budget_max_per_week: max,
         }
       : {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          full_name: combined,
-          preferred_name: combined,
+          ...nameFields,
           university_id: universityId,
           campus_id: universityId ? campusId.trim() || null : null,
           course: course.trim(),
@@ -881,8 +892,9 @@ export default function StudentOnboarding() {
     const fullPayload = { ...corePayload, ...onboardingExtras }
     const bootstrapPayload = isIdentityPath
       ? {
-          full_name: combined,
-          preferred_name: combined,
+          ...(legalNameLocked
+            ? { preferred_name: preferredName.trim() || null }
+            : { full_name: combined, preferred_name: combined }),
           university_id: null,
           campus_id: null,
           course: null,
@@ -890,8 +902,9 @@ export default function StudentOnboarding() {
           phone: phone.trim(),
         }
       : {
-          full_name: combined,
-          preferred_name: combined,
+          ...(legalNameLocked
+            ? { preferred_name: preferredName.trim() || null }
+            : { full_name: combined, preferred_name: combined }),
           university_id: universityId,
           campus_id: universityId ? campusId.trim() || null : null,
           course: course.trim(),
@@ -941,12 +954,20 @@ export default function StudentOnboarding() {
 
       if (error) {
         const msg = messageFromSupabaseError(error)
-        const hint = looksLikeMissingDbColumn(error)
-          ? ' Run `supabase/student_profile_extend.sql` and `supabase/student_onboarding.sql` in Supabase → SQL Editor.'
-          : /row level security|rls|42501|permission denied/i.test(msg)
-            ? ' If this is an RLS error, confirm policies allow students to update their own row.'
-            : ''
-        const formErrMsg = msg + hint
+        const isLegalLock =
+          (typeof error === 'object' &&
+            error != null &&
+            'code' in error &&
+            (error as { code?: string }).code === '23514') ||
+          msg.includes('legal_name_locked')
+        const formErrMsg = isLegalLock
+          ? "Your legal name is verified and can't be edited here."
+          : msg +
+            (looksLikeMissingDbColumn(error)
+              ? ' Run `supabase/student_profile_extend.sql` and `supabase/student_onboarding.sql` in Supabase → SQL Editor.'
+              : /row level security|rls|42501|permission denied/i.test(msg)
+                ? ' If this is an RLS error, confirm policies allow students to update their own row.'
+                : '')
         setFormError(formErrMsg)
         if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg, { sentry: true })
         return
@@ -1363,8 +1384,8 @@ export default function StudentOnboarding() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="so-fn" className={labelClass}>
-                        First name
-                        <RequiredMark />
+                        {legalNameLocked ? 'Legal first name (verified)' : 'First name'}
+                        {!legalNameLocked ? <RequiredMark /> : null}
                       </label>
                       <input
                         id="so-fn"
@@ -1372,13 +1393,16 @@ export default function StudentOnboarding() {
                         onChange={(ev) => setFirstName(ev.target.value)}
                         className={inputClass}
                         autoComplete="given-name"
+                        readOnly={legalNameLocked}
+                        disabled={legalNameLocked}
+                        aria-describedby={legalNameLocked ? 'so-legal-name-hint' : undefined}
                       />
                       {fieldErrors.firstName && <p className={errClass}>{fieldErrors.firstName}</p>}
                     </div>
                     <div>
                       <label htmlFor="so-ln" className={labelClass}>
-                        Last name
-                        <RequiredMark />
+                        {legalNameLocked ? 'Legal last name (verified)' : 'Last name'}
+                        {!legalNameLocked ? <RequiredMark /> : null}
                       </label>
                       <input
                         id="so-ln"
@@ -1386,10 +1410,35 @@ export default function StudentOnboarding() {
                         onChange={(ev) => setLastName(ev.target.value)}
                         className={inputClass}
                         autoComplete="family-name"
+                        readOnly={legalNameLocked}
+                        disabled={legalNameLocked}
+                        aria-describedby={legalNameLocked ? 'so-legal-name-hint' : undefined}
                       />
                       {fieldErrors.lastName && <p className={errClass}>{fieldErrors.lastName}</p>}
+                      {legalNameLocked ? (
+                        <p id="so-legal-name-hint" className="mt-1 text-xs text-stone-500">
+                          From your verified ID. Contact support to change.
+                        </p>
+                      ) : null}
                     </div>
                   </div>
+                  {legalNameLocked ? (
+                    <div>
+                      <label htmlFor="so-preferred" className={labelClass}>
+                        Preferred name
+                      </label>
+                      <input
+                        id="so-preferred"
+                        value={preferredName}
+                        onChange={(ev) => setPreferredName(ev.target.value)}
+                        className={inputClass}
+                        autoComplete="nickname"
+                      />
+                      <p className="mt-1 text-xs text-stone-500">
+                        How you want to appear on the platform. This does not change your legal name.
+                      </p>
+                    </div>
+                  ) : null}
 
                   {!isIdentityPath && (
                     <>
