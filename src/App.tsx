@@ -237,6 +237,7 @@ function App() {
               <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
               <Route path="document-access-log" element={<Lazy.AdminDocumentAccessLog />} />
               <Route path="support-lookup" element={<Lazy.AdminSupportLookup />} />
+              <Route path="open-items" element={<Lazy.AdminOpenItems />} />
               <Route path="state-workflows" element={<Lazy.AdminStateWorkflows />} />
               <Route path="qase" element={<Lazy.QaseTicketList />} />
               <Route path="qase/settings" element={<Lazy.QaseSettings />} />
