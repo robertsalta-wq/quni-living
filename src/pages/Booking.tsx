@@ -359,6 +359,38 @@ function BookingConflictPanel(opts: {
   )
 }
 
+function bookingEligibilityUserErrorBlock(opts: {
+  title: string
+  message: string
+  profileHref: string
+  profileCta: string
+  onDismiss: () => void
+}) {
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-3" role="alert">
+      <div>
+        <p className="font-semibold text-amber-950 m-0">{opts.title}</p>
+        <p className="mt-1 m-0 text-amber-900/90">{opts.message}</p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Link
+          to={opts.profileHref}
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
+        >
+          {opts.profileCta}
+        </Link>
+        <button
+          type="button"
+          onClick={opts.onDismiss}
+          className="rounded-lg bg-white border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100/80"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function bookingPaymentUserErrorBlock(opts: {
   variant: 'payment' | 'form'
   onTryAgain: () => void
@@ -1356,6 +1388,21 @@ export default function Booking() {
           error: j.error,
           message: j.message,
         })
+        if (res.status === 403 && j.error === 'email_not_confirmed') {
+          setPiError(
+            j.message ??
+              'Confirm your email before continuing. Check your inbox for the confirmation link.',
+          )
+          return
+        }
+        if (res.status === 403 && j.error === 'verification_required') {
+          setPiError('__verification_required__')
+          return
+        }
+        if (res.status === 403 && j.error === 'student_only_listing') {
+          setPiError('__student_only_listing__')
+          return
+        }
         if (j.error === 'stripe_not_ready') {
           setPiError(
             j.message ??
@@ -1479,6 +1526,19 @@ export default function Booking() {
         setSubmitError(
           j.message ??
             'Confirm your email before submitting a booking request. Check your inbox for the confirmation link.',
+        )
+        return
+      }
+      if (res.status === 403 && j.error === 'verification_required') {
+        setSubmitError(
+          j.message ??
+            'Complete your profile and verification before submitting a booking request. Open your profile to continue.',
+        )
+        return
+      }
+      if (res.status === 403 && j.error === 'student_only_listing') {
+        setSubmitError(
+          j.message ?? 'This listing is for verified students only.',
         )
         return
       }
@@ -2407,6 +2467,23 @@ export default function Booking() {
               bookingPaymentUserErrorBlock({
                 variant: 'payment',
                 onTryAgain: () => setPiError(null),
+              })
+            ) : piError === '__verification_required__' ? (
+              bookingEligibilityUserErrorBlock({
+                title: 'Verification required',
+                message:
+                  'Complete your profile and verification before paying a booking deposit. Open your profile to finish setup.',
+                profileHref: '/student-profile#renter-section-verification',
+                profileCta: 'Complete profile & verification',
+                onDismiss: () => setPiError(null),
+              })
+            ) : piError === '__student_only_listing__' ? (
+              bookingEligibilityUserErrorBlock({
+                title: 'Student tenants only',
+                message: 'This listing is for verified student tenants only. Verify as a student, or choose another listing.',
+                profileHref: '/student-profile#renter-section-verification',
+                profileCta: 'Open verification',
+                onDismiss: () => setPiError(null),
               })
             ) : (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{piError}</div>
