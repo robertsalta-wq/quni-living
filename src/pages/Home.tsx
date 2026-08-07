@@ -525,7 +525,7 @@ export default function Home() {
                       width={800}
                       height={600}
                       fetchPriority="high"
-                      decoding="async"
+                      decoding="sync"
                       className="h-full w-full object-cover"
                     />
                   </picture>
