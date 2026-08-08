@@ -231,6 +231,7 @@ function App() {
               <Route path="team" element={<Lazy.AdminTeam />} />
               <Route path="pricing" element={<Lazy.PricingPage />} />
               <Route path="knowledge-base" element={<Lazy.KnowledgeBase />} />
+              <Route path="feature-inventory" element={<Lazy.AdminFeatureInventory />} />
               <Route path="documents" element={<Lazy.DocumentsPage />} />
               <Route path="agreement-previews" element={<Lazy.AgreementPreviewsPage />} />
               <Route path="domains" element={<Lazy.DomainsPage />} />

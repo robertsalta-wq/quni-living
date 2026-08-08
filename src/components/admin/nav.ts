@@ -103,6 +103,7 @@ export const ADMIN_NAV_ZONES: readonly AdminNavZone[] = [
       { id: 'apps', label: 'Apps', icon: 'app-window', to: '/admin/apps' },
       { id: 'domains', label: 'Domains', icon: 'globe', to: '/admin/domains' },
       { id: 'kb', label: 'Knowledge base', icon: 'book-open', to: '/admin/knowledge-base' },
+      { id: 'feature-inventory', label: 'Feature inventory', icon: 'file-text', to: '/admin/feature-inventory' },
       { id: 'support-lookup', label: 'Support lookup', icon: 'search', to: '/admin/support-lookup' },
       { id: 'open-items', label: 'Open items', icon: 'bookmark', to: '/admin/open-items' },
       { id: 'qase', label: 'Support (Qase)', icon: 'life-buoy', to: '/admin/qase' },

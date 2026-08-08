@@ -19,7 +19,11 @@ Search this file (`Ctrl+F`) before digging through routes or asking in chat. Use
 | **UI only** | Surfaced in product but not fully backed |
 | **Deprecated** | Replaced; kept here so support/marketing do not resurrect it |
 
-### 2. Keep marketing and FAQ honest
+### 2. Read in Admin
+
+Staff-readable view: **Admin → Feature inventory** (`/admin/feature-inventory`). Same markdown as this file. AI RAG chunks are separate under Admin → Knowledge base (sync via `npm run sync:knowledge-inventory` then `npm run seed:knowledge`).
+
+### 3. Keep marketing and FAQ honest
 
 When editing [`faq-comprehensive-review.md`](./faq-comprehensive-review.md), `/faq`, or landing copy:
 
@@ -27,7 +31,7 @@ When editing [`faq-comprehensive-review.md`](./faq-comprehensive-review.md), `/f
 2. If you promote something **UI only**, label it “coming soon” on the site or finish the backend first.
 3. After copy changes, skim the relevant **Students** or **Landlords** section here for gaps.
 
-### 3. QA and release checklists
+### 4. QA and release checklists
 
 Before a student- or landlord-facing release:
 
@@ -35,20 +39,20 @@ Before a student- or landlord-facing release:
 - Walk the bullets that touch your change; add any new bullets in the same PR (or immediately after merge).
 - For big flows (booking, onboarding, listing form), cross-check [`mobile-testing-checklist.md`](./mobile-testing-checklist.md).
 
-### 4. Support and triage
+### 5. Support and triage
 
 Map tenant/landlord tickets to a bullet (e.g. “Bond receipt download” → Students → Post-booking). If the user asks for something with no bullet, it is either missing product, mis-routed role, or a bug - not “undocumented magic.”
 
-### 5. Scope and prioritisation
+### 6. Scope and prioritisation
 
 - **Roadmap:** mark new bullets as Live when shipped; move wishlist items to a “Backlog (not in product)” subsection if you add them.
 - **Dual-tier work:** see also [`dual-tier-service-model.md`](./dual-tier-service-model.md) for Listing vs Managed rules; this doc lists *what users can click*, not fee tables.
 
-### 6. Onboarding teammates
+### 7. Onboarding teammates
 
 New dev, support, or marketing: read **How to use** → skim **Shared** → deep-read one persona. Key routes are in parentheses where helpful.
 
-### 7. Keeping it alive (maintenance rule)
+### 8. Keeping it alive (maintenance rule)
 
 Update this file when you ship or remove **user-visible** behaviour:
 
@@ -58,7 +62,7 @@ Update this file when you ship or remove **user-visible** behaviour:
 
 Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inventory.md` if needed.”*
 
-### 8. Keep the AI assistant in sync
+### 9. Keep the AI assistant in sync
 
 After you change this file:
 
