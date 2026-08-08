@@ -49,6 +49,38 @@ export const OPEN_ITEM_SECTIONS: {
 /** Active unfinished items (newest workstream first within each section is fine). */
 export const OPEN_ITEMS: OpenItem[] = [
   {
+    id: 'KNOW-1',
+    what: 'Populate landlord rule-map rows (Q3 first, then Q1/Q2; park solicitor-heavy rows)',
+    whyParked:
+      'Structure + recite-or-refer guardrail shipped; external law cells still empty — do not invent content',
+    whenToDo:
+      'Focused sourcing pass against primary sources (Fair Trading / RTA); human-verify to verified before serving',
+    where:
+      'api/lib/tenancy/rules/ruleMapData.ts · docs/landlord-source-audit.md · docs/landlord-knowledge-pipeline-recon.md',
+    priority: 'P2',
+    section: 'tech',
+  },
+  {
+    id: 'KNOW-2',
+    what: 'Feed verified rule-map rows into the embedded assistant (KB migration + seed, or other path)',
+    whyParked:
+      'knowledge_base has no citation/date/verified columns; map must be populated and verified first',
+    whenToDo: 'After KNOW-1 has verified rows worth reciting',
+    where:
+      'scripts/knowledgeData.json · scripts/seedKnowledge.ts · api/lib/knowledgeRetrieval.ts · Supabase knowledge_base schema',
+    priority: 'P2',
+    section: 'tech',
+  },
+  {
+    id: 'KNOW-3',
+    what: 'Generate llms.txt / FAQ JSON-LD from verified rule-map content',
+    whyParked: 'Those surfaces are still hand-authored; map has no verified law to expose yet',
+    whenToDo: 'After KNOW-1 (and preferably KNOW-2) so machine-readable copy matches what the assistant can recite',
+    where: 'public/llms.txt · src/lib/faqContent.tsx · FAQPage JSON-LD builders',
+    priority: 'P3',
+    section: 'tech',
+  },
+  {
     id: 'LEGAL-4',
     what: 'Enforce locked legal name before signing / bond docs / tenancy generation',
     whyParked:
@@ -78,7 +110,7 @@ export const OPEN_ITEMS: OpenItem[] = [
  * Keep in docs/open-items.md as well.
  */
 export const OPEN_ITEMS_TECH_EMPTY_NOTE =
-  'No latent tech debt from the legal-name / onboarding residual (as of 2026-08-08). Onboarding no longer writes first_name/last_name when locked (#268). Profile personal section already skipped those fields when locked (Phase 3d).'
+  'No other latent tech debt parked here beyond the KNOW-* landlord knowledge pipeline items.'
 
 export const OPEN_ITEMS_DONE: DoneOpenItem[] = [
   {

@@ -34,9 +34,9 @@ Related: [feature inventory](./feature-inventory.md), larger multi-PR work under
 
 | ID | What | Why parked | When to do | Where | Priority |
 |----|------|------------|------------|-------|----------|
-| *(none from legal-name / onboarding residual as of 2026-08-08)* | | | | | |
-
-Onboarding no longer writes `first_name`/`last_name` when locked (#268). Profile personal section already skipped those fields when locked (Phase 3d).
+| KNOW-1 | Populate landlord rule-map rows (Q3 first, then Q1/Q2; park solicitor-heavy rows) | Structure + recite-or-refer guardrail shipped; external law cells still empty — do not invent content | Focused sourcing pass against primary sources (Fair Trading / RTA); human-verify to `verified` before serving | `api/lib/tenancy/rules/ruleMapData.ts` · `docs/landlord-source-audit.md` · `docs/landlord-knowledge-pipeline-recon.md` | P2 |
+| KNOW-2 | Feed verified rule-map rows into the embedded assistant (KB migration + seed, or other path) | `knowledge_base` has no citation/date/verified columns; map must be populated and verified first | After KNOW-1 has verified rows worth reciting | `scripts/knowledgeData.json` · `scripts/seedKnowledge.ts` · `api/lib/knowledgeRetrieval.ts` · Supabase `knowledge_base` schema | P2 |
+| KNOW-3 | Generate `llms.txt` / FAQ JSON-LD from verified rule-map content | Those surfaces are still hand-authored; map has no verified law to expose yet | After KNOW-1 (and preferably KNOW-2) so machine-readable copy matches what the assistant can recite | `public/llms.txt` · `src/lib/faqContent.tsx` · FAQPage JSON-LD builders | P3 |
 
 ---
 
