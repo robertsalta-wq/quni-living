@@ -29,6 +29,9 @@ const ADMIN_SEGMENT_IMPORTERS: Record<string, RouteImporter> = {
 
 const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/listings': [routeImports.listings],
+  '/guides': [() => import('../pages/Guides')],
+  '/for-universities': [() => import('../pages/ForUniversities')],
+  '/for-landlords': [() => import('../pages/ForLandlords')],
   '/login': [routeImports.login],
   '/rent-near-campus': [routeImports.rentNearCampus],
   '/international': [routeImports.internationalStudents],
@@ -116,6 +119,11 @@ export function prefetchRouteChunks(pathname: string): void {
     return
   }
 
+  if (path.startsWith('/guides/')) {
+    prefetch([() => import('../pages/guides/GuideArticlePage')])
+    return
+  }
+
   if (path.startsWith('/student-accommodation/')) {
     const parts = path.slice('/student-accommodation/'.length).split('/')
     if (parts.length >= 2) prefetch([routeImports.campusAccommodation])
@@ -156,6 +164,37 @@ export function prefetchRouteChunks(pathname: string): void {
   if (exact) {
     prefetch(exact)
   }
+}
+
+/**
+ * Await the route chunk for the current pathname before hydrateRoot.
+ * Prevents Suspense fallback flash on prerendered marketing/SEO pages after
+ * those routes became client-lazy.
+ */
+export async function warmRouteChunkForHydration(pathname: string): Promise<void> {
+  const path = normalizePathname(pathname)
+  if (path === '/') return
+
+  const pending: Promise<unknown>[] = []
+  const capture = (importers: RouteImporter[]) => {
+    for (const load of importers) pending.push(load())
+  }
+
+  if (path.startsWith('/listings/') || path.startsWith('/properties/')) {
+    capture([routeImports.propertyDetail])
+  } else if (path.startsWith('/guides/')) {
+    capture([() => import('../pages/guides/GuideArticlePage')])
+  } else if (path.startsWith('/student-accommodation/')) {
+    const parts = path.slice('/student-accommodation/'.length).split('/')
+    capture([
+      parts.length >= 2 ? routeImports.campusAccommodation : routeImports.universityAccommodation,
+    ])
+  } else {
+    const exact = EXACT_PATH_IMPORTERS[path]
+    if (exact) capture(exact)
+  }
+
+  if (pending.length > 0) await Promise.all(pending)
 }
 
 /** Warm every bottom-nav destination for landlord/renter mobile chrome. */

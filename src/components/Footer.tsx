@@ -42,6 +42,9 @@ export default function Footer() {
                 alt="Quni"
                 width={96}
                 height={32}
+                fetchPriority="low"
+                decoding="async"
+                loading="lazy"
                 className="h-8 w-auto max-w-full object-contain object-left"
               />
             </Link>

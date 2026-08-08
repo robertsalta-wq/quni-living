@@ -13,25 +13,10 @@ import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
 import Home from './pages/Home'
-import AuthCallback from './pages/auth/AuthCallback'
-import GuideArticlePage from './pages/guides/GuideArticlePage'
-import Guides from './pages/Guides'
-import ForUniversities from './pages/ForUniversities'
-import CampusAccommodation from './pages/seo/CampusAccommodation'
-import UniversityAccommodation from './pages/seo/UniversityAccommodation'
-import PropertyDetail from './pages/PropertyDetail'
 import NotFoundPage from './pages/NotFoundPage'
-import Pricing from './pages/Pricing'
-import Faq from './pages/Faq'
-import Listings from './pages/Listings'
-import HowItWorks from './pages/HowItWorks'
-import Verification from './pages/Verification'
-import Contact from './pages/Contact'
-import LandlordPartnerships from './pages/services/LandlordPartnerships'
-import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
-import ForLandlords from './pages/ForLandlords'
 import { isDeskShellEnabled } from './lib/deskShell'
 import * as Lazy from './lazyPages'
+import * as Marketing from './marketingRoutePages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import AppShellLayout from './components/appShell/AppShellLayout'
 import MarketingChromeLayout from './components/appShell/MarketingChromeLayout'
@@ -187,8 +172,15 @@ function App() {
               />
             </Route>
 
-            {/* AI landing - no marketing header; eager for prerender SEO */}
-            <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
+            {/* AI landing - no marketing header; SSR-eager / client-lazy */}
+            <Route
+              path="/landlords/ai"
+              element={
+                <Suspense fallback={<PageRouteFallback />}>
+                  <Marketing.LandlordAIFeaturePage />
+                </Suspense>
+              }
+            />
 
             {/*
               Landlord desk - same URL in Preview (desk_shell_enabled) and Production.
@@ -199,7 +191,9 @@ function App() {
               path="/for-landlords"
               element={
                 isDeskShellEnabled() ? (
-                  <ForLandlords />
+                  <Suspense fallback={<PageRouteFallback />}>
+                    <Marketing.ForLandlords />
+                  </Suspense>
                 ) : (
                   <Navigate to="/services/landlord-partnerships" replace />
                 )
@@ -248,31 +242,33 @@ function App() {
 
             {/* Marketing / auth - public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
-              {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS / empty shells). */}
+              {/* Home stays sync on the client (LCP). Other marketing/SEO pages are
+                  SSR-eager via marketingRoutePages + client-lazy under Suspense. */}
               <Route path="/" element={<Home />} />
-              <Route path="/guides" element={<Guides />} />
-              <Route path="/guides/:slug" element={<GuideArticlePage />} />
-              <Route path="/for-universities" element={<ForUniversities />} />
-              <Route path="/listings" element={<Listings />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/faq" element={<Faq />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/verification" element={<Verification />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/services/landlord-partnerships" element={<LandlordPartnerships />} />
-              {/* Eager: campus/uni SEO must mount during renderToString prerender. */}
-              <Route
-                path="/student-accommodation/:universitySlug/:campusSlug"
-                element={<CampusAccommodation />}
-              />
-              <Route
-                path="/student-accommodation/:universitySlug"
-                element={<UniversityAccommodation />}
-              />
-              {/* Eager: listing SEO must mount during renderToString prerender. */}
-              <Route path="/listings/:slug" element={<PropertyDetail />} />
-              <Route path="/properties/:slug" element={<PropertyDetail />} />
               <Route element={<LazyOutlet />}>
+                <Route path="/guides" element={<Marketing.Guides />} />
+                <Route path="/guides/:slug" element={<Marketing.GuideArticlePage />} />
+                <Route path="/for-universities" element={<Marketing.ForUniversities />} />
+                <Route path="/listings" element={<Marketing.Listings />} />
+                <Route path="/pricing" element={<Marketing.Pricing />} />
+                <Route path="/faq" element={<Marketing.Faq />} />
+                <Route path="/how-it-works" element={<Marketing.HowItWorks />} />
+                <Route path="/verification" element={<Marketing.Verification />} />
+                <Route path="/contact" element={<Marketing.Contact />} />
+                <Route
+                  path="/services/landlord-partnerships"
+                  element={<Marketing.LandlordPartnerships />}
+                />
+                <Route
+                  path="/student-accommodation/:universitySlug/:campusSlug"
+                  element={<Marketing.CampusAccommodation />}
+                />
+                <Route
+                  path="/student-accommodation/:universitySlug"
+                  element={<Marketing.UniversityAccommodation />}
+                />
+                <Route path="/listings/:slug" element={<Marketing.PropertyDetail />} />
+                <Route path="/properties/:slug" element={<Marketing.PropertyDetail />} />
                 <Route path="/search" element={<Navigate to="/listings" replace />} />
                 <Route path="/properties" element={<Navigate to="/listings" replace />} />
                 <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
@@ -306,7 +302,7 @@ function App() {
                   element={<Navigate to="/landlord/dashboard?tab=profile" replace />}
                 />
 
-                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/auth/callback" element={<Marketing.AuthCallback />} />
                 <Route path="/login" element={<Lazy.Login />} />
                 <Route path="/forgot-password" element={<Lazy.ForgotPassword />} />
                 <Route path="/reset-password" element={<Lazy.ResetPassword />} />
