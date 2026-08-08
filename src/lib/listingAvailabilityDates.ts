@@ -53,13 +53,35 @@ export function formatIsoDateAuNumeric(isoDate: string): string {
   return dt.toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-/** Parse typed dd/mm/yyyy to YYYY-MM-DD; invalid calendar dates return null. */
+/**
+ * Insert dd/mm/yyyy slashes while typing digits (iOS numeric keypad has no `/`).
+ * Non-digits are ignored so mobile users can enter 01011972 → 01/01/1972.
+ */
+export function formatAuNumericDateAsYouType(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+}
+
+/** Parse typed dd/mm/yyyy (or 8 digits) to YYYY-MM-DD; invalid calendar dates return null. */
 export function parseAuNumericDateToIso(text: string): string | null {
-  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim())
-  if (!m) return null
-  const day = Number(m[1])
-  const month = Number(m[2])
-  const year = Number(m[3])
+  const trimmed = text.trim()
+  let day: number
+  let month: number
+  let year: number
+  const slashed = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed)
+  if (slashed) {
+    day = Number(slashed[1])
+    month = Number(slashed[2])
+    year = Number(slashed[3])
+  } else {
+    const digits = trimmed.replace(/\D/g, '')
+    if (!/^\d{8}$/.test(digits)) return null
+    day = Number(digits.slice(0, 2))
+    month = Number(digits.slice(2, 4))
+    year = Number(digits.slice(4, 8))
+  }
   if (month < 1 || month > 12 || day < 1 || day > 31) return null
   const dt = new Date(year, month - 1, day)
   if (dt.getFullYear() !== year || dt.getMonth() !== month - 1 || dt.getDate() !== day) return null
