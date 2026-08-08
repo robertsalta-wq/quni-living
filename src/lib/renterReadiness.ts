@@ -1,5 +1,5 @@
 import type { Database } from './database.types'
-import { INCOMPLETE_RENTER_DESTINATION } from './authProfile'
+import { INCOMPLETE_RENTER_DESTINATION } from './authProfileRouting'
 import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
   effectiveAccommodationRoute,

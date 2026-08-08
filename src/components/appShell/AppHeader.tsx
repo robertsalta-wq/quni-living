@@ -11,7 +11,8 @@ import {
   appShellFocusTitle,
 } from '../../lib/appShell'
 import { dashboardMobileHomePath } from '../../lib/dashboardMobileChrome'
-import { isRenterRole, type LandlordProfileRow } from '../../lib/authProfile'
+import type { LandlordProfileRow } from '../../lib/authProfileRouting'
+import { isRenterRole } from '../../lib/marketplaceRole'
 import { formatDisplayName } from '../../lib/formatDisplayName'
 import { landlordDisplayName } from '../../lib/nameResolution'
 import {

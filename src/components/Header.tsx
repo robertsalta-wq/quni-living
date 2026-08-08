@@ -31,7 +31,6 @@ import AskAiHeaderControl from './aiChat/AskAiHeaderControl'
 import SiteSocialLinks from './SiteSocialLinks'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
@@ -72,7 +71,8 @@ function studentsMenuLeft(anchor: DOMRect): number {
 }
 
 function warmListingsNav() {
-  warmListingsBrowseCache()
+  // Dynamic: keep fetchListingsBrowse + supabase off the marketing critical path.
+  void import('../lib/listingsBrowseCache').then((m) => m.warmListingsBrowseCache())
 }
 
 type HeaderProps = {
@@ -242,7 +242,7 @@ export default function Header({ embedded = false }: HeaderProps) {
   }, [mobileNavOpen])
 
   useEffect(() => {
-    warmListingsBrowseCache()
+    warmListingsNav()
   }, [])
 
   const listingsNavWarm = { onMouseEnter: warmListingsNav, onFocus: warmListingsNav, onTouchStart: warmListingsNav }

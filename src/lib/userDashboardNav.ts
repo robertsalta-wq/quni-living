@@ -1,4 +1,4 @@
-import type { UserRole } from './authProfile'
+import type { UserRole } from './authProfileRouting'
 import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 
 export type UserDashboardSection = 'overview' | 'listings' | 'messages' | 'bookings' | 'saved' | 'profile'

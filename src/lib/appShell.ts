@@ -2,8 +2,8 @@
  * Authenticated app shell membership - section destinations + in-app focus flows.
  * Public marketing routes stay outside this tree.
  */
-import type { UserRole } from './authProfile'
-import { isRenterRole } from './authProfile'
+import type { UserRole } from './authProfileRouting'
+import { isRenterRole } from './marketplaceRole'
 import { isRenterProfileExpandKey } from './renterProfilePaths'
 import type { UserDashboardSection } from './userDashboardNav'
 
