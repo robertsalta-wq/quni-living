@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useId, useRef, useState, type FocusEventHandler } from 'react'
 import {
+  formatAuNumericDateAsYouType,
   formatIsoDateAuNumeric,
   isIsoDateString,
   parseAuNumericDateToIso,
@@ -67,7 +68,9 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
   const effectiveMax = birthDate ? (max && isIsoDateString(max) ? max : todayIsoLocal()) : max
   const effectiveMin = birthDate ? (min && isIsoDateString(min) ? min : BIRTH_DATE_MIN) : min
   const hiddenRef = useRef<HTMLInputElement>(null)
-  const [pickerDraftIso, setPickerDraftIso] = useState('')
+  const [pickerDraftIso, setPickerDraftIso] = useState(() =>
+    birthDate ? birthDatePickerAnchorIso(effectiveMax, effectiveMin) : '',
+  )
   const [formatError, setFormatError] = useState(false)
   const [text, setText] = useState(() =>
     value && isIsoDateString(value) ? formatIsoDateAuNumeric(value) : '',
@@ -79,6 +82,12 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
       setText(value && isIsoDateString(value) ? formatIsoDateAuNumeric(value) : '')
     }
   }, [value, focused])
+
+  useEffect(() => {
+    if (birthDate && !isIsoDateString(value)) {
+      setPickerDraftIso(birthDatePickerAnchorIso(effectiveMax, effectiveMin))
+    }
+  }, [birthDate, value, effectiveMax, effectiveMin])
 
   const commitText = useCallback(() => {
     const trimmed = text.trim()
@@ -107,27 +116,28 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
     setFormatError(false)
   }, [text, value, effectiveMin, effectiveMax, onChange, birthDate])
 
+  /** Keyboard / desktop fallback when the overlay date input is not the activation target. */
   const openPicker = () => {
     const el = hiddenRef.current
     if (!el || disabled) return
-    const anchor =
-      birthDate && !isIsoDateString(value)
-        ? birthDatePickerAnchorIso(effectiveMax, effectiveMin)
-        : null
-    if (anchor) {
+    if (birthDate && !isIsoDateString(value)) {
+      const anchor = birthDatePickerAnchorIso(effectiveMax, effectiveMin)
       setPickerDraftIso(anchor)
+      el.value = anchor
     }
-    window.requestAnimationFrame(() => {
-      if (anchor) el.value = anchor
-      try {
-        el.showPicker?.()
-      } catch {
-        el.click()
-      }
-    })
+    try {
+      el.showPicker?.()
+    } catch {
+      el.focus()
+      el.click()
+    }
   }
 
-  const hiddenPickerValue = isIsoDateString(value) ? value : birthDate ? pickerDraftIso : ''
+  const hiddenPickerValue = isIsoDateString(value)
+    ? value
+    : birthDate
+      ? pickerDraftIso || birthDatePickerAnchorIso(effectiveMax, effectiveMin)
+      : ''
   const formatErrorId = birthDate ? `${inputId}-birth-format-error` : undefined
 
   return (
@@ -153,7 +163,7 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
           commitText()
         }}
         onChange={(e) => {
-          setText(e.target.value)
+          setText(formatAuNumericDateAsYouType(e.target.value))
           if (formatError) setFormatError(false)
         }}
         aria-invalid={ariaInvalid || formatError || undefined}
@@ -181,12 +191,17 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
           </svg>
           {birthDate ? <span>Pick date</span> : null}
         </button>
+        {/*
+          Invisible native date input over the button. iOS Safari often ignores showPicker()
+          on a different element / after rAF; a direct tap on type=date is reliable.
+        */}
         <input
           ref={hiddenRef}
           type="date"
-          className="absolute inset-0 h-full w-full opacity-0 pointer-events-none"
+          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:pointer-events-none"
           tabIndex={-1}
           aria-hidden
+          disabled={disabled}
           value={hiddenPickerValue}
           min={effectiveMin}
           max={effectiveMax}
@@ -204,7 +219,8 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
     </div>
     {formatError ? (
       <p id={formatErrorId} className="text-xs text-red-700" role="alert">
-        Use day/month/year with slashes, e.g. <span className="font-semibold tabular-nums">06/12/1996</span>.
+        Use day/month/year, e.g. type <span className="font-semibold tabular-nums">06121996</span> or{' '}
+        <span className="font-semibold tabular-nums">06/12/1996</span>.
       </p>
     ) : null}
     </div>
