@@ -21,7 +21,6 @@ import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/proper
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
-import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
@@ -212,22 +211,34 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false
-    void (async () => {
-      try {
-        const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
-        const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
-        const managed = formatFeeForDisplay(managedCell)
-        const listing = formatFeeForDisplay(listingCell)
-        if (!cancelled) {
-          setDynamicListingFeeText(listing.landlordFeeDisplay)
-          setDynamicManagedFeeText(managed.landlordFeeDisplay)
+    const loadPricing = () => {
+      void (async () => {
+        try {
+          const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
+          const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
+          const managed = formatFeeForDisplay(managedCell)
+          const listing = formatFeeForDisplay(listingCell)
+          if (!cancelled) {
+            setDynamicListingFeeText(listing.landlordFeeDisplay)
+            setDynamicManagedFeeText(managed.landlordFeeDisplay)
+          }
+        } catch {
+          // keep defaults
         }
-      } catch {
-        // keep defaults
-      }
-    })()
+      })()
+    }
+    // Fee copy is below the fold — do not compete with hero LCP on Slow 4G.
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(loadPricing, { timeout: 4000 })
+    } else {
+      timeoutId = window.setTimeout(loadPricing, 2000)
+    }
     return () => {
       cancelled = true
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId)
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [])
 
@@ -349,11 +360,9 @@ export default function Home() {
     return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
   })()
 
-  // Keep the top collage on the preloaded first-party asset so LCP is discoverable
-  // immediately (do not wait on / swap after the featured Supabase fetch).
+  // Keep the collage on static assets so LCP never waits on featured Supabase → Unsplash.
   const heroCollageTopSrc = HERO_COLLAGE_TOP_FALLBACK
-  const heroCollageBottomSrc =
-    withUnsplashWidth(firstPropertyImageUrl(featured[0]?.images ?? null) ?? HERO_COLLAGE_BOTTOM_FALLBACK, 640)
+  const heroCollageBottomSrc = withUnsplashWidth(HERO_COLLAGE_BOTTOM_FALLBACK, 640)
 
   const homeOgImage = absoluteUrl(HERO_COLLAGE_TOP_FALLBACK)
 
@@ -461,8 +470,9 @@ export default function Home() {
                   </picture>
                 </div>
               </div>
-              {/* Bottom image - left, overlaps */}
-              <div className="relative z-20 -mt-8 ml-0 w-2/3">
+              {/* Bottom image — desktop only. On mobile it sat above the fold with
+                  lazy/low priority and stole LCP from the first-party top AVIF. */}
+              <div className="relative z-20 -mt-8 ml-0 hidden w-2/3 lg:block">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
                   <img
                     src={heroCollageBottomSrc}
