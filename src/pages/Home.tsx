@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabaseConfigured'
@@ -28,8 +28,8 @@ import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
 /** First-party LCP hero (same Unsplash photo-1571260899304…, 4:3). See public/hero/. */
 const HERO_COLLAGE_TOP_FALLBACK = '/hero/hero-top-800.webp'
-const HERO_COLLAGE_BOTTOM_FALLBACK =
-  'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=640&q=70&auto=format&fit=crop'
+/** First-party secondary collage (Unsplash photo-1555041469…). Desktop-only in layout. */
+const HERO_COLLAGE_BOTTOM_FALLBACK = '/hero/hero-bottom-640.webp'
 const LANDLORD_SECTION_IMAGE =
   'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=960&q=70&auto=format&fit=crop'
 
@@ -43,21 +43,20 @@ const HERO_TOP_WEBP_SRCSET = [
   '/hero/hero-top-640.webp 640w',
   '/hero/hero-top-800.webp 800w',
 ].join(', ')
-const HERO_TOP_SIZES = '(min-width: 1024px) 36vw, 75vw'
+/** Desktop collage cell is ~¼ viewport; avoid over-fetching 640/800w. */
+const HERO_TOP_SIZES = '(min-width: 1024px) 28vw, 75vw'
 
-function withUnsplashWidth(url: string, width: number, quality = 70): string {
-  try {
-    const parsed = new URL(url)
-    if (parsed.hostname !== 'images.unsplash.com') return url
-    parsed.searchParams.set('w', String(width))
-    parsed.searchParams.set('q', String(quality))
-    parsed.searchParams.set('auto', 'format')
-    if (!parsed.searchParams.has('fit')) parsed.searchParams.set('fit', 'crop')
-    return parsed.toString()
-  } catch {
-    return url
-  }
-}
+const HERO_BOTTOM_AVIF_SRCSET = [
+  '/hero/hero-bottom-480.avif 480w',
+  '/hero/hero-bottom-640.avif 640w',
+  '/hero/hero-bottom-800.avif 800w',
+].join(', ')
+const HERO_BOTTOM_WEBP_SRCSET = [
+  '/hero/hero-bottom-480.webp 480w',
+  '/hero/hero-bottom-640.webp 640w',
+  '/hero/hero-bottom-800.webp 800w',
+].join(', ')
+const HERO_BOTTOM_SIZES = '(min-width: 1024px) 24vw, 66vw'
 
 const STUDENT_HOW_STEPS = [
   {
@@ -197,7 +196,6 @@ export default function Home() {
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
   const [listingCount, setListingCount] = useState<number | null>(null)
-  const [countLoading, setCountLoading] = useState(isSupabaseConfigured)
   const [featured, setFeatured] = useState<Property[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(isSupabaseConfigured)
   const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(() => {
@@ -208,10 +206,17 @@ export default function Home() {
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')
   const [dynamicManagedFeeText, setDynamicManagedFeeText] = useState('7%')
+  const landlordFaqRef = useRef<HTMLDivElement | null>(null)
 
+  // Fee strings only appear in landlord FAQ answers — load when that block nears the viewport.
   useEffect(() => {
+    const el = landlordFaqRef.current
+    if (!el) return
     let cancelled = false
+    let started = false
     const loadPricing = () => {
+      if (started || cancelled) return
+      started = true
       void (async () => {
         try {
           const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
@@ -227,13 +232,49 @@ export default function Home() {
         }
       })()
     }
-    // Fee copy is below the fold — do not compete with hero LCP on Slow 4G.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          loadPricing()
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px 0px' },
+    )
+    observer.observe(el)
+    return () => {
+      cancelled = true
+      observer.disconnect()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    let cancelled = false
+    const run = () => {
+      void (async () => {
+        const { supabase } = await import('../lib/supabase')
+        if (cancelled) return
+        const { count, error } = await applyPropertyListingDateWindow(
+          supabase.from('properties').select('id', { count: 'exact', head: true }),
+          listingIsoDateUtc(),
+        ).eq('status', 'active')
+        if (cancelled) return
+        if (error) {
+          console.error(error)
+          setListingCount(null)
+        } else {
+          setListingCount(count ?? 0)
+        }
+      })()
+    }
+    // Trust-line count is non-critical chrome — keep supabase off the first paint path.
     let idleId: number | undefined
     let timeoutId: number | undefined
     if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(loadPricing, { timeout: 4000 })
+      idleId = window.requestIdleCallback(run, { timeout: 6000 })
     } else {
-      timeoutId = window.setTimeout(loadPricing, 2000)
+      timeoutId = window.setTimeout(run, 2500)
     }
     return () => {
       cancelled = true
@@ -244,68 +285,50 @@ export default function Home() {
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      setCountLoading(false)
-      return
-    }
-    let cancelled = false
-    setCountLoading(true)
-    void (async () => {
-      const { supabase } = await import('../lib/supabase')
-      if (cancelled) return
-      const { count, error } = await applyPropertyListingDateWindow(
-        supabase.from('properties').select('id', { count: 'exact', head: true }),
-        listingIsoDateUtc(),
-      ).eq('status', 'active')
-      if (cancelled) return
-      if (error) {
-        console.error(error)
-        setListingCount(null)
-      } else {
-        setListingCount(count ?? 0)
-      }
-      setCountLoading(false)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
       setFeaturedLoading(false)
       return
     }
     let cancelled = false
-    setFeaturedLoading(true)
-    void (async () => {
-      const { supabase } = await import('../lib/supabase')
-      if (cancelled) return
-      const { data, error } = await applyPropertyListingDateWindow(
-        supabase.from('properties').select(
-          `
+    const run = () => {
+      void (async () => {
+        const { supabase } = await import('../lib/supabase')
+        if (cancelled) return
+        const { data, error } = await applyPropertyListingDateWindow(
+          supabase.from('properties').select(
+            `
         *,
         landlord_profiles ( id, full_name, avatar_url, verified ),
         universities ( id, name, slug ),
         campuses ( id, name )
       `,
-        ),
-        listingIsoDateUtc(),
-      )
-        .eq('status', 'active')
-        .eq('featured', true)
-        .order('created_at', { ascending: false })
-        .limit(6)
-      if (cancelled) return
-      if (error) {
-        console.error(error)
-        setFeatured([])
-      } else {
-        setFeatured((data ?? []) as Property[])
-      }
-      setFeaturedLoading(false)
-    })()
+          ),
+          listingIsoDateUtc(),
+        )
+          .eq('status', 'active')
+          .eq('featured', true)
+          .order('created_at', { ascending: false })
+          .limit(6)
+        if (cancelled) return
+        if (error) {
+          console.error(error)
+          setFeatured([])
+        } else {
+          setFeatured((data ?? []) as Property[])
+        }
+        setFeaturedLoading(false)
+      })()
+    }
+    let idleId: number | undefined
+    let timeoutId: number | undefined
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(run, { timeout: 6000 })
+    } else {
+      timeoutId = window.setTimeout(run, 2500)
+    }
     return () => {
       cancelled = true
+      if (idleId !== undefined) window.cancelIdleCallback?.(idleId)
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [])
 
@@ -354,15 +377,16 @@ export default function Home() {
     if (!isSupabaseConfigured) {
       return 'Connect Supabase to see live listings near Australian universities.'
     }
-    if (countLoading || listingCount === null) {
-      return 'Loading listings near Australian universities…'
+    if (listingCount !== null) {
+      return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
     }
-    return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
+    // Idle-deferred count: keep stable copy (avoid a long "Loading…" flash on desktop).
+    return 'Verified listings near Australian universities'
   })()
 
-  // Keep the collage on static assets so LCP never waits on featured Supabase → Unsplash.
+  // Keep the collage on static first-party assets so LCP never waits on featured → Unsplash.
   const heroCollageTopSrc = HERO_COLLAGE_TOP_FALLBACK
-  const heroCollageBottomSrc = withUnsplashWidth(HERO_COLLAGE_BOTTOM_FALLBACK, 640)
+  const heroCollageBottomSrc = HERO_COLLAGE_BOTTOM_FALLBACK
 
   const homeOgImage = absoluteUrl(HERO_COLLAGE_TOP_FALLBACK)
 
@@ -470,20 +494,24 @@ export default function Home() {
                   </picture>
                 </div>
               </div>
-              {/* Bottom image — desktop only. On mobile it sat above the fold with
-                  lazy/low priority and stole LCP from the first-party top AVIF. */}
+              {/* Bottom image — desktop only (hidden on mobile so LCP stays on top AVIF).
+                  Above the fold on lg+: first-party + eager (never lazy/low Unsplash). */}
               <div className="relative z-20 -mt-8 ml-0 hidden w-2/3 lg:block">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
-                  <img
-                    src={heroCollageBottomSrc}
-                    alt=""
-                    width={640}
-                    height={480}
-                    loading="lazy"
-                    decoding="async"
-                    fetchPriority="low"
-                    className="h-full w-full object-cover"
-                  />
+                  <picture>
+                    <source type="image/avif" srcSet={HERO_BOTTOM_AVIF_SRCSET} sizes={HERO_BOTTOM_SIZES} />
+                    <source type="image/webp" srcSet={HERO_BOTTOM_WEBP_SRCSET} sizes={HERO_BOTTOM_SIZES} />
+                    <img
+                      src={heroCollageBottomSrc}
+                      srcSet={HERO_BOTTOM_WEBP_SRCSET}
+                      sizes={HERO_BOTTOM_SIZES}
+                      alt=""
+                      width={640}
+                      height={480}
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  </picture>
                 </div>
               </div>
             </div>
@@ -684,7 +712,7 @@ export default function Home() {
             <div className="my-10 border-t border-gray-200" aria-hidden />
 
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">For landlords</p>
-            <div className="divide-y divide-gray-200 border-b border-gray-200">
+            <div ref={landlordFaqRef} className="divide-y divide-gray-200 border-b border-gray-200">
               {LANDLORD_FAQ.map((item) => {
                 const open = openFaqId === item.id
                 const answer =
