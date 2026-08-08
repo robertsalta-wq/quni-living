@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom'
 import type { TenantInviteSignupHints } from '../../lib/tenantInviteSignupContext'
+import { clearQuniTenantInviteContext } from '../../lib/quniTenantInvite'
+import { clearPostAuthRedirect, peekPostAuthRedirect } from '../../lib/postAuthRedirect'
 import TenantInviteOfferBanner from './TenantInviteOfferBanner'
 
 type Props = {
   hints: TenantInviteSignupHints
   loginHref: string
+}
+
+function clearInviteAndGoToLandlordSignup() {
+  clearQuniTenantInviteContext()
+  const stored = peekPostAuthRedirect()
+  if (stored?.includes('invite=')) clearPostAuthRedirect()
+  window.location.assign('/signup?role=landlord')
 }
 
 export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
@@ -50,6 +59,16 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
           Log in
         </Link>{' '}
         to continue to the booking.
+      </p>
+      <p className="mt-2 text-xs text-gray-500">
+        Signing up as a landlord instead?{' '}
+        <button
+          type="button"
+          onClick={clearInviteAndGoToLandlordSignup}
+          className="font-medium text-[var(--quni-trust)] hover:text-[var(--quni-trust-hover)]"
+        >
+          Continue with landlord signup
+        </button>
       </p>
     </div>
   )

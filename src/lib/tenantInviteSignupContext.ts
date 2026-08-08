@@ -21,25 +21,34 @@ function redirectHasInviteToken(redirect: string | null): boolean {
   return redirect.includes('invite=')
 }
 
-/** URL or session redirect still points at an invite-driven signup / login flow. */
-export function isActiveTenantInviteAuthUrl(searchParams: URLSearchParams): boolean {
+/** URL / session signals that the user is still in an invite-driven auth flow (not mere localStorage). */
+export function hasTenantInviteAuthUrlSignals(searchParams: URLSearchParams): boolean {
+  if (searchParams.get('role')?.trim() === 'landlord') return false
   if (searchParams.get('invited_email')?.trim()) return true
   if (searchParams.get('invited_name')?.trim()) return true
   if (searchParams.get('invite_property')?.trim()) return true
   if (searchParams.get('invite_student_only') === '1') return true
   if (redirectHasInviteToken(searchParams.get('redirect'))) return true
   if (redirectHasInviteToken(peekPostAuthRedirect())) return true
-  if (hasRecentQuniTenantInviteContext()) return true
   return false
 }
 
 /**
- * Drop persisted invite state when the user opens generic signup/login (not from an invite link).
- * Recent in-flow context survives app switches and listing-detail detours; expired context is cleared.
+ * @deprecated Prefer hasTenantInviteAuthUrlSignals — name kept for Login call sites.
+ * True when signup/login URL or stored post-auth redirect still points at an invite.
+ */
+export function isActiveTenantInviteAuthUrl(searchParams: URLSearchParams): boolean {
+  return hasTenantInviteAuthUrlSignals(searchParams)
+}
+
+/**
+ * Drop persisted invite state when the user opens generic signup/login (not from an invite link),
+ * or explicitly starts landlord signup (`?role=landlord`).
+ * Invite URL/session redirects keep context through listing-detail detours; expired context is cleared.
  */
 export function abandonStaleTenantInviteUnlessActive(searchParams: URLSearchParams): void {
   clearStaleQuniTenantInviteContext()
-  if (isActiveTenantInviteAuthUrl(searchParams)) return
+  if (hasTenantInviteAuthUrlSignals(searchParams)) return
   clearQuniTenantInviteContext()
   const stored = peekPostAuthRedirect()
   if (stored && redirectHasInviteToken(stored)) clearPostAuthRedirect()
