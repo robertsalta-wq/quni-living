@@ -231,12 +231,14 @@ function App() {
               <Route path="team" element={<Lazy.AdminTeam />} />
               <Route path="pricing" element={<Lazy.PricingPage />} />
               <Route path="knowledge-base" element={<Lazy.KnowledgeBase />} />
+              <Route path="feature-inventory" element={<Lazy.AdminFeatureInventory />} />
               <Route path="documents" element={<Lazy.DocumentsPage />} />
               <Route path="agreement-previews" element={<Lazy.AgreementPreviewsPage />} />
               <Route path="domains" element={<Lazy.DomainsPage />} />
               <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
               <Route path="document-access-log" element={<Lazy.AdminDocumentAccessLog />} />
               <Route path="support-lookup" element={<Lazy.AdminSupportLookup />} />
+              <Route path="open-items" element={<Lazy.AdminOpenItems />} />
               <Route path="state-workflows" element={<Lazy.AdminStateWorkflows />} />
               <Route path="qase" element={<Lazy.QaseTicketList />} />
               <Route path="qase/settings" element={<Lazy.QaseSettings />} />
