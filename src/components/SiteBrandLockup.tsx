@@ -28,6 +28,8 @@ export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) 
       alt="Quni"
       width={120}
       height={40}
+      fetchPriority="low"
+      decoding="async"
       className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
     />
   )
