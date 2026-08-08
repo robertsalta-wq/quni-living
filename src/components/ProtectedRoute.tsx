@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import PageRouteFallback from './PageRouteFallback'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import { useAuthContext } from '../context/AuthContext'
 import {
   getNavDashboardPath,
@@ -8,7 +8,7 @@ import {
   INCOMPLETE_RENTER_DESTINATION,
   type StudentProfileRow,
   type UserRole,
-} from '../lib/authProfile'
+} from '../lib/authProfileRouting'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 

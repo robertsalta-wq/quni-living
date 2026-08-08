@@ -3,10 +3,12 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 import type { Property } from '../lib/listings'
-import { PropertyCard } from '../components/PropertyCard'
 import LandlordAIBanner from '../components/LandlordAIBanner'
 
 const UniversityCampusSelect = lazy(() => import('../components/UniversityCampusSelect'))
+const PropertyCard = lazy(() =>
+  import('../components/PropertyCard').then((m) => ({ default: m.PropertyCard })),
+)
 import Seo from '../components/Seo'
 import {
   SITE_URL,
@@ -812,11 +814,13 @@ export default function Home() {
           )}
 
           {!featuredLoading && featured.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {featured.map((p) => (
-                <PropertyCard key={p.id} property={p} />
-              ))}
-            </div>
+            <Suspense fallback={<p className="text-sm text-gray-500 py-8">Loading featured listings…</p>}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {featured.map((p) => (
+                  <PropertyCard key={p.id} property={p} />
+                ))}
+              </div>
+            </Suspense>
           )}
 
           <div className="mt-10 flex justify-center">

@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import BootErrorBoundary from './components/BootErrorBoundary'
 import { AppTree } from './AppTree'
-import { registerNativeOAuthDeepLinkHandler } from './lib/nativeOAuthDeepLink'
 import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFallback'
 import { prefetchRouteChunks, warmRouteChunkForHydration } from './lib/routePrefetch'
 import './index.css'
@@ -16,9 +15,10 @@ if ('scrollRestoration' in history) {
 
 applyNativeStatusBarInsetFallback()
 prefetchRouteChunks(window.location.pathname)
-registerNativeOAuthDeepLinkHandler()
 clearChunkReloadSessionFlag()
 registerStaleChunkLoadRecovery()
+// Capacitor-only; keep supabase client off the marketing web critical path.
+void import('./lib/nativeOAuthDeepLink').then((m) => m.registerNativeOAuthDeepLinkHandler())
 
 function scheduleSentryInit(): void {
   const boot = () => {

@@ -1,12 +1,15 @@
 import {
   createContext,
+  lazy,
+  Suspense,
   useCallback,
   useContext,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
-import ChatPanel from '../components/aiChat/ChatPanel'
+
+const ChatPanel = lazy(() => import('../components/aiChat/ChatPanel'))
 
 type AiChatOpenContextValue = {
   openChat: () => void
@@ -25,7 +28,11 @@ export function AiChatOpenProvider({ children }: { children: ReactNode }) {
   return (
     <AiChatOpenContext.Provider value={value}>
       {children}
-      {open ? <ChatPanel variant="widget" onClose={close} /> : null}
+      {open ? (
+        <Suspense fallback={null}>
+          <ChatPanel variant="widget" onClose={close} />
+        </Suspense>
+      ) : null}
     </AiChatOpenContext.Provider>
   )
 }

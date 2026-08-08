@@ -1,5 +1,5 @@
-import type { UserRole } from './authProfile'
-import { isRenterRole } from './authProfile'
+import type { UserRole } from './authProfileRouting'
+import { isRenterRole } from './marketplaceRole'
 import {
   appShellActiveSection,
   appShellFocusTitle,

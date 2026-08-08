@@ -5,7 +5,7 @@ import {
   type ListingsBrowseResult,
 } from './fetchListingsBrowse'
 import type { ListingsQueryFilters } from './listingsBrowseTypes'
-import { isSupabaseConfigured } from './supabase'
+import { isSupabaseConfigured } from './supabaseConfigured'
 
 const MEMORY_TTL_MS = 5 * 60 * 1000
 const STORAGE_TTL_MS = 30 * 60 * 1000

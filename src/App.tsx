@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect } from 'react'
+import { lazy, Suspense, useLayoutEffect } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { apexAuthTokenRedirectPath } from './lib/authCallbackParams'
 import ScrollToTop from './components/ScrollToTop'
@@ -18,8 +18,10 @@ import { isDeskShellEnabled } from './lib/deskShell'
 import * as Lazy from './lazyPages'
 import * as Marketing from './marketingRoutePages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
-import AppShellLayout from './components/appShell/AppShellLayout'
 import MarketingChromeLayout from './components/appShell/MarketingChromeLayout'
+
+/** Authenticated shell stays off the marketing `/` critical path. */
+const AppShellLayout = lazy(() => import('./components/appShell/AppShellLayout'))
 
 function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -61,7 +63,13 @@ function App() {
         <div className="flex min-h-0 w-full flex-1 flex-col">
           <Routes>
             {/* Authenticated app shell - section + focus destinations */}
-            <Route element={<AppShellLayout />}>
+            <Route
+              element={
+                <Suspense fallback={<PageRouteFallback />}>
+                  <AppShellLayout />
+                </Suspense>
+              }
+            >
               <Route
                 path="/messages/:conversationId?"
                 element={
