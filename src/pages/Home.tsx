@@ -400,21 +400,85 @@ export default function Home() {
       {/* Hero - coral band; collage + badges reference Wix trial */}
       <section className="bg-[var(--quni-coral)] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
-            <div className="flex flex-col justify-center min-w-0">
-              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.12em] sm:tracking-[0.16em] uppercase text-white/70 mb-4 max-w-xl leading-snug">
+          {/*
+            Mobile: brand → collage → search (LCP image above the fold, brand still first).
+            Desktop: brand+search left, collage right (row-span-2).
+          */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start lg:items-stretch">
+            <div className="order-1 min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.12em] sm:tracking-[0.16em] uppercase text-white/70 mb-3 sm:mb-4 max-w-xl leading-snug">
                 Australia&apos;s verified accommodation for students, graduates &amp; young
                 professionals
               </p>
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[4.5rem] font-bold tracking-tight text-white !mt-0 mb-8 sm:mb-10 leading-tight">
+              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[4.5rem] font-bold tracking-tight text-white !mt-0 mb-5 sm:mb-8 lg:mb-10 leading-tight">
                 <span className="block">Live well</span>
                 <span className="block">near campus.</span>
               </h1>
-              <p className="home-hero-lead text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal font-sans">
+              <p className="home-hero-lead text-white/90 text-base sm:text-lg leading-relaxed mb-0 max-w-xl font-normal font-sans lg:mb-8">
                 Browse verified listings near your university or workplace - enquire and book on one
                 marketplace.
               </p>
+            </div>
 
+            <div className="relative order-2 w-full min-h-[240px] sm:min-h-[300px] lg:row-span-2 lg:min-h-[380px] pt-2 pb-2 lg:py-4">
+              {/* Floating badges */}
+              <div
+                className="absolute left-0 top-4 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white shadow-lg ring-2 ring-white/50"
+                aria-hidden
+              >
+                <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+              </div>
+              <div
+                className="absolute right-0 top-[28%] sm:top-[32%] z-30 rounded-full bg-teal-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md whitespace-nowrap"
+                aria-hidden
+              >
+                $ All Inclusive
+              </div>
+
+              {/* Top image - right (LCP; first-party AVIF/WebP) */}
+              <div className="relative z-10 flex justify-end pr-1">
+                <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
+                  <picture>
+                    <source type="image/avif" srcSet={HERO_TOP_AVIF_SRCSET} sizes={HERO_TOP_SIZES} />
+                    <source type="image/webp" srcSet={HERO_TOP_WEBP_SRCSET} sizes={HERO_TOP_SIZES} />
+                    <img
+                      src={heroCollageTopSrc}
+                      srcSet={HERO_TOP_WEBP_SRCSET}
+                      sizes={HERO_TOP_SIZES}
+                      alt=""
+                      width={800}
+                      height={600}
+                      fetchPriority="high"
+                      decoding="sync"
+                      className="h-full w-full object-cover"
+                    />
+                  </picture>
+                </div>
+              </div>
+              {/* Bottom image - left, overlaps */}
+              <div className="relative z-20 -mt-8 ml-0 w-2/3">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
+                  <img
+                    src={heroCollageBottomSrc}
+                    alt=""
+                    width={640}
+                    height={480}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="order-3 min-w-0">
               <form
                 onSubmit={handleSearch}
                 className="flex flex-col gap-3 w-full min-w-0 max-w-xl"
@@ -490,64 +554,6 @@ export default function Home() {
               </p>
 
               <p className="mt-4 text-sm text-white/70">{trustLine}</p>
-            </div>
-
-            <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
-              {/* Floating badges */}
-              <div
-                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white shadow-lg ring-2 ring-white/50"
-                aria-hidden
-              >
-                <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-              </div>
-              <div
-                className="absolute right-0 top-[28%] sm:top-[32%] z-30 rounded-full bg-teal-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md whitespace-nowrap"
-                aria-hidden
-              >
-                $ All Inclusive
-              </div>
-
-              {/* Top image - right (LCP; first-party AVIF/WebP) */}
-              <div className="relative z-10 flex justify-end pr-1">
-                <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
-                  <picture>
-                    <source type="image/avif" srcSet={HERO_TOP_AVIF_SRCSET} sizes={HERO_TOP_SIZES} />
-                    <source type="image/webp" srcSet={HERO_TOP_WEBP_SRCSET} sizes={HERO_TOP_SIZES} />
-                    <img
-                      src={heroCollageTopSrc}
-                      srcSet={HERO_TOP_WEBP_SRCSET}
-                      sizes={HERO_TOP_SIZES}
-                      alt=""
-                      width={800}
-                      height={600}
-                      fetchPriority="high"
-                      decoding="sync"
-                      className="h-full w-full object-cover"
-                    />
-                  </picture>
-                </div>
-              </div>
-              {/* Bottom image - left, overlaps */}
-              <div className="relative z-20 -mt-8 ml-0 w-2/3">
-                <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
-                  <img
-                    src={heroCollageBottomSrc}
-                    alt=""
-                    width={640}
-                    height={480}
-                    loading="lazy"
-                    decoding="async"
-                    fetchPriority="low"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
             </div>
           </div>
         </div>
