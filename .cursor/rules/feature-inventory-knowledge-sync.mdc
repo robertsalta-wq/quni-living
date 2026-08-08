@@ -1,0 +1,51 @@
+---
+description: When shipping user-visible features, update feature-inventory.md and sync AI knowledge base.
+alwaysApply: true
+---
+
+# Feature inventory + knowledge base sync
+
+Agents cannot magically detect every new feature from a diff. When you **ship or remove user-visible** student/renter or landlord behaviour, keep the living inventory and AI RAG in sync before calling the task done.
+
+## When this applies
+
+Update when the change adds, removes, renames, or gates any of:
+
+- Buttons, tabs, steps, routes, statuses, CTAs
+- Verification, booking, messaging, listing, payments, or dashboard flows
+- Marketing claims that depend on what the product can do
+
+**Skip** for pure refactors, admin-only tools (except a one-line pointer if needed), typo/CSS-only, or docs that do not change capabilities.
+
+## Required steps (same PR / same task)
+
+1. **Inventory (human + Admin page)** — Edit [`docs/feature-inventory.md`](docs/feature-inventory.md):
+   - Add/update/remove bullets under the right persona (Shared / Students / Landlords).
+   - Mark **Live**, **UI only**, or **Deprecated** correctly.
+   - Include key routes in parentheses where helpful.
+   - Admin → Feature inventory (`/admin/feature-inventory`) renders this file; no separate Admin copy.
+
+2. **Knowledge seed JSON** — From repo root:
+   ```bash
+   npm run sync:knowledge-inventory
+   ```
+   That refreshes the four inventory chunks in `scripts/knowledgeData.json` (ids `6fad4b80-0020`…`0023`). Commit the JSON with the inventory edit.
+
+3. **AI RAG (prod write)** — Seeding upserts **all** rows in `knowledgeData.json` into Supabase `knowledge_base`:
+   ```bash
+   npm run seed:knowledge
+   ```
+   - Resolve env like the seed script (`.env.vercel` then `.env.local` override). Org prod ref is `cqakltqzqrxnmxfbqatx`.
+   - **Do not seed without the user’s explicit go** (or Rob) — this is a production write. Pre-flight: confirm URL ref + that the diff only touches inventory chunks unless a broader seed was requested.
+   - If seed is deferred, say so in the PR/summary: inventory + JSON updated; seed still needed.
+
+## Do not
+
+- Invent features in the inventory that are not in the code.
+- Edit only Admin Knowledge base UI for inventory coverage (source of truth is the markdown + sync script).
+- Treat “four platform_policy chunks” as the whole KB — RAG also uses other policy / tenancy / disclaimer rows; sync only manages the four inventory ones.
+
+## References
+
+- [`docs/ai-knowledge-sync.md`](docs/ai-knowledge-sync.md)
+- [`docs/feature-inventory.md`](docs/feature-inventory.md) § Keep the AI assistant in sync
