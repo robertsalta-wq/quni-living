@@ -56,6 +56,7 @@ import {
   type BookingReadinessGate,
 } from '../../components/booking/review'
 import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
+import { bookingStatusShowsLeaseAgreementSurface } from '../../lib/booking/signedAgreementAvailability'
 import {
   resolveBookingReviewReadinessGates,
   bookingReviewReadinessAllClear,
@@ -1695,12 +1696,7 @@ export default function LandlordBookingReviewPage() {
                 onToggle={() => setAgreementExpanded((v) => !v)}
               >
                 <div className="space-y-5">
-                  {(booking.status === 'bond_pending' ||
-                    booking.status === 'confirmed' ||
-                    booking.status === 'active' ||
-                    booking.status === 'terminating' ||
-                    booking.status === 'terminated') &&
-                    property && (
+                  {bookingStatusShowsLeaseAgreementSurface(booking.status) && property && (
                     <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
                       <TenancyAgreementExplainer
                         state={property.state ?? ''}

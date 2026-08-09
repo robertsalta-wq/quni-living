@@ -69,6 +69,7 @@ import {
   type SchedulingBooking,
 } from '../lib/landlordBookingsScheduling'
 import type { LandlordListingForGroup } from '../lib/landlordListingsGrouped'
+import { shouldOfferLandlordAgreementListAction } from '../lib/booking/signedAgreementAvailability'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -209,6 +210,17 @@ function signedAgreementDocScore(doc: TenancyDocRow): number {
   if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') return 0
   if (signedAgreementPathsFromDoc(doc) == null) return 0
   return doc.document_type === 'residential_tenancy' ? 20 : 10
+}
+
+/**
+ * Show Download/Open agreement in the Bookings Actions column whenever a fully
+ * signed PDF exists (any status), or while signing is still in progress.
+ */
+function shouldOfferLandlordAgreementAction(b: BookingWithRelations): boolean {
+  return shouldOfferLandlordAgreementListAction({
+    hasSignedPaths: Boolean(b.landlord_agreement_signed_paths),
+    status: b.status,
+  })
 }
 
 /** Prefer residential_tenancy over legacy lease when both have signed Storage paths. */
@@ -1608,45 +1620,53 @@ export default function LandlordDashboard() {
                     {otherBookings.map((b) => {
                       const verification = buildLandlordVerificationFromProfile(b.student_profiles)
                       const isAgreementBusy = agreementActionBusyId === b.id
-                      const showAgreementFootnote =
-                        leaseDownloadErrorId === b.id && (b.status === 'confirmed' || b.status === 'active')
-                      const actions =
-                        b.status === 'confirmed' || b.status === 'active'
-                          ? [
-                              {
-                                label: isAgreementBusy
-                                  ? 'Opening…'
-                                  : b.landlord_agreement_signed_paths
-                                    ? 'Download agreement'
-                                    : 'Open agreement',
-                                variant: 'primary' as const,
-                                onClick: () => void handleLandlordAgreement(b),
-                                disabled: isAgreementBusy,
-                              },
-                              {
-                                label: 'Booking details',
-                                variant: 'secondary' as const,
-                                href: `/landlord/bookings/${b.id}/review`,
-                              },
-                            ]
-                          : b.status === 'terminating' || b.status === 'terminated'
-                            ? [
-                                {
-                                  label:
-                                    b.status === 'terminating'
-                                      ? 'Open termination'
-                                      : 'Booking details',
-                                  variant: 'primary' as const,
-                                  href: `/landlord/bookings/${b.id}/review`,
-                                },
-                              ]
-                            : [
-                                {
-                                  label: 'Review request',
-                                  variant: 'primary' as const,
-                                  href: `/landlord/bookings/${b.id}/review`,
-                                },
-                              ]
+                      const offerAgreement = shouldOfferLandlordAgreementAction(b)
+                      const showAgreementFootnote = leaseDownloadErrorId === b.id && offerAgreement
+                      const actions: {
+                        label: string
+                        variant: 'primary' | 'secondary'
+                        onClick?: () => void
+                        href?: string
+                        disabled?: boolean
+                      }[] = []
+                      if (offerAgreement) {
+                        actions.push({
+                          label: isAgreementBusy
+                            ? 'Opening…'
+                            : b.landlord_agreement_signed_paths
+                              ? 'Download agreement'
+                              : 'Open agreement',
+                          variant: 'primary',
+                          onClick: () => void handleLandlordAgreement(b),
+                          disabled: isAgreementBusy,
+                        })
+                      }
+                      if (b.status === 'terminating') {
+                        actions.push({
+                          label: 'Open termination',
+                          variant: offerAgreement ? 'secondary' : 'primary',
+                          href: `/landlord/bookings/${b.id}/review`,
+                        })
+                      } else if (
+                        offerAgreement ||
+                        b.status === 'confirmed' ||
+                        b.status === 'active' ||
+                        b.status === 'bond_pending' ||
+                        b.status === 'terminated' ||
+                        b.status === 'completed'
+                      ) {
+                        actions.push({
+                          label: 'Booking details',
+                          variant: offerAgreement ? 'secondary' : 'primary',
+                          href: `/landlord/bookings/${b.id}/review`,
+                        })
+                      } else {
+                        actions.push({
+                          label: 'Review request',
+                          variant: 'primary',
+                          href: `/landlord/bookings/${b.id}/review`,
+                        })
+                      }
 
                       return (
                         <LandlordBookingMobileCard
@@ -1747,7 +1767,7 @@ export default function LandlordDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col items-start gap-1">
-                              {b.status === 'confirmed' || b.status === 'active' ? (
+                              {shouldOfferLandlordAgreementAction(b) ? (
                                 <>
                                   <button
                                     type="button"
@@ -1765,7 +1785,7 @@ export default function LandlordDashboard() {
                                     to={`/landlord/bookings/${b.id}/review`}
                                     className="block w-full text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
                                   >
-                                    Booking details
+                                    {b.status === 'terminating' ? 'Open termination' : 'Booking details'}
                                   </Link>
                                 </>
                               ) : (
@@ -1775,15 +1795,14 @@ export default function LandlordDashboard() {
                                 >
                                   {b.status === 'terminating'
                                     ? 'Open termination'
-                                    : b.status === 'terminated'
+                                    : b.status === 'terminated' || b.status === 'completed'
                                       ? 'Booking details'
                                       : 'Review request'}
                                 </Link>
                               )}
-                              {leaseDownloadErrorId === b.id &&
-                                (b.status === 'confirmed' || b.status === 'active') && (
-                                  <p className="text-[11px] leading-snug text-gray-500">Agreement not yet generated</p>
-                                )}
+                              {leaseDownloadErrorId === b.id && shouldOfferLandlordAgreementAction(b) && (
+                                <p className="text-[11px] leading-snug text-gray-500">Agreement not yet generated</p>
+                              )}
                             </div>
                           </td>
                         </tr>
