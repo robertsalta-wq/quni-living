@@ -168,7 +168,9 @@ export default function UniversityAccommodation({
       const u = uRow as UniversityReferenceRow
       setUniversity(u)
 
-      const camps = await fetchCampusesForUniversityId(u.id, u.slug)
+      const camps = await fetchCampusesForUniversityId(u.id, u.slug, {
+        onlyWithActiveListings: false,
+      })
       if (cancelled) return
       setCampuses(camps)
 
