@@ -128,7 +128,18 @@ describe('deriveLeaseDocState', () => {
     }
   })
 
-  it("returns 'none' for terminal booking even when both parties have signed timestamps", () => {
+  it("returns 'fully_signed' for terminated booking when both parties signed (archived or signed doc)", () => {
+    const state = deriveLeaseDocState({
+      ...baseRow,
+      bookingStatus: 'terminated',
+      documentStatus: 'archived',
+      landlordSignedAt: '2026-05-09T00:00:00Z',
+      studentSignedAt: '2026-05-09T01:00:00Z',
+    })
+    expect(state).toBe('fully_signed')
+  })
+
+  it("returns 'fully_signed' when both parties signed even if booking is cancelled (executed package retained)", () => {
     const state = deriveLeaseDocState({
       ...baseRow,
       bookingStatus: 'cancelled',
@@ -136,7 +147,7 @@ describe('deriveLeaseDocState', () => {
       landlordSignedAt: '2026-05-09T00:00:00Z',
       studentSignedAt: '2026-05-09T01:00:00Z',
     })
-    expect(state).toBe('none')
+    expect(state).toBe('fully_signed')
   })
 
   it('bond_pending sent_for_signing still yields ready_to_sign', () => {

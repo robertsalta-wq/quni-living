@@ -21,9 +21,11 @@ function allRequiredPartiesSigned(input) {
 }
 
 export function deriveLeaseDocState(input) {
-  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
-
+  // Executed packages stay downloadable after tenancy ends (terminated etc.).
   if (allRequiredPartiesSigned(input)) return 'fully_signed'
+
+  // Terminal pre-tenancy outcomes: hide signing UX when not fully executed.
+  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
 
   if (!input.documentExists) return 'none'
 
@@ -40,7 +42,7 @@ export function deriveLeaseDocState(input) {
 
   if (status === 'draft') return 'preview'
 
-  if (status === 'signed') {
+  if (status === 'signed' || status === 'archived') {
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
     if (timestampSet(viewerSignedAt)) return 'awaiting_other'
