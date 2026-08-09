@@ -5,7 +5,8 @@
  * POST JSON: { booking_id: string }
  * Authorization: Bearer <Supabase access_token> - must be landlord or student on the booking.
  *
- * Looks up tenancy_documents with document_type `lease` or `residential_tenancy` and status `signed`.
+ * Looks up tenancy_documents with document_type `lease` or `residential_tenancy` and
+ * status `signed` or `archived` (archived after mutual termination still holds the executed PDF).
  *
  * NSW residential package: returns `signed_url_rta` and `signed_url_addendum` when both files exist
  * (separate PDFs from DocuSeal - not merged server-side for download). Legacy rows may only return `signed_url`.
@@ -104,11 +105,11 @@ export default async function handler(req: any, res: any) {
   const { data: docRows, error: dErr } = await admin
     .from('tenancy_documents')
     .select(
-      'id, file_path, document_type, docuseal_submission_id, metadata, landlord_signed_at, student_signed_at',
+      'id, file_path, document_type, status, docuseal_submission_id, metadata, landlord_signed_at, student_signed_at',
     )
     .eq('tenancy_id', tenancy.id)
     .in('document_type', ['lease', 'residential_tenancy'])
-    .eq('status', 'signed')
+    .in('status', ['signed', 'archived'])
 
   if (dErr) {
     console.error('[lease-signed-url] tenancy_documents', dErr)
@@ -125,9 +126,10 @@ export default async function handler(req: any, res: any) {
 
   /**
    * Phase 3 / Task J: gate downloads on both parties having actually signed.
-   * Status='signed' alone is not enough - the DocuSeal webhook can fire after a single
+   * Status alone is not enough - the DocuSeal webhook can fire after a single
    * signature in some configurations. Requiring both per-party timestamps means the
    * "Download signed agreement" button never serves a partially-signed PDF.
+   * Includes archived rows (status flipped after mutual termination).
    */
   const landlordSignedAt =
     typeof doc.landlord_signed_at === 'string' ? doc.landlord_signed_at.trim() : ''

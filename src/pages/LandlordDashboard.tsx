@@ -69,6 +69,7 @@ import {
   type SchedulingBooking,
 } from '../lib/landlordBookingsScheduling'
 import type { LandlordListingForGroup } from '../lib/landlordListingsGrouped'
+import { isFullyExecutedTenancyDocument } from '../lib/booking/executedTenancyDocument'
 import { shouldOfferLandlordAgreementListAction } from '../lib/booking/signedAgreementAvailability'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
@@ -155,6 +156,8 @@ type TenancyDocRow = {
   status: string
   metadata: unknown
   file_path: string | null
+  landlord_signed_at?: string | null
+  student_signed_at?: string | null
 }
 
 type TenancyWithDocsForSigning = {
@@ -187,8 +190,16 @@ function buildLandlordSigningUrlByBookingId(rows: TenancyWithDocsForSigning[] | 
 }
 
 function signedAgreementPathsFromDoc(doc: TenancyDocRow): LandlordAgreementSignedPaths | null {
-  if (doc.status !== 'signed') return null
   if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') return null
+  if (
+    !isFullyExecutedTenancyDocument({
+      status: doc.status,
+      landlordSignedAt: doc.landlord_signed_at,
+      studentSignedAt: doc.student_signed_at,
+    })
+  ) {
+    return null
+  }
   const meta =
     doc.metadata && typeof doc.metadata === 'object' && !Array.isArray(doc.metadata)
       ? (doc.metadata as Record<string, unknown>)
@@ -208,7 +219,6 @@ function signedAgreementPathsFromDoc(doc: TenancyDocRow): LandlordAgreementSigne
 }
 
 function signedAgreementDocScore(doc: TenancyDocRow): number {
-  if (doc.status !== 'signed') return 0
   if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') return 0
   if (signedAgreementPathsFromDoc(doc) == null) return 0
   return doc.document_type === 'residential_tenancy' ? 20 : 10
@@ -246,8 +256,23 @@ function buildSignedMutualTerminationPathByBookingId(
     const docs = Array.isArray(raw) ? raw : raw ? [raw] : []
     for (const item of docs) {
       if (!item || typeof item !== 'object') continue
-      const doc = item as { document_type?: string; status?: string; file_path?: string | null }
-      if (doc.document_type !== 'mutual_termination' || doc.status !== 'signed') continue
+      const doc = item as {
+        document_type?: string
+        status?: string
+        file_path?: string | null
+        landlord_signed_at?: string | null
+        student_signed_at?: string | null
+      }
+      if (doc.document_type !== 'mutual_termination') continue
+      if (
+        !isFullyExecutedTenancyDocument({
+          status: doc.status,
+          landlordSignedAt: doc.landlord_signed_at,
+          studentSignedAt: doc.student_signed_at,
+        })
+      ) {
+        continue
+      }
       const fp = typeof doc.file_path === 'string' ? doc.file_path.trim() : ''
       if (fp) out.set(bid, fp)
     }
@@ -859,7 +884,7 @@ export default function LandlordDashboard() {
               .from('tenancies')
               // Only lease/RTA docs - mutual_termination metadata embeds full DocuSeal payloads and can stall the Bookings tab.
               .select(
-                'booking_id, tenancy_documents!inner ( document_type, status, metadata, file_path )',
+                'booking_id, tenancy_documents!inner ( document_type, status, metadata, file_path, landlord_signed_at, student_signed_at )',
               )
               .in('booking_id', bookingIds)
               .in('tenancy_documents.document_type', ['lease', 'residential_tenancy'])
@@ -867,8 +892,10 @@ export default function LandlordDashboard() {
         bookingIds.length > 0
           ? supabase
               .from('tenancies')
-              // Paths only - never pull mutual_termination.metadata on this dashboard load.
-              .select('booking_id, tenancy_documents!inner ( document_type, status, file_path )')
+              // Paths + party stamps only - never pull mutual_termination.metadata on this dashboard load.
+              .select(
+                'booking_id, tenancy_documents!inner ( document_type, status, file_path, landlord_signed_at, student_signed_at )',
+              )
               .in('booking_id', bookingIds)
               .eq('tenancy_documents.document_type', 'mutual_termination')
           : Promise.resolve({ data: [] as TenancyWithTerminationDocs[], error: null }),

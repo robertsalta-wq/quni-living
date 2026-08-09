@@ -56,9 +56,11 @@ function allRequiredPartiesSigned(input: LeaseStateInput): boolean {
 
 /** Purely derive the conceptual lease state for the viewer. No I/O. */
 export function deriveLeaseDocState(input: LeaseStateInput): LeaseDocState {
-  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
-
+  // Executed packages stay downloadable after tenancy ends (terminated etc.).
   if (allRequiredPartiesSigned(input)) return 'fully_signed'
+
+  // Terminal pre-tenancy outcomes: hide signing UX when not fully executed.
+  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
 
   if (!input.documentExists) return 'none'
 
@@ -77,7 +79,7 @@ export function deriveLeaseDocState(input: LeaseStateInput): LeaseDocState {
     return 'preview'
   }
 
-  if (status === 'signed') {
+  if (status === 'signed' || status === 'archived') {
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
     if (timestampSet(viewerSignedAt)) return 'awaiting_other'
