@@ -1266,7 +1266,15 @@ export default function AdminApps() {
           'Content-Type': 'application/json',
         },
       })
-      const body = (await res.json().catch(() => ({}))) as PagespeedLabCheckResponse & { error?: string }
+      const rawText = await res.text()
+      let body = {} as PagespeedLabCheckResponse & { error?: string }
+      try {
+        body = rawText ? (JSON.parse(rawText) as PagespeedLabCheckResponse & { error?: string }) : body
+      } catch {
+        setLabError(rawText.trim() || `Lab check failed (${res.status})`)
+        setLabLoading(false)
+        return
+      }
       if (!res.ok) {
         setLabError(body.error ?? `Lab check failed (${res.status})`)
         setLabLoading(false)

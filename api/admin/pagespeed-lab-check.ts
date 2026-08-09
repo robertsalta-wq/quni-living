@@ -3,8 +3,13 @@
  *
  * Runs Google PageSpeed Insights (lab) for the marketing homepage — mobile + desktop.
  * Admin-only. Requires PAGESPEED_API_KEY on Vercel (GCP PageSpeed Insights API key).
+ *
+ * Node.js runtime (req/res) — not Web Request — so maxDuration can cover PSI latency.
  */
-import { requireAdminUser } from '../lib/adminAuth.js'
+import { createClient } from '@supabase/supabase-js'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { isPlatformAdminUser } from '../lib/adminAuth.js'
+import { headerString } from '../lib/nodeHandler.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 120 }
 
@@ -30,21 +35,25 @@ export type PagespeedLabCheckResponse = {
   apiKeyConfigured: boolean
 }
 
-function json(body: unknown, status: number, origin: string): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-    },
-  })
+type VercelResponse = ServerResponse & {
+  status: (code: number) => VercelResponse
+  json: (body: unknown) => void
+}
+
+function corsJson(res: VercelResponse, body: unknown, status = 200, origin = '*') {
+  res.setHeader('Access-Control-Allow-Origin', origin)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  return res.status(status).json(body)
 }
 
 function siteUrl(): string {
-  const raw =
-    (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://quni.com.au').trim()
+  const raw = (
+    process.env.PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.VITE_SITE_URL ||
+    'https://quni.com.au'
+  ).trim()
   return raw.replace(/\/+$/, '') || 'https://quni.com.au'
 }
 
@@ -84,7 +93,7 @@ async function runStrategy(
   endpoint.searchParams.set('url', pageUrl)
   endpoint.searchParams.set('strategy', strategy)
   endpoint.searchParams.append('category', 'performance')
-  if (apiKey) endpoint.searchParams.set('key', apiKey)
+  endpoint.searchParams.set('key', apiKey)
 
   try {
     const res = await fetch(endpoint.toString(), { method: 'GET' })
@@ -122,65 +131,81 @@ async function runStrategy(
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  const origin = request.headers.get('origin') || '*'
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const vres = res as VercelResponse
+  const origin = headerString(req.headers, 'origin') || '*'
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-        'Access-Control-Max-Age': '86400',
-      },
-    })
+  if (req.method === 'OPTIONS') {
+    vres.setHeader('Access-Control-Allow-Origin', origin)
+    vres.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    vres.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    vres.setHeader('Access-Control-Max-Age', '86400')
+    return vres.status(204).end()
   }
 
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405, origin)
+  if (req.method !== 'POST') {
+    return corsJson(vres, { error: 'Method not allowed' }, 405, origin)
   }
 
-  const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
-  const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
-  if (!supabaseUrl || !anonKey) {
-    return json({ error: 'Server misconfigured' }, 500, origin)
+  try {
+    const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
+    const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+    if (!supabaseUrl || !anonKey) {
+      return corsJson(vres, { error: 'Server misconfigured' }, 500, origin)
+    }
+
+    const authHeader = headerString(req.headers, 'authorization')
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token) {
+      return corsJson(vres, { error: 'Missing authorization' }, 401, origin)
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, anonKey)
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabaseAuth.auth.getUser(token)
+    if (userErr || !user) {
+      return corsJson(vres, { error: 'Invalid or expired session' }, 401, origin)
+    }
+    if (!(await isPlatformAdminUser(user))) {
+      return corsJson(vres, { error: 'Admin access required' }, 403, origin)
+    }
+
+    const apiKey = (process.env.PAGESPEED_API_KEY || '').trim()
+    if (!apiKey) {
+      return corsJson(
+        vres,
+        {
+          error:
+            'PAGESPEED_API_KEY is not set on Vercel. Create a Google Cloud API key with PageSpeed Insights API enabled, then add it as PAGESPEED_API_KEY.',
+        },
+        503,
+        origin,
+      )
+    }
+
+    const pageUrl = `${siteUrl()}/`
+    const [mobile, desktop] = await Promise.all([
+      runStrategy(pageUrl, 'mobile', apiKey),
+      runStrategy(pageUrl, 'desktop', apiKey),
+    ])
+
+    const payload: PagespeedLabCheckResponse = {
+      url: pageUrl,
+      checkedAt: new Date().toISOString(),
+      mobile,
+      desktop,
+      apiKeyConfigured: true,
+    }
+
+    if (mobile.error && desktop.error) {
+      return corsJson(vres, { error: mobile.error, ...payload }, 502, origin)
+    }
+
+    return corsJson(vres, payload, 200, origin)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Lab check failed'
+    return corsJson(vres, { error: message }, 500, origin)
   }
-
-  const auth = await requireAdminUser(request, supabaseUrl, anonKey)
-  if ('error' in auth) {
-    return json({ error: auth.error }, auth.status, origin)
-  }
-
-  const apiKey = (process.env.PAGESPEED_API_KEY || '').trim()
-  if (!apiKey) {
-    return json(
-      {
-        error:
-          'PAGESPEED_API_KEY is not set on Vercel. Create a Google Cloud API key with PageSpeed Insights API enabled, then add it as PAGESPEED_API_KEY.',
-      },
-      503,
-      origin,
-    )
-  }
-
-  const pageUrl = `${siteUrl()}/`
-  const [mobile, desktop] = await Promise.all([
-    runStrategy(pageUrl, 'mobile', apiKey),
-    runStrategy(pageUrl, 'desktop', apiKey),
-  ])
-
-  const payload: PagespeedLabCheckResponse = {
-    url: pageUrl,
-    checkedAt: new Date().toISOString(),
-    mobile,
-    desktop,
-    apiKeyConfigured: true,
-  }
-
-  if (mobile.error && desktop.error) {
-    return json({ error: mobile.error, ...payload }, 502, origin)
-  }
-
-  return json(payload, 200, origin)
 }
