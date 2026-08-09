@@ -29,6 +29,7 @@ import { bookingReferenceLabel } from '../../lib/bookingReference'
 import { formatDate } from '../../pages/admin/adminUi'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
+import { bookingStatusShowsLeaseAgreementSurface } from '../../lib/booking/signedAgreementAvailability'
 import {
   formatBookingReviewShortDate,
   resolveLandlordAwaitingInfoQuestion,
@@ -162,8 +163,7 @@ export default function RenterBookingZones({
     ? formatDate(booking.bond_window_expires_at.slice(0, 10))
     : null
 
-  const showLeaseStrip =
-    booking.status === 'bond_pending' || booking.status === 'confirmed' || booking.status === 'active'
+  const showLeaseStrip = bookingStatusShowsLeaseAgreementSurface(booking.status)
   const showBondReceipt = renterBondReceiptDownloadVisible({
     bookingStatus: booking.status,
     hasBondReceipt,
