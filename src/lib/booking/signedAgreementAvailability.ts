@@ -11,6 +11,11 @@ export function shouldOfferLandlordAgreementListAction(args: {
   return args.status === 'bond_pending' || args.status === 'confirmed' || args.status === 'active'
 }
 
+/** Mutual termination download when the signed PDF is in Storage. */
+export function shouldOfferLandlordTerminationListAction(hasSignedPath: boolean): boolean {
+  return hasSignedPath
+}
+
 /** Renter / landlord review: show the lease panel for post-accept statuses that may still need download. */
 export function bookingStatusShowsLeaseAgreementSurface(status: string): boolean {
   return (

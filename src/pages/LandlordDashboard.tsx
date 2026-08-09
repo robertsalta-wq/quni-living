@@ -112,6 +112,8 @@ type BookingWithRelations = BookingRow & {
   landlord_agreement_signing_url: string | null
   /** When the lease/RTA row is signed and Storage paths exist - download instead of opening DocuSeal. */
   landlord_agreement_signed_paths: LandlordAgreementSignedPaths | null
+  /** Signed mutual-termination PDF path in Storage (light select; no DocuSeal metadata). */
+  landlord_termination_signed_path: string | null
 }
 
 /** DocuSeal stores per-submitter signing links on the submission; email uses landlord `embed_src`. */
@@ -221,6 +223,36 @@ function shouldOfferLandlordAgreementAction(b: BookingWithRelations): boolean {
     hasSignedPaths: Boolean(b.landlord_agreement_signed_paths),
     status: b.status,
   })
+}
+
+function shouldOfferLandlordTerminationAction(b: BookingWithRelations): boolean {
+  return Boolean(b.landlord_termination_signed_path?.trim())
+}
+
+type TenancyWithTerminationDocs = {
+  booking_id: string | null
+  tenancy_documents: unknown
+}
+
+/** Paths only - do not select mutual_termination.metadata (large DocuSeal payloads). */
+function buildSignedMutualTerminationPathByBookingId(
+  rows: TenancyWithTerminationDocs[] | null | undefined,
+): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const row of rows ?? []) {
+    const bid = row.booking_id
+    if (!bid) continue
+    const raw = row.tenancy_documents
+    const docs = Array.isArray(raw) ? raw : raw ? [raw] : []
+    for (const item of docs) {
+      if (!item || typeof item !== 'object') continue
+      const doc = item as { document_type?: string; status?: string; file_path?: string | null }
+      if (doc.document_type !== 'mutual_termination' || doc.status !== 'signed') continue
+      const fp = typeof doc.file_path === 'string' ? doc.file_path.trim() : ''
+      if (fp) out.set(bid, fp)
+    }
+  }
+  return out
 }
 
 /** Prefer residential_tenancy over legacy lease when both have signed Storage paths. */
@@ -490,7 +522,9 @@ export default function LandlordDashboard() {
   )
   const [landlordBookingPaymentError, setLandlordBookingPaymentError] = useState(false)
   const [leaseDownloadErrorId, setLeaseDownloadErrorId] = useState<string | null>(null)
+  const [terminationDownloadErrorId, setTerminationDownloadErrorId] = useState<string | null>(null)
   const [agreementActionBusyId, setAgreementActionBusyId] = useState<string | null>(null)
+  const [terminationActionBusyId, setTerminationActionBusyId] = useState<string | null>(null)
 
   const downloadAgreementFromSignedUrls = useCallback(
     async (signedRta: string, signedAddendum: string | null, state: string | null | undefined) => {
@@ -639,6 +673,45 @@ export default function LandlordDashboard() {
     [downloadAgreementFromSignedUrls, fetchLeaseSignedUrlsViaApi, fetchLeaseSigningUrlViaApi],
   )
 
+  const handleLandlordTerminationDownload = useCallback(async (b: BookingWithRelations) => {
+    setTerminationDownloadErrorId(null)
+    setTerminationActionBusyId(b.id)
+    try {
+      const path = b.landlord_termination_signed_path?.trim()
+      if (!path) {
+        setTerminationDownloadErrorId(b.id)
+        return
+      }
+      const bucket = supabase.storage.from('tenancy-documents')
+      const expirySec = 60 * 60 * 24 * 7
+      const r = await bucket.createSignedUrl(path, expirySec)
+      if (r.error || !r.data?.signedUrl) {
+        setTerminationDownloadErrorId(b.id)
+        return
+      }
+      try {
+        const resp = await fetch(r.data.signedUrl)
+        if (!resp.ok) throw new Error('fetch failed')
+        const blob = await resp.blob()
+        const objectUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = objectUrl
+        a.download = 'Quni-Mutual-Termination.pdf'
+        a.rel = 'noopener'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(objectUrl)
+      } catch {
+        window.open(r.data.signedUrl, '_blank', 'noopener,noreferrer')
+      }
+    } catch {
+      setTerminationDownloadErrorId(b.id)
+    } finally {
+      setTerminationActionBusyId(null)
+    }
+  }, [])
+
   const load = useCallback(async () => {
     const gen = ++loadGenRef.current
 
@@ -711,7 +784,7 @@ export default function LandlordDashboard() {
       const bookingPropertyIds = [...new Set(bookingRows.map((b) => b.property_id).filter(Boolean))] as string[]
       const bookingIds = bookingRows.map((b) => b.id)
 
-      const [studRes, bookingPropsRes, tenancyRes] = await Promise.all([
+      const [studRes, bookingPropsRes, tenancyRes, terminationDocRes] = await Promise.all([
         studentIds.length > 0
           ? (async () => {
               let r = await supabase
@@ -791,6 +864,14 @@ export default function LandlordDashboard() {
               .in('booking_id', bookingIds)
               .in('tenancy_documents.document_type', ['lease', 'residential_tenancy'])
           : Promise.resolve({ data: [] as TenancyWithDocsForSigning[], error: null }),
+        bookingIds.length > 0
+          ? supabase
+              .from('tenancies')
+              // Paths only - never pull mutual_termination.metadata on this dashboard load.
+              .select('booking_id, tenancy_documents!inner ( document_type, status, file_path )')
+              .in('booking_id', bookingIds)
+              .eq('tenancy_documents.document_type', 'mutual_termination')
+          : Promise.resolve({ data: [] as TenancyWithTerminationDocs[], error: null }),
       ])
 
       if (bookingPropsRes.error) throw bookingPropsRes.error
@@ -803,6 +884,11 @@ export default function LandlordDashboard() {
       const signedPathsByBookingId = tenancyRes.error
         ? new Map<string, LandlordAgreementSignedPaths>()
         : buildSignedAgreementPathsByBookingId(tenancyRows)
+      const terminationPathByBookingId = terminationDocRes.error
+        ? new Map<string, string>()
+        : buildSignedMutualTerminationPathByBookingId(
+            (terminationDocRes.data ?? []) as TenancyWithTerminationDocs[],
+          )
 
       const studentById = new Map<string, LandlordLoadedStudentRow>()
       if (!studRes.error && studRes.data) {
@@ -834,6 +920,7 @@ export default function LandlordDashboard() {
           student_profiles: sp ? { ...sp } : null,
           landlord_agreement_signing_url: signingUrlByBookingId.get(b.id) ?? null,
           landlord_agreement_signed_paths: signedPathsByBookingId.get(b.id) ?? null,
+          landlord_termination_signed_path: terminationPathByBookingId.get(b.id) ?? null,
         }
       })
 
@@ -1620,8 +1707,18 @@ export default function LandlordDashboard() {
                     {otherBookings.map((b) => {
                       const verification = buildLandlordVerificationFromProfile(b.student_profiles)
                       const isAgreementBusy = agreementActionBusyId === b.id
+                      const isTerminationBusy = terminationActionBusyId === b.id
                       const offerAgreement = shouldOfferLandlordAgreementAction(b)
-                      const showAgreementFootnote = leaseDownloadErrorId === b.id && offerAgreement
+                      const offerTermination = shouldOfferLandlordTerminationAction(b)
+                      const showAgreementFootnote =
+                        (leaseDownloadErrorId === b.id && offerAgreement) ||
+                        (terminationDownloadErrorId === b.id && offerTermination)
+                      const footnoteText =
+                        terminationDownloadErrorId === b.id && offerTermination
+                          ? 'Termination document not available'
+                          : leaseDownloadErrorId === b.id && offerAgreement
+                            ? 'Agreement not yet generated'
+                            : null
                       const actions: {
                         label: string
                         variant: 'primary' | 'secondary'
@@ -1641,14 +1738,23 @@ export default function LandlordDashboard() {
                           disabled: isAgreementBusy,
                         })
                       }
+                      if (offerTermination) {
+                        actions.push({
+                          label: isTerminationBusy ? 'Opening…' : 'Download termination',
+                          variant: offerAgreement ? 'secondary' : 'primary',
+                          onClick: () => void handleLandlordTerminationDownload(b),
+                          disabled: isTerminationBusy,
+                        })
+                      }
                       if (b.status === 'terminating') {
                         actions.push({
                           label: 'Open termination',
-                          variant: offerAgreement ? 'secondary' : 'primary',
+                          variant: offerAgreement || offerTermination ? 'secondary' : 'primary',
                           href: `/landlord/bookings/${b.id}/review`,
                         })
                       } else if (
                         offerAgreement ||
+                        offerTermination ||
                         b.status === 'confirmed' ||
                         b.status === 'active' ||
                         b.status === 'bond_pending' ||
@@ -1657,7 +1763,7 @@ export default function LandlordDashboard() {
                       ) {
                         actions.push({
                           label: 'Booking details',
-                          variant: offerAgreement ? 'secondary' : 'primary',
+                          variant: offerAgreement || offerTermination ? 'secondary' : 'primary',
                           href: `/landlord/bookings/${b.id}/review`,
                         })
                       } else {
@@ -1691,7 +1797,7 @@ export default function LandlordDashboard() {
                           weeklyRent={b.weekly_rent != null ? Number(b.weekly_rent) : null}
                           status={b.status}
                           actions={actions}
-                          footnote={showAgreementFootnote ? 'Agreement not yet generated' : null}
+                          footnote={showAgreementFootnote ? footnoteText : null}
                         />
                       )
                     })}
@@ -1768,41 +1874,61 @@ export default function LandlordDashboard() {
                           <td className="px-4 py-3">
                             <div className="flex flex-col items-start gap-1">
                               {shouldOfferLandlordAgreementAction(b) ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={agreementActionBusyId === b.id}
-                                    onClick={() => void handleLandlordAgreement(b)}
-                                    className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
-                                  >
-                                    {agreementActionBusyId === b.id
-                                      ? 'Opening…'
-                                      : b.landlord_agreement_signed_paths
-                                        ? 'Download agreement'
-                                        : 'Open agreement'}
-                                  </button>
-                                  <Link
-                                    to={`/landlord/bookings/${b.id}/review`}
-                                    className="block w-full text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
-                                  >
-                                    {b.status === 'terminating' ? 'Open termination' : 'Booking details'}
-                                  </Link>
-                                </>
-                              ) : (
-                                <Link
-                                  to={`/landlord/bookings/${b.id}/review`}
-                                  className="text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2"
+                                <button
+                                  type="button"
+                                  disabled={agreementActionBusyId === b.id}
+                                  onClick={() => void handleLandlordAgreement(b)}
+                                  className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
                                 >
-                                  {b.status === 'terminating'
-                                    ? 'Open termination'
-                                    : b.status === 'terminated' || b.status === 'completed'
-                                      ? 'Booking details'
-                                      : 'Review request'}
-                                </Link>
-                              )}
+                                  {agreementActionBusyId === b.id
+                                    ? 'Opening…'
+                                    : b.landlord_agreement_signed_paths
+                                      ? 'Download agreement'
+                                      : 'Open agreement'}
+                                </button>
+                              ) : null}
+                              {shouldOfferLandlordTerminationAction(b) ? (
+                                <button
+                                  type="button"
+                                  disabled={terminationActionBusyId === b.id}
+                                  onClick={() => void handleLandlordTerminationDownload(b)}
+                                  className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+                                >
+                                  {terminationActionBusyId === b.id
+                                    ? 'Opening…'
+                                    : 'Download termination'}
+                                </button>
+                              ) : null}
+                              <Link
+                                to={`/landlord/bookings/${b.id}/review`}
+                                className={
+                                  shouldOfferLandlordAgreementAction(b) ||
+                                  shouldOfferLandlordTerminationAction(b)
+                                    ? 'block w-full text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2'
+                                    : 'text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2'
+                                }
+                              >
+                                {b.status === 'terminating'
+                                  ? 'Open termination'
+                                  : shouldOfferLandlordAgreementAction(b) ||
+                                      shouldOfferLandlordTerminationAction(b) ||
+                                      b.status === 'terminated' ||
+                                      b.status === 'completed' ||
+                                      b.status === 'confirmed' ||
+                                      b.status === 'active' ||
+                                      b.status === 'bond_pending'
+                                    ? 'Booking details'
+                                    : 'Review request'}
+                              </Link>
                               {leaseDownloadErrorId === b.id && shouldOfferLandlordAgreementAction(b) && (
                                 <p className="text-[11px] leading-snug text-gray-500">Agreement not yet generated</p>
                               )}
+                              {terminationDownloadErrorId === b.id &&
+                                shouldOfferLandlordTerminationAction(b) && (
+                                  <p className="text-[11px] leading-snug text-gray-500">
+                                    Termination document not available
+                                  </p>
+                                )}
                             </div>
                           </td>
                         </tr>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   bookingStatusShowsLeaseAgreementSurface,
   shouldOfferLandlordAgreementListAction,
+  shouldOfferLandlordTerminationListAction,
 } from './signedAgreementAvailability'
 
 describe('shouldOfferLandlordAgreementListAction', () => {
@@ -33,6 +34,13 @@ describe('shouldOfferLandlordAgreementListAction', () => {
     expect(
       shouldOfferLandlordAgreementListAction({ hasSignedPaths: false, status: 'expired' }),
     ).toBe(false)
+  })
+})
+
+describe('shouldOfferLandlordTerminationListAction', () => {
+  it('offers only when a signed mutual-termination path exists', () => {
+    expect(shouldOfferLandlordTerminationListAction(true)).toBe(true)
+    expect(shouldOfferLandlordTerminationListAction(false)).toBe(false)
   })
 })
 
