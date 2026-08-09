@@ -4,8 +4,11 @@ import { AdminPageHeader } from '../../components/admin/primitives'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
+import { apiUrl } from '../../lib/apiUrl'
 import type { Database } from '../../lib/database.types'
 import CryptoJS from 'crypto-js'
+
+const PAGESPEED_LAB_STORAGE_KEY = 'quni-admin-pagespeed-lab:v1'
 
 const ENC_KEY = import.meta.env.VITE_CREDENTIALS_ENC_KEY ?? 'dev-key-change-me'
 
@@ -54,6 +57,46 @@ type FrontendPerformanceResponse = {
   rows: FrontendPerformanceRow[]
   failingRoutes: string[]
   checkedAt: string
+}
+
+type PagespeedLabStrategyResult = {
+  strategy: 'mobile' | 'desktop'
+  performance: number | null
+  fcp: string | null
+  lcp: string | null
+  tbt: string | null
+  cls: string | null
+  speedIndex: string | null
+  lcpElement: string | null
+  error: string | null
+}
+
+type PagespeedLabCheckResponse = {
+  url: string
+  checkedAt: string
+  mobile: PagespeedLabStrategyResult
+  desktop: PagespeedLabStrategyResult
+  apiKeyConfigured: boolean
+}
+
+function readStoredPagespeedLab(): PagespeedLabCheckResponse | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(PAGESPEED_LAB_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as PagespeedLabCheckResponse
+    if (!parsed?.checkedAt || !parsed.mobile || !parsed.desktop) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function labScoreTone(score: number | null): string {
+  if (score == null) return 'text-gray-500'
+  if (score >= 90) return 'text-green-700'
+  if (score >= 50) return 'text-amber-700'
+  return 'text-red-700'
 }
 
 type VendorHealthRow = Pick<Database['public']['Tables']['admin_vendor_subscriptions']['Row'], 'title' | 'href'>
@@ -1066,6 +1109,9 @@ export default function AdminApps() {
   const [perfStatsPeriod, setPerfStatsPeriod] = useState('7d')
   const [perfThresholds, setPerfThresholds] = useState({ lcpMs: 2500, inpMs: 200, cls: 0.1 })
   const [perfCheckedAt, setPerfCheckedAt] = useState<string | null>(null)
+  const [labResult, setLabResult] = useState<PagespeedLabCheckResponse | null>(() => readStoredPagespeedLab())
+  const [labLoading, setLabLoading] = useState(false)
+  const [labError, setLabError] = useState<string | null>(null)
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
@@ -1201,6 +1247,45 @@ export default function AdminApps() {
       setPerfThresholds(data.cwvThresholds)
     }
     setPerfCheckedAt(typeof data?.checkedAt === 'string' ? data.checkedAt : null)
+  }, [])
+
+  const runPagespeedLabCheck = useCallback(async () => {
+    setLabLoading(true)
+    setLabError(null)
+    const auth = await getValidAccessTokenForFunctions()
+    if ('error' in auth) {
+      setLabError(auth.error)
+      setLabLoading(false)
+      return
+    }
+    try {
+      const res = await fetch(apiUrl('/api/admin/pagespeed-lab-check'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      const body = (await res.json().catch(() => ({}))) as PagespeedLabCheckResponse & { error?: string }
+      if (!res.ok) {
+        setLabError(body.error ?? `Lab check failed (${res.status})`)
+        setLabLoading(false)
+        return
+      }
+      setLabResult(body)
+      try {
+        window.localStorage.setItem(PAGESPEED_LAB_STORAGE_KEY, JSON.stringify(body))
+      } catch {
+        // ignore quota / private mode
+      }
+      if (body.mobile.error || body.desktop.error) {
+        setLabError([body.mobile.error, body.desktop.error].filter(Boolean).join(' · '))
+      }
+    } catch (err) {
+      setLabError(err instanceof Error ? err.message : 'Lab check network error')
+    } finally {
+      setLabLoading(false)
+    }
   }, [])
 
   const load = useCallback(async () => {
@@ -1759,14 +1844,25 @@ export default function AdminApps() {
                 </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => void loadFrontendPerformance()}
-                disabled={perfLoading}
-                className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-white px-3 py-1.5 text-[12px] font-semibold text-admin-ink-3 hover:bg-admin-surface-2 disabled:opacity-60"
-              >
-                {perfLoading ? 'Refreshing…' : 'Refresh metrics'}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void runPagespeedLabCheck()}
+                  disabled={labLoading}
+                  className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-white px-3 py-1.5 text-[12px] font-semibold text-admin-ink-3 hover:bg-admin-surface-2 disabled:opacity-60"
+                  title="Google PageSpeed Insights lab run for the homepage (mobile + desktop). Scores vary run-to-run."
+                >
+                  {labLoading ? 'Running lab check…' : 'Run lab check'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void loadFrontendPerformance()}
+                  disabled={perfLoading}
+                  className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-white px-3 py-1.5 text-[12px] font-semibold text-admin-ink-3 hover:bg-admin-surface-2 disabled:opacity-60"
+                >
+                  {perfLoading ? 'Refreshing…' : 'Refresh metrics'}
+                </button>
+              </div>
             </div>
             {perfCheckedAt ? (
               <p className="mt-2 text-[11px] text-gray-500">
@@ -1780,6 +1876,57 @@ export default function AdminApps() {
                   hour12: true,
                 })}
               </p>
+            ) : null}
+            <p className="mt-2 text-[11px] text-gray-500">
+              Lab check is a one-off PageSpeed Insights run for{' '}
+              <span className="font-medium text-gray-700">/</span> only — noisy vs field CWV above. Takes ~30–60s.
+            </p>
+            {labError ? (
+              <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                {labError}
+              </p>
+            ) : null}
+            {labResult ? (
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {([labResult.mobile, labResult.desktop] as const).map((row) => (
+                  <div
+                    key={row.strategy}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-xs text-gray-700"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="font-semibold capitalize text-gray-900">{row.strategy}</p>
+                      <p className={`text-lg font-bold tabular-nums ${labScoreTone(row.performance)}`}>
+                        {row.performance == null ? '—' : row.performance}
+                      </p>
+                    </div>
+                    {row.error ? (
+                      <p className="mt-1 text-amber-800">{row.error}</p>
+                    ) : (
+                      <ul className="mt-1.5 space-y-0.5 text-[11px] text-gray-600">
+                        <li>FCP {row.fcp ?? '—'} · LCP {row.lcp ?? '—'}</li>
+                        <li>TBT {row.tbt ?? '—'} · CLS {row.cls ?? '—'} · SI {row.speedIndex ?? '—'}</li>
+                        {row.lcpElement ? (
+                          <li className="truncate text-gray-500" title={row.lcpElement}>
+                            LCP: {row.lcpElement}
+                          </li>
+                        ) : null}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+                <p className="sm:col-span-2 text-[11px] text-gray-500">
+                  Last lab run:{' '}
+                  {new Date(labResult.checkedAt).toLocaleString('en-AU', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}{' '}
+                  · {labResult.url}
+                </p>
+              </div>
             ) : null}
           </div>
 
