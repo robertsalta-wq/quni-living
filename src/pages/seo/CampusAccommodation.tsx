@@ -109,7 +109,9 @@ export default function CampusAccommodation() {
       const u = uRow as UniversityReferenceRow
       setUniversity(u)
 
-      const allCampuses = await fetchCampusesForUniversityId(u.id, u.slug)
+      const allCampuses = await fetchCampusesForUniversityId(u.id, u.slug, {
+        onlyWithActiveListings: false,
+      })
       const match = allCampuses.find((c) => campusUrlSlug(c).toLowerCase() === campusSlug)
 
       if (cancelled) return
