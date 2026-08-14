@@ -104,6 +104,17 @@ export function showRoomForRentSelect(choice: AccommodationUiChoice): boolean {
   return !isEntirePlaceChoice(choice)
 }
 
+/** Scroll type-specific fields only when a click reveals or grows that block. */
+export function shouldScrollAccommodationTypeBlock(
+  prev: AccommodationUiChoice,
+  next: AccommodationUiChoice,
+): boolean {
+  if (prev === next) return false
+  if (isEntirePlaceChoice(next)) return false
+  if (isEntirePlaceChoice(prev)) return true
+  return next === 'registered_rooming_house'
+}
+
 export function roomForRentOptions(choice: AccommodationUiChoice): [RoomType, string][] {
   if (choice === 'private_room_landlord_off_site' || choice === 'registered_rooming_house') {
     return [
