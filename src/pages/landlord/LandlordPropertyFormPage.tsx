@@ -75,7 +75,6 @@ import {
   type PropertyImage,
 } from '../../lib/propertyImages'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
-import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
@@ -742,21 +741,27 @@ export default function LandlordPropertyFormPage() {
   const [roomsRentedToResidents, setRoomsRentedToResidents] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('apartment')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
+  const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
+  const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
 
   const accommodationChoice = useMemo(
-    () => accommodationChoiceFromFields(propertyListingType, roomType),
-    [propertyListingType, roomType],
+    () => accommodationChoiceFromFields(propertyListingType, roomType, isRegisteredRoomingHouse),
+    [propertyListingType, roomType, isRegisteredRoomingHouse],
   )
 
   const selectAccommodationChoice = useCallback((choice: AccommodationUiChoice) => {
     const next = fieldsFromAccommodationChoice(choice)
     setPropertyListingType(next.propertyListingType)
     setRoomType(next.roomType)
+    if (choice === 'registered_rooming_house') {
+      setIsRegisteredRoomingHouse(true)
+    } else {
+      setIsRegisteredRoomingHouse(false)
+      setRoomingHouseRegistrationNumber('')
+    }
   }, [])
   const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
-  const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
-  const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
   const [roomDescription, setRoomDescription] = useState('')
   const [sharedAreas, setSharedAreas] = useState<NswT3SharedAreas>({ ...EMPTY_NSW_T3_SHARED_AREAS })
   const [additionalCharges, setAdditionalCharges] = useState<NswT3AdditionalCharge[]>([])
@@ -3225,8 +3230,9 @@ export default function LandlordPropertyFormPage() {
               <div className="space-y-3">
                 <p className="text-sm font-medium text-gray-800">What is the tenant renting?</p>
                 <p className="text-xs text-gray-500">
-                  Choose the arrangement that matches your listing. For a room in a share house, enter total bedrooms and
-                  bathrooms for the whole property, not just the room you are advertising.
+                  Choose the arrangement that matches your listing. Rooming house is for a registered boarding house, not
+                  a normal share. For a room in a share house, enter total bedrooms and bathrooms for the whole property,
+                  not just the room you are advertising.
                 </p>
                 <div className="grid grid-cols-1 gap-2">
                   {ACCOMMODATION_UI_OPTIONS.map((opt) => {
@@ -3328,57 +3334,42 @@ export default function LandlordPropertyFormPage() {
                       Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
                     </p>
                   )}
+                  {accommodationChoice === 'registered_rooming_house' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Identify the room you are listing. Registration number is required below.
+                    </p>
+                  )}
                 </div>
               )}
-              <div>
-                <label htmlFor="pf-rooming-house" className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
-                  <span className="inline-flex items-center gap-2">
-                    <input
-                      id="pf-rooming-house"
-                      type="checkbox"
-                      checked={isRegisteredRoomingHouse}
-                      onChange={(e) => {
-                        const on = e.target.checked
-                        setIsRegisteredRoomingHouse(on)
-                        if (!on) setRoomingHouseRegistrationNumber('')
-                      }}
-                      className={LANDLORD_FORM_CHECKBOX_CLASS}
-                    />
-                    <span className="text-sm text-gray-700">This property is a registered rooming house</span>
-                  </span>
-                  <FieldHelpHint label="What is a registered rooming house?">
-                    A <strong>registered rooming/boarding house</strong> is a regulated category - not a normal share
-                    house. Rules and registration differ by state (e.g. NSW boarding houses, VIC rooming houses, QLD
-                    rooming accommodation). Most single-room listings should leave this <strong>unchecked</strong>. Only
-                    tick if you have the relevant registration number.
-                  </FieldHelpHint>
-                </label>
-                {showRoomingHouseValidation && roomingHouseErrors.onSiteConflict ? (
-                  <p className="mt-2 text-sm text-red-600" role="alert">
-                    {roomingHouseErrors.onSiteConflict}
+              {isRegisteredRoomingHouse ? (
+                <div>
+                  <label htmlFor="pf-rooming-reg" className={labelClass}>
+                    Rooming house registration number <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-0.5 mb-1">
+                    NSW boarding houses and other registered rooming houses need the number from your state register.
+                    Quni does not verify registration.
                   </p>
-                ) : null}
-                {isRegisteredRoomingHouse ? (
-                  <div className="mt-3 pl-6">
-                    <label htmlFor="pf-rooming-reg" className={labelClass}>
-                      Rooming house registration number
-                    </label>
-                    <input
-                      id="pf-rooming-reg"
-                      type="text"
-                      value={roomingHouseRegistrationNumber}
-                      onChange={(e) => setRoomingHouseRegistrationNumber(e.target.value)}
-                      className={inputClass}
-                      autoComplete="off"
-                    />
-                    {showRoomingHouseValidation && roomingHouseErrors.missingRegistration ? (
-                      <p className="mt-2 text-sm text-red-600" role="alert">
-                        {roomingHouseErrors.missingRegistration}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+                  <input
+                    id="pf-rooming-reg"
+                    type="text"
+                    value={roomingHouseRegistrationNumber}
+                    onChange={(e) => setRoomingHouseRegistrationNumber(e.target.value)}
+                    className={inputClass}
+                    autoComplete="off"
+                  />
+                  {showRoomingHouseValidation && roomingHouseErrors.missingRegistration ? (
+                    <p className="mt-2 text-sm text-red-600" role="alert">
+                      {roomingHouseErrors.missingRegistration}
+                    </p>
+                  ) : null}
+                  {showRoomingHouseValidation && roomingHouseErrors.onSiteConflict ? (
+                    <p className="mt-2 text-sm text-red-600" role="alert">
+                      {roomingHouseErrors.onSiteConflict}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {isNswT3Listing ? (
                 <div id="section-nsw-t3-particulars" className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
                   <p className="text-sm font-medium text-gray-900">Boarding-house occupancy particulars</p>

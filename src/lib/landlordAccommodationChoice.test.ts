@@ -18,8 +18,20 @@ describe('landlordAccommodationChoice', () => {
     })
   })
 
-  it('treats legacy entire_property + single as whole apartment', () => {
-    expect(accommodationChoiceFromFields('entire_property', 'single')).toBe('entire_apartment')
+  it('maps registered rooming house off-site to its own card', () => {
+    expect(
+      accommodationChoiceFromFields('private_room_landlord_off_site', 'single', true),
+    ).toBe('registered_rooming_house')
+    expect(fieldsFromAccommodationChoice('registered_rooming_house')).toEqual({
+      propertyListingType: 'private_room_landlord_off_site',
+      roomType: 'single',
+    })
+  })
+
+  it('keeps off-site private room distinct from rooming house', () => {
+    expect(
+      accommodationChoiceFromFields('private_room_landlord_off_site', 'single', false),
+    ).toBe('private_room_landlord_off_site')
   })
 
   it('normalizes private room off-site studio on save', () => {

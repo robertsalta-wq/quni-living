@@ -18,7 +18,7 @@ const TITLE_MAX = 60
 const TYPE_TILES: { key: HubListingTypeTile; label: string; sub: string }[] = [
   { key: 'entire', label: 'Entire place', sub: 'Whole property' },
   { key: 'room', label: 'Private room', sub: 'Room in a share' },
-  { key: 'rooming', label: 'Rooming house', sub: 'Registered share' },
+  { key: 'rooming', label: 'Rooming house', sub: 'Registered boarding house' },
 ]
 
 export type ListingBasicInfoValues = {

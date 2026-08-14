@@ -6,6 +6,7 @@ export type AccommodationUiChoice =
   | 'entire_apartment'
   | 'entire_studio'
   | 'private_room_landlord_off_site'
+  | 'registered_rooming_house'
   | 'private_room_landlord_on_site'
   | 'shared_room'
 
@@ -32,7 +33,13 @@ export const ACCOMMODATION_UI_OPTIONS: {
   {
     value: 'private_room_landlord_off_site',
     title: 'One private room',
-    description: 'A bedroom in a shared house - you do not live on site.',
+    description: 'A bedroom in a share house. You do not live on site. Not a registered boarding house.',
+  },
+  {
+    value: 'registered_rooming_house',
+    title: 'Rooming house',
+    description:
+      'A room in a registered boarding house (NSW) or rooming house. You do not live on site, and you have a registration number.',
   },
   {
     value: 'private_room_landlord_on_site',
@@ -63,6 +70,8 @@ export function fieldsFromAccommodationChoice(choice: AccommodationUiChoice): {
       return { propertyListingType: 'entire_property', roomType: 'studio' }
     case 'private_room_landlord_off_site':
       return { propertyListingType: 'private_room_landlord_off_site', roomType: 'single' }
+    case 'registered_rooming_house':
+      return { propertyListingType: 'private_room_landlord_off_site', roomType: 'single' }
     case 'private_room_landlord_on_site':
       return { propertyListingType: 'private_room_landlord_on_site', roomType: 'single' }
     case 'shared_room':
@@ -74,6 +83,7 @@ export function fieldsFromAccommodationChoice(choice: AccommodationUiChoice): {
 export function accommodationChoiceFromFields(
   propertyListingType: PropertyListingType,
   roomType: RoomType | '',
+  isRegisteredRoomingHouse = false,
 ): AccommodationUiChoice {
   if (propertyListingType === 'entire_property') {
     if (roomType === 'house') return 'entire_house'
@@ -81,6 +91,7 @@ export function accommodationChoiceFromFields(
     return 'entire_apartment'
   }
   if (propertyListingType === 'private_room_landlord_off_site') {
+    if (isRegisteredRoomingHouse) return 'registered_rooming_house'
     return 'private_room_landlord_off_site'
   }
   if (propertyListingType === 'private_room_landlord_on_site') {
@@ -94,7 +105,7 @@ export function showRoomForRentSelect(choice: AccommodationUiChoice): boolean {
 }
 
 export function roomForRentOptions(choice: AccommodationUiChoice): [RoomType, string][] {
-  if (choice === 'private_room_landlord_off_site') {
+  if (choice === 'private_room_landlord_off_site' || choice === 'registered_rooming_house') {
     return [
       ['single', ROOM_TYPE_LABELS.single],
       ['studio', ROOM_TYPE_LABELS.studio],
@@ -111,10 +122,10 @@ export function roomForRentOptions(choice: AccommodationUiChoice): [RoomType, st
 
 /** Coerce stored/partial values before save. */
 export const ROOMING_HOUSE_ON_SITE_ERROR =
-  "A registered rooming house can't have the landlord living on site. Either untick the rooming house checkbox or change the accommodation type."
+  "A registered rooming house can't have the landlord living on site. Choose Rooming house, or choose a room in your home without registration."
 
 export const ROOMING_HOUSE_REGISTRATION_REQUIRED_ERROR =
-  "Enter your rooming house registration number, or untick registered rooming house if this doesn't apply."
+  "Enter your rooming house registration number, or choose a different listing type if this is not a registered boarding house."
 
 export function roomingHouseFieldErrors(
   propertyListingType: PropertyListingType,
@@ -140,7 +151,7 @@ export function normalizeAccommodationForSave(
   if (isEntirePlaceChoice(choice)) {
     return fieldsFromAccommodationChoice(choice)
   }
-  if (choice === 'private_room_landlord_off_site') {
+  if (choice === 'private_room_landlord_off_site' || choice === 'registered_rooming_house') {
     return {
       propertyListingType: 'private_room_landlord_off_site',
       roomType: roomType === 'studio' ? 'studio' : 'single',
