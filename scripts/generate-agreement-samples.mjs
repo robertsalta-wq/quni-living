@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import React from 'react'
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib'
@@ -7,6 +7,7 @@ import {
   nswAddendumSampleProps,
   nswOccupancySampleProps,
   nswT2AgreementSampleProps,
+  nswT3BoardingHouseSampleProps,
   qldAddendumSampleProps,
   qldOccupancySampleProps,
   qldT2AgreementSampleProps,
@@ -27,6 +28,7 @@ const { QuniPlatformAddendumQld } = await import('../src/lib/documents/QuniPlatf
 const { VicLicenceToOccupyOnSite } = await import('../src/lib/documents/vic/occupancyGenerator.tsx')
 const { VicResidentialRentalAgreementForm1 } = await import('../src/lib/documents/vic/form1Generator.tsx')
 const { QuniPlatformAddendumVic } = await import('../src/lib/documents/vic/addendumGenerator.tsx')
+const { NswBoardingHouseOccupancyAgreement } = await import('../src/lib/documents/nsw/boardingHouse/generator.tsx')
 
 const SAMPLE_ROOT = join(process.cwd(), 'public', 'agreement-samples')
 const WATERMARK_TEXT = 'SAMPLE - not for execution'
@@ -83,6 +85,13 @@ const samples = [
     props: nswAddendumSampleProps(),
   },
   {
+    state: 'NSW',
+    tier: 'T3',
+    document: 'Standard Occupancy Agreement',
+    component: NswBoardingHouseOccupancyAgreement,
+    props: nswT3BoardingHouseSampleProps(),
+  },
+  {
     state: 'QLD',
     tier: 'T1',
     document: 'Occupancy agreement',
@@ -126,16 +135,26 @@ const samples = [
   },
 ]
 
-rmSync(SAMPLE_ROOT, { recursive: true, force: true })
-mkdirSync(SAMPLE_ROOT, { recursive: true })
+const onlyKey = process.argv.find((a) => a.startsWith('--only='))?.slice('--only='.length) ?? null
 
-const manifest = {
-  generatedAt: new Date().toISOString(),
-  watermark: WATERMARK_TEXT,
-  samples: [],
+function sampleKey(sample) {
+  return `${sample.state}-${sample.tier}`
 }
 
-for (const sample of samples) {
+const selected = onlyKey ? samples.filter((sample) => sampleKey(sample) === onlyKey) : samples
+if (selected.length === 0) {
+  console.error(`No samples matched --only=${onlyKey}`)
+  process.exit(1)
+}
+
+if (!onlyKey) {
+  rmSync(SAMPLE_ROOT, { recursive: true, force: true })
+}
+mkdirSync(SAMPLE_ROOT, { recursive: true })
+
+const written = []
+
+for (const sample of selected) {
   const fileName = `${sanitizeFileName(sample.state)}-${sanitizeFileName(sample.tier)}-${sanitizeFileName(sample.document)}.pdf`
   const outputPath = join(SAMPLE_ROOT, fileName)
   const rawBuffer = sample.officialQldForm18a
@@ -143,8 +162,7 @@ for (const sample of samples) {
     : await renderToBuffer(element(sample.component, sample.props))
   const watermarked = await applyWatermark(rawBuffer)
   writeFileSync(outputPath, watermarked)
-
-  manifest.samples.push({
+  written.push({
     state: sample.state,
     tier: sample.tier,
     document: sample.document,
@@ -155,5 +173,39 @@ for (const sample of samples) {
 }
 
 const manifestPath = join(SAMPLE_ROOT, 'manifest.json')
+const preferredOrder = samples.map(
+  (sample) => `${sanitizeFileName(sample.state)}-${sanitizeFileName(sample.tier)}-${sanitizeFileName(sample.document)}.pdf`,
+)
+
+function orderedSamples(entries) {
+  const byFile = new Map(entries.map((entry) => [entry.fileName, entry]))
+  const ordered = []
+  for (const fileName of preferredOrder) {
+    const entry = byFile.get(fileName)
+    if (entry) {
+      ordered.push(entry)
+      byFile.delete(fileName)
+    }
+  }
+  ordered.push(...byFile.values())
+  return ordered
+}
+
+let existingSamples = []
+if (onlyKey && existsSync(manifestPath)) {
+  try {
+    const prev = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    if (Array.isArray(prev.samples)) existingSamples = prev.samples
+  } catch {
+    existingSamples = []
+  }
+}
+
+const manifest = {
+  generatedAt: new Date().toISOString(),
+  watermark: WATERMARK_TEXT,
+  samples: orderedSamples([...existingSamples, ...written]),
+}
+
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 console.log('Written:', manifestPath)

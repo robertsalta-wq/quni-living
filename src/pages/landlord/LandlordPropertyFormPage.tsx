@@ -47,12 +47,25 @@ import {
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
+  EMPTY_NSW_T3_SHARED_AREAS,
+  emptyNswT3ChargeRow,
+  nswT3AdditionalChargesError,
+  nswT3AdditionalChargesToJson,
+  nswT3RoomDescriptionError,
+  nswT3SharedAreasError,
+  nswT3SharedAreasToJson,
+  parseNswT3AdditionalCharges,
+  parseNswT3SharedAreas,
+  type NswT3AdditionalCharge,
+  type NswT3SharedAreas,
+} from '../../lib/tenancy/nswT3ListingFields'
+import {
   formatPropertyPayoutBsbDisplay,
   listingTierRequiresPropertyPayoutDetails,
   propertyPayoutDetailsComplete,
   propertyPayoutDetailsFieldErrors,
 } from '../../lib/propertyPayoutDetails'
-import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
+import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, T3_MAX_SECURITY_DEPOSIT_WEEKS, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import AIListingProofread, { useListingProofread } from '../../components/AIListingProofread'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
@@ -266,6 +279,9 @@ type LandlordPropertyDraftV1 = {
   images: string[]
   isRegisteredRoomingHouse: boolean
   roomingHouseRegistrationNumber: string
+  roomDescription: string
+  sharedAreas: NswT3SharedAreas
+  additionalCharges: NswT3AdditionalCharge[]
   serviceTier: LandlordServiceTier
   houseRules: string
   selectedRules: Partial<Record<string, RulePermitted>>
@@ -448,6 +464,9 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       isRegisteredRoomingHouse: Boolean(d.isRegisteredRoomingHouse),
       roomingHouseRegistrationNumber:
         typeof d.roomingHouseRegistrationNumber === 'string' ? d.roomingHouseRegistrationNumber : '',
+      roomDescription: typeof d.roomDescription === 'string' ? d.roomDescription : '',
+      sharedAreas: parseNswT3SharedAreas(d.sharedAreas),
+      additionalCharges: parseNswT3AdditionalCharges(d.additionalCharges),
       serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'listing',
       houseRules: typeof d.houseRules === 'string' ? d.houseRules : '',
       selectedRules: parseDraftSelectedRules(d.selectedRules),
@@ -738,6 +757,9 @@ export default function LandlordPropertyFormPage() {
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
+  const [roomDescription, setRoomDescription] = useState('')
+  const [sharedAreas, setSharedAreas] = useState<NswT3SharedAreas>({ ...EMPTY_NSW_T3_SHARED_AREAS })
+  const [additionalCharges, setAdditionalCharges] = useState<NswT3AdditionalCharge[]>([])
   const roomingHouseErrors = useMemo(
     () => roomingHouseFieldErrors(propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber),
     [propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber],
@@ -915,6 +937,14 @@ export default function LandlordPropertyFormPage() {
     () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
     [propertyListingType, isRegisteredRoomingHouse],
   )
+  const isNswT3Listing = useMemo(
+    () =>
+      (state.trim() || '').toUpperCase() === 'NSW' &&
+      propertyListingType === 'private_room_landlord_off_site' &&
+      isRegisteredRoomingHouse,
+    [state, propertyListingType, isRegisteredRoomingHouse],
+  )
+  const bondWeekCap = isNswT3Listing ? T3_MAX_SECURITY_DEPOSIT_WEEKS : MAX_BOND_WEEKS
   const serviceTierAvailability = useMemo(
     () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
     [state, resolvedPropertyTier, serviceTierResolverOptions],
@@ -999,9 +1029,14 @@ export default function LandlordPropertyFormPage() {
   const [payeeAccountNumber, setPayeeAccountNumber] = useState('')
   const parsedBondWeeks = useMemo(() => {
     const w = parseInt(bondWeeks, 10)
-    if (!Number.isFinite(w) || w < 0 || w > MAX_BOND_WEEKS) return null
+    if (!Number.isFinite(w) || w < 0 || w > bondWeekCap) return null
     return w
-  }, [bondWeeks])
+  }, [bondWeeks, bondWeekCap])
+
+  useEffect(() => {
+    const w = parseInt(bondWeeks, 10)
+    if (Number.isFinite(w) && w > bondWeekCap) setBondWeeks(String(bondWeekCap))
+  }, [bondWeekCap, bondWeeks])
 
   const bondPreviewAtListedRent = useMemo(() => {
     if (parsedBondWeeks == null || parsedBondWeeks === 0) return null
@@ -1063,6 +1098,9 @@ export default function LandlordPropertyFormPage() {
         images: serializePropertyImages(images),
         isRegisteredRoomingHouse,
         roomingHouseRegistrationNumber,
+        roomDescription,
+        sharedAreas,
+        additionalCharges,
         serviceTier,
         houseRules,
         selectedRules: { ...selectedRules },
@@ -1081,6 +1119,9 @@ export default function LandlordPropertyFormPage() {
       propertyListingType,
       isRegisteredRoomingHouse,
       roomingHouseRegistrationNumber,
+      roomDescription,
+      sharedAreas,
+      additionalCharges,
       furnished,
       linenSupplied,
       weeklyCleaning,
@@ -1211,6 +1252,9 @@ export default function LandlordPropertyFormPage() {
     setInitialServiceTier('listing')
     setIsRegisteredRoomingHouse(false)
     setRoomingHouseRegistrationNumber('')
+    setRoomDescription('')
+    setSharedAreas({ ...EMPTY_NSW_T3_SHARED_AREAS })
+    setAdditionalCharges([])
     setFurnished(false)
     setLinenSupplied(false)
     setWeeklyCleaning(false)
@@ -1398,6 +1442,9 @@ export default function LandlordPropertyFormPage() {
         setRoomingHouseRegistrationNumber(
           typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
         )
+        setRoomDescription(typeof prop.room_description === 'string' ? prop.room_description : '')
+        setSharedAreas(parseNswT3SharedAreas(prop.shared_areas))
+        setAdditionalCharges(parseNswT3AdditionalCharges(prop.additional_charges))
         setFurnished(Boolean(prop.furnished))
         setLinenSupplied(Boolean(prop.linen_supplied))
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
@@ -1546,6 +1593,9 @@ export default function LandlordPropertyFormPage() {
       setServiceTier(parsed.serviceTier)
       setIsRegisteredRoomingHouse(parsed.isRegisteredRoomingHouse)
       setRoomingHouseRegistrationNumber(parsed.roomingHouseRegistrationNumber)
+      setRoomDescription(parsed.roomDescription)
+      setSharedAreas(parsed.sharedAreas)
+      setAdditionalCharges(parsed.additionalCharges)
       setFurnished(parsed.furnished)
       setLinenSupplied(parsed.linenSupplied)
       setWeeklyCleaning(parsed.weeklyCleaning)
@@ -2257,6 +2307,27 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (isNswT3Listing) {
+      const roomErr = nswT3RoomDescriptionError(roomDescription)
+      if (roomErr) {
+        reportSubmitError(roomErr)
+        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+      const sharedErr = nswT3SharedAreasError(sharedAreas)
+      if (sharedErr) {
+        reportSubmitError(sharedErr)
+        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+      const chargeErr = nswT3AdditionalChargesError(additionalCharges)
+      if (chargeErr) {
+        reportSubmitError(chargeErr)
+        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+
     if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
       reportSubmitError('Managed properties cannot be changed back to Quni Listing.')
       return
@@ -2361,7 +2432,7 @@ export default function LandlordPropertyFormPage() {
     const accuracyContentHash = await computeListingAccuracyContentHash({
       rent_per_week: rent,
       bond: loadedBond,
-      bond_weeks: Math.min(MAX_BOND_WEEKS, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
+      bond_weeks: Math.min(bondWeekCap, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
       room_type: accommodationForHash.roomType,
       max_occupants: maxOcc,
       available_from: availableFrom.trim() || null,
@@ -2498,13 +2569,16 @@ export default function LandlordPropertyFormPage() {
         isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
           ? roomingHouseRegistrationNumber.trim()
           : null,
+      room_description: isNswT3Listing ? roomDescription.trim() : null,
+      shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
+      additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
       rent_per_week: rent,
       max_occupants: maxOcc,
       couple_surcharge_per_week: maxOcc >= 2 && coupleAmt != null && coupleAmt > 0 ? coupleAmt : null,
       parking_surcharge_per_week:
         parkingAvailable && parkingAmt != null && parkingAmt > 0 ? parkingAmt : null,
       parking_available: parkingAvailable,
-      bond_weeks: Math.min(MAX_BOND_WEEKS, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
+      bond_weeks: Math.min(bondWeekCap, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
       qld_bond_remittance_preference:
         showQldBondRemittance ? qldBondRemittancePreference : null,
       lease_length: leaseLength || null,
@@ -2762,10 +2836,13 @@ export default function LandlordPropertyFormPage() {
                 isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
                   ? roomingHouseRegistrationNumber.trim()
                   : null,
+              room_description: isNswT3Listing ? roomDescription.trim() : null,
+              shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
+              additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
               rent_per_week: rent,
               max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
               bond_weeks: Math.min(
-                MAX_BOND_WEEKS,
+                bondWeekCap,
                 Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS),
               ),
               lease_length: leaseLength || null,
@@ -2818,6 +2895,11 @@ export default function LandlordPropertyFormPage() {
     propertyListingType,
     roomType,
     isRegisteredRoomingHouse,
+    roomDescription,
+    sharedAreas,
+    additionalCharges,
+    isNswT3Listing,
+    bondWeekCap,
     description,
     bedrooms,
     bathrooms,
@@ -3297,6 +3379,138 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 ) : null}
               </div>
+              {isNswT3Listing ? (
+                <div id="section-nsw-t3-particulars" className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                  <p className="text-sm font-medium text-gray-900">Boarding-house occupancy particulars</p>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    These details print on the NSW Standard Occupancy Agreement. Room description is required. Tick
+                    every shared area the resident may use.
+                  </p>
+                  <div>
+                    <label htmlFor="pf-room-description" className={labelClass}>
+                      Room description
+                    </label>
+                    <input
+                      id="pf-room-description"
+                      type="text"
+                      value={roomDescription}
+                      onChange={(e) => setRoomDescription(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. Room 3, first floor rear"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <fieldset>
+                    <legend className={labelClass}>Shared areas</legend>
+                    <div className="mt-2 space-y-2">
+                      {(
+                        [
+                          ['kitchen', 'Kitchen/s'],
+                          ['bathroom', 'Bathroom/s'],
+                          ['commonRoom', 'Common room'],
+                          ['laundry', 'Laundry'],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2 text-sm text-gray-800">
+                          <input
+                            type="checkbox"
+                            checked={sharedAreas[key]}
+                            onChange={(e) => setSharedAreas((prev) => ({ ...prev, [key]: e.target.checked }))}
+                            className={LANDLORD_FORM_CHECKBOX_CLASS}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <label htmlFor="pf-shared-other" className={`${labelClass} mt-3`}>
+                      Other shared area
+                    </label>
+                    <input
+                      id="pf-shared-other"
+                      type="text"
+                      value={sharedAreas.other}
+                      onChange={(e) => setSharedAreas((prev) => ({ ...prev, other: e.target.value }))}
+                      className={inputClass}
+                      placeholder="Optional, e.g. backyard"
+                      autoComplete="off"
+                    />
+                  </fieldset>
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-900">Additional charges (Annexure 2)</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Optional. If you charge utilities or other amounts on top of the occupancy fee, add a row and
+                      explain how it is calculated from actual cost and a reasonable share of use.
+                    </p>
+                    {additionalCharges.map((row, index) => (
+                      <div key={index} className="rounded-lg border border-stone-200 bg-white p-3 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Charge {index + 1}</p>
+                          <button
+                            type="button"
+                            className="text-xs text-red-700 hover:underline"
+                            onClick={() =>
+                              setAdditionalCharges((prev) => prev.filter((_, i) => i !== index))
+                            }
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={row.item}
+                          onChange={(e) =>
+                            setAdditionalCharges((prev) =>
+                              prev.map((r, i) => (i === index ? { ...r, item: e.target.value } : r)),
+                            )
+                          }
+                          className={inputClass}
+                          placeholder="Item, e.g. Electricity"
+                        />
+                        <input
+                          type="text"
+                          value={row.amount}
+                          onChange={(e) =>
+                            setAdditionalCharges((prev) =>
+                              prev.map((r, i) => (i === index ? { ...r, amount: e.target.value } : r)),
+                            )
+                          }
+                          className={inputClass}
+                          placeholder="Amount"
+                        />
+                        <input
+                          type="text"
+                          value={row.whenDue}
+                          onChange={(e) =>
+                            setAdditionalCharges((prev) =>
+                              prev.map((r, i) => (i === index ? { ...r, whenDue: e.target.value } : r)),
+                            )
+                          }
+                          className={inputClass}
+                          placeholder="When due"
+                        />
+                        <textarea
+                          value={row.howCalculated}
+                          onChange={(e) =>
+                            setAdditionalCharges((prev) =>
+                              prev.map((r, i) => (i === index ? { ...r, howCalculated: e.target.value } : r)),
+                            )
+                          }
+                          className={inputClass}
+                          rows={2}
+                          placeholder="How calculated (actual cost and reasonable apportionment)"
+                        />
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-[var(--quni-coral)] hover:underline"
+                      onClick={() => setAdditionalCharges((prev) => [...prev, emptyNswT3ChargeRow()])}
+                    >
+                      Add a charge
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div id="section-lister-role" className="space-y-3">
                 <p className="text-sm font-medium text-gray-900">Who is listing this property?</p>
                 <div className="space-y-2">
@@ -4104,13 +4318,13 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <p className={labelClass}>Bond</p>
+                  <p className="text-sm font-medium text-gray-900">{isNswT3Listing ? 'Security deposit' : 'Bond'}</p>
                   <div
                     className="mt-1 grid grid-cols-5 gap-2"
                     role="group"
                     aria-label="Bond weeks"
                   >
-                    {BOND_WEEK_SELECTOR_OPTIONS.map((opt) => {
+                    {BOND_WEEK_SELECTOR_OPTIONS.filter((opt) => opt.value <= bondWeekCap).map((opt) => {
                       const selected = parsedBondWeeks === opt.value
                       return (
                         <button
@@ -4130,10 +4344,14 @@ export default function LandlordPropertyFormPage() {
                     })}
                   </div>
                   <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
-                    Default is {DEFAULT_BOND_WEEKS} weeks. Enter 0 for no bond. Maximum {MAX_BOND_WEEKS} weeks.
+                    {isNswT3Listing
+                      ? `Security deposit. Default is ${DEFAULT_BOND_WEEKS} weeks occupancy fee. Enter 0 for none. Maximum ${bondWeekCap} weeks under the Boarding Houses Act 2012.`
+                      : `Default is ${DEFAULT_BOND_WEEKS} weeks. Enter 0 for no bond. Maximum ${MAX_BOND_WEEKS} weeks.`}
                   </p>
                   {parsedBondWeeks === 0 ? (
-                    <p className="mt-1 text-sm text-gray-700">No bond required.</p>
+                    <p className="mt-1 text-sm text-gray-700">
+                      {isNswT3Listing ? 'No security deposit required.' : 'No bond required.'}
+                    </p>
                   ) : bondPreviewAtListedRent != null ? (
                     <p className="mt-1 text-sm text-gray-800 tabular-nums">
                       At listed rent:{' '}
@@ -4165,7 +4383,7 @@ export default function LandlordPropertyFormPage() {
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Under Queensland law, a bond cannot exceed {MAX_BOND_WEEKS} weeks&apos; rent.
                   </p>
-                ) : (state.trim() || '').toUpperCase() === 'NSW' && bondSuggestedMaxWeeklyRent != null ? (
+                ) : (state.trim() || '').toUpperCase() === 'NSW' && !isNswT3Listing && bondSuggestedMaxWeeklyRent != null ? (
                   <p className="text-xs text-gray-500 leading-relaxed">
                     NSW residential bonds are often up to {MAX_BOND_WEEKS} weeks&apos; rent. At maximum occupancy and
                     extras, that could be up to{' '}
@@ -4181,8 +4399,9 @@ export default function LandlordPropertyFormPage() {
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900">Payee bank details</h3>
                     <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                      Renters pay bond and rent directly to this account by fee-free bank transfer, using their name
-                      and the property address as the reference.
+                      {isNswT3Listing
+                        ? 'Residents pay the security deposit and occupancy fee directly to this account by fee-free bank transfer, using their name and the property address as the reference.'
+                        : 'Renters pay bond and rent directly to this account by fee-free bank transfer, using their name and the property address as the reference.'}
                     </p>
                     {!propertyPayoutDetailsComplete({
                       account_name: payeeAccountName,

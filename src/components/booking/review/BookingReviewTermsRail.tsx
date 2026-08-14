@@ -21,6 +21,7 @@ type BookingRow = Database['public']['Tables']['bookings']['Row']
 export type BookingReviewTermsRailProps = {
   booking: BookingRow
   propertyBondWeeks: number | null
+  maxBondWeeks?: number
   tier: 'listing' | 'managed'
   /** Resolved bond figure for display (property default or booking override). */
   bondDisplayAud: number | null
@@ -50,6 +51,7 @@ function initialsFor(name: string): string {
 export default function BookingReviewTermsRail({
   booking,
   propertyBondWeeks,
+  maxBondWeeks,
   tier,
   bondDisplayAud,
   serviceTierTitle,
@@ -287,6 +289,7 @@ export default function BookingReviewTermsRail({
                   bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
                   rentBreakdown={booking.rent_breakdown}
                   propertyBondWeeks={propertyBondWeeks}
+                  maxBondWeeks={maxBondWeeks}
                   moveInDate={booking.move_in_date}
                   startDate={booking.start_date}
                   leaseLength={booking.lease_length}
@@ -304,6 +307,7 @@ export default function BookingReviewTermsRail({
                   bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
                   rentBreakdown={booking.rent_breakdown}
                   propertyBondWeeks={propertyBondWeeks}
+                  maxBondWeeks={maxBondWeeks}
                   serviceTierAtRequest={booking.service_tier_at_request}
                   onSaved={handleSaved}
                   embedded

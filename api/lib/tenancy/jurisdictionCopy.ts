@@ -15,7 +15,7 @@ export type TenancyAgreementExplainerCopy = {
 
 const AGREEMENT_BY_STATE: Record<
   string,
-  Record<'T1' | 'T2', { headline: string; legislation: string }>
+  Partial<Record<'T1' | 'T2' | 'T3', { headline: string; legislation: string }>>
 > = {
   NSW: {
     T1: {
@@ -25,6 +25,10 @@ const AGREEMENT_BY_STATE: Record<
     T2: {
       headline: 'Legally binding NSW-compliant tenancy agreement',
       legislation: 'Residential Tenancies Act 2010 (NSW)',
+    },
+    T3: {
+      headline: 'Legally binding NSW Standard Occupancy Agreement',
+      legislation: 'Boarding Houses Act 2012 (NSW)',
     },
   },
   QLD: {
@@ -52,11 +56,10 @@ const AGREEMENT_BY_STATE: Record<
 /** Trust callout above DocuSeal signing - null when the listing has no supported package. */
 export function tenancyAgreementExplainerCopy(input: TenancyPackageInput): TenancyAgreementExplainerCopy | null {
   const pkg = resolveTenancyPackage(input)
-  if (!pkg.supported || pkg.tier === 'T3') return null
+  if (!pkg.supported) return null
 
   const state = normalizeAuStateCode(input.state)
-  const tier = pkg.tier as 'T1' | 'T2'
-  const mapped = AGREEMENT_BY_STATE[state]?.[tier]
+  const mapped = AGREEMENT_BY_STATE[state]?.[pkg.tier]
 
   if (mapped) {
     return {
@@ -105,14 +108,21 @@ export function statutoryRentBankTransferCopy(
   }
 }
 
-/** First paragraph on the bond step when the statutory bond scheme does not apply (e.g. NSW T1). */
+/** First paragraph on the bond step when the statutory bond scheme does not apply (e.g. NSW T1 / T3). */
 export function landlordHeldBondIntroParagraph(
   state: string | null | undefined,
   ackAuthorityName: string | null,
+  opts?: { tier?: 'T1' | 'T2' | 'T3' },
 ): string {
   const st = normalizeAuStateCode(state)
   const jurisdiction = st || 'your state'
   const authority = ackAuthorityName ?? 'the relevant state regulator'
+  if (opts?.tier === 'T3') {
+    return (
+      `This occupancy is under the Boarding Houses Act 2012 (NSW). Your security deposit is payable to and held by the proprietor. ` +
+      `It is not lodged with ${authority} (Rental Bonds Online). The deposit cannot exceed two weeks occupancy fee.`
+    )
+  }
   return (
     `As this is a boarding/lodger arrangement, the standard residential tenancy bond scheme may not apply in ${jurisdiction}. ` +
     `Your bond is held directly by your landlord and is not required to be lodged with ${authority}.`

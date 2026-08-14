@@ -157,6 +157,23 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   }
 
   if (propertyType === 'private_room_landlord_off_site' && isRooming) {
+    if (state === 'NSW') {
+      const rules = nswTenancyRules('T3')
+      return {
+        tier: 'T3',
+        supported: true,
+        generator: 'nsw-boarding-house',
+        pdfKind: 'occupancy_agreement',
+        rules,
+        signingPackageName: 'NSW Standard Occupancy Agreement (boarding house)',
+        storagePaths: {
+          draft: 'nsw_boarding_house_occupancy_draft.pdf',
+          signed: 'nsw_boarding_house_occupancy_signed.pdf',
+        },
+        ragState,
+        unsupportedReason: null,
+      }
+    }
     return unsupportedBase('T3', T3_DEFERRED_REASON, ragState)
   }
 
@@ -327,6 +344,7 @@ export function propertyUsesNswFt6600T2FromRow(
 export function tenancyGeneratorToApiPath(generator: string | null): string | null {
   if (generator === 'nsw-ft6600') return '/api/documents/generate-residential-tenancy'
   if (generator === 'nsw-occupancy') return '/api/documents/generate-lease'
+  if (generator === 'nsw-boarding-house') return '/api/documents/generate-nsw-boarding-house'
   if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
   if (generator === 'qld-form18a') return '/api/documents/generate-qld-residential-tenancy'
   if (generator === 'vic-form1') return '/api/documents/generate-vic-residential-rental'

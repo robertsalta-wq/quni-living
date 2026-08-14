@@ -52,6 +52,10 @@ const bundleJobs = [
     inFile: 'src/lib/documents/vic/occupancyGenerator.tsx',
     outFile: 'api/documents/VicOccupancyAgreement.js',
   },
+  {
+    inFile: 'src/lib/documents/nsw/boardingHouse/generator.tsx',
+    outFile: 'api/documents/NswBoardingHouseAgreement.js',
+  },
 ]
 
 for (const { inFile, outFile } of bundleJobs) {

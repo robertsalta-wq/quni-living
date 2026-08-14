@@ -4,7 +4,7 @@ import { absoluteUrl } from '../../lib/site'
 import { generateTenantInviteTokenPair } from '../../lib/tenantInviteToken'
 import { sendTenantInviteEmail } from '../../lib/tenantInviteEmail'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
-import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, parseBondWeeks } from '../../lib/booking/resolveBookingBondAmount'
+import { DEFAULT_BOND_WEEKS, maxBondWeeksForProperty, parseBondWeeks } from '../../lib/booking/resolveBookingBondAmount'
 import { formatTenantInviteFunnelAt, tenantInviteFunnelSummary } from '../../lib/tenantInviteFunnel'
 import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
 import type { Database } from '../../lib/database.types'
@@ -22,6 +22,9 @@ type PropertyForInvite = {
   couple_surcharge_per_week?: number | null
   parking_surcharge_per_week?: number | null
   parking_available?: boolean | null
+  state?: string | null
+  property_type?: string | null
+  is_registered_rooming_house?: boolean | null
 }
 
 type Props = {
@@ -61,6 +64,7 @@ function formatEmailSentAt(iso: string | null | undefined): string | null {
 }
 
 export default function LandlordTenantInviteModal({ open, property, landlordProfileId, onClose }: Props) {
+  const maxBondWeeks = maxBondWeeksForProperty(property)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [note, setNote] = useState('')
@@ -112,13 +116,13 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
 
   function parseBondOfferWeeks(): number | null {
     if (!bondOfferEnabled) return null
-    return parseBondWeeks(bondOfferWeeks)
+    return parseBondWeeks(bondOfferWeeks, maxBondWeeks)
   }
 
   function validateBondOfferFields(): string | null {
     if (!bondOfferEnabled) return null
     const weeks = parseBondOfferWeeks()
-    if (weeks == null) return `Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`
+    if (weeks == null) return `Enter bond weeks from 0 to ${maxBondWeeks}.`
     return null
   }
 
@@ -470,7 +474,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                   id="invite-bond-weeks"
                   type="number"
                   min={0}
-                  max={MAX_BOND_WEEKS}
+                  max={maxBondWeeks}
                   step={1}
                   value={bondOfferWeeks}
                   onChange={(e) => setBondOfferWeeks(e.target.value)}

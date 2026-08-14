@@ -58,6 +58,7 @@ export function nswOccupancySampleProps() {
     documentId: 'nsw-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
     serviceTier: 'listing',
+    platformLegalName: 'Quni Living Pty Ltd',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, Newtown, NSW, 2042' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('NSW', 'Newtown', '2042', 'private_room_landlord_on_site', 'Front bedroom'),
@@ -75,11 +76,64 @@ export function nswOccupancySampleProps() {
   }
 }
 
+export function nswT3BoardingHouseSampleProps() {
+  return {
+    documentId: 'nsw-t3-boarding-house-001',
+    generatedAt: SAMPLE_GENERATED_AT,
+    proprietor: {
+      fullName: 'Alex Proprietor',
+      companyName: null,
+      abn: '12 345 678 901',
+      addressLine: '12 Provider Street, Newtown, NSW, 2042',
+      email: 'alex.proprietor@example.com',
+      phone: '0400111222',
+    },
+    resident: {
+      fullName: 'Jordan Resident',
+      email: 'jordan.resident@example.com',
+      phone: '0411222333',
+      emergencyContactName: 'Sam Resident',
+      emergencyContactPhone: '0411333444',
+    },
+    premises: {
+      addressLine: '45 Brunswick Street, Newtown, NSW, 2042',
+      roomDescription: 'Room 3, first floor rear',
+      furnished: true,
+      sharedAreas: {
+        kitchen: true,
+        bathroom: true,
+        commonRoom: true,
+        laundry: true,
+        other: '',
+      },
+    },
+    term: { ...SHARED_TERM },
+    occupancyFeeWeeklyAud: 420,
+    securityDepositAud: 840,
+    payout: {
+      account_name: 'Alex Proprietor',
+      bsb: '123456',
+      account_number: '987654321',
+    },
+    paymentReference: 'Jordan Resident - 45 Brunswick Street, Newtown, NSW, 2042',
+    houseRules: 'Quiet hours 10pm-7am. Shared kitchen cleaned after use.',
+    additionalCharges: [
+      {
+        item: 'Electricity',
+        amount: 'Actual cost',
+        whenDue: 'Monthly in arrears',
+        howCalculated: 'Proprietor cost of supply, apportioned equally among occupied rooms',
+      },
+    ],
+  }
+}
+
 export function qldOccupancySampleProps() {
   return {
     documentId: 'qld-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
     serviceTier: 'listing',
+    platformLegalName: 'Quni Living Pty Ltd',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, West End, QLD, 4101' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('QLD', 'West End', '4101', 'private_room_landlord_on_site', 'Rear bedroom'),
@@ -102,6 +156,7 @@ export function vicOccupancySampleProps() {
     documentId: 'vic-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
     serviceTier: 'listing',
+    platformLegalName: 'Quni Living Pty Ltd',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, Carlton, VIC, 3053' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('VIC', 'Carlton', '3053', 'private_room_landlord_on_site', 'Bedroom 2 (rear)'),

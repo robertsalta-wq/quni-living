@@ -10,6 +10,7 @@ import {
 import {
   assertBondWithinCap,
   bondAmountAtApplyFromProperty,
+  maxBondWeeksForProperty,
   parseBondWeeks,
 } from './bookingBondAmount.js'
 
@@ -59,7 +60,7 @@ export function applyTenantInviteRentOffer(listingResolved, property, invite, mo
   }
 
   const bondAmount = bondAmountAtApplyFromProperty(property, weeklyRent, invite)
-  const capCheck = assertBondWithinCap(bondAmount, weeklyRent)
+  const capCheck = assertBondWithinCap(bondAmount, weeklyRent, maxBondWeeksForProperty(property))
   if (!capCheck.ok) {
     return {
       ok: false,

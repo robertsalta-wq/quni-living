@@ -72,6 +72,12 @@
     "api/documents/generate-lease.ts": {
       "maxDuration": 60
     },
+    "api/documents/generate-lease.ts": {
+      "maxDuration": 60
+    },
+    "api/documents/generate-nsw-boarding-house.ts": {
+      "maxDuration": 60
+    },
     "api/documents/generate-qld-occupancy.ts": {
       "maxDuration": 60
     },

@@ -4,6 +4,7 @@
 
 import {
   assertBondWithinCap,
+  maxBondWeeksForProperty,
   parseBondWeeks,
   parsePropertyBondAud,
   recomputeBondForAgreedRent,
@@ -150,7 +151,7 @@ export async function buildRentBondPatchSlice(
     }
   }
 
-  const capCheck = assertBondWithinCap(newBondAmount, agreedWeeklyRentAud)
+  const capCheck = assertBondWithinCap(newBondAmount, agreedWeeklyRentAud, maxBondWeeksForProperty(property))
   if (!capCheck.ok) {
     return {
       ok: false,

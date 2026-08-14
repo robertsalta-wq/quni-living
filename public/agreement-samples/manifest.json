@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-09T01:16:18.986Z",
+  "generatedAt": "2026-08-14T03:24:36.598Z",
   "watermark": "SAMPLE - not for execution",
   "samples": [
     {
@@ -22,6 +22,13 @@
       "document": "Quni addendum",
       "fileName": "nsw-t2-quni-addendum.pdf",
       "href": "/agreement-samples/nsw-t2-quni-addendum.pdf"
+    },
+    {
+      "state": "NSW",
+      "tier": "T3",
+      "document": "Standard Occupancy Agreement",
+      "fileName": "nsw-t3-standard-occupancy-agreement.pdf",
+      "href": "/agreement-samples/nsw-t3-standard-occupancy-agreement.pdf"
     },
     {
       "state": "QLD",

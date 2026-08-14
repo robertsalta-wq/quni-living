@@ -72,17 +72,21 @@ describe('resolveTenancyPackage', () => {
       expect(r.generator).toBe('nsw-ft6600')
     })
 
-    it('T3 off_site + rooming house → deferred', () => {
+    it('T3 off_site + rooming house → nsw-boarding-house', () => {
       const r = pkg({
         state: 'NSW',
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: true,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.generator).toBeNull()
-      expect(r.rules).toBeNull()
-      expect(r.unsupportedReason).toMatch(/not available/i)
+      expect(r.generator).toBe('nsw-boarding-house')
+      expect(r.pdfKind).toBe('occupancy_agreement')
+      expect(r.signingPackageName).toBe('NSW Standard Occupancy Agreement (boarding house)')
+      expect(r.rules.bond.schemeApplies).toBe(false)
+      expect(r.storagePaths?.draft).toBe('nsw_boarding_house_occupancy_draft.pdf')
+      expect(r.storagePaths?.signed).toBe('nsw_boarding_house_occupancy_signed.pdf')
+      expect(r.unsupportedReason).toBeNull()
     })
   })
 
@@ -255,6 +259,7 @@ describe('tenancyGeneratorToApiPath', () => {
   it('maps NSW generators', () => {
     expect(tenancyGeneratorToApiPath('nsw-ft6600')).toBe('/api/documents/generate-residential-tenancy')
     expect(tenancyGeneratorToApiPath('nsw-occupancy')).toBe('/api/documents/generate-lease')
+    expect(tenancyGeneratorToApiPath('nsw-boarding-house')).toBe('/api/documents/generate-nsw-boarding-house')
     expect(tenancyGeneratorToApiPath('vic-form1')).toBe('/api/documents/generate-vic-residential-rental')
     expect(tenancyGeneratorToApiPath('vic-occupancy')).toBe('/api/documents/generate-vic-occupancy')
     expect(tenancyGeneratorToApiPath('qld-occupancy')).toBe('/api/documents/generate-qld-occupancy')

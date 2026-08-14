@@ -70,7 +70,7 @@ import {
   resolveLandlordBookingReviewActionCopy,
 } from '../../lib/booking/bookingReviewActionModel'
 import { buildBookingReviewChatThread, initialsOf } from '../../lib/booking/bookingReviewChatThread'
-import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
+import { resolveListingBondAud, maxBondWeeksForProperty } from '../../lib/booking/resolveBookingBondAmount'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { studentDisplayName } from '../../lib/nameResolution'
 import Section from '../../components/ui/Section'
@@ -1443,6 +1443,7 @@ export default function LandlordBookingReviewPage() {
               <BookingReviewTermsRail
                 booking={booking}
                 propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                maxBondWeeks={maxBondWeeksForProperty(property)}
                 tier={isListingApplyBooking ? 'listing' : 'managed'}
                 bondDisplayAud={bondDisplayAud}
                 serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}

@@ -26,6 +26,26 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.body).toContain('Rooming Accommodation Act 2008')
   })
 
+  it('returns NSW T3 boarding-house copy', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'NSW',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: true,
+    })
+    expect(copy?.headline).toContain('Standard Occupancy Agreement')
+    expect(copy?.body).toContain('Boarding Houses Act 2012')
+  })
+
+  it('returns null for QLD T3 (still deferred)', () => {
+    expect(
+      tenancyAgreementExplainerCopy({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: true,
+      }),
+    ).toBeNull()
+  })
+
   it('returns null for unsupported state', () => {
     expect(
       tenancyAgreementExplainerCopy({

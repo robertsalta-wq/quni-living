@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 export type AgreementSampleEntry = {
   state: 'NSW' | 'QLD' | 'VIC'
-  tier: 'T1' | 'T2'
+  tier: 'T1' | 'T2' | 'T3'
   document: string
   fileName: string
   href: string
