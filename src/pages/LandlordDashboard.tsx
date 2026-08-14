@@ -99,6 +99,8 @@ type PropertySummary = Pick<
   | 'property_type'
   | 'property_group_id'
   | 'bedrooms'
+  | 'state'
+  | 'is_registered_rooming_house'
 >
 
 /** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
@@ -338,6 +340,9 @@ type InviteModalProperty = {
   couple_surcharge_per_week?: number | null
   parking_surcharge_per_week?: number | null
   parking_available?: boolean | null
+  state?: string | null
+  property_type?: string | null
+  is_registered_rooming_house?: boolean | null
 }
 
 function readInviteModalFromSession(): InviteModalProperty | null {
@@ -360,6 +365,9 @@ function readInviteModalFromSession(): InviteModalProperty | null {
       couple_surcharge_per_week: parsed.couple_surcharge_per_week ?? null,
       parking_surcharge_per_week: parsed.parking_surcharge_per_week ?? null,
       parking_available: parsed.parking_available ?? null,
+      state: typeof parsed.state === 'string' ? parsed.state : null,
+      property_type: typeof parsed.property_type === 'string' ? parsed.property_type : null,
+      is_registered_rooming_house: Boolean(parsed.is_registered_rooming_house),
     }
   } catch {
     return null
@@ -793,7 +801,7 @@ export default function LandlordDashboard() {
       const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, address, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available, property_type, property_group_id, bedrooms')
+          .select('id, title, slug, rent_per_week, room_type, suburb, address, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available, property_type, property_group_id, bedrooms, state, is_registered_rooming_house')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
@@ -1506,6 +1514,9 @@ export default function LandlordDashboard() {
                 couple_surcharge_per_week: full.couple_surcharge_per_week,
                 parking_surcharge_per_week: full.parking_surcharge_per_week,
                 parking_available: full.parking_available,
+                state: full.state,
+                property_type: full.property_type,
+                is_registered_rooming_house: full.is_registered_rooming_house,
               })
             }}
             toActionListing={(listing) => {

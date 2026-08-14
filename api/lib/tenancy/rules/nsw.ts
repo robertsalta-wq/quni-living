@@ -29,8 +29,21 @@ const NSW_T2_BOND: TenancyBondRules = {
   landlordAckAuthorityName: null,
 }
 
-export function nswTenancyRules(tier: 'T1' | 'T2'): TenancyRules {
-  return {
-    bond: tier === 'T1' ? NSW_T1_BOND : NSW_T2_BOND,
-  }
+const NSW_T3_BOND: TenancyBondRules = {
+  schemeApplies: false,
+  maxBondCopy: null,
+  authority: null,
+  authorityUrl: null,
+  maxBondMonths: null,
+  lodgementDays: null,
+  lodgementDaysUnit: null,
+  receiptDays: null,
+  authorityPublicLabel: null,
+  landlordAckAuthorityName: 'NSW Fair Trading',
+}
+
+export function nswTenancyRules(tier: 'T1' | 'T2' | 'T3'): TenancyRules {
+  if (tier === 'T1') return { bond: NSW_T1_BOND }
+  if (tier === 'T3') return { bond: NSW_T3_BOND }
+  return { bond: NSW_T2_BOND }
 }

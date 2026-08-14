@@ -2,8 +2,13 @@
  * Bond resolution: listing weeks config, invite/acceptance overrides, booking snapshot.
  */
 
+import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+
 /** Statutory cap in weeks for live states (NSW, QLD). VIC multipliers parked. */
 export const MAX_BOND_WEEKS = 4
+
+/** Boarding Houses Act occupancy principle 8: two weeks occupancy fee. */
+export const T3_MAX_SECURITY_DEPOSIT_WEEKS = 2
 
 export const DEFAULT_BOND_WEEKS = 2
 
@@ -27,13 +32,75 @@ export function roundBondAud(n) {
 
 /**
  * @param {unknown} value
+ * @param {number} [maxWeeks]
  * @returns {number | null}
  */
-export function parseBondWeeks(value) {
+export function parseBondWeeks(value, maxWeeks = MAX_BOND_WEEKS) {
   if (value === null || value === undefined || value === '') return null
   const n = Math.floor(Number(value))
-  if (!Number.isFinite(n) || n < 0 || n > MAX_BOND_WEEKS) return null
+  const max = Number.isFinite(Number(maxWeeks)) ? Number(maxWeeks) : MAX_BOND_WEEKS
+  if (!Number.isFinite(n) || n < 0 || n > max) return null
   return n
+}
+
+/**
+ * Weekly equivalent of an occupancy fee (v1 is weekly; month/year supported for later print).
+ * @param {unknown} amount
+ * @param {string} [period]
+ * @returns {number | null}
+ */
+export function occupancyFeeWeeklyEquivalentAud(amount, period = 'week') {
+  const n = Number(amount)
+  if (!Number.isFinite(n) || n <= 0) return null
+  const p = String(period || 'week').toLowerCase()
+  if (p === 'month') return roundBondAud((n * 12) / 52)
+  if (p === 'year') return roundBondAud(n / 52)
+  return roundBondAud(n)
+}
+
+/**
+ * @param {unknown} weeklyEquivalent
+ * @returns {number | null}
+ */
+export function t3SecurityDepositCapAud(weeklyEquivalent) {
+  const w = Number(weeklyEquivalent)
+  if (!Number.isFinite(w) || w <= 0) return null
+  return roundBondAud(T3_MAX_SECURITY_DEPOSIT_WEEKS * w)
+}
+
+/**
+ * @param {unknown} amount
+ * @param {unknown} occupancyFeeAmount
+ * @param {string} [period]
+ * @returns {{ ok: true } | { ok: false; message: string }}
+ */
+export function assertT3SecurityDepositCap(amount, occupancyFeeAmount, period = 'week') {
+  const parsed = parsePropertyBondAud(amount)
+  if (parsed == null) return { ok: true }
+  const weekly = occupancyFeeWeeklyEquivalentAud(occupancyFeeAmount, period)
+  const cap = t3SecurityDepositCapAud(weekly)
+  if (cap != null && parsed > cap) {
+    return {
+      ok: false,
+      message: 'Security deposit exceeds two weeks occupancy fee.',
+    }
+  }
+  return { ok: true }
+}
+
+/**
+ * @param {object | null | undefined} property
+ * @returns {number}
+ */
+export function maxBondWeeksForProperty(property) {
+  if (!property) return MAX_BOND_WEEKS
+  const r = resolveTenancyPackage({
+    state: typeof property.state === 'string' ? property.state : '',
+    property_type: typeof property.property_type === 'string' ? property.property_type : '',
+    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+  })
+  if (r.supported && r.tier === 'T3') return T3_MAX_SECURITY_DEPOSIT_WEEKS
+  return MAX_BOND_WEEKS
 }
 
 /**
@@ -50,16 +117,23 @@ export function maxBondCapAud(weeklyRentAud) {
 /**
  * @param {unknown} bondAmountAud
  * @param {unknown} weeklyRentAud
+ * @param {number} [maxWeeks]
  * @returns {{ ok: true } | { ok: false; message: string }}
  */
-export function assertBondWithinCap(bondAmountAud, weeklyRentAud) {
+export function assertBondWithinCap(bondAmountAud, weeklyRentAud, maxWeeks = MAX_BOND_WEEKS) {
   const amount = parsePropertyBondAud(bondAmountAud)
   if (amount == null) return { ok: true }
-  const cap = maxBondCapAud(weeklyRentAud)
-  if (cap != null && amount > cap) {
+  const rent = Number(weeklyRentAud)
+  if (!Number.isFinite(rent) || rent <= 0) return { ok: true }
+  const weeks = Number.isFinite(Number(maxWeeks)) ? Number(maxWeeks) : MAX_BOND_WEEKS
+  const cap = roundBondAud(weeks * rent)
+  if (amount > cap) {
     return {
       ok: false,
-      message: 'Bond exceeds the four-week statutory cap for this weekly rent.',
+      message:
+        weeks === T3_MAX_SECURITY_DEPOSIT_WEEKS
+          ? 'Security deposit exceeds two weeks occupancy fee.'
+          : 'Bond exceeds the four-week statutory cap for this weekly rent.',
     }
   }
   return { ok: true }

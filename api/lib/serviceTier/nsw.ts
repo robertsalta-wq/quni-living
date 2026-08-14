@@ -15,5 +15,8 @@ export function nswServiceTierAvailability(propertyTier: PropertyTier): ServiceT
   if (propertyTier === 't2') {
     return { listing: 'available', managed: 'gated', notes: 'Managed currently unavailable in NSW Tier 2' }
   }
+  if (propertyTier === 't3') {
+    return { listing: 'available', managed: 'unsupported' }
+  }
   return { listing: 'unsupported', managed: 'unsupported' }
 }

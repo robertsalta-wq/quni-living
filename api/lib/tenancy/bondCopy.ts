@@ -31,17 +31,23 @@ function bondCapFragmentFromBond(bond: TenancyBondRules): string | null {
 export function bondStepRegulatoryCopy(
   bond: TenancyBondRules,
   stateCode: string | null | undefined,
+  opts?: { tier?: 'T1' | 'T2' | 'T3' },
 ): BondRegulatoryCopy {
   const st = normalizeAuStateCode(stateCode) || 'NSW'
 
   if (!bond.schemeApplies) {
+    const t3 = opts?.tier === 'T3'
     return {
       mode: 'landlord_held',
       bondCapFragment: bondCapFragmentFromBond(bond),
       landlordHeldParagraphs: [
-        landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName),
-        'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
-        'Your landlord can generate an official bond receipt through their Quni Living dashboard.',
+        landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName, { tier: opts?.tier }),
+        t3
+          ? 'Get a written receipt when you pay your security deposit, and keep a copy for your records.'
+          : 'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
+        t3
+          ? 'Your proprietor can generate an official receipt through their Quni Living dashboard.'
+          : 'Your landlord can generate an official bond receipt through their Quni Living dashboard.',
       ],
       schemeLeadBeforeBold: '',
       schemeBoldDeadline: '',
@@ -50,7 +56,9 @@ export function bondStepRegulatoryCopy(
       authorityPublicLine: '',
       amberTitle: '',
       amberBody: '',
-      acknowledgementCheckbox: `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`,
+      acknowledgementCheckbox: t3
+        ? `I understand the security deposit is paid directly to the proprietor and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`
+        : `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`,
     }
   }
 

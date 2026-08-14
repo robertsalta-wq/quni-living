@@ -1732,7 +1732,7 @@ export default function Booking() {
     if (!tenancyPackage.supported) {
       return null
     }
-    return bondStepRegulatoryCopy(tenancyPackage.rules.bond, property?.state)
+    return bondStepRegulatoryCopy(tenancyPackage.rules.bond, property?.state, { tier: tenancyPackage.tier })
   }, [tenancyPackage, property?.state])
 
   if (!isSupabaseConfigured) {

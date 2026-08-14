@@ -29,6 +29,13 @@ describe('resolveServiceTierAvailability', () => {
     })
   })
 
+  it('NSW T3 → Listing available, Managed unsupported', () => {
+    expect(resolveServiceTierAvailability('NSW', 't3')).toEqual({
+      listing: 'available',
+      managed: 'unsupported',
+    })
+  })
+
   it('forces Managed gated when managedGloballyEnabled is false', () => {
     expect(resolveServiceTierAvailability('QLD', 't2', { managedGloballyEnabled: false })).toEqual({
       listing: 'available',

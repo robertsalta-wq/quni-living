@@ -1276,6 +1276,9 @@ export interface Database {
           open_to_non_students: boolean
           is_registered_rooming_house: boolean
           rooming_house_registration_number: string | null
+          room_description: string | null
+          shared_areas: Json
+          additional_charges: Json
           house_rules: string | null
           created_at: string
           updated_at: string
@@ -1338,6 +1341,9 @@ export interface Database {
           open_to_non_students?: boolean
           is_registered_rooming_house?: boolean
           rooming_house_registration_number?: string | null
+          room_description?: string | null
+          shared_areas?: Json
+          additional_charges?: Json
           house_rules?: string | null
           created_at?: string
           updated_at?: string
@@ -1399,6 +1405,9 @@ export interface Database {
           open_to_non_students?: boolean
           is_registered_rooming_house?: boolean
           rooming_house_registration_number?: string | null
+          room_description?: string | null
+          shared_areas?: Json
+          additional_charges?: Json
           house_rules?: string | null
           created_at?: string
           updated_at?: string

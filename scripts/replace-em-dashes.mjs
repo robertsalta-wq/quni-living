@@ -20,6 +20,12 @@ const SKIP_DIRS = new Set([
   'scripts/test-official-form-spike',
 ])
 
+const ALLOW_EM_DASH_RELATIVE = new Set([
+  'docs/nsw/boarding-house-occupancy-master.txt',
+  'src/lib/documents/nsw/boardingHouse/lockedText.ts',
+  'api/documents/NswBoardingHouseAgreement.js',
+])
+
 const TEXT_EXT = new Set([
   '.ts',
   '.tsx',
@@ -84,6 +90,9 @@ let remaining = 0
 const remainingFiles = []
 
 for (const file of files) {
+  const rel = path.relative(ROOT, file).replaceAll('\\', '/')
+  if (ALLOW_EM_DASH_RELATIVE.has(rel)) continue
+
   const raw = fs.readFileSync(file, 'utf8')
   if (!raw.includes(EM)) continue
 

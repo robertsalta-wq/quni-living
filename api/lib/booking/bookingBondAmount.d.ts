@@ -1,13 +1,23 @@
 export const MAX_BOND_WEEKS = 4
+export const T3_MAX_SECURITY_DEPOSIT_WEEKS = 2
 export const DEFAULT_BOND_WEEKS = 2
 
 export function parsePropertyBondAud(value: unknown): number | null
 export function roundBondAud(n: number): number
-export function parseBondWeeks(value: unknown): number | null
+export function parseBondWeeks(value: unknown, maxWeeks?: number): number | null
+export function occupancyFeeWeeklyEquivalentAud(amount: unknown, period?: string): number | null
+export function t3SecurityDepositCapAud(weeklyEquivalent: unknown): number | null
+export function assertT3SecurityDepositCap(
+  amount: unknown,
+  occupancyFeeAmount: unknown,
+  period?: string,
+): { ok: true } | { ok: false; message: string }
+export function maxBondWeeksForProperty(property: object | null | undefined): number
 export function maxBondCapAud(weeklyRentAud: unknown): number | null
 export function assertBondWithinCap(
   bondAmountAud: unknown,
   weeklyRentAud: unknown,
+  maxWeeks?: number,
 ): { ok: true } | { ok: false; message: string }
 export function resolveListingBondAud(
   property: object | null | undefined,

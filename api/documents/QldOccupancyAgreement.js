@@ -556,6 +556,412 @@ function buildLicencePlatformEntityDisplay(fields) {
   return display;
 }
 
+// api/lib/tenancy/rules/nsw.ts
+var NSW_T1_BOND = {
+  schemeApplies: false,
+  maxBondCopy: null,
+  authority: null,
+  authorityUrl: null,
+  maxBondMonths: null,
+  lodgementDays: null,
+  lodgementDaysUnit: null,
+  receiptDays: null,
+  authorityPublicLabel: null,
+  landlordAckAuthorityName: "NSW Fair Trading"
+};
+var NSW_T2_BOND = {
+  schemeApplies: true,
+  maxBondCopy: "Under NSW law, bond cannot exceed 4 weeks rent.",
+  authority: "NSW Fair Trading",
+  authorityUrl: "https://www.nsw.gov.au/housing-and-construction/renting",
+  maxBondMonths: 1,
+  lodgementDays: 10,
+  lodgementDaysUnit: "business",
+  receiptDays: 15,
+  authorityPublicLabel: "NSW Fair Trading (Rental Bonds Online)",
+  landlordAckAuthorityName: null
+};
+var NSW_T3_BOND = {
+  schemeApplies: false,
+  maxBondCopy: null,
+  authority: null,
+  authorityUrl: null,
+  maxBondMonths: null,
+  lodgementDays: null,
+  lodgementDaysUnit: null,
+  receiptDays: null,
+  authorityPublicLabel: null,
+  landlordAckAuthorityName: "NSW Fair Trading"
+};
+function nswTenancyRules(tier) {
+  if (tier === "T1") return { bond: NSW_T1_BOND };
+  if (tier === "T3") return { bond: NSW_T3_BOND };
+  return { bond: NSW_T2_BOND };
+}
+
+// api/lib/tenancy/rules/qld.ts
+var QLD_T1_BOND = {
+  schemeApplies: true,
+  maxBondCopy: "Under Queensland law, bond cannot exceed 4 weeks rent.",
+  authority: "Residential Tenancies Authority (RTA Queensland)",
+  authorityUrl: "https://www.rta.qld.gov.au/",
+  maxBondMonths: 1,
+  lodgementDays: 10,
+  lodgementDaysUnit: "calendar",
+  receiptDays: 15,
+  authorityPublicLabel: "Residential Tenancies Authority (RTA)",
+  landlordAckAuthorityName: null
+};
+var QLD_T2_BOND = {
+  schemeApplies: true,
+  maxBondCopy: "Under Queensland law, bond cannot exceed 4 weeks rent.",
+  authority: "Residential Tenancies Authority (RTA Queensland)",
+  authorityUrl: "https://www.rta.qld.gov.au/",
+  maxBondMonths: 1,
+  lodgementDays: 10,
+  lodgementDaysUnit: "calendar",
+  receiptDays: 15,
+  authorityPublicLabel: "Residential Tenancies Authority (RTA)",
+  landlordAckAuthorityName: null
+};
+function qldTenancyRules(tier) {
+  return {
+    bond: tier === "T1" ? QLD_T1_BOND : QLD_T2_BOND
+  };
+}
+
+// api/lib/tenancy/rules/vic.ts
+var VIC_T1_BOND = {
+  schemeApplies: false,
+  maxBondCopy: null,
+  authority: null,
+  authorityUrl: null,
+  maxBondMonths: null,
+  lodgementDays: null,
+  lodgementDaysUnit: null,
+  receiptDays: null,
+  authorityPublicLabel: null,
+  landlordAckAuthorityName: "Residential Tenancies Bond Authority (RTBA)"
+};
+var VIC_T2_BOND = {
+  schemeApplies: true,
+  maxBondCopy: null,
+  authority: "RTBA",
+  authorityUrl: "https://www.rtba.vic.gov.au/",
+  maxBondMonths: 1,
+  lodgementDays: 10,
+  lodgementDaysUnit: "business",
+  receiptDays: 15,
+  authorityPublicLabel: "Residential Tenancies Bond Authority (RTBA)",
+  landlordAckAuthorityName: null
+};
+function vicTenancyRules(tier) {
+  return {
+    bond: tier === "T1" ? VIC_T1_BOND : VIC_T2_BOND
+  };
+}
+
+// api/lib/resolveTenancyPackage.ts
+var T3_DEFERRED_REASON = "Rooming/boarding house (T3) tenancy agreements are not available on the platform yet.";
+function nswFt6600Paths() {
+  return {
+    draft: "nsw_residential_tenancy_agreement_draft.pdf",
+    signed: "nsw_residential_tenancy_agreement_signed.pdf"
+  };
+}
+function qldForm18aPaths() {
+  return {
+    draft: "qld_form18a_general_tenancy_agreement_draft.pdf",
+    signed: "qld_form18a_general_tenancy_agreement_signed.pdf"
+  };
+}
+function vicForm1Paths() {
+  return {
+    draft: "vic_residential_rental_agreement_draft.pdf",
+    signed: "vic_residential_rental_agreement_signed.pdf"
+  };
+}
+function vicOccupancyPaths() {
+  return {
+    draft: "vic_occupancy_agreement_draft.pdf",
+    signed: "vic_occupancy_agreement_signed.pdf"
+  };
+}
+function qldOccupancyPaths() {
+  return {
+    draft: "qld_occupancy_agreement_draft.pdf",
+    signed: "qld_occupancy_agreement_signed.pdf"
+  };
+}
+function unsupportedBase(tier, reason, ragState) {
+  return {
+    tier,
+    supported: false,
+    generator: null,
+    pdfKind: null,
+    rules: null,
+    signingPackageName: null,
+    storagePaths: null,
+    ragState,
+    unsupportedReason: reason
+  };
+}
+function resolveTenancyPackage(input) {
+  void input.date;
+  const stateRaw = typeof input.state === "string" ? input.state.trim().toUpperCase() : "";
+  const propertyType = typeof input.property_type === "string" ? input.property_type.trim() : "";
+  const isRooming = Boolean(input.is_registered_rooming_house);
+  if (stateRaw !== "NSW" && stateRaw !== "VIC" && stateRaw !== "QLD") {
+    return unsupportedBase("T2", "unsupported_state", null);
+  }
+  const state = stateRaw;
+  const ragState = state;
+  if (!propertyType) {
+    return unsupportedBase("T2", "unknown_property_type", ragState);
+  }
+  const knownTypes = /* @__PURE__ */ new Set([
+    "private_room_landlord_on_site",
+    "private_room_landlord_off_site",
+    "entire_property",
+    "shared_room"
+  ]);
+  if (!knownTypes.has(propertyType)) {
+    return unsupportedBase("T2", "unknown_property_type", ragState);
+  }
+  if (isRooming && propertyType !== "private_room_landlord_off_site") {
+    return unsupportedBase(
+      "T2",
+      "Registered rooming house is only valid for private room (landlord off-site) listings.",
+      ragState
+    );
+  }
+  if (propertyType === "private_room_landlord_off_site" && isRooming) {
+    if (state === "NSW") {
+      const rules = nswTenancyRules("T3");
+      return {
+        tier: "T3",
+        supported: true,
+        generator: "nsw-boarding-house",
+        pdfKind: "occupancy_agreement",
+        rules,
+        signingPackageName: "NSW Standard Occupancy Agreement (boarding house)",
+        storagePaths: {
+          draft: "nsw_boarding_house_occupancy_draft.pdf",
+          signed: "nsw_boarding_house_occupancy_signed.pdf"
+        },
+        ragState,
+        unsupportedReason: null
+      };
+    }
+    return unsupportedBase("T3", T3_DEFERRED_REASON, ragState);
+  }
+  if (propertyType === "private_room_landlord_on_site" && !isRooming) {
+    if (state === "NSW") {
+      const rules2 = nswTenancyRules("T1");
+      return {
+        tier: "T1",
+        supported: true,
+        generator: "nsw-occupancy",
+        pdfKind: "occupancy_agreement",
+        rules: rules2,
+        signingPackageName: "NSW Residential Occupancy Agreement",
+        storagePaths: null,
+        ragState,
+        unsupportedReason: null
+      };
+    }
+    if (state === "QLD") {
+      const rules2 = qldTenancyRules("T1");
+      return {
+        tier: "T1",
+        supported: true,
+        generator: "qld-occupancy",
+        pdfKind: "occupancy_agreement",
+        rules: rules2,
+        signingPackageName: "QLD occupancy agreement",
+        storagePaths: qldOccupancyPaths(),
+        ragState,
+        unsupportedReason: null
+      };
+    }
+    const rules = vicTenancyRules("T1");
+    return {
+      tier: "T1",
+      supported: true,
+      generator: "vic-occupancy",
+      pdfKind: "occupancy_agreement",
+      rules,
+      signingPackageName: "VIC Licence to Occupy",
+      storagePaths: vicOccupancyPaths(),
+      ragState,
+      unsupportedReason: null
+    };
+  }
+  if ((propertyType === "private_room_landlord_off_site" || propertyType === "entire_property" || propertyType === "shared_room") && !isRooming) {
+    if (state === "NSW") {
+      const rules2 = nswTenancyRules("T2");
+      return {
+        tier: "T2",
+        supported: true,
+        generator: "nsw-ft6600",
+        pdfKind: "residential_tenancy_agreement",
+        rules: rules2,
+        signingPackageName: "NSW Residential Tenancy Agreement (FT6600)",
+        storagePaths: nswFt6600Paths(),
+        ragState,
+        unsupportedReason: null
+      };
+    }
+    if (state === "QLD") {
+      const rules2 = qldTenancyRules("T2");
+      return {
+        tier: "T2",
+        supported: true,
+        generator: "qld-form18a",
+        pdfKind: "residential_tenancy_agreement",
+        rules: rules2,
+        signingPackageName: "QLD Form 18a - General Tenancy Agreement",
+        storagePaths: qldForm18aPaths(),
+        ragState,
+        unsupportedReason: null
+      };
+    }
+    const rules = vicTenancyRules("T2");
+    return {
+      tier: "T2",
+      supported: true,
+      generator: "vic-form1",
+      pdfKind: "residential_rental_agreement",
+      rules,
+      signingPackageName: "VIC Form 1 - Residential rental agreement",
+      storagePaths: vicForm1Paths(),
+      ragState,
+      unsupportedReason: null
+    };
+  }
+  return unsupportedBase("T2", "unknown_property_type", ragState);
+}
+
+// api/lib/tenancy/jurisdictionCopy.ts
+function normalizeAuStateCode(state) {
+  return (state ?? "").trim().toUpperCase();
+}
+
+// api/lib/tenancy/qldBondRemittance.ts
+function effectiveQldBondRemittancePreference(raw) {
+  return raw ?? "tenant_choice";
+}
+
+// api/lib/tenancy/qldRtaBondCopy.ts
+var QLD_RTA_LODGEMENT_STEPS = [
+  "Record bond receipt on Quni (this is not RTA lodgement).",
+  "Lodge with RTA Web Services (Queensland Digital Identity required) or paper Form 2 - see rta.qld.gov.au.",
+  "Once payment clears, RTA issues an Acknowledgement of Rental Bond (bond number) to both parties - keep this confirmation."
+];
+
+// src/lib/propertyPayoutDetails.ts
+function propertyPayoutDetailsComplete(p) {
+  return Boolean(p?.account_name?.trim() && p?.bsb?.trim() && p?.account_number?.trim());
+}
+function formatPropertyPayoutBsbDisplay(raw) {
+  const digits = (raw ?? "").replace(/[\s-]/g, "");
+  if (digits.length !== 6) return raw.trim();
+  return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+}
+
+// api/lib/tenancy/listingBondPaymentCopy.ts
+function lodgementDeadlinePhrase(bond) {
+  const unit = bond.lodgementDaysUnit === "calendar" ? "days" : "business days";
+  return `${bond.lodgementDays} ${unit}`;
+}
+var NSW_TENANT_RBO_URL = "https://www.nsw.gov.au/housing-and-construction/renting/rental-bonds";
+function hostPayeeFieldsFromOptions(options) {
+  const p = options?.payee;
+  if (!p || !propertyPayoutDetailsComplete(p)) {
+    return {
+      hostPayeeAccountName: null,
+      hostPayeeBsbDisplay: null,
+      hostPayeeAccountNumber: null,
+      paymentReference: null
+    };
+  }
+  return {
+    hostPayeeAccountName: p.account_name.trim(),
+    hostPayeeBsbDisplay: formatPropertyPayoutBsbDisplay(p.bsb),
+    hostPayeeAccountNumber: p.account_number.trim(),
+    paymentReference: options?.paymentReference?.trim() || null
+  };
+}
+function buildHostStepProse(g) {
+  const prefSuffix = g.preferLandlordCollection ? " (your host's stated preference)" : "";
+  let content = `Pay your host directly${prefSuffix}`;
+  if (g.hostPayeeAccountName && g.hostPayeeBsbDisplay && g.hostPayeeAccountNumber && g.paymentReference) {
+    content += ` by fee-free bank transfer: Account name: ${g.hostPayeeAccountName}; BSB: ${g.hostPayeeBsbDisplay}; Account number: ${g.hostPayeeAccountNumber}; Reference: ${g.paymentReference}.`;
+  } else {
+    content += " (bank transfer, cash, or as agreed)";
+  }
+  content += ` They must lodge with ${g.authorityLabel} within ${g.lodgementDeadlinePhrase} and give you a receipt.`;
+  if (g.hostPayeeAccountName && g.paymentReference) {
+    content += " You may also pay by cash or another method as agreed with your host.";
+  }
+  return content;
+}
+function buildAuthorityStepProse(g) {
+  const offeredFirst = g.preferLandlordCollection ? "" : " (offered first)";
+  return `Pay through ${g.authorityLabel}${offeredFirst}: ${g.directPayLinkLabel} (${g.directPayLinkUrl}).`;
+}
+function listingBondPaymentOccupancyProse(bond, stateCode, options) {
+  const g = listingBondPaymentTenantGuidance(bond, stateCode, options);
+  if (!g) return null;
+  const hostStep = buildHostStepProse(g);
+  const authorityStep = buildAuthorityStepProse(g);
+  const routeBullets = g.preferLandlordCollection ? [hostStep, authorityStep] : [authorityStep, hostStep];
+  const paragraphs = [];
+  if (g.directPayNote && (g.preferLandlordCollection || g.stateLabel === "QLD")) {
+    paragraphs.push(g.directPayNote);
+  }
+  if (g.stateLabel === "QLD") {
+    paragraphs.push("QLD - after bond is received or paid:");
+  }
+  const qldLodgementBullets = g.stateLabel === "QLD" ? [...QLD_RTA_LODGEMENT_STEPS] : [];
+  const offenceNote = g.stateLabel === "QLD" ? "Not lodging bond within 10 days, or keeping it in a personal account, is an offence under Queensland law. A bond is not compulsory - rent in advance is a lawful alternative." : void 0;
+  return {
+    paragraphs,
+    bullets: [...routeBullets, ...qldLodgementBullets],
+    offenceNote
+  };
+}
+function listingBondPaymentTenantGuidance(bond, stateCode, options) {
+  if (!bond.schemeApplies) return null;
+  const st = normalizeAuStateCode(stateCode) || "NSW";
+  const qldPref = st === "QLD" ? effectiveQldBondRemittancePreference(options?.qldBondRemittancePreference) : null;
+  const preferLandlordCollection = qldPref === "landlord_collects_remits";
+  const directPayNote = st === "NSW" ? "For Rental Bonds Online, your host must send you an RBO invitation email first. You can then pay by card or BPAY. Your host cannot require you to use RBO only." : st === "QLD" ? preferLandlordCollection ? "Your host prefers to collect bond and lodge with the RTA on your behalf within 10 days. You can still lodge directly with the RTA (Web Services / QDI or Form 2) if you prefer - Quni does not block that." : "You can lodge and pay bond through the RTA web service (QDI required) or paper Form 2, or pay your host directly - it is your choice." : "You can pay bond through the state bond authority\u2019s online service where available, or pay your host directly - it is your choice.";
+  return {
+    schemeApplies: true,
+    stateLabel: st,
+    authorityLabel: bond.authorityPublicLabel,
+    authorityUrl: bond.authorityUrl,
+    lodgementDeadlinePhrase: lodgementDeadlinePhrase(bond),
+    directPayNote,
+    directPayLinkLabel: st === "NSW" ? "NSW Rental Bonds Online (tenants)" : bond.authorityPublicLabel,
+    directPayLinkUrl: st === "NSW" ? NSW_TENANT_RBO_URL : bond.authorityUrl,
+    qldRemittancePreference: qldPref,
+    preferLandlordCollection,
+    ...hostPayeeFieldsFromOptions(options)
+  };
+}
+function listingLandlordHeldPayeeOccupancyLines(payee, paymentReference) {
+  if (!propertyPayoutDetailsComplete(payee)) return null;
+  return [
+    `Account name: ${payee.account_name.trim()}`,
+    `BSB: ${formatPropertyPayoutBsbDisplay(payee.bsb)}`,
+    `Account number: ${payee.account_number.trim()}`,
+    `Reference: ${paymentReference.trim()}`,
+    "Method: Fee-free bank transfer."
+  ];
+}
+
 // src/lib/documents/licenceOccupy/utils.ts
 function licenceTerminationNoticePhrase(paymentMethod) {
   const m = paymentMethod.toLowerCase();
@@ -580,6 +986,44 @@ function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisp
     return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the ${party} before payout to the ${party}, as disclosed in the ${party} service agreement and listing terms.`;
   }
   return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`;
+}
+function occupancyClause11BankDetailsIntro(content, props) {
+  if (!props.payout || !props.paymentReference?.trim()) {
+    return content.bankDetailsTemplate;
+  }
+  const scope = props.schemeApplies === true ? "the weekly licence fee" : "the weekly licence fee and security deposit";
+  return `Direct credit details for payment of ${scope} are set out below and are also shown on the Platform and in booking correspondence.`;
+}
+function occupancyClause11PayeeLines(props) {
+  if (!props.payout || !props.paymentReference?.trim()) return [];
+  return listingLandlordHeldPayeeOccupancyLines(props.payout, props.paymentReference) ?? [];
+}
+function occupancyFinancialTermsPayeeNote(props) {
+  if (!props.payout) return null;
+  return "The weekly licence fee is paid to the account set out in clause 11.";
+}
+function occupancyBondSectionPayeeNote(props) {
+  if (!props.payout || props.schemeApplies === true) return null;
+  return "Any security deposit under this licence is paid to the same account set out in clause 11.";
+}
+function occupancyQldBondPaymentSupplement(props) {
+  if (props.schemeApplies !== true) return null;
+  if (props.bond.amount == null || !Number.isFinite(props.bond.amount) || props.bond.amount <= 0) {
+    return null;
+  }
+  const propertyType = props.premises.propertyType ?? "";
+  const pkg = resolveTenancyPackage({
+    state: "QLD",
+    property_type: propertyType,
+    is_registered_rooming_house: false,
+    date: props.term.startDate || void 0
+  });
+  if (!pkg.supported) return null;
+  return listingBondPaymentOccupancyProse(pkg.rules.bond, "QLD", {
+    qldBondRemittancePreference: props.qldBondRemittancePreference ?? void 0,
+    payee: props.payout ?? void 0,
+    paymentReference: props.paymentReference
+  });
 }
 
 // src/lib/documents/licenceOccupy/docusealTags.ts
@@ -765,6 +1209,11 @@ function LicenceOccupyDocument({
   const serviceTier = props.serviceTier === "managed" ? "managed" : "listing";
   const hasExtraTerms = extraLines.length > 0;
   const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0;
+  const financialTermsPayeeNote = occupancyFinancialTermsPayeeNote(props);
+  const bondSectionPayeeNote = occupancyBondSectionPayeeNote(props);
+  const clause11BankIntro = occupancyClause11BankDetailsIntro(content, props);
+  const clause11PayeeLines = occupancyClause11PayeeLines(props);
+  const qldBondSupplement = occupancyQldBondPaymentSupplement(props);
   const conditionReportClauseNum = 12;
   const continuationClauseNum = hasContinuation ? 13 : null;
   const additionalTermsClauseNum = hasContinuation ? 14 : 13;
@@ -818,12 +1267,21 @@ function LicenceOccupyDocument({
         " in advance, by the payment method stated in the schedule: ",
         rent.paymentMethod
       ] }),
+      financialTermsPayeeNote ? /* @__PURE__ */ jsx2(BodyParagraph, { children: financialTermsPayeeNote }) : null,
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.utilitiesDefault }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 5, title: content.bond.sectionTitle }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bond.intro }),
+      bondSectionPayeeNote ? /* @__PURE__ */ jsx2(BodyParagraph, { children: bondSectionPayeeNote }) : null,
       /* @__PURE__ */ jsx2(BodyParagraph, { children: bondAmountLine }),
       content.bond.bullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `b-${i}`)),
-      content.bond.afterBullets?.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `ba-${i}`))
+      content.bond.afterBullets?.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `ba-${i}`)),
+      qldBondSupplement ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: "Bond payment - your choice:" }),
+        qldBondSupplement.bullets.slice(0, 2).map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `qld-route-${i}`)),
+        qldBondSupplement.paragraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `qld-p-${i}`)),
+        qldBondSupplement.bullets.slice(2).map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `qld-step-${i}`)),
+        qldBondSupplement.offenceNote ? /* @__PURE__ */ jsx2(BodyParagraph, { children: qldBondSupplement.offenceNote }) : null
+      ] }) : null
     ] }),
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: terminationSectionTitle }),
@@ -863,7 +1321,8 @@ function LicenceOccupyDocument({
         partyLabel
       ) }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.feeFreeBankTransfer }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bankDetailsTemplate })
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: clause11BankIntro }),
+      clause11PayeeLines.map((line, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: line }, `payee-${i}`))
     ] }),
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: conditionReportClauseNum, title: "Condition report" }),
@@ -977,7 +1436,7 @@ var QLD_LICENCE_OCCUPY_CONTENT = {
     sectionTitle: "Bond (RTA lodgement)",
     intro: "Where a bond is required under this licence, it must not exceed the equivalent of four (4) weeks' licence fee. The bond must be lodged with the Residential Tenancies Authority (RTA Queensland) and may be lodged either by the resident directly through RTA Web Services, or by the Principal within 10 days of receiving it.",
     bullets: [
-      "The bond is held by the RTA \u2014 not by the Principal and not by Quni; where Quni's payment facilities are used, Quni acts only as a conduit for transmission and is never the custodian of any bond.",
+      "The bond is held by the RTA - not by the Principal and not by Quni; where Quni's payment facilities are used, Quni acts only as a conduit for transmission and is never the custodian of any bond.",
       "The resident should retain evidence of bond payment and official RTA lodgement confirmation.",
       "At the end of the occupancy the bond is dealt with through the RTA's Refund of Rental Bond process."
     ],
@@ -1031,7 +1490,7 @@ var QLD_LICENCE_OCCUPY_CONTENT = {
   ],
   disputesParagraph: "",
   disputesParagraphs: [
-    "The parties will attempt in good faith to resolve any dispute under this licence by discussion before taking any other step. Where a bond has been lodged with the RTA, the parties acknowledge that any dispute about that bond is dealt with through the RTA's dispute resolution service and, if unresolved, the Queensland Civil and Administrative Tribunal, and nothing in this licence purports to exclude that process. For all other matters arising under this licence \u2014 this being a boarder/lodger arrangement to which the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) does not apply \u2014 the parties' rights and remedies are governed by the general law, and nothing in this licence submits those matters to the Tribunal's residential-tenancy jurisdiction or the RTA's tenancy dispute process. Nothing in this clause limits any right or remedy a party has at law or in equity, or any statutory right that cannot lawfully be excluded."
+    "The parties will attempt in good faith to resolve any dispute under this licence by discussion before taking any other step. Where a bond has been lodged with the RTA, the parties acknowledge that any dispute about that bond is dealt with through the RTA's dispute resolution service and, if unresolved, the Queensland Civil and Administrative Tribunal, and nothing in this licence purports to exclude that process. For all other matters arising under this licence - this being a boarder/lodger arrangement to which the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) does not apply - the parties' rights and remedies are governed by the general law, and nothing in this licence submits those matters to the Tribunal's residential-tenancy jurisdiction or the RTA's tenancy dispute process. Nothing in this clause limits any right or remedy a party has at law or in equity, or any statutory right that cannot lawfully be excluded."
   ],
   conditionReportIntro: "",
   conditionReportReturn: "",
@@ -1039,7 +1498,7 @@ var QLD_LICENCE_OCCUPY_CONTENT = {
   conditionReportParagraphs: [
     "The Principal will prepare an ingoing condition report for the allocated room or space and shared areas, supported by photographs, at or before the start of the licence. The resident will be given a reasonable opportunity to review and comment on the report and to attach their own photographs where appropriate.",
     "The resident should return a signed copy or written comments within the timeframe notified by the Principal or the Platform, failing which the report may be taken as accepted except for manifest errors or items the resident could not reasonably have inspected. At the end of the licence, an outgoing condition report will be used to compare the state of the allocated room or space and shared areas with the ingoing report, fair wear and tear excepted.",
-    "Where a bond has been lodged, any claim by the Principal against the bond for loss, damage or unpaid weekly licence fees must be supported by the ingoing and outgoing condition reports and photographs provided to the resident, and is dealt with through the RTA's Refund of Rental Bond process and dispute resolution service described in clause 5 and the additional terms \u2014 not by deduction from amounts held by the Principal. Where no bond has been taken, the Principal may recover any such loss, damage or unpaid weekly licence fees from the resident as a debt, supported by the same condition reports and photographs."
+    "Where a bond has been lodged, any claim by the Principal against the bond for loss, damage or unpaid weekly licence fees must be supported by the ingoing and outgoing condition reports and photographs provided to the resident, and is dealt with through the RTA's Refund of Rental Bond process and dispute resolution service described in clause 5 and the additional terms - not by deduction from amounts held by the Principal. Where no bond has been taken, the Principal may recover any such loss, damage or unpaid weekly licence fees from the resident as a debt, supported by the same condition reports and photographs."
   ],
   continuationParagraphs: [
     "If neither party gives written notice to end this licence before the expiry of the fixed period, the licence continues on a periodic weekly basis on the same terms and conditions.",

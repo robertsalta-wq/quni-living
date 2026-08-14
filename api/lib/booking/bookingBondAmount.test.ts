@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assertT3SecurityDepositCap,
   bondAmountAtApplyFromProperty,
   maxBondCapAud,
+  occupancyFeeWeeklyEquivalentAud,
   parsePropertyBondAud,
   recomputeBondForAgreedRent,
   resolveBookingBondAmountAud,
   resolveInviteBondAud,
   resolveListingBondAud,
+  t3SecurityDepositCapAud,
 } from './bookingBondAmount.js'
 
 const weeksProperty = {
@@ -78,5 +81,35 @@ describe('maxBondCapAud', () => {
 describe('parsePropertyBondAud', () => {
   it('returns null for zero', () => {
     expect(parsePropertyBondAud(0)).toBeNull()
+  })
+})
+
+describe('T3 security deposit cap', () => {
+  it('allows two times the weekly equivalent', () => {
+    expect(t3SecurityDepositCapAud(350)).toBe(700)
+    expect(assertT3SecurityDepositCap(700, 350, 'week').ok).toBe(true)
+  })
+
+  it('blocks one dollar over two weeks', () => {
+    const r = assertT3SecurityDepositCap(701, 350, 'week')
+    expect(r.ok).toBe(false)
+  })
+
+  it('blocks four weeks on T3', () => {
+    const r = assertT3SecurityDepositCap(1400, 350, 'week')
+    expect(r.ok).toBe(false)
+  })
+
+  it('caps monthly input at two times weekly equivalent, not two times monthly', () => {
+    const weeklyEq = occupancyFeeWeeklyEquivalentAud(1400, 'month')
+    expect(weeklyEq).not.toBeNull()
+    const cap = t3SecurityDepositCapAud(weeklyEq)
+    expect(cap).toBeLessThan(2 * 1400)
+    expect(assertT3SecurityDepositCap(cap, 1400, 'month').ok).toBe(true)
+    expect(assertT3SecurityDepositCap((cap ?? 0) + 1, 1400, 'month').ok).toBe(false)
+  })
+
+  it('allows a nil deposit', () => {
+    expect(assertT3SecurityDepositCap(null, 350, 'week').ok).toBe(true)
   })
 })

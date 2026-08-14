@@ -25,6 +25,10 @@ import {
   preflightVicOccupancyListingTenancy,
   runVicOccupancyListingTenancy,
 } from './vicOccupancy.js'
+import {
+  preflightNswBoardingHouseListingTenancy,
+  runNswBoardingHouseListingTenancy,
+} from './nswBoardingHouse.js'
 
 export type ListingTenancyGeneratorModule = {
   preflight: (
@@ -62,6 +66,10 @@ const REGISTRY: Record<string, ListingTenancyGeneratorModule> = {
   'vic-occupancy': {
     preflight: preflightVicOccupancyListingTenancy,
     run: runVicOccupancyListingTenancy,
+  },
+  'nsw-boarding-house': {
+    preflight: preflightNswBoardingHouseListingTenancy,
+    run: runNswBoardingHouseListingTenancy,
   },
 }
 

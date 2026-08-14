@@ -90,6 +90,10 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
     date: moveInRaw,
   })
   const schemeApplies = pkg.supported && pkg.rules.bond.schemeApplies
+  const isT3 = pkg.supported && pkg.tier === 'T3'
+  const depositLabel = isT3 ? 'Security deposit' : 'Bond'
+  const payeeLabel = isT3 ? 'proprietor' : 'host'
+  const occupancyFeeLabel = isT3 ? 'occupancy fee' : 'rent'
 
   const bondAmountAud = resolveBookingBondAmountAud(
     booking.bond_amount,
@@ -113,7 +117,13 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
   const showUpfrontTotal = isBondPending && showBondSection && hasBond && hasWeeklyRent
   const addressLine = propertyAddressLine(property)
   const paymentReference = `${renterDisplayName.trim()} - ${addressLine}`.trim()
-  const heading = showBondSection ? 'How to pay your bond and rent' : 'How to pay your rent'
+  const heading = showBondSection
+    ? isT3
+      ? 'How to pay your security deposit and occupancy fee'
+      : 'How to pay your bond and rent'
+    : isT3
+      ? 'How to pay your occupancy fee'
+      : 'How to pay your rent'
 
   return (
     <div
@@ -123,31 +133,31 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
       <p className="font-semibold leading-snug">{heading}</p>
       <p className="text-xs leading-relaxed text-indigo-900/95">
         {showBondSection
-          ? 'Pay your host directly by fee-free bank transfer. Use the reference below so they can match your payment.'
-          : 'Pay your rent to your host by fee-free bank transfer. Use the reference below so they can match your payment.'}
+          ? `Pay your ${payeeLabel} directly by fee-free bank transfer. Use the reference below so they can match your payment.`
+          : `Pay your ${occupancyFeeLabel} to your ${payeeLabel} by fee-free bank transfer. Use the reference below so they can match your payment.`}
       </p>
       {showBondSection ? (
         <p>
-          <span className="font-semibold">Bond:</span> {formatAud(bondAmountAud)} due by{' '}
+          <span className="font-semibold">{depositLabel}:</span> {formatAud(bondAmountAud)} due by{' '}
           <span className="font-semibold">{bondDeadlineLabel}</span>.
         </p>
       ) : null}
       {isBondPending && hasWeeklyRent ? (
         <p>
-          <span className="font-semibold">First week&apos;s rent:</span> {formatAud(weeklyRentAud)}, due by your
+          <span className="font-semibold">First week&apos;s {occupancyFeeLabel}:</span> {formatAud(weeklyRentAud)}, due by your
           move-in date (<span className="font-semibold">{moveInLabel}</span>).
         </p>
       ) : null}
       {showUpfrontTotal ? (
         <p>
           Up front you&apos;ll need{' '}
-          <span className="font-semibold">{formatAud(bondAmountAud! + weeklyRentAud!)} in total</span> - bond{' '}
+          <span className="font-semibold">{formatAud(bondAmountAud! + weeklyRentAud!)} in total</span> - {depositLabel.toLowerCase()}{' '}
           {formatAud(bondAmountAud)} (by <span className="font-semibold">{bondDeadlineLabel}</span>) and your first
-          week&apos;s rent {formatAud(weeklyRentAud)} (by <span className="font-semibold">{moveInLabel}</span>).
+          week&apos;s {occupancyFeeLabel} {formatAud(weeklyRentAud)} (by <span className="font-semibold">{moveInLabel}</span>).
         </p>
       ) : null}
       <p>
-        <span className="font-semibold">Rent:</span> {formatAud(weeklyRentAud)} per week, paid weekly in advance from
+        <span className="font-semibold">{isT3 ? 'Occupancy fee' : 'Rent'}:</span> {formatAud(weeklyRentAud)} per week, paid weekly in advance from
         your move-in date (<span className="font-semibold">{moveInLabel}</span>).
       </p>
       <div>

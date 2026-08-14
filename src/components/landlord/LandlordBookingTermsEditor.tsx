@@ -17,6 +17,7 @@ export type LandlordBookingTermsEditorProps = {
   bondAmount: number | null | undefined
   rentBreakdown: unknown
   propertyBondWeeks?: number | null
+  maxBondWeeks?: number
   moveInDate: string | null | undefined
   startDate: string | null | undefined
   leaseLength: string | null | undefined
@@ -70,6 +71,7 @@ export default function LandlordBookingTermsEditor({
   bondAmount,
   rentBreakdown,
   propertyBondWeeks,
+  maxBondWeeks = MAX_BOND_WEEKS,
   moveInDate,
   startDate,
   leaseLength,
@@ -154,13 +156,13 @@ export default function LandlordBookingTermsEditor({
       return bondAmount != null ? Number(bondAmount) : null
     }
     if (bondOverrideEnabled) {
-      const weeks = parseBondWeeks(bondOverrideWeeks)
+      const weeks = parseBondWeeks(bondOverrideWeeks, maxBondWeeks)
       if (weeks == null) return null
       return resolveListingBondAud({ bond_weeks: weeks }, rent)
     }
     if (bondAmount != null) return Number(bondAmount)
     return resolveListingBondAud({ bond_weeks: propertyBondWeeks }, rent)
-  }, [bondAmount, bondOverrideEnabled, bondOverrideWeeks, propertyBondWeeks, weeklyRentInput])
+  }, [bondAmount, bondOverrideEnabled, bondOverrideWeeks, maxBondWeeks, propertyBondWeeks, weeklyRentInput])
 
   const signingBlocked =
     leaseGate?.any_party_signed === true || leaseGate?.state === 'fully_signed'
@@ -212,9 +214,9 @@ export default function LandlordBookingTermsEditor({
     }
 
     if (bondOverrideEnabled) {
-      const weeks = parseBondWeeks(bondOverrideWeeks)
+      const weeks = parseBondWeeks(bondOverrideWeeks, maxBondWeeks)
       if (weeks == null) {
-        setError(`Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`)
+        setError(`Enter bond weeks from 0 to ${maxBondWeeks}.`)
         return
       }
       patch.bondOverride = { enabled: true, weeks }
@@ -441,7 +443,7 @@ export default function LandlordBookingTermsEditor({
               id="terms-bond-weeks"
               type="number"
               min={0}
-              max={MAX_BOND_WEEKS}
+              max={maxBondWeeks}
               step={1}
               value={bondOverrideWeeks}
               onChange={(e) => setBondOverrideWeeks(e.target.value)}

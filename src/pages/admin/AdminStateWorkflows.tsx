@@ -95,7 +95,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'NSW',
     section: 'supported',
-    intent: 'Registered rooming house (off-site private room + rooming flag)',
+    intent: 'Registered boarding house (NSW Standard Occupancy Agreement)',
     input: {
       state: 'NSW',
       property_type: 'private_room_landlord_off_site',

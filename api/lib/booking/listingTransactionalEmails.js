@@ -5,7 +5,7 @@
  */
 import { sendEmail } from '../sendEmail.js'
 import { sendBookingEmail } from './sendBookingEmail.js'
-import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import { tenantLegalNameForDocuments } from './tenantLegalNameForDocuments.js'
@@ -132,7 +132,7 @@ async function loadListingEmailContext(admin, bookingId) {
   const qldBondRemittancePreference =
     typeof prop.qld_bond_remittance_preference === 'string' ? prop.qld_bond_remittance_preference : null
 
-  const isBoarderLodger = tenancyPackageUsesOccupancyAgreement(tenancyPackage)
+  const isBoarderLodger = tenancyPackage.supported && tenancyPackage.tier === 'T1'
   let payout = null
   const propertyId =
     typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
