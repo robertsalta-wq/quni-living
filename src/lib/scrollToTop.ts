@@ -52,6 +52,14 @@ export function scrollWindowToTop(behavior: ScrollBehavior = 'auto'): void {
   }, 100)
 }
 
+/** Smooth scroll unless the user prefers reduced motion. */
+export function userScrollBehavior(): ScrollBehavior {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 'instant'
+  }
+  return 'smooth'
+}
+
 /** Bring an anchor into view below the fixed mobile header (uses `.scroll-mt-below-header`). */
 export function scrollAnchorBelowHeader(anchor: HTMLElement | null | undefined): void {
   if (!anchor) {

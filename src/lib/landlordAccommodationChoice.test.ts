@@ -4,6 +4,7 @@ import {
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
   roomingHouseFieldErrors,
+  shouldScrollAccommodationTypeBlock,
 } from './landlordAccommodationChoice'
 
 describe('landlordAccommodationChoice', () => {
@@ -41,6 +42,25 @@ describe('landlordAccommodationChoice', () => {
       propertyListingType: 'private_room_landlord_off_site',
       roomType: 'studio',
     })
+  })
+
+  it('scrolls type-specific fields when they appear or grow', () => {
+    expect(shouldScrollAccommodationTypeBlock('entire_house', 'private_room_landlord_off_site')).toBe(true)
+    expect(shouldScrollAccommodationTypeBlock('entire_apartment', 'registered_rooming_house')).toBe(true)
+    expect(shouldScrollAccommodationTypeBlock('entire_studio', 'private_room_landlord_on_site')).toBe(true)
+    expect(shouldScrollAccommodationTypeBlock('private_room_landlord_off_site', 'registered_rooming_house')).toBe(true)
+    expect(shouldScrollAccommodationTypeBlock('shared_room', 'registered_rooming_house')).toBe(true)
+  })
+
+  it('does not scroll among whole-place cards or between small room blocks', () => {
+    expect(shouldScrollAccommodationTypeBlock('entire_house', 'entire_apartment')).toBe(false)
+    expect(shouldScrollAccommodationTypeBlock('private_room_landlord_off_site', 'shared_room')).toBe(false)
+    expect(shouldScrollAccommodationTypeBlock('shared_room', 'private_room_landlord_off_site')).toBe(false)
+    expect(shouldScrollAccommodationTypeBlock('registered_rooming_house', 'private_room_landlord_off_site')).toBe(false)
+    expect(shouldScrollAccommodationTypeBlock('registered_rooming_house', 'registered_rooming_house')).toBe(false)
+    expect(shouldScrollAccommodationTypeBlock('private_room_landlord_off_site', 'private_room_landlord_off_site')).toBe(
+      false,
+    )
   })
 
   it('flags rooming house conflicts and missing registration', () => {

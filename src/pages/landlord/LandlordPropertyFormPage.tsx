@@ -30,9 +30,11 @@ import {
   normalizeAccommodationForSave,
   roomForRentOptions,
   roomingHouseFieldErrors,
+  shouldScrollAccommodationTypeBlock,
   showRoomForRentSelect,
   type AccommodationUiChoice,
 } from '../../lib/landlordAccommodationChoice'
+import { userScrollBehavior } from '../../lib/scrollToTop'
 import {
   isQldOnSiteBoarderLodgerListing,
   parseRoomsRentedToResidents,
@@ -650,6 +652,22 @@ function sectionClass(title: string, children: ReactNode, sectionId?: string) {
   )
 }
 
+const TYPE_SPECIFIC_FOCUS_SELECTOR =
+  'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), select, textarea'
+
+function scrollAndFocusTypeSpecificFields(): void {
+  const behavior = userScrollBehavior()
+  const run = () => {
+    const block = document.getElementById('section-accommodation')
+    if (!block) return
+    block.scrollIntoView({ behavior, block: 'start' })
+    block.querySelector<HTMLElement>(TYPE_SPECIFIC_FOCUS_SELECTOR)?.focus({ preventScroll: true })
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(run)
+  })
+}
+
 export default function LandlordPropertyFormPage() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -750,6 +768,7 @@ export default function LandlordPropertyFormPage() {
   )
 
   const selectAccommodationChoice = useCallback((choice: AccommodationUiChoice) => {
+    const prev = accommodationChoice
     const next = fieldsFromAccommodationChoice(choice)
     setPropertyListingType(next.propertyListingType)
     setRoomType(next.roomType)
@@ -759,7 +778,10 @@ export default function LandlordPropertyFormPage() {
       setIsRegisteredRoomingHouse(false)
       setRoomingHouseRegistrationNumber('')
     }
-  }, [])
+    if (shouldScrollAccommodationTypeBlock(prev, choice)) {
+      scrollAndFocusTypeSpecificFields()
+    }
+  }, [accommodationChoice])
   const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [roomDescription, setRoomDescription] = useState('')
@@ -2308,7 +2330,7 @@ export default function LandlordPropertyFormPage() {
     if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
       setShowRoomingHouseValidation(true)
       reportSubmitError('Fix rooming house registration details before saving.')
-      document.getElementById('section-accommodation')?.scrollIntoView({ behavior: 'smooth' })
+      document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
       return
     }
 
@@ -3255,6 +3277,8 @@ export default function LandlordPropertyFormPage() {
                   })}
                 </div>
               </div>
+              {showRoomForRentSelect(accommodationChoice) ? (
+                <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
               {qldOnSiteBoarderLodger ? (
                 <div className="space-y-3">
                   <p className="text-sm text-sky-950 leading-relaxed">{qldOnSiteListingCallout()}</p>
@@ -3284,34 +3308,6 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="pf-bed" className={labelClass}>
-                    Total bedrooms in the property
-                  </label>
-                  <input
-                    id="pf-bed"
-                    type="number"
-                    min={0}
-                    value={bedrooms}
-                    onChange={(e) => setBedrooms(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pf-bath" className={labelClass}>
-                    Total bathrooms in the property
-                  </label>
-                  <input
-                    id="pf-bath"
-                    type="number"
-                    min={0}
-                    value={bathrooms}
-                    onChange={(e) => setBathrooms(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
               {showRoomForRentSelect(accommodationChoice) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
@@ -3502,6 +3498,36 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
+                </div>
+              ) : null}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="pf-bed" className={labelClass}>
+                    Total bedrooms in the property
+                  </label>
+                  <input
+                    id="pf-bed"
+                    type="number"
+                    min={0}
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pf-bath" className={labelClass}>
+                    Total bathrooms in the property
+                  </label>
+                  <input
+                    id="pf-bath"
+                    type="number"
+                    min={0}
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
               <div id="section-lister-role" className="space-y-3">
                 <p className="text-sm font-medium text-gray-900">Who is listing this property?</p>
                 <div className="space-y-2">
