@@ -228,6 +228,7 @@ function App() {
               <Route path="students" element={<Lazy.AdminStudents />} />
               <Route path="landlords" element={<Lazy.AdminLandlords />} />
               <Route path="apps" element={<Lazy.AdminApps />} />
+              <Route path="search" element={<Lazy.AdminSearch />} />
               <Route path="payments" element={<Lazy.AdminPayments />} />
               <Route path="settings" element={<Lazy.AdminSettings />} />
               <Route path="team" element={<Lazy.AdminTeam />} />
