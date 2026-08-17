@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CircleHelp } from 'lucide-react'
-import { AdminPageHeader } from '../../components/admin/primitives'
+import { AdminPageHeader, Card } from '../../components/admin/primitives'
 import { apiUrl } from '../../lib/apiUrl'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 
@@ -323,7 +323,7 @@ export default function AdminSearch() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-admin-md border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+        <Card padding={20}>
           <h2 className="text-sm font-semibold text-admin-ink-2">Top queries (28d)</h2>
           {queries.status === 'loading' ? (
             <div className="mt-4 h-48 animate-pulse rounded-admin-sm bg-admin-surface-2" />
@@ -357,9 +357,9 @@ export default function AdminSearch() {
               </table>
             </div>
           )}
-        </section>
+        </Card>
 
-        <section className="rounded-admin-md border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+        <Card padding={20}>
           <h2 className="text-sm font-semibold text-admin-ink-2">Top pages (28d)</h2>
           {pages.status === 'loading' ? (
             <div className="mt-4 h-48 animate-pulse rounded-admin-sm bg-admin-surface-2" />
@@ -397,7 +397,7 @@ export default function AdminSearch() {
               </table>
             </div>
           )}
-        </section>
+        </Card>
       </div>
 
       <div className="border-t border-admin-line pt-5">
@@ -437,11 +437,7 @@ function MetricCard({
   warn?: boolean
 }) {
   return (
-    <div
-      className={`rounded-admin-md border bg-admin-surface-1 p-5 shadow-admin-card ${
-        warn ? 'border-admin-warning/50' : 'border-admin-line'
-      }`}
-    >
+    <Card padding={20} className={warn ? 'ring-1 ring-admin-warning/50' : undefined}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-admin-ink-4">{label}</p>
         {tooltip ? (
@@ -452,6 +448,6 @@ function MetricCard({
       </div>
       <p className="mt-2 text-3xl font-semibold tabular-nums text-admin-ink-2">{value}</p>
       {hint ? <p className="mt-1 text-xs text-admin-ink-4">{hint}</p> : null}
-    </div>
+    </Card>
   )
 }
