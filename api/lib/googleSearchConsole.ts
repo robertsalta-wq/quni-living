@@ -8,6 +8,11 @@ import { google } from 'googleapis'
 /** Domain property - keep in sync with verified Search Console property. */
 export const SEARCH_CONSOLE_SITE_URL = 'sc-domain:quni.com.au'
 
+/** Enough rows that the top-10 by impressions is not an arbitrary slice. */
+const SEARCH_ANALYTICS_ROW_LIMIT = 250
+/** Rows returned to the admin UI (client may re-sort within this set). */
+const TOP_ROWS_RETURNED = 100
+
 export type SearchConsoleSummaryPayload = {
   clicks28d: number
   impressions28d: number
@@ -15,7 +20,7 @@ export type SearchConsoleSummaryPayload = {
   sitemapUrlsSubmitted: number
   /** Live count from quni.com.au/sitemap.xml (null if fetch failed). */
   sitemapUrlsLive: number | null
-  /** Null if the page-dimension count call failed. */
+  /** Null if the page-dimension count call failed. Deduped after www/scheme normalise. */
   urlsWithTraffic28d: number | null
   clicks7d: number
   clicksPrev7d: number
@@ -29,14 +34,27 @@ export type SearchConsoleQueryRow = {
   position: number
 }
 
+export type SearchConsolePageKind =
+  | 'home'
+  | 'campus'
+  | 'university'
+  | 'listings'
+  | 'guide'
+  | 'landlord'
+  | 'universities'
+  | 'audience'
+  | 'company'
+  | 'other'
+
 export type SearchConsolePageRow = {
   pagePath: string
   clicks: number
   impressions: number
   ctr: number
   position: number
-  /** Coarse bucket for Quni SEO surfaces. */
-  kind: 'campus' | 'university' | 'listing' | 'other'
+  kind: SearchConsolePageKind
+  /** Original GSC page URL(s) before www/scheme normalisation (for hover). */
+  sourceUrls: string[]
 }
 
 export class SearchConsoleConfigError extends Error {
@@ -49,6 +67,14 @@ export class SearchConsolePermissionError extends Error {
 
 export class SearchConsoleOAuthRevokedError extends Error {
   readonly code = 'SEARCH_CONSOLE_OAUTH_REVOKED' as const
+}
+
+type AnalyticsRow = {
+  keys?: string[] | null
+  clicks?: number | null
+  impressions?: number | null
+  ctr?: number | null
+  position?: number | null
 }
 
 function loadOAuthCredentialsFromEnv(): { clientId: string; clientSecret: string; refreshToken: string } {
@@ -102,6 +128,15 @@ function getWebmasters() {
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret)
   oauth2Client.setCredentials({ refresh_token: refreshToken })
   return google.webmasters({ version: 'v3', auth: oauth2Client })
+}
+
+/** Impressions desc, then clicks desc. */
+export function compareByImpressionsThenClicks(
+  a: { impressions: number; clicks: number },
+  b: { impressions: number; clicks: number },
+): number {
+  if (b.impressions !== a.impressions) return b.impressions - a.impressions
+  return b.clicks - a.clicks
 }
 
 async function queryAggregate(
@@ -170,6 +205,123 @@ async function countLiveSitemapUrls(): Promise<number | null> {
   }
 }
 
+/**
+ * Strip scheme + leading www, keep path (+ search). Apex and www collapse to the same key.
+ */
+export function pageUrlToDisplayPath(raw: string): string {
+  const s = raw.trim()
+  if (!s) return '/'
+  if (s.startsWith('/')) {
+    const path = s.split('?')[0] || '/'
+    return path === '' ? '/' : path.replace(/\/+$/, '') || '/'
+  }
+  try {
+    const u = new URL(s.startsWith('http') ? s : `https://${s}`)
+    let path = u.pathname || '/'
+    if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)
+    return path || '/'
+  } catch {
+    const path = (s.startsWith('/') ? s : `/${s}`).split('?')[0] || '/'
+    return path.replace(/\/+$/, '') || '/'
+  }
+}
+
+export function classifyPagePath(pagePath: string): SearchConsolePageKind {
+  const p = (pagePath.split('?')[0] ?? pagePath).replace(/\/+$/, '') || '/'
+
+  if (p === '/') return 'home'
+
+  // Campus before university (longer prefix of the same path).
+  if (/^\/student-accommodation\/[^/]+\/[^/]+$/.test(p)) return 'campus'
+  if (/^\/student-accommodation\/[^/]+$/.test(p)) return 'university'
+
+  if (p === '/listings' || p.startsWith('/listings/')) return 'listings'
+  if (p === '/guides' || p.startsWith('/guides/')) return 'guide'
+
+  if (
+    p === '/for-landlords' ||
+    p.startsWith('/landlords/') ||
+    p.startsWith('/landlord-') ||
+    p.startsWith('/services/')
+  ) {
+    return 'landlord'
+  }
+
+  if (p === '/for-universities') return 'universities'
+
+  if (p === '/international' || p === '/rent-near-campus') return 'audience'
+
+  if (
+    p === '/about' ||
+    p === '/faq' ||
+    p === '/contact' ||
+    p === '/verification' ||
+    p === '/terms' ||
+    p === '/privacy' ||
+    p === '/refunds' ||
+    p === '/non-discrimination'
+  ) {
+    return 'company'
+  }
+
+  return 'other'
+}
+
+type AccPage = {
+  pagePath: string
+  clicks: number
+  impressions: number
+  positionWeightedSum: number
+  sourceUrls: string[]
+}
+
+/** Aggregate GSC page rows after www/scheme normalisation (impression-weighted position). */
+export function aggregatePageAnalyticsRows(rows: AnalyticsRow[]): SearchConsolePageRow[] {
+  const byPath = new Map<string, AccPage>()
+
+  for (const row of rows) {
+    const rawUrl = (row.keys?.[0] ?? '').trim()
+    if (!rawUrl) continue
+    const pagePath = pageUrlToDisplayPath(rawUrl)
+    const clicks = row.clicks ?? 0
+    const impressions = row.impressions ?? 0
+    const position = row.position ?? 0
+    const existing = byPath.get(pagePath)
+    if (!existing) {
+      byPath.set(pagePath, {
+        pagePath,
+        clicks,
+        impressions,
+        positionWeightedSum: position * impressions,
+        sourceUrls: [rawUrl],
+      })
+      continue
+    }
+    existing.clicks += clicks
+    existing.impressions += impressions
+    existing.positionWeightedSum += position * impressions
+    if (!existing.sourceUrls.includes(rawUrl)) existing.sourceUrls.push(rawUrl)
+  }
+
+  const out: SearchConsolePageRow[] = []
+  for (const acc of byPath.values()) {
+    const position =
+      acc.impressions > 0 ? Math.round((acc.positionWeightedSum / acc.impressions) * 10) / 10 : 0
+    const ctr = acc.impressions > 0 ? acc.clicks / acc.impressions : 0
+    out.push({
+      pagePath: acc.pagePath,
+      clicks: acc.clicks,
+      impressions: acc.impressions,
+      ctr,
+      position,
+      kind: classifyPagePath(acc.pagePath),
+      sourceUrls: acc.sourceUrls,
+    })
+  }
+
+  return out.sort(compareByImpressionsThenClicks)
+}
+
 async function countPageUrlsWithImpressions28d(
   webmasters: ReturnType<typeof getWebmasters>,
   range28: { startDate: string; endDate: string },
@@ -183,8 +335,8 @@ async function countPageUrlsWithImpressions28d(
       rowLimit: 25000,
     },
   })
-  const rows = res.data.rows ?? []
-  return rows.filter((row) => (row.impressions ?? 0) >= 1).length
+  const aggregated = aggregatePageAnalyticsRows(res.data.rows ?? [])
+  return aggregated.filter((row) => row.impressions >= 1).length
 }
 
 export async function fetchSearchConsoleSummaryFromGoogle(): Promise<SearchConsoleSummaryPayload> {
@@ -236,43 +388,23 @@ export async function fetchTopQueriesFromGoogle(): Promise<SearchConsoleQueryRow
         startDate: range28.startDate,
         endDate: range28.endDate,
         dimensions: ['query'],
-        rowLimit: 250,
+        rowLimit: SEARCH_ANALYTICS_ROW_LIMIT,
       },
     })
-    const rows = [...(res.data.rows ?? [])].sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0)).slice(0, 10)
-    return rows.map((row) => ({
-      query: row.keys?.[0] ?? '',
-      clicks: row.clicks ?? 0,
-      impressions: row.impressions ?? 0,
-      ctr: row.ctr ?? 0,
-      position: row.position ?? 0,
-    }))
+    const rows = [...(res.data.rows ?? [])]
+      .map((row) => ({
+        query: row.keys?.[0] ?? '',
+        clicks: row.clicks ?? 0,
+        impressions: row.impressions ?? 0,
+        ctr: row.ctr ?? 0,
+        position: row.position ?? 0,
+      }))
+      .sort(compareByImpressionsThenClicks)
+      .slice(0, TOP_ROWS_RETURNED)
+    return rows
   } catch (e) {
     throw mapGoogleError(e)
   }
-}
-
-export function pageUrlToDisplayPath(raw: string): string {
-  const s = raw.trim()
-  if (s.startsWith('/')) return s
-  try {
-    const u = new URL(s.startsWith('http') ? s : `https://${s}`)
-    const host = u.hostname.toLowerCase()
-    if (host === 'www.quni.com.au' || host === 'quni.com.au') {
-      return `${u.pathname}${u.search}` || '/'
-    }
-    return `${u.pathname}${u.search}` || '/'
-  } catch {
-    return s.startsWith('/') ? s : `/${s}`
-  }
-}
-
-export function classifyPagePath(pagePath: string): SearchConsolePageRow['kind'] {
-  const p = pagePath.split('?')[0] ?? pagePath
-  if (/^\/listings\/[^/]+\/?$/.test(p)) return 'listing'
-  if (/^\/student-accommodation\/[^/]+\/[^/]+\/?$/.test(p)) return 'campus'
-  if (/^\/student-accommodation\/[^/]+\/?$/.test(p)) return 'university'
-  return 'other'
 }
 
 export async function fetchTopPagesFromGoogle(): Promise<SearchConsolePageRow[]> {
@@ -285,21 +417,10 @@ export async function fetchTopPagesFromGoogle(): Promise<SearchConsolePageRow[]>
         startDate: range28.startDate,
         endDate: range28.endDate,
         dimensions: ['page'],
-        rowLimit: 250,
+        rowLimit: SEARCH_ANALYTICS_ROW_LIMIT,
       },
     })
-    const rows = [...(res.data.rows ?? [])].sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0)).slice(0, 10)
-    return rows.map((row) => {
-      const pagePath = pageUrlToDisplayPath(row.keys?.[0] ?? '')
-      return {
-        pagePath,
-        clicks: row.clicks ?? 0,
-        impressions: row.impressions ?? 0,
-        ctr: row.ctr ?? 0,
-        position: row.position ?? 0,
-        kind: classifyPagePath(pagePath),
-      }
-    })
+    return aggregatePageAnalyticsRows(res.data.rows ?? []).slice(0, TOP_ROWS_RETURNED)
   } catch (e) {
     throw mapGoogleError(e)
   }
