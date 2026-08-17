@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CircleHelp } from 'lucide-react'
 import { AdminPageHeader, Card } from '../../components/admin/primitives'
 import { apiUrl } from '../../lib/apiUrl'
@@ -16,7 +16,9 @@ const LIVE_SITEMAP_TOOLTIP =
   'Count of <loc> entries currently returned by https://quni.com.au/sitemap.xml (live API).'
 
 const URLS_WITH_TRAFFIC_TOOLTIP =
-  'Distinct pages with at least 1 impression in the last 28 days. Not the same as indexed pages.'
+  'Distinct pages with at least 1 impression in the last 28 days (www/scheme normalised). Not the same as indexed pages.'
+
+const TABLE_DISPLAY_LIMIT = 10
 
 type SummaryPayload = {
   clicks28d: number
@@ -37,16 +39,45 @@ type QueryRow = {
   position: number
 }
 
+type PageKind =
+  | 'home'
+  | 'campus'
+  | 'university'
+  | 'listings'
+  | 'guide'
+  | 'landlord'
+  | 'universities'
+  | 'audience'
+  | 'company'
+  | 'other'
+
 type PageRow = {
   pagePath: string
   clicks: number
   impressions: number
   ctr: number
   position: number
-  kind: 'campus' | 'university' | 'listing' | 'other'
+  kind: PageKind
+  sourceUrls?: string[]
 }
 
 type ApiBody<T> = { ok: true; data: T; cached?: boolean } | { ok: false; error?: string; code?: string }
+
+type SortKey = 'impressions' | 'clicks' | 'ctr' | 'position'
+type SortDir = 'desc' | 'asc'
+
+const PAGE_KIND_ORDER: PageKind[] = [
+  'home',
+  'campus',
+  'university',
+  'listings',
+  'guide',
+  'landlord',
+  'universities',
+  'audience',
+  'company',
+  'other',
+]
 
 function fmtInt(n: number) {
   return new Intl.NumberFormat('en-AU').format(n)
@@ -56,14 +87,26 @@ function fmtPct(ratio: number) {
   return `${(ratio * 100).toFixed(1)}%`
 }
 
-function kindLabel(kind: PageRow['kind']) {
+function kindLabel(kind: PageKind) {
   switch (kind) {
+    case 'home':
+      return 'Home'
     case 'campus':
       return 'Campus'
     case 'university':
-      return 'Uni hub'
-    case 'listing':
-      return 'Listing'
+      return 'University'
+    case 'listings':
+      return 'Listings'
+    case 'guide':
+      return 'Guide'
+    case 'landlord':
+      return 'Landlord'
+    case 'universities':
+      return 'Universities'
+    case 'audience':
+      return 'Audience'
+    case 'company':
+      return 'Company'
     default:
       return 'Other'
   }
@@ -77,6 +120,53 @@ function clicksDelta(summary: SummaryPayload): string | null {
   const pct = ((cur - prev) / prev) * 100
   const sign = pct > 0 ? '+' : ''
   return `${sign}${pct.toFixed(0)}% vs prior 7d`
+}
+
+function compareMetric(
+  a: { clicks: number; impressions: number; ctr: number; position: number },
+  b: { clicks: number; impressions: number; ctr: number; position: number },
+  key: SortKey,
+  dir: SortDir,
+): number {
+  const mul = dir === 'desc' ? 1 : -1
+  const primary = (b[key] - a[key]) * mul
+  if (primary !== 0) return primary
+  // Stable secondary: impressions then clicks (always desc preference for ties).
+  if (b.impressions !== a.impressions) return b.impressions - a.impressions
+  return b.clicks - a.clicks
+}
+
+function SortTh({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onSort,
+  align = 'left',
+}: {
+  label: string
+  sortKey: SortKey
+  activeKey: SortKey
+  dir: SortDir
+  onSort: (key: SortKey) => void
+  align?: 'left' | 'right'
+}) {
+  const active = activeKey === sortKey
+  const arrow = active ? (dir === 'desc' ? ' ↓' : ' ↑') : ''
+  return (
+    <th className={`py-2 font-medium ${align === 'right' ? 'pr-3 text-right' : 'pr-3 text-left'}`}>
+      <button
+        type="button"
+        className={`inline-flex items-center gap-0.5 hover:text-admin-ink-2 ${
+          active ? 'text-admin-ink-2' : 'text-admin-ink-4'
+        }`}
+        onClick={() => onSort(sortKey)}
+      >
+        {label}
+        {arrow}
+      </button>
+    </th>
+  )
 }
 
 export default function AdminSearch() {
@@ -100,6 +190,11 @@ export default function AdminSearch() {
   >({ status: 'loading' })
 
   const [refreshBusy, setRefreshBusy] = useState(false)
+  const [querySortKey, setQuerySortKey] = useState<SortKey>('impressions')
+  const [querySortDir, setQuerySortDir] = useState<SortDir>('desc')
+  const [pageSortKey, setPageSortKey] = useState<SortKey>('impressions')
+  const [pageSortDir, setPageSortDir] = useState<SortDir>('desc')
+  const [pageKindFilter, setPageKindFilter] = useState<PageKind | 'all'>('all')
 
   const loadAll = useCallback(async (accessToken: string, signal: AbortSignal, refresh: boolean) => {
     const q = refresh ? '?refresh=1' : ''
@@ -214,6 +309,55 @@ export default function AdminSearch() {
     void loadAll(token, ac.signal, false)
   }, [token, loadAll])
 
+  const toggleQuerySort = useCallback((key: SortKey) => {
+    setQuerySortKey((prev) => {
+      if (prev === key) {
+        setQuerySortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+        return prev
+      }
+      setQuerySortDir('desc')
+      return key
+    })
+  }, [])
+
+  const togglePageSort = useCallback((key: SortKey) => {
+    setPageSortKey((prev) => {
+      if (prev === key) {
+        setPageSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+        return prev
+      }
+      setPageSortDir('desc')
+      return key
+    })
+  }, [])
+
+  const sortedQueries = useMemo(() => {
+    if (queries.status !== 'ok') return []
+    return [...queries.data]
+      .sort((a, b) => compareMetric(a, b, querySortKey, querySortDir))
+      .slice(0, TABLE_DISPLAY_LIMIT)
+  }, [queries, querySortKey, querySortDir])
+
+  const impressionsByKind = useMemo(() => {
+    if (pages.status !== 'ok') return []
+    const map = new Map<PageKind, number>()
+    for (const row of pages.data) {
+      map.set(row.kind, (map.get(row.kind) ?? 0) + row.impressions)
+    }
+    return PAGE_KIND_ORDER.filter((k) => (map.get(k) ?? 0) > 0).map((kind) => ({
+      kind,
+      impressions: map.get(kind) ?? 0,
+    }))
+  }, [pages])
+
+  const sortedPages = useMemo(() => {
+    if (pages.status !== 'ok') return []
+    return [...pages.data]
+      .filter((row) => pageKindFilter === 'all' || row.kind === pageKindFilter)
+      .sort((a, b) => compareMetric(a, b, pageSortKey, pageSortDir))
+      .slice(0, TABLE_DISPLAY_LIMIT)
+  }, [pages, pageKindFilter, pageSortKey, pageSortDir])
+
   const summaryLoading = summary.status === 'loading'
   const summaryErr = summary.status === 'error' ? summary.message : null
   const summaryOk = summary.status === 'ok' ? summary.data : null
@@ -322,31 +466,94 @@ export default function AdminSearch() {
         )}
       </div>
 
+      {pages.status === 'ok' && impressionsByKind.length > 0 ? (
+        <Card padding={20}>
+          <h2 className="text-sm font-semibold text-admin-ink-2">Impressions by type (28d)</h2>
+          <p className="mt-1 text-xs text-admin-ink-4">
+            From the fetched page set (www/scheme normalised). Campus near zero after the soft-404 fix means
+            eligible but not ranking.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {impressionsByKind.map(({ kind, impressions }) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setPageKindFilter(kind)}
+                className={`rounded-admin-sm border px-3 py-1.5 text-sm ${
+                  pageKindFilter === kind
+                    ? 'border-admin-coral bg-admin-coral/10 font-semibold text-admin-ink-2'
+                    : 'border-admin-line bg-admin-surface-1 text-admin-ink-3 hover:bg-admin-surface-2'
+                }`}
+              >
+                {kindLabel(kind)}{' '}
+                <span className="tabular-nums text-admin-ink-2">{fmtInt(impressions)}</span>
+              </button>
+            ))}
+            {pageKindFilter !== 'all' ? (
+              <button
+                type="button"
+                onClick={() => setPageKindFilter('all')}
+                className="rounded-admin-sm border border-admin-line px-3 py-1.5 text-sm text-admin-ink-4 hover:bg-admin-surface-2"
+              >
+                Clear filter
+              </button>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card padding={20}>
           <h2 className="text-sm font-semibold text-admin-ink-2">Top queries (28d)</h2>
+          <p className="mt-1 text-xs text-admin-ink-4">Default sort: impressions. Click a column to re-sort.</p>
           {queries.status === 'loading' ? (
             <div className="mt-4 h-48 animate-pulse rounded-admin-sm bg-admin-surface-2" />
           ) : queries.status === 'error' ? (
             <p className="mt-3 text-sm text-admin-danger-fg">{queries.message}</p>
-          ) : queries.data.length === 0 ? (
+          ) : sortedQueries.length === 0 ? (
             <p className="mt-3 text-sm text-admin-ink-4">No query data for this period.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-admin-line text-admin-ink-4">
-                    <th className="py-2 pr-3 font-medium">Query</th>
-                    <th className="py-2 pr-3 font-medium">Clicks</th>
-                    <th className="py-2 pr-3 font-medium">Impr.</th>
-                    <th className="py-2 pr-3 font-medium">CTR</th>
-                    <th className="py-2 font-medium">Pos</th>
+                  <tr className="border-b border-admin-line">
+                    <th className="py-2 pr-3 text-left font-medium text-admin-ink-4">Query</th>
+                    <SortTh
+                      label="Clicks"
+                      sortKey="clicks"
+                      activeKey={querySortKey}
+                      dir={querySortDir}
+                      onSort={toggleQuerySort}
+                    />
+                    <SortTh
+                      label="Impr."
+                      sortKey="impressions"
+                      activeKey={querySortKey}
+                      dir={querySortDir}
+                      onSort={toggleQuerySort}
+                    />
+                    <SortTh
+                      label="CTR"
+                      sortKey="ctr"
+                      activeKey={querySortKey}
+                      dir={querySortDir}
+                      onSort={toggleQuerySort}
+                    />
+                    <SortTh
+                      label="Pos"
+                      sortKey="position"
+                      activeKey={querySortKey}
+                      dir={querySortDir}
+                      onSort={toggleQuerySort}
+                    />
                   </tr>
                 </thead>
                 <tbody>
-                  {queries.data.map((row, i) => (
+                  {sortedQueries.map((row, i) => (
                     <tr key={`${row.query}-${i}`} className="border-b border-admin-line/60">
-                      <td className="max-w-[200px] truncate py-2 pr-3 font-medium text-admin-ink-2">{row.query}</td>
+                      <td className="max-w-[200px] truncate py-2 pr-3 font-medium text-admin-ink-2" title={row.query}>
+                        {row.query}
+                      </td>
                       <td className="py-2 pr-3 tabular-nums">{fmtInt(row.clicks)}</td>
                       <td className="py-2 pr-3 tabular-nums">{fmtInt(row.impressions)}</td>
                       <td className="py-2 pr-3 tabular-nums">{fmtPct(row.ctr)}</td>
@@ -360,39 +567,92 @@ export default function AdminSearch() {
         </Card>
 
         <Card padding={20}>
-          <h2 className="text-sm font-semibold text-admin-ink-2">Top pages (28d)</h2>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-admin-ink-2">Top pages (28d)</h2>
+              <p className="mt-1 text-xs text-admin-ink-4">Default sort: impressions. Hover a path for source URLs.</p>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-admin-ink-4">
+              Type
+              <select
+                className="rounded-admin-sm border border-admin-line bg-admin-surface-1 px-2 py-1.5 text-sm text-admin-ink-2"
+                value={pageKindFilter}
+                onChange={(e) => setPageKindFilter(e.target.value as PageKind | 'all')}
+              >
+                <option value="all">All</option>
+                {PAGE_KIND_ORDER.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kindLabel(kind)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           {pages.status === 'loading' ? (
             <div className="mt-4 h-48 animate-pulse rounded-admin-sm bg-admin-surface-2" />
           ) : pages.status === 'error' ? (
             <p className="mt-3 text-sm text-admin-danger-fg">{pages.message}</p>
-          ) : pages.data.length === 0 ? (
+          ) : sortedPages.length === 0 ? (
             <p className="mt-3 text-sm text-admin-ink-4">No page data for this period.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-admin-line text-admin-ink-4">
-                    <th className="py-2 pr-3 font-medium">Page</th>
-                    <th className="py-2 pr-3 font-medium">Type</th>
-                    <th className="py-2 pr-3 font-medium">Clicks</th>
-                    <th className="py-2 pr-3 font-medium">Impr.</th>
-                    <th className="py-2 pr-3 font-medium">CTR</th>
-                    <th className="py-2 font-medium">Pos</th>
+                  <tr className="border-b border-admin-line">
+                    <th className="py-2 pr-3 text-left font-medium text-admin-ink-4">Page</th>
+                    <th className="py-2 pr-3 text-left font-medium text-admin-ink-4">Type</th>
+                    <SortTh
+                      label="Clicks"
+                      sortKey="clicks"
+                      activeKey={pageSortKey}
+                      dir={pageSortDir}
+                      onSort={togglePageSort}
+                    />
+                    <SortTh
+                      label="Impr."
+                      sortKey="impressions"
+                      activeKey={pageSortKey}
+                      dir={pageSortDir}
+                      onSort={togglePageSort}
+                    />
+                    <SortTh
+                      label="CTR"
+                      sortKey="ctr"
+                      activeKey={pageSortKey}
+                      dir={pageSortDir}
+                      onSort={togglePageSort}
+                    />
+                    <SortTh
+                      label="Pos"
+                      sortKey="position"
+                      activeKey={pageSortKey}
+                      dir={pageSortDir}
+                      onSort={togglePageSort}
+                    />
                   </tr>
                 </thead>
                 <tbody>
-                  {pages.data.map((row, i) => (
-                    <tr key={`${row.pagePath}-${i}`} className="border-b border-admin-line/60">
-                      <td className="max-w-[220px] break-all py-2 pr-3 font-medium text-admin-ink-2">
-                        {row.pagePath}
-                      </td>
-                      <td className="py-2 pr-3 text-admin-ink-4">{kindLabel(row.kind)}</td>
-                      <td className="py-2 pr-3 tabular-nums">{fmtInt(row.clicks)}</td>
-                      <td className="py-2 pr-3 tabular-nums">{fmtInt(row.impressions)}</td>
-                      <td className="py-2 pr-3 tabular-nums">{fmtPct(row.ctr)}</td>
-                      <td className="py-2 tabular-nums">{row.position.toFixed(1)}</td>
-                    </tr>
-                  ))}
+                  {sortedPages.map((row, i) => {
+                    const sourceTitle =
+                      row.sourceUrls && row.sourceUrls.length > 0
+                        ? row.sourceUrls.join('\n')
+                        : row.pagePath
+                    return (
+                      <tr key={`${row.pagePath}-${i}`} className="border-b border-admin-line/60">
+                        <td
+                          className="max-w-[220px] break-all py-2 pr-3 font-medium text-admin-ink-2"
+                          title={sourceTitle}
+                        >
+                          {row.pagePath}
+                        </td>
+                        <td className="py-2 pr-3 text-admin-ink-4">{kindLabel(row.kind)}</td>
+                        <td className="py-2 pr-3 tabular-nums">{fmtInt(row.clicks)}</td>
+                        <td className="py-2 pr-3 tabular-nums">{fmtInt(row.impressions)}</td>
+                        <td className="py-2 pr-3 tabular-nums">{fmtPct(row.ctr)}</td>
+                        <td className="py-2 tabular-nums">{row.position.toFixed(1)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
