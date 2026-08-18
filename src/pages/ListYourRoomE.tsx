@@ -7,6 +7,7 @@ import ListYourRoomDPreviewDrawer, {
   type ListYourRoomDPreviewMode,
 } from '../components/listYourRoom/ListYourRoomDPreviewDrawer'
 import ListYourRoomDSignupSheet from '../components/listYourRoom/ListYourRoomDSignupSheet'
+import VerifiedMarketplaceWatermark from '../components/listYourRoom/VerifiedMarketplaceWatermark'
 import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
 import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
@@ -318,7 +319,7 @@ export default function ListYourRoomE() {
   }
 
   return (
-    <div className="bg-[var(--quni-surface-2)]">
+    <div className="relative bg-[var(--quni-surface-2)]">
       <Seo
         title="List your room on Quni"
         description="List your spare room to verified university students. Free to list. You only pay $99 when you accept."
@@ -351,6 +352,7 @@ export default function ListYourRoomE() {
           <PapersFooter />
         </div>
       </main>
+      <VerifiedMarketplaceWatermark />
 
       <ListYourRoomDPreviewDrawer
         open={activeOverlay === 'preview'}
