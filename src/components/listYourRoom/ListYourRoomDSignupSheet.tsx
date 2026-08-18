@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type TransitionEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Signup from '../../pages/Signup'
+import { trackVercelEvent } from '../../lib/vercelAnalytics'
 
 const SIGNUP_EXIT_DELAY_MS = 340
 
@@ -25,6 +26,12 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   const closingRef = useRef(false)
   const closeTimerRef = useRef<number | null>(null)
   const [entered, setEntered] = useState(false)
+  /** Defer Signup until first open so SSR/prerender does not pull the auth form (sessionStorage). */
+  const [signupMounted, setSignupMounted] = useState(false)
+
+  useEffect(() => {
+    if (open) setSignupMounted(true)
+  }, [open])
 
   function completeClose() {
     if (!closingRef.current) return
@@ -131,7 +138,10 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
           </div>
           <button
             type="button"
-            onClick={(event) => onOpen(event.currentTarget)}
+            onClick={(event) => {
+              trackVercelEvent('cta_click_list_room', { location: 'sticky_bar' })
+              onOpen(event.currentTarget)
+            }}
             className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--quni-coral)] px-4 py-3 text-sm font-bold text-white transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             List my room →
@@ -209,7 +219,16 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-5 [padding-bottom:max(var(--space-5),env(safe-area-inset-bottom,0px))]"
           >
             <div className="mx-auto max-w-lg">
-              <Signup embedLandlordInvite embedHideHeading embedConsentAfterForm />
+              {signupMounted ? (
+                <Signup
+                  embedLandlordInvite
+                  embedHideHeading
+                  embedConsentAfterForm
+                  onSignupSubmitted={(method) =>
+                    trackVercelEvent('signup_submitted', { method, source: 'list_your_room' })
+                  }
+                />
+              ) : null}
             </div>
           </div>
         </div>

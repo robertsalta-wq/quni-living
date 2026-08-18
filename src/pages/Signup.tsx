@@ -246,6 +246,8 @@ type SignupProps = {
   embedConsentAfterForm?: boolean
   /** Sheet wrapper supplies its own ink title and fee header. */
   embedHideHeading?: boolean
+  /** Fired after a successful email signup or Google OAuth handoff (embed analytics). */
+  onSignupSubmitted?: (method: 'email' | 'google') => void
 }
 
 export default function Signup({
@@ -256,6 +258,7 @@ export default function Signup({
   embedInviteEyebrow,
   embedConsentAfterForm = false,
   embedHideHeading = false,
+  onSignupSubmitted,
 }: SignupProps) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -476,6 +479,7 @@ export default function Signup({
         )
         return
       }
+      onSignupSubmitted?.('email')
       if (data.session) {
         const signupRole = accountKind === 'landlord' ? 'landlord' : 'renter'
         const onboardingPath =
@@ -526,7 +530,11 @@ export default function Signup({
       provider: 'google',
       options: getGoogleOAuthOptions(oauthSignupContext),
     })
-    if (oErr) setError(oErr.message)
+    if (oErr) {
+      setError(oErr.message)
+      return
+    }
+    onSignupSubmitted?.('google')
   }
 
   if (checkEmail) {
