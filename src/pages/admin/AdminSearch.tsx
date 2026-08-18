@@ -62,7 +62,9 @@ type PageRow = {
   sourceUrls?: string[]
 }
 
-type ApiBody<T> = { ok: true; data: T; cached?: boolean } | { ok: false; error?: string; code?: string }
+type ApiBody<T> =
+  | { ok: true; data: T; cached?: boolean; stale?: boolean; fetchedAt?: string }
+  | { ok: false; error?: string; code?: string }
 
 type SortKey = 'impressions' | 'clicks' | 'ctr' | 'position'
 type SortDir = 'desc' | 'asc'
@@ -199,6 +201,7 @@ export default function AdminSearch() {
   const [pageSortKey, setPageSortKey] = useState<SortKey>('impressions')
   const [pageSortDir, setPageSortDir] = useState<SortDir>('desc')
   const [pageKindFilter, setPageKindFilter] = useState<PageKind | 'all'>('all')
+  const [staleFetchedAt, setStaleFetchedAt] = useState<string | null>(null)
 
   const loadAll = useCallback(async (accessToken: string, signal: AbortSignal, refresh: boolean) => {
     const q = refresh ? '?refresh=1' : ''
@@ -207,6 +210,7 @@ export default function AdminSearch() {
     setSummary({ status: 'loading' })
     setQueries({ status: 'loading' })
     setPages({ status: 'loading' })
+    setStaleFetchedAt(null)
 
     const fetchJson = async <T,>(path: string): Promise<ApiBody<T>> => {
       const res = await fetch(apiUrl(path), { headers, signal })
@@ -232,6 +236,12 @@ export default function AdminSearch() {
       ])
 
       if (signal.aborted) return
+
+      const staleAts: string[] = []
+      for (const r of [sumR, qR, pR]) {
+        if (r.ok === true && r.stale && r.fetchedAt) staleAts.push(r.fetchedAt)
+      }
+      setStaleFetchedAt(staleAts.length > 0 ? staleAts.sort()[0]! : null)
 
       if (sumR.ok === true) {
         setSummary({ status: 'ok', data: sumR.data })
@@ -378,14 +388,25 @@ export default function AdminSearch() {
         title="Search"
         subtitle="Read-only Google Search Console snapshot for quni.com.au. Data typically lags 2-3 days."
         actions={
-          <button
-            type="button"
-            disabled={!token || refreshBusy}
-            className="rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => void onRefresh()}
-          >
-            {refreshBusy ? 'Refreshing…' : 'Refresh'}
-          </button>
+          <div className="flex flex-col items-end gap-1.5">
+            {staleFetchedAt ? (
+              <p className="m-0 text-xs text-admin-ink-4">
+                Showing data from{' '}
+                {new Date(staleFetchedAt).toLocaleString('en-AU', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={!token || refreshBusy}
+              className="rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => void onRefresh()}
+            >
+              {refreshBusy ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
         }
       />
 
