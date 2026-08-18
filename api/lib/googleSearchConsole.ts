@@ -36,6 +36,7 @@ export type SearchConsoleQueryRow = {
 
 export type SearchConsolePageKind =
   | 'home'
+  | 'accommodation'
   | 'campus'
   | 'university'
   | 'listings'
@@ -231,7 +232,8 @@ export function classifyPagePath(pagePath: string): SearchConsolePageKind {
 
   if (p === '/') return 'home'
 
-  // Campus before university (longer prefix of the same path).
+  // Bare index before campus/uni hubs (longer prefixes of the same path).
+  if (p === '/student-accommodation') return 'accommodation'
   if (/^\/student-accommodation\/[^/]+\/[^/]+$/.test(p)) return 'campus'
   if (/^\/student-accommodation\/[^/]+$/.test(p)) return 'university'
 

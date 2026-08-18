@@ -41,6 +41,7 @@ type QueryRow = {
 
 type PageKind =
   | 'home'
+  | 'accommodation'
   | 'campus'
   | 'university'
   | 'listings'
@@ -68,6 +69,7 @@ type SortDir = 'desc' | 'asc'
 
 const PAGE_KIND_ORDER: PageKind[] = [
   'home',
+  'accommodation',
   'campus',
   'university',
   'listings',
@@ -91,6 +93,8 @@ function kindLabel(kind: PageKind) {
   switch (kind) {
     case 'home':
       return 'Home'
+    case 'accommodation':
+      return 'Accommodation'
     case 'campus':
       return 'Campus'
     case 'university':

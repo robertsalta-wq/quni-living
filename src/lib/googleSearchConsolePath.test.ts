@@ -25,6 +25,7 @@ describe('pageUrlToDisplayPath', () => {
 describe('classifyPagePath', () => {
   it('matches brief patterns in order (campus before university)', () => {
     expect(classifyPagePath('/')).toBe('home')
+    expect(classifyPagePath('/student-accommodation')).toBe('accommodation')
     expect(classifyPagePath('/student-accommodation/anu/acton-campus')).toBe('campus')
     expect(classifyPagePath('/student-accommodation/anu')).toBe('university')
     expect(classifyPagePath('/listings')).toBe('listings')
