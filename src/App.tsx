@@ -262,6 +262,7 @@ function App() {
                 <Route path="/pricing" element={<Marketing.Pricing />} />
                 <Route path="/faq" element={<Marketing.Faq />} />
                 <Route path="/how-it-works" element={<Marketing.HowItWorks />} />
+                <Route path="/check" element={<Marketing.CheckCoverage />} />
                 <Route path="/verification" element={<Marketing.Verification />} />
                 <Route path="/contact" element={<Marketing.Contact />} />
                 <Route
