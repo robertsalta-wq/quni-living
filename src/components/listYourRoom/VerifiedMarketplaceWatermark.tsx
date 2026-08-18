@@ -20,7 +20,7 @@ function StampMark() {
 export default function VerifiedMarketplaceWatermark() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
-      <div className="absolute -inset-[28%] grid grid-cols-3 content-start gap-x-8 gap-y-20 rotate-[-16deg] opacity-[0.1] mix-blend-multiply">
+      <div className="absolute -inset-[28%] grid grid-cols-3 content-start gap-x-8 gap-y-20 rotate-[-16deg] opacity-[0.18] mix-blend-multiply">
         {Array.from({ length: STAMP_COUNT }, (_, index) => (
           <div key={index} className={index % 3 === 1 ? 'translate-y-10' : undefined}>
             <StampMark />
