@@ -14,6 +14,8 @@ Set all three for **Production** and **Preview**:
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Client secret |
 | `GOOGLE_OAUTH_REFRESH_TOKEN` | Refresh token (typically starts with `1//`) |
 
+Also requires existing `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` for the durable cache table.
+
 Do **not** use `GOOGLE_SEARCH_CONSOLE_SA_KEY` or service-account JSON.
 
 ## Property
@@ -24,9 +26,13 @@ Do **not** use `GOOGLE_SEARCH_CONSOLE_SA_KEY` or service-account JSON.
 
 `https://www.googleapis.com/auth/webmasters.readonly` (reads only)
 
-## Setup
+## Cache
 
-Settled configuration is recorded separately (17 Aug 2026). Mirror Unstash `docs/google-search-console-setup.md` if reminting tokens.
+Responses are stored in `public.search_console_cache` (service-role only; RLS on, no policies). TTL is **12 hours** (`expires_at` at write). Cache keys include the rolling 28d window, so the first request each UTC day is a miss by design.
+
+- Fresh hit → `cached: true`
+- Google transient failure with any prior row → `cached: true`, `stale: true` (UI shows "Showing data from …")
+- Hard errors stay hard: config **503**, `invalid_grant` **401**, permission **403** (never serve stale)
 
 ## Endpoints
 
@@ -34,4 +40,10 @@ Settled configuration is recorded separately (17 Aug 2026). Mirror Unstash `docs
 - `GET /api/admin/search-console/queries`
 - `GET /api/admin/search-console/pages`
 
-Admin Bearer JWT required. Optional `?refresh=1` bypasses the 1h in-process cache.
+Admin Bearer JWT required. Optional `?refresh=1` bypasses the cache and re-reads from Google.
+
+## Setup
+
+Settled OAuth configuration is recorded separately (17 Aug 2026). Mirror Unstash `docs/google-search-console-setup.md` if reminting tokens.
+
+Migration: `supabase/migrations/20260818120000_search_console_cache.sql` - apply to Quni-Living-AU before relying on cache in Production.

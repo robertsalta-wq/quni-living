@@ -9,7 +9,7 @@ import { google } from 'googleapis'
 export const SEARCH_CONSOLE_SITE_URL = 'sc-domain:quni.com.au'
 
 /** Enough rows that the top-10 by impressions is not an arbitrary slice. */
-const SEARCH_ANALYTICS_ROW_LIMIT = 250
+export const SEARCH_ANALYTICS_ROW_LIMIT = 250
 /** Rows returned to the admin UI (client may re-sort within this set). */
 const TOP_ROWS_RETURNED = 100
 
@@ -122,6 +122,11 @@ function rangeEndingYesterday(days: number): { startDate: string; endDate: strin
   const start = new Date(end)
   start.setUTCDate(start.getUTCDate() - (days - 1))
   return { startDate: utcYmd(start), endDate: utcYmd(end) }
+}
+
+/** 28d Search Analytics window ending yesterday (UTC). Used for cache keys. */
+export function searchConsoleRange28d(): { startDate: string; endDate: string } {
+  return rangeEndingYesterday(28)
 }
 
 function getWebmasters() {

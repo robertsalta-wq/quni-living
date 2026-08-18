@@ -2726,6 +2726,27 @@ export interface Database {
           },
         ]
       }
+      search_console_cache: {
+        Row: {
+          cache_key: string
+          payload: Json
+          fetched_at: string
+          expires_at: string
+        }
+        Insert: {
+          cache_key: string
+          payload: Json
+          fetched_at?: string
+          expires_at: string
+        }
+        Update: {
+          cache_key?: string
+          payload?: Json
+          fetched_at?: string
+          expires_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
