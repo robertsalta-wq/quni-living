@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { App } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -1263,6 +1265,13 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleDraftStartFresh = useCallback(() => {
+    if (
+      !window.confirm(
+        'Start fresh? This permanently deletes your saved draft on this device and clears the form.',
+      )
+    ) {
+      return
+    }
     clearLandlordPropertyNewDraft()
     if (propertyId) clearLandlordPropertyEditDraft(propertyId)
     setShowResumeDraftBanner(false)
@@ -1750,6 +1759,42 @@ export default function LandlordPropertyFormPage() {
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+
+  /**
+   * Capacitor WebView: opening the photo picker / OS background may skip pagehide and
+   * visibilitychange, and never unmount React. Flush on native app background / pause.
+   */
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const flushIfReady = () => {
+      if (!draftSaveEnabledRef.current || loadingPageRef.current) return
+      persistLandlordPropertyDraft()
+    }
+    let cancelled = false
+    const handles: Array<{ remove: () => Promise<void> }> = []
+    void (async () => {
+      const stateHandle = await App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) flushIfReady()
+      })
+      if (cancelled) {
+        void stateHandle.remove()
+        return
+      }
+      handles.push(stateHandle)
+      const pauseHandle = await App.addListener('pause', () => flushIfReady())
+      if (cancelled) {
+        void pauseHandle.remove()
+        return
+      }
+      handles.push(pauseHandle)
+    })()
+    return () => {
+      cancelled = true
+      for (const h of handles) {
+        void h.remove()
+      }
+    }
+  }, [persistLandlordPropertyDraft])
 
   useEffect(() => {
     if (!isEdit || loadingPage || refsLoading) return

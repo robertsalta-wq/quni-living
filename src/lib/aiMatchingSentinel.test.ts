@@ -122,6 +122,32 @@ describe('AI surface sentinel leakage (assembled model call)', () => {
     }
   })
 
+  it('landlord_assessment: booking context drops profile preferred lease/move-in', () => {
+    const { userMessage, fullPayload } = assembleLandlordAssessmentModelCall({
+      studentProfileRow: {
+        ...studentRow,
+        preferred_lease_length: '6_months',
+        preferred_move_in_date: '2026-01-15',
+      },
+      bookingRow: {
+        ...bookingRow,
+        lease_length: '3 months',
+        move_in_date: '2026-03-01',
+      },
+      propertyRow: { ...propertyRow, lease_length: 'Flexible' },
+      universityName: 'UNSW',
+      landlordFirstName: 'Sam',
+      applicantFirstName: 'Alex',
+    })
+    expect(fullPayload['student.preferred_lease_length']).toBeUndefined()
+    expect(fullPayload['student.preferred_move_in_date']).toBeUndefined()
+    expect(fullPayload['booking.lease_length']).toBe('3 months')
+    expect(userMessage).toContain('booking.lease_length: 3 months')
+    expect(userMessage).not.toContain('preferred_lease_length')
+    expect(userMessage).not.toContain('6_months')
+    expect(userMessage).toMatch(/Requested lease length: 3 months/)
+  })
+
   it('sample assembled landlord_assessment prompt for eyeball review', () => {
     const { fullAssembled } = assembleLandlordAssessmentModelCall({
       studentProfileRow: studentRow,

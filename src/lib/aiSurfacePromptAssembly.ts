@@ -122,6 +122,7 @@ Rules:
 - When context.fit_summary is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap - do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing - say what to verify. You may still comment on verification credentials separately from preference/listing fit.
 - If there is no context.fit_summary block, do not claim strong preference alignment with the listing; summarise what the applicant asked for and note what to check on the listing.
 - Focus on: verification completeness and tier, university and course when provided as facts only, housing preference alignment (occupancy, move-in flexibility, pets, parking, bills, furnishing when in allowlisted fields), budget fit, smoking status when present, and fit vs listing/booking context
+- Lease length and move-in for THIS request: When booking.lease_length, booking.move_in_date / booking.start_date, context.property_listing "Requested …" lines, or context.fit_summary are present, those are authoritative. Do not use student.preferred_lease_length or student.preferred_move_in_date as the requested term, and do not invent a lease length that only appears on a profile preference.
 - Location and commute: Do not claim the listing is near a specific university, campus, or landmark, and do not discuss commute length, unless those facts appear in context.property_listing. You may state the student's university from context.university_name as a fact; if listing context does not tie the property to a campus/university, do not invent a geographic mismatch or "wrong uni" narrative.
 - Rent: Never invent dollar amounts. Only mention weekly rent if a figure appears in context.property_listing or booking.weekly_rent. If no rent is in the context, do not guess.
 - End with one practical suggestion for what the landlord might want to ask or consider before confirming
@@ -428,6 +429,13 @@ export function assembleLandlordAssessmentModelCall(args: {
   const { universities: _u, campuses: _c, first_name: _fn, ...spRow } = spJoin
 
   const studentPayload = buildStudentProfileAiPayload('landlord_assessment', spRow)
+  // Booking terms override profile preferences for this request (handoff bug: AI cited
+  // preferred_lease_length "6 months" while booking.lease_length was "3 months").
+  if (args.bookingRow) {
+    delete studentPayload.payload.preferred_lease_length
+    delete studentPayload.payload.preferred_move_in_date
+    studentPayload.fieldKeys = Object.keys(studentPayload.payload).sort()
+  }
   let mergedPayload = studentPayload.payload
   let fieldKeys = [...studentPayload.fieldKeys]
 
