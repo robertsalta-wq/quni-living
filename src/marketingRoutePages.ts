@@ -82,3 +82,7 @@ export const PropertyDetail: PageExport = import.meta.env.SSR
 export const AuthCallback: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.authCallback)
   : clientPage(routeImports.authCallback)
+
+export const CheckCoverage: PageExport = import.meta.env.SSR
+  ? await ssrPage(routeImports.checkCoverage)
+  : clientPage(routeImports.checkCoverage)

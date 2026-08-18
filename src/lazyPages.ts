@@ -3,6 +3,7 @@ import { lazy } from 'react'
 /** Shared dynamic import() factories - used by React.lazy and route prefetch. */
 export const routeImports = {
   authCallback: () => import('./pages/auth/AuthCallback'),
+  checkCoverage: () => import('./pages/CheckCoverage'),
   forgotPassword: () => import('./pages/ForgotPassword'),
   resetPassword: () => import('./pages/ResetPassword'),
   verifyEmail: () => import('./pages/VerifyEmail'),
