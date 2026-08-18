@@ -1,9 +1,9 @@
 /**
  * Google Search Console (read-only) via OAuth refresh token.
- * Mirrors Unstash Project-Warehouse/api/lib/googleSearchConsole.ts.
+ * Uses @googleapis/webmasters (v3) instead of the googleapis umbrella SDK.
  * Env: GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN
  */
-import { google } from 'googleapis'
+import { auth, webmasters } from '@googleapis/webmasters'
 
 /** Domain property - keep in sync with verified Search Console property. */
 export const SEARCH_CONSOLE_SITE_URL = 'sc-domain:quni.com.au'
@@ -131,9 +131,9 @@ export function searchConsoleRange28d(): { startDate: string; endDate: string } 
 
 function getWebmasters() {
   const { clientId, clientSecret, refreshToken } = loadOAuthCredentialsFromEnv()
-  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret)
+  const oauth2Client = new auth.OAuth2(clientId, clientSecret)
   oauth2Client.setCredentials({ refresh_token: refreshToken })
-  return google.webmasters({ version: 'v3', auth: oauth2Client })
+  return webmasters({ version: 'v3', auth: oauth2Client })
 }
 
 /** Impressions desc, then clicks desc. */
