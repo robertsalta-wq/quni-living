@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hoistHeadTags } from './headTags'
+import { hoistHeadTags, injectHelmetHead, injectPrerender, stripDefaultSeoHead } from './headTags'
 
 const WRAPPER_OPEN = '<div class="flex min-h-0 w-full flex-1 flex-col">'
 
@@ -51,5 +51,45 @@ describe('hoistHeadTags', () => {
     const { body } = hoistHeadTags(`<!--$--><main>page</main><!--/$-->`)
 
     expect(body).toBe('<main>page</main>')
+  })
+})
+
+describe('injectHelmetHead', () => {
+  it('places SEO tags after charset so Facebook Range 0-4095 can see them', () => {
+    const padding = 'x'.repeat(5000)
+    const shell = `<!doctype html><html><head><meta charset="UTF-8" /><link rel="preload" href="/${padding}" /><title>Shell</title></head><body><div id="root"></div></body></html>`
+    const helmet = `<title>List your room</title>
+<meta property="og:url" content="https://quni.com.au/list-your-room"/>
+<meta property="og:image" content="https://quni.com.au/og-list-your-room.jpg"/>`
+
+    const html = injectHelmetHead(shell, helmet)
+    const firstChunk = html.slice(0, 4096)
+
+    expect(firstChunk).toContain('property="og:url"')
+    expect(firstChunk).toContain('og-list-your-room.jpg')
+    expect(html.indexOf('property="og:url"')).toBeLessThan(4096)
+  })
+})
+
+describe('injectPrerender', () => {
+  it('strips homepage OG defaults and injects page tags early', () => {
+    const template = `<!doctype html><html><head>
+<meta charset="UTF-8" />
+<meta property="og:url" content="https://quni.com.au" />
+<meta property="og:image" content="https://quni.com.au/og-default.png" />
+<title>Home</title>
+</head><body><div id="root"></div></body></html>`
+
+    const html = injectPrerender(
+      template,
+      '<main>page</main>',
+      '<title>List your room</title>\n<meta property="og:url" content="https://quni.com.au/list-your-room"/>',
+    )
+
+    expect(html).not.toContain('og-default.png')
+    expect(html).not.toContain('content="https://quni.com.au"')
+    expect(html).toContain('https://quni.com.au/list-your-room')
+    expect(html).toContain('<main>page</main>')
+    expect(stripDefaultSeoHead(template)).not.toContain('<title>')
   })
 })
