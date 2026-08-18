@@ -76,8 +76,17 @@ assert(existsSync(path.join(dist, 'list-your-room/index.html')), 'missing list-y
     const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)
     const ogImage = ogImageMatch?.[1] ?? ''
     assert(/^https:\/\//.test(ogImage), `list-your-room: og:image is not absolute https: ${ogImage || '(empty)'}`)
+    // Facebook/WhatsApp Range: bytes=0-4095 — OG must land in that window.
+    const ogUrlIdx = html.indexOf('property="og:url"')
+    assert(ogUrlIdx >= 0, 'list-your-room: missing og:url')
+    assert(ogUrlIdx < 4096, `list-your-room: og:url at byte ${ogUrlIdx} (must be < 4096 for FB crawler)`)
+    assert(
+      html.includes('content="https://quni.com.au/list-your-room"'),
+      'list-your-room: og:url/canonical must be /list-your-room (not homepage)',
+    )
     console.log('Static prerender check: dist/list-your-room/index.html')
     console.log(`  og:image = ${ogImage}`)
+    console.log(`  og:url byte offset = ${ogUrlIdx}`)
   }
 }
 

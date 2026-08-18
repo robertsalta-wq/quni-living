@@ -9,7 +9,7 @@ import {
   listingPrerenderPaths,
 } from '../lib/publishedListings'
 import { writePropertyDetailCache } from '../lib/propertyDetailCache'
-import { hoistHeadTags } from './headTags'
+import { hoistHeadTags, injectPrerender } from './headTags'
 import { listPrerenderPathnames, pathnameToDistDir } from './routes'
 import NotFoundPage from '../pages/NotFoundPage'
 
@@ -33,22 +33,6 @@ function renderAppAt(pathname: string): { body: string; head: string } {
     </HelmetProvider>,
   )
   return hoistHeadTags(body)
-}
-
-/** Remove default homepage SEO from the SPA shell so prerendered tags are authoritative. */
-function stripDefaultSeoHead(html: string): string {
-  return html
-    .replace(/<title[\s\S]*?<\/title>\s*/gi, '')
-    .replace(/<meta\s+name="description"[\s\S]*?\/>\s*/gi, '')
-    .replace(/<meta\s+property="og:[^"]+"[\s\S]*?\/>\s*/gi, '')
-    .replace(/<meta\s+name="twitter:[^"]+"[\s\S]*?\/>\s*/gi, '')
-}
-
-function injectPrerender(template: string, body: string, head: string): string {
-  let page = template.replace('<div id="root"></div>', `<div id="root">${body}</div>`)
-  page = stripDefaultSeoHead(page)
-  page = page.replace('</head>', `${head}\n</head>`)
-  return page
 }
 
 export async function prerenderRoutes(distDir: string): Promise<void> {
