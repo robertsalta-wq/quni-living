@@ -44,6 +44,7 @@ const STATIC_ROUTES = [
   '/services/landlord-partnerships',
   '/services/fully-furnished',
   '/landlords/ai',
+  '/list-your-room',
 ] as const
 
 type SitemapEntry = {
