@@ -12,6 +12,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/faq',
   '/guides',
   '/how-it-works',
+  '/check',
   '/verification',
   '/contact',
   '/services/landlord-partnerships',
