@@ -40,13 +40,18 @@ export function setPostAuthRedirect(path: string): void {
 }
 
 export function peekPostAuthRedirect(): string | null {
-  const v = sessionStorage.getItem(KEY)
-  if (!v || !isSafeInternalPath(v)) return null
-  if (isShallowReturnIntentPath(v)) {
-    sessionStorage.removeItem(KEY)
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    const v = sessionStorage.getItem(KEY)
+    if (!v || !isSafeInternalPath(v)) return null
+    if (isShallowReturnIntentPath(v)) {
+      sessionStorage.removeItem(KEY)
+      return null
+    }
+    return v
+  } catch {
     return null
   }
-  return v
 }
 
 export function consumePostAuthRedirect(): string | null {

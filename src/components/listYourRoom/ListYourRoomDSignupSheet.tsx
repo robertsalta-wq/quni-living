@@ -26,6 +26,12 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   const closingRef = useRef(false)
   const closeTimerRef = useRef<number | null>(null)
   const [entered, setEntered] = useState(false)
+  /** Defer Signup until first open so SSR/prerender does not pull the auth form (sessionStorage). */
+  const [signupMounted, setSignupMounted] = useState(false)
+
+  useEffect(() => {
+    if (open) setSignupMounted(true)
+  }, [open])
 
   function completeClose() {
     if (!closingRef.current) return
@@ -213,14 +219,16 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-5 [padding-bottom:max(var(--space-5),env(safe-area-inset-bottom,0px))]"
           >
             <div className="mx-auto max-w-lg">
-              <Signup
-                embedLandlordInvite
-                embedHideHeading
-                embedConsentAfterForm
-                onSignupSubmitted={(method) =>
-                  trackVercelEvent('signup_submitted', { method, source: 'list_your_room' })
-                }
-              />
+              {signupMounted ? (
+                <Signup
+                  embedLandlordInvite
+                  embedHideHeading
+                  embedConsentAfterForm
+                  onSignupSubmitted={(method) =>
+                    trackVercelEvent('signup_submitted', { method, source: 'list_your_room' })
+                  }
+                />
+              ) : null}
             </div>
           </div>
         </div>
