@@ -190,20 +190,20 @@ const VERDICT_COPY: Record<Level, { heading: string; blurb: string }> = {
 const LEVEL_LABEL: Record<Level, string> = { red: 'Exposed', amber: 'Soft spot', green: 'Covered' }
 
 const LEVEL_CARD: Record<Level, string> = {
-  red: 'border-[rgba(179,64,44,0.35)] bg-[#FDF3F1]',
-  amber: 'border-[rgba(176,124,20,0.35)] bg-[#FFF8E8]',
+  red: 'border-[rgba(180,50,42,0.3)] bg-[var(--quni-danger-bg)]',
+  amber: 'border-[rgba(183,121,31,0.35)] bg-[var(--quni-warning-bg)]',
   green: 'border-[rgba(55,98,86,0.3)] bg-[var(--quni-trust-bg)]',
 }
 
 const LEVEL_CHIP: Record<Level, string> = {
-  red: 'bg-[#B3402C] text-white',
-  amber: 'bg-[#8A6410] text-white',
+  red: 'bg-[var(--quni-danger-strong)] text-white',
+  amber: 'bg-[var(--quni-warning-fg)] text-white',
   green: 'bg-[var(--quni-trust)] text-white',
 }
 
 const LEVEL_TEXT: Record<Level, string> = {
-  red: 'text-[#8F3323]',
-  amber: 'text-[#70510D]',
+  red: 'text-[var(--quni-danger-fg)]',
+  amber: 'text-[var(--quni-warning-fg)]',
   green: 'text-[var(--quni-trust)]',
 }
 
@@ -358,7 +358,7 @@ export default function CheckCoverage() {
         canonicalPath="/check"
         jsonLd={buildFaqPageJsonLd(FAQS) ?? undefined}
       />
-      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[var(--quni-ink)] antialiased">
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-cream)] font-inter text-[var(--quni-ink)] antialiased">
         <PageHeroBand
           title="Host exposure check"
           subtitle="Four questions, about 60 seconds. See whether your bond, your agreement, and your insurance actually hold up in NSW or QLD."
