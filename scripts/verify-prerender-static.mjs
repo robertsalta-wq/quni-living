@@ -61,6 +61,26 @@ assertPrerenderedPage('landlords/ai/index.html', { titleSnippet: 'Landlord AI' }
 assertPrerenderedPage('guides/index.html')
 assertPrerenderedPage('services/landlord-partnerships/index.html')
 
+// Landlord invite landing: FB share card (noindex kept; not in sitemap)
+assert(existsSync(path.join(dist, 'list-your-room/index.html')), 'missing list-your-room/index.html')
+{
+  const html = loadDistHtml('list-your-room/index.html')
+  if (html) {
+    assertPrerenderedPage('list-your-room/index.html', {
+      titleSnippet: 'List your room on Quni',
+      bodySnippet: 'Quinnie',
+    })
+    assert(html.includes('noindex'), 'list-your-room: expected noindex')
+    assert(/og-list-your-room\.jpg/i.test(html), 'list-your-room: missing dedicated OG image')
+    assert(!html.includes('og-default.png'), 'list-your-room: still using default OG image')
+    const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)
+    const ogImage = ogImageMatch?.[1] ?? ''
+    assert(/^https:\/\//.test(ogImage), `list-your-room: og:image is not absolute https: ${ogImage || '(empty)'}`)
+    console.log('Static prerender check: dist/list-your-room/index.html')
+    console.log(`  og:image = ${ogImage}`)
+  }
+}
+
 const llms = path.join(dist, 'llms.txt')
 assert(existsSync(llms), 'missing dist/llms.txt (copy from public/)')
 if (existsSync(llms)) {

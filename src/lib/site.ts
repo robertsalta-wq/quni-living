@@ -44,6 +44,9 @@ const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.tri
 /** 1200×630 branded share image (`public/og-default.png`). */
 export const DEFAULT_OG_IMAGE = ogFromEnv || 'https://quni.com.au/og-default.png'
 
+/** Absolute OG image for the FB landlord invite landing (`/list-your-room`). */
+export const LIST_YOUR_ROOM_OG_IMAGE = `${SITE_URL}/og-list-your-room.jpg`
+
 export const DEFAULT_OG_IMAGE_ALT = 'Quni - verified accommodation near campus and work'
 
 export const ORGANIZATION_EMAIL = 'hello@quni.com.au'

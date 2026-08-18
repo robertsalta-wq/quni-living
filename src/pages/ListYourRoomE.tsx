@@ -15,7 +15,7 @@ import { LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
 import type { Property } from '../lib/listings'
 import { formatAustralianAbn } from '../lib/platformIdentity'
 import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { SITE_CONTENT_MAX_CLASS, LIST_YOUR_ROOM_OG_IMAGE } from '../lib/site'
 
 const QUINNIE_IMG = '/landlord-invite/quinnie.jpg'
 const INVITE_ABN_FALLBACK = '65675990968'
@@ -320,9 +320,11 @@ export default function ListYourRoomE() {
   return (
     <div className="bg-[var(--quni-surface-2)]">
       <Seo
-        title="List your property"
-        description="The safest way to rent your spare room to university students. See the going rate, preview your room, and list free until someone moves in."
+        title="List your room on Quni"
+        description="List your spare room to verified university students. Free to list. You only pay $99 when you accept."
         canonicalPath="/list-your-room"
+        image={LIST_YOUR_ROOM_OG_IMAGE}
+        imageAlt="List your room on Quni - verified students, free to list, $99 on accept"
         noindex
       />
 

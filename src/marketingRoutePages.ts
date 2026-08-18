@@ -63,6 +63,10 @@ export const LandlordAIFeaturePage: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.landlordAIFeaturePage)
   : clientPage(routeImports.landlordAIFeaturePage)
 
+export const ListYourRoomE: PageExport = import.meta.env.SSR
+  ? await ssrPage(routeImports.listYourRoomE)
+  : clientPage(routeImports.listYourRoomE)
+
 export const ForLandlords: PageExport = import.meta.env.SSR
   ? await ssrPage(() => import('./pages/ForLandlords'))
   : clientPage(() => import('./pages/ForLandlords'))

@@ -16,6 +16,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/contact',
   '/services/landlord-partnerships',
   '/landlords/ai',
+  '/list-your-room',
 ] as const
 
 /** Only when desk_shell_enabled (Preview / local) - Production must not ship indexable desk HTML. */

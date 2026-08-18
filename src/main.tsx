@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
+import { Analytics } from '@vercel/analytics/react'
 import BootErrorBoundary from './components/BootErrorBoundary'
 import { AppTree } from './AppTree'
 import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFallback'
@@ -39,6 +40,7 @@ const app = (
       <HelmetProvider>
         <BrowserRouter>
           <AppTree />
+          <Analytics />
         </BrowserRouter>
       </HelmetProvider>
     </BootErrorBoundary>
