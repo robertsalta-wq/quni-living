@@ -92,8 +92,7 @@ create policy "Landlords select own property T3 attestations"
   on public.property_t3_attestations for select
   to authenticated
   using (
-    attested_by = auth.uid()
-    or property_id in (
+    property_id in (
       select p.id
       from public.properties p
       join public.landlord_profiles lp on lp.id = p.landlord_id
@@ -125,6 +124,7 @@ grant select on table public.property_t3_attestations to service_role;
 create or replace function public.trg_property_t3_attestations_stamp_insert()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 declare
   v_addr text;
@@ -175,6 +175,7 @@ create trigger property_t3_attestations_stamp_insert
 create or replace function public.trg_property_t3_attestations_append_only()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   if tg_op = 'DELETE' then
@@ -292,6 +293,7 @@ grant execute on function public.property_has_complete_nsw_t3_attestation(uuid, 
 create or replace function public.trg_properties_require_nsw_t3_attestation()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   if new.status is distinct from 'active' then
@@ -389,10 +391,16 @@ begin
     raise exception 'warranty_version must be nsw-t3-compliance-warranty-v1';
   end if;
 
+  -- Store head-lessor consent whenever declared true (additive). Completeness
+  -- only *requires* it for head_tenant. Keeping true on an owner-row attestation
+  -- lets attest-then-flip-to-head_tenant succeed on an active listing without
+  -- unpublishing (RPC still reads lister_role from the property row).
   if coalesce(v_lister_role, 'owner') = 'head_tenant' then
     if p_head_lessor_consent_declared is not true then
       raise exception 'head_lessor_consent_declared required for head_tenant';
     end if;
+    v_head_lessor := true;
+  elsif p_head_lessor_consent_declared is true then
     v_head_lessor := true;
   else
     v_head_lessor := null;
