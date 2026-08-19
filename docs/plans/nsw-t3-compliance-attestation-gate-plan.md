@@ -1,6 +1,6 @@
 # NSW Tier 3 compliance attestation gate - plan
 
-**Status:** Awaiting Rob approval. No code until this plan is approved. **Not** part of the occupancy-agreement generator PR.
+**Status:** Approved (A1–A5 defaults, 19 Aug 2026). Implementing.
 **Date:** 14 August 2026
 **Follows:** `Cursor-Brief-Tier3-NSW-Compliance-Attestation-Gate.md`; generator plan `docs/plans/nsw-t3-boarding-house-occupancy-agreement-plan.md` (D14).
 
@@ -37,11 +37,11 @@ The gate **reuses** `lister_role` for A3 (head-lessor consent only when `head_te
 
 | # | Topic | Recommended default | Tick |
 |---|---|---|---|
-| A1 | Declarations vs uploads | v1: all four declarations + registration number **required**. File uploads **optional**. | |
-| A2 | AFSS expiry re-block | Capture statement date/expiry if the form has it. **No auto-reblock on lapse in v1.** | |
-| A3 | Owner branch | Use existing `lister_role`. Head-lessor consent required only when `head_tenant`. Do not add a second “are you the owner?” question unless `lister_role` is missing. | |
-| A4 | Lapse / withdraw | Block **new** T3 publish and **new** agreement generation. Already-executed agreements stand. | |
-| A5 | Scope | **NSW T3 only.** QLD/VIC later. | |
+| A1 | Declarations vs uploads | v1: all four declarations + registration number **required**. File uploads **optional**. | ✓ |
+| A2 | AFSS expiry re-block | Capture statement date/expiry if the form has it. **No auto-reblock on lapse in v1.** | ✓ |
+| A3 | Owner branch | Use existing `lister_role`. Head-lessor consent required only when `head_tenant`. Do not add a second “are you the owner?” question unless `lister_role` is missing. | ✓ |
+| A4 | Lapse / withdraw | Block **new** T3 publish and **new** agreement generation. Already-executed agreements stand. | ✓ |
+| A5 | Scope | **NSW T3 only.** QLD/VIC later. | ✓ |
 
 ---
 

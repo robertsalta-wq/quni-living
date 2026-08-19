@@ -28,6 +28,10 @@ import {
   parseNswT3AdditionalCharges,
   parseNswT3SharedAreas,
 } from '../../../../src/lib/tenancy/nswT3ListingFields.js'
+import {
+  NSW_T3_COMPLIANCE_BLOCKED_MESSAGE,
+  isCompleteNswT3ComplianceAttestation,
+} from '../../../../src/lib/tenancy/nswT3ComplianceAttestation.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 const STORAGE_DRAFT_NAME = 'nsw_boarding_house_occupancy_draft.pdf'
@@ -164,7 +168,9 @@ async function loadNswBoardingHouseContext(
         house_rules,
         room_description,
         shared_areas,
-        additional_charges
+        additional_charges,
+        lister_role,
+        rooming_house_registration_number
       )
     `,
     )
@@ -228,6 +234,24 @@ async function loadNswBoardingHouseContext(
   const particularsErr = t3ParticularsError(prop, weeklyRent, bondNum)
   if (particularsErr) {
     return { ok: false, status: 400, error: particularsErr }
+  }
+
+  const listerRole = prop.lister_role === 'head_tenant' ? 'head_tenant' : 'owner'
+  const { data: t3Attestation, error: t3AttestErr } = await admin
+    .from('property_t3_attestations')
+    .select(
+      'id, property_id, attested_by, attested_at, registration_number, da_lawful_use_declared, afss_current_declared, afss_statement_date, afss_expiry_date, head_lessor_consent_declared, warranty_version, superseded_at',
+    )
+    .eq('property_id', booking.property_id)
+    .is('superseded_at', null)
+    .maybeSingle()
+
+  if (t3AttestErr) {
+    console.error('[nsw-boarding-house] t3 attestation lookup', t3AttestErr)
+    return { ok: false, status: 500, error: 'Could not verify boarding-house compliance attestation' }
+  }
+  if (!isCompleteNswT3ComplianceAttestation(t3Attestation, listerRole)) {
+    return { ok: false, status: 400, error: NSW_T3_COMPLIANCE_BLOCKED_MESSAGE }
   }
 
   const payeeFields = await loadOccupancyListingPayeeFields(admin, {
