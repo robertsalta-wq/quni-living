@@ -73,6 +73,9 @@ comment on column public.property_t3_attestations.premises_state is
 comment on column public.property_t3_attestations.premises_postcode is
   'Snapshot of properties.postcode at attestation time.';
 
+comment on column public.property_t3_attestations.head_lessor_consent_declared is
+  'True when the operator declared written head-lessor consent. Required for completeness when properties.lister_role = head_tenant. May be true on an owner-row attestation (additive) so an active listing can attest then flip to head_tenant.';
+
 comment on table public.property_t3_attestations is
   'Append-only NSW T3 boarding-house compliance self-attestations. Current row has superseded_at IS NULL. Survives property delete (property_id SET NULL; premises snapshot retained). Quni records the declaration and does not verify DA, fire, or registration.';
 
