@@ -1003,6 +1003,18 @@ export default function LandlordPropertyFormPage() {
     })
   }, [isNswT3Listing, roomingHouseRegistrationNumber])
 
+  /** Role change is a different legal posture - wipe T3 form and require a full fresh affirmation. */
+  const applyListerRoleChange = useCallback(
+    (next: ListerRole) => {
+      if (listerRole !== next) {
+        setT3ComplianceForm(emptyNswT3ComplianceFormState(roomingHouseRegistrationNumber.trim()))
+        setT3ComplianceCompleteOnLoad(false)
+      }
+      setListerRole(next)
+    },
+    [listerRole, roomingHouseRegistrationNumber],
+  )
+
   const bondWeekCap = isNswT3Listing ? T3_MAX_SECURITY_DEPOSIT_WEEKS : MAX_BOND_WEEKS
   const serviceTierAvailability = useMemo(
     () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
@@ -3636,7 +3648,7 @@ export default function LandlordPropertyFormPage() {
                       value="owner"
                       checked={listerRole === 'owner'}
                       onChange={() => {
-                        setListerRole('owner')
+                        applyListerRoleChange('owner')
                         setHeadTenantLandlordConsent(null)
                       }}
                       className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
@@ -3650,7 +3662,7 @@ export default function LandlordPropertyFormPage() {
                       value="head_tenant"
                       checked={listerRole === 'head_tenant'}
                       onChange={() => {
-                        setListerRole('head_tenant')
+                        applyListerRoleChange('head_tenant')
                         setHeadTenantLandlordConsent(null)
                         setAuthorityToLetAgreed(false)
                       }}
