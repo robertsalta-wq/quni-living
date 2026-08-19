@@ -35,46 +35,35 @@ export async function propertyHasCurrentNswT3ComplianceAttestation(
 }
 
 /**
- * Insert a new current attestation and supersede any prior current row.
+ * Record a new current attestation via security-definer RPC (atomic supersede + insert).
  * Caller must ensure form is complete (nswT3ComplianceFormErrors).
+ * Server stamps attested_at / superseded_at / attested_by / premises snapshot.
  */
 export async function recordNswT3ComplianceAttestation(args: {
   client: Client
   propertyId: string
+  /** Kept for call-site compatibility; RPC sets attested_by from auth.uid(). */
   attestedByUserId: string
+  /** Kept for call-site compatibility; RPC reads lister_role from the property row. */
   listerRole: 'owner' | 'head_tenant'
   form: NswT3ComplianceFormState
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { client, propertyId, attestedByUserId, listerRole, form } = args
-  const now = new Date().toISOString()
+  const { client, propertyId, listerRole, form } = args
 
-  const { error: supersedeErr } = await client
-    .from('property_t3_attestations')
-    .update({ superseded_at: now })
-    .eq('property_id', propertyId)
-    .is('superseded_at', null)
-
-  if (supersedeErr) {
-    return { ok: false, error: supersedeErr.message }
-  }
-
-  const { error: insertErr } = await client.from('property_t3_attestations').insert({
-    property_id: propertyId,
-    attested_by: attestedByUserId,
-    attested_at: now,
-    registration_number: form.registrationNumber.trim(),
-    da_lawful_use_declared: form.daDeclared,
-    afss_current_declared: form.afssDeclared,
-    afss_statement_date: form.afssStatementDate.trim() || null,
-    afss_expiry_date: form.afssExpiryDate.trim() || null,
-    head_lessor_consent_declared: listerRole === 'head_tenant' ? form.headLessorConsentDeclared : null,
-    warranty_version: NSW_T3_COMPLIANCE_WARRANTY_VERSION,
-    evidence_paths: null,
-    superseded_at: null,
+  const { error } = await client.rpc('record_property_t3_attestation', {
+    p_property_id: propertyId,
+    p_registration_number: form.registrationNumber.trim(),
+    p_da_lawful_use_declared: form.daDeclared,
+    p_afss_current_declared: form.afssDeclared,
+    p_afss_statement_date: form.afssStatementDate.trim() || null,
+    p_afss_expiry_date: form.afssExpiryDate.trim() || null,
+    p_head_lessor_consent_declared:
+      listerRole === 'head_tenant' ? form.headLessorConsentDeclared : null,
+    p_warranty_version: NSW_T3_COMPLIANCE_WARRANTY_VERSION,
   })
 
-  if (insertErr) {
-    return { ok: false, error: insertErr.message }
+  if (error) {
+    return { ok: false, error: error.message }
   }
   return { ok: true }
 }

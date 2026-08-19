@@ -1,0 +1,65 @@
+-- Rob-run verification after applying
+-- supabase/migrations/20260819140000_harden_property_t3_attestations.sql
+--
+-- Agents must not run this against production. Use a throwaway landlord-owned
+-- draft property you are willing to delete. Replace the placeholders below.
+--
+-- Placeholders:
+--   :property_id  - uuid of a draft test property you own
+--   :user_id      - auth.users id for that landlord (auth.uid() when signed in)
+
+-- ---------------------------------------------------------------------------
+-- 1) Direct table UPDATE / DELETE must fail (append-only)
+-- ---------------------------------------------------------------------------
+-- As the landlord JWT (or after set_config jwt claims), expect both to error:
+--
+--   update public.property_t3_attestations
+--   set registration_number = 'TAMPERED'
+--   where property_id = :property_id;
+--
+--   delete from public.property_t3_attestations
+--   where property_id = :property_id;
+--
+-- Expected: restrict_violation / append-only exception (or 0 rows + grant denial).
+
+-- ---------------------------------------------------------------------------
+-- 2) Forged client timestamps must not land
+-- ---------------------------------------------------------------------------
+-- After a successful:
+--   select public.record_property_t3_attestation(
+--     :property_id, 'BH-VERIFY', true, true, null, null, null,
+--     'nsw-t3-compliance-warranty-v1'
+--   );
+--
+--   select attested_at, superseded_at, property_id_at_attestation,
+--          premises_address, premises_suburb, premises_state, premises_postcode
+--   from public.property_t3_attestations
+--   where property_id = :property_id and superseded_at is null;
+--
+-- Expected: attested_at ≈ now(), superseded_at null, property_id_at_attestation = property_id,
+-- premises_* match the property row. Direct insert as authenticated must be denied.
+
+-- ---------------------------------------------------------------------------
+-- 3) Publish without attestation must fail server-side
+-- ---------------------------------------------------------------------------
+-- On an NSW T3 property (state NSW, private_room_landlord_off_site,
+-- is_registered_rooming_house true) with no current complete attestation:
+--
+--   update public.properties set status = 'active' where id = :property_id;
+--
+-- Expected: check_violation with message
+--   Complete the NSW boarding-house compliance attestation before publishing or generating an occupancy agreement.
+
+-- ---------------------------------------------------------------------------
+-- 4) H4b: deleting the property retains the attestation
+-- ---------------------------------------------------------------------------
+-- After a successful attestation on a draft:
+--
+--   delete from public.properties where id = :property_id;
+--
+--   select property_id, property_id_at_attestation, premises_address, superseded_at
+--   from public.property_t3_attestations
+--   where property_id_at_attestation = :property_id;
+--
+-- Expected: property_id IS NULL, property_id_at_attestation still equals the deleted id,
+-- premises snapshot intact, row not deleted.

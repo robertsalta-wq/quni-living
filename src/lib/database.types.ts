@@ -532,7 +532,12 @@ export interface Database {
       property_t3_attestations: {
         Row: {
           id: string
-          property_id: string
+          property_id: string | null
+          property_id_at_attestation: string
+          premises_address: string | null
+          premises_suburb: string | null
+          premises_state: string | null
+          premises_postcode: string | null
           attested_by: string
           attested_at: string
           registration_number: string
@@ -547,8 +552,13 @@ export interface Database {
         }
         Insert: {
           id?: string
-          property_id: string
-          attested_by: string
+          property_id?: string | null
+          property_id_at_attestation?: string
+          premises_address?: string | null
+          premises_suburb?: string | null
+          premises_state?: string | null
+          premises_postcode?: string | null
+          attested_by?: string
           attested_at?: string
           registration_number: string
           da_lawful_use_declared: boolean
@@ -562,7 +572,12 @@ export interface Database {
         }
         Update: {
           id?: string
-          property_id?: string
+          property_id?: string | null
+          property_id_at_attestation?: string
+          premises_address?: string | null
+          premises_suburb?: string | null
+          premises_state?: string | null
+          premises_postcode?: string | null
           attested_by?: string
           attested_at?: string
           registration_number?: string
@@ -2830,6 +2845,23 @@ export interface Database {
       duplicate_property_listing: {
         Args: { p_source_id: string }
         Returns: string
+      }
+      record_property_t3_attestation: {
+        Args: {
+          p_property_id: string
+          p_registration_number: string
+          p_da_lawful_use_declared: boolean
+          p_afss_current_declared: boolean
+          p_afss_statement_date?: string | null
+          p_afss_expiry_date?: string | null
+          p_head_lessor_consent_declared?: boolean | null
+          p_warranty_version: string
+        }
+        Returns: string
+      }
+      property_has_complete_nsw_t3_attestation: {
+        Args: { p_property_id: string; p_lister_role: string }
+        Returns: boolean
       }
       resolve_tenant_invite: {
         Args: { p_token: string }

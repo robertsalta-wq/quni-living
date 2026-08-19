@@ -2689,6 +2689,23 @@ export default function LandlordPropertyFormPage() {
       'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable, water_separately_metered_efficient_attested_at, utilities_services'
 
       if (isEdit && propertyId) {
+        // Active T3 listings: record attestation before the properties UPDATE so the
+        // DB publish trigger sees a complete current row (lister_role may have changed).
+        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+          const currentAttestation = await fetchCurrentNswT3ComplianceAttestation(supabase, propertyId)
+          const completeForRole = isCompleteNswT3ComplianceAttestation(currentAttestation, listerRole)
+          if (!completeForRole) {
+            const recorded = await recordNswT3ComplianceAttestation({
+              client: supabase,
+              propertyId,
+              attestedByUserId: user.id,
+              listerRole,
+              form: t3ComplianceForm,
+            })
+            if (!recorded.ok) throw new Error(recorded.error)
+            setT3ComplianceCompleteOnLoad(true)
+          }
+        }
         const { data: updatedRow, error: upErr } = await supabase
           .from('properties')
           .update(baseFields)
@@ -2771,19 +2788,6 @@ export default function LandlordPropertyFormPage() {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
         }
-        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
-          if (!t3ComplianceCompleteOnLoad) {
-            const recorded = await recordNswT3ComplianceAttestation({
-              client: supabase,
-              propertyId,
-              attestedByUserId: user.id,
-              listerRole,
-              form: t3ComplianceForm,
-            })
-            if (!recorded.ok) throw new Error(recorded.error)
-            setT3ComplianceCompleteOnLoad(true)
-          }
-        }
         if (accuracyAttestationPatch.accuracy_attested_at) {
           setAccuracyAttestedAt(accuracyAttestationPatch.accuracy_attested_at)
           setAccuracyAttestedContentHash(accuracyAttestationPatch.accuracy_attested_content_hash)
@@ -2813,6 +2817,7 @@ export default function LandlordPropertyFormPage() {
         }
       } else {
         const slug = generatePropertySlug(t)
+        const publishAsActive = !isNswT3Listing
         const { data: inserted, error: insErr } = await supabase
           .from('properties')
           .insert({
@@ -2820,13 +2825,13 @@ export default function LandlordPropertyFormPage() {
             title: t,
             slug,
             landlord_id: landlordId,
-            status: 'active',
+            // NSW T3: insert draft, attest, then activate (DB trigger requires attestation for active).
+            status: publishAsActive ? 'active' : 'draft',
             featured: false,
           } as PropertyInsert & { show_add_another_university?: boolean })
           .select('id, university_id, campus_id')
           .single()
         if (insErr) throw insErr
-        requestSiteRebuild()
         const insertedRow = inserted as { id: string; university_id: string | null; campus_id: string | null }
         const newId = insertedRow.id
         if (insertedRow.university_id !== resolvedUniversityId || insertedRow.campus_id !== resolvedCampusId) {
@@ -2867,7 +2872,13 @@ export default function LandlordPropertyFormPage() {
             form: t3ComplianceForm,
           })
           if (!recorded.ok) throw new Error(recorded.error)
+          const { error: activateErr } = await supabase
+            .from('properties')
+            .update({ status: 'active' })
+            .eq('id', newId)
+          if (activateErr) throw activateErr
         }
+        requestSiteRebuild()
         try {
           clearLandlordPropertyNewDraft()
         } catch {
