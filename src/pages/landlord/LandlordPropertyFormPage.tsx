@@ -62,6 +62,23 @@ import {
   type NswT3SharedAreas,
 } from '../../lib/tenancy/nswT3ListingFields'
 import {
+  NSW_T3_COMPLIANCE_AFSS_LABEL,
+  NSW_T3_COMPLIANCE_DA_LABEL,
+  NSW_T3_COMPLIANCE_HEAD_LESSOR_LABEL,
+  NSW_T3_COMPLIANCE_INTRO,
+  NSW_T3_COMPLIANCE_SECTION_TITLE,
+  NSW_T3_COMPLIANCE_WARRANTY_LABEL,
+  emptyNswT3ComplianceFormState,
+  formStateFromNswT3Attestation,
+  isCompleteNswT3ComplianceAttestation,
+  nswT3ComplianceFormErrors,
+  type NswT3ComplianceFormState,
+} from '../../lib/tenancy/nswT3ComplianceAttestation'
+import {
+  fetchCurrentNswT3ComplianceAttestation,
+  recordNswT3ComplianceAttestation,
+} from '../../lib/tenancy/nswT3ComplianceAttestationPersist'
+import {
   formatPropertyPayoutBsbDisplay,
   listingTierRequiresPropertyPayoutDetails,
   propertyPayoutDetailsComplete,
@@ -787,6 +804,10 @@ export default function LandlordPropertyFormPage() {
   const [roomDescription, setRoomDescription] = useState('')
   const [sharedAreas, setSharedAreas] = useState<NswT3SharedAreas>({ ...EMPTY_NSW_T3_SHARED_AREAS })
   const [additionalCharges, setAdditionalCharges] = useState<NswT3AdditionalCharge[]>([])
+  const [t3ComplianceForm, setT3ComplianceForm] = useState<NswT3ComplianceFormState>(() =>
+    emptyNswT3ComplianceFormState(),
+  )
+  const [t3ComplianceCompleteOnLoad, setT3ComplianceCompleteOnLoad] = useState(false)
   const roomingHouseErrors = useMemo(
     () => roomingHouseFieldErrors(propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber),
     [propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber],
@@ -971,6 +992,17 @@ export default function LandlordPropertyFormPage() {
       isRegisteredRoomingHouse,
     [state, propertyListingType, isRegisteredRoomingHouse],
   )
+
+  useEffect(() => {
+    if (!isNswT3Listing) return
+    const reg = roomingHouseRegistrationNumber.trim()
+    if (!reg) return
+    setT3ComplianceForm((prev) => {
+      if (prev.registrationNumber.trim()) return prev
+      return { ...prev, registrationNumber: reg }
+    })
+  }, [isNswT3Listing, roomingHouseRegistrationNumber])
+
   const bondWeekCap = isNswT3Listing ? T3_MAX_SECURITY_DEPOSIT_WEEKS : MAX_BOND_WEEKS
   const serviceTierAvailability = useMemo(
     () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
@@ -1545,6 +1577,19 @@ export default function LandlordPropertyFormPage() {
         setPayeeAccountName(payoutRow?.account_name?.trim() ?? '')
         setPayeeBsb(payoutRow?.bsb ? formatPropertyPayoutBsbDisplay(payoutRow.bsb) : '')
         setPayeeAccountNumber(payoutRow?.account_number?.trim() ?? '')
+
+        const regNum =
+          typeof prop.rooming_house_registration_number === 'string'
+            ? prop.rooming_house_registration_number
+            : ''
+        const t3Row = await fetchCurrentNswT3ComplianceAttestation(supabase, propertyId)
+        const t3Complete = isCompleteNswT3ComplianceAttestation(t3Row, loadedListerRole)
+        setT3ComplianceCompleteOnLoad(t3Complete)
+        if (t3Row && t3Complete) {
+          setT3ComplianceForm(formStateFromNswT3Attestation(t3Row, loadedListerRole))
+        } else {
+          setT3ComplianceForm(emptyNswT3ComplianceFormState(regNum))
+        }
       }
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Could not load form.')
@@ -2411,6 +2456,15 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (isNswT3Listing && (isPublishingNewListing || existingListingStatus === 'active')) {
+      const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
+      if (t3FormErr) {
+        reportSubmitError(t3FormErr)
+        document.getElementById('section-nsw-t3-compliance')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+
     if (
       waterUsageChargedSeparatelySelected &&
       !propertyHasWaterSeparatelyMeteredAttestation({
@@ -2717,6 +2771,19 @@ export default function LandlordPropertyFormPage() {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
         }
+        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+          if (!t3ComplianceCompleteOnLoad) {
+            const recorded = await recordNswT3ComplianceAttestation({
+              client: supabase,
+              propertyId,
+              attestedByUserId: user.id,
+              listerRole,
+              form: t3ComplianceForm,
+            })
+            if (!recorded.ok) throw new Error(recorded.error)
+            setT3ComplianceCompleteOnLoad(true)
+          }
+        }
         if (accuracyAttestationPatch.accuracy_attested_at) {
           setAccuracyAttestedAt(accuracyAttestationPatch.accuracy_attested_at)
           setAccuracyAttestedContentHash(accuracyAttestationPatch.accuracy_attested_content_hash)
@@ -2790,6 +2857,16 @@ export default function LandlordPropertyFormPage() {
             { onConflict: 'property_id' },
           )
           if (payoutErr) throw payoutErr
+        }
+        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+          const recorded = await recordNswT3ComplianceAttestation({
+            client: supabase,
+            propertyId: newId,
+            attestedByUserId: user.id,
+            listerRole,
+            form: t3ComplianceForm,
+          })
+          if (!recorded.ok) throw new Error(recorded.error)
         }
         try {
           clearLandlordPropertyNewDraft()
@@ -2886,6 +2963,16 @@ export default function LandlordPropertyFormPage() {
           const featureIds = [...selectedFeatureIds]
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
+          if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+            const recorded = await recordNswT3ComplianceAttestation({
+              client: supabase,
+              propertyId: newId,
+              attestedByUserId: user.id,
+              listerRole,
+              form: t3ComplianceForm,
+            })
+            if (!recorded.ok) throw new Error(recorded.error)
+          }
           clearLandlordPropertyNewDraft()
           navigate(listingHubPath({ propertyId: newId }), { replace: true })
           return
@@ -3649,6 +3736,124 @@ export default function LandlordPropertyFormPage() {
                   </span>
                 </label>
               </div>
+              {isNswT3Listing ? (
+                <div
+                  id="section-nsw-t3-compliance"
+                  className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4 scroll-mt-below-header"
+                >
+                  <p className="text-sm font-medium text-gray-900">{NSW_T3_COMPLIANCE_SECTION_TITLE}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed">{NSW_T3_COMPLIANCE_INTRO}</p>
+                  {t3ComplianceCompleteOnLoad ? (
+                    <p className="text-xs text-gray-700">
+                      Current attestation is on file for this listing. Update the declarations below only if you need to
+                      replace it.
+                    </p>
+                  ) : null}
+                  <div>
+                    <label htmlFor="pf-t3-reg" className={labelClass}>
+                      Fair Trading registration number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="pf-t3-reg"
+                      type="text"
+                      value={t3ComplianceForm.registrationNumber}
+                      onChange={(e) => {
+                        setT3ComplianceCompleteOnLoad(false)
+                        setT3ComplianceForm((prev) => ({ ...prev, registrationNumber: e.target.value }))
+                      }}
+                      className={inputClass}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                    <input
+                      type="checkbox"
+                      checked={t3ComplianceForm.daDeclared}
+                      onChange={(e) => {
+                        setT3ComplianceCompleteOnLoad(false)
+                        setT3ComplianceForm((prev) => ({ ...prev, daDeclared: e.target.checked }))
+                      }}
+                      className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                    />
+                    <span>{NSW_T3_COMPLIANCE_DA_LABEL}</span>
+                  </label>
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                    <input
+                      type="checkbox"
+                      checked={t3ComplianceForm.afssDeclared}
+                      onChange={(e) => {
+                        setT3ComplianceCompleteOnLoad(false)
+                        setT3ComplianceForm((prev) => ({ ...prev, afssDeclared: e.target.checked }))
+                      }}
+                      className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                    />
+                    <span>{NSW_T3_COMPLIANCE_AFSS_LABEL}</span>
+                  </label>
+                  {t3ComplianceForm.afssDeclared ? (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor="pf-t3-afss-date" className={labelClass}>
+                          AFSS statement date (optional)
+                        </label>
+                        <input
+                          id="pf-t3-afss-date"
+                          type="date"
+                          value={t3ComplianceForm.afssStatementDate}
+                          onChange={(e) => {
+                            setT3ComplianceCompleteOnLoad(false)
+                            setT3ComplianceForm((prev) => ({ ...prev, afssStatementDate: e.target.value }))
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="pf-t3-afss-expiry" className={labelClass}>
+                          AFSS expiry (optional)
+                        </label>
+                        <input
+                          id="pf-t3-afss-expiry"
+                          type="date"
+                          value={t3ComplianceForm.afssExpiryDate}
+                          onChange={(e) => {
+                            setT3ComplianceCompleteOnLoad(false)
+                            setT3ComplianceForm((prev) => ({ ...prev, afssExpiryDate: e.target.value }))
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  {listerRole === 'head_tenant' ? (
+                    <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                      <input
+                        type="checkbox"
+                        checked={t3ComplianceForm.headLessorConsentDeclared}
+                        onChange={(e) => {
+                          setT3ComplianceCompleteOnLoad(false)
+                          setT3ComplianceForm((prev) => ({
+                            ...prev,
+                            headLessorConsentDeclared: e.target.checked,
+                          }))
+                        }}
+                        className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                      />
+                      <span>{NSW_T3_COMPLIANCE_HEAD_LESSOR_LABEL}</span>
+                    </label>
+                  ) : null}
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                    <input
+                      type="checkbox"
+                      checked={t3ComplianceForm.warrantyAgreed}
+                      onChange={(e) => {
+                        setT3ComplianceCompleteOnLoad(false)
+                        setT3ComplianceForm((prev) => ({ ...prev, warrantyAgreed: e.target.checked }))
+                      }}
+                      className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                    />
+                    <span>{NSW_T3_COMPLIANCE_WARRANTY_LABEL}</span>
+                  </label>
+                </div>
+              ) : null}
             </div>,
             'section-property-details',
           )}

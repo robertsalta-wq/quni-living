@@ -6,6 +6,11 @@ import {
   AUTHORITY_TO_LET_BLOCKED_MESSAGE,
   propertyHasAuthorityToLetAttestation,
 } from '../lib/authorityToLetAttestation'
+import {
+  NSW_T3_COMPLIANCE_BLOCKED_MESSAGE,
+  isNswT3ListingFields,
+} from '../lib/tenancy/nswT3ComplianceAttestation'
+import { propertyHasCurrentNswT3ComplianceAttestation } from '../lib/tenancy/nswT3ComplianceAttestationPersist'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { requestSiteRebuild } from '../lib/triggerSiteRebuild'
@@ -28,7 +33,28 @@ export type LandlordPropertyForListingActions = Pick<
   | 'couple_surcharge_per_week'
   | 'parking_surcharge_per_week'
   | 'parking_available'
+  | 'state'
+  | 'property_type'
+  | 'is_registered_rooming_house'
+  | 'lister_role'
 >
+
+async function assertNswT3ComplianceBeforeActivate(
+  property: LandlordPropertyForListingActions,
+): Promise<string | null> {
+  if (
+    !isNswT3ListingFields({
+      state: property.state,
+      propertyType: property.property_type,
+      isRegisteredRoomingHouse: property.is_registered_rooming_house,
+    })
+  ) {
+    return null
+  }
+  const role = property.lister_role === 'head_tenant' ? 'head_tenant' : 'owner'
+  const ok = await propertyHasCurrentNswT3ComplianceAttestation(supabase, property.id, role)
+  return ok ? null : NSW_T3_COMPLIANCE_BLOCKED_MESSAGE
+}
 
 export function useLandlordPropertyListingActions(args: {
   reload: () => Promise<void>
@@ -51,6 +77,11 @@ export function useLandlordPropertyListingActions(args: {
       if (property.status !== 'draft') return
       if (!propertyHasAuthorityToLetAttestation(property)) {
         showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+        return
+      }
+      const t3Block = await assertNswT3ComplianceBeforeActivate(property)
+      if (t3Block) {
+        showToast({ kind: 'error', message: t3Block })
         return
       }
       setPublishingListingId(property.id)
@@ -103,6 +134,13 @@ export function useLandlordPropertyListingActions(args: {
         showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
         return
       }
+      if (nextStatus === 'active') {
+        const t3Block = await assertNswT3ComplianceBeforeActivate(property)
+        if (t3Block) {
+          showToast({ kind: 'error', message: t3Block })
+          return
+        }
+      }
       setUpdatingListingId(property.id)
       try {
         const { error: updateError } = await withSentryMonitoring('LandlordPropertyListing/toggle-status', () =>
@@ -117,7 +155,7 @@ export function useLandlordPropertyListingActions(args: {
         setUpdatingListingId(null)
       }
     },
-    [reload, reportMutErr],
+    [reload, reportMutErr, showToast],
   )
 
   return {

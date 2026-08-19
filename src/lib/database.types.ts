@@ -529,6 +529,62 @@ export interface Database {
           },
         ]
       }
+      property_t3_attestations: {
+        Row: {
+          id: string
+          property_id: string
+          attested_by: string
+          attested_at: string
+          registration_number: string
+          da_lawful_use_declared: boolean
+          afss_current_declared: boolean
+          afss_statement_date: string | null
+          afss_expiry_date: string | null
+          head_lessor_consent_declared: boolean | null
+          warranty_version: string
+          evidence_paths: Json | null
+          superseded_at: string | null
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          attested_by: string
+          attested_at?: string
+          registration_number: string
+          da_lawful_use_declared: boolean
+          afss_current_declared: boolean
+          afss_statement_date?: string | null
+          afss_expiry_date?: string | null
+          head_lessor_consent_declared?: boolean | null
+          warranty_version: string
+          evidence_paths?: Json | null
+          superseded_at?: string | null
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          attested_by?: string
+          attested_at?: string
+          registration_number?: string
+          da_lawful_use_declared?: boolean
+          afss_current_declared?: boolean
+          afss_statement_date?: string | null
+          afss_expiry_date?: string | null
+          head_lessor_consent_declared?: boolean | null
+          warranty_version?: string
+          evidence_paths?: Json | null
+          superseded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'property_t3_attestations_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       student_profiles: {
         Row: {
           id: string
