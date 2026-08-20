@@ -468,6 +468,7 @@ Canonical seeded features (`supabase/quni_supabase_schema.sql`):
 |---------|-------------------|
 | WiFi | Amenity (browse: not filtered) |
 | Air conditioning | Amenity |
+| Ceiling fan | Amenity |
 | Heating | Amenity |
 | Washing machine | Amenity |
 | Dryer | Amenity |

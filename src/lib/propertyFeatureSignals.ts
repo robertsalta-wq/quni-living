@@ -1,5 +1,20 @@
 /** Derive listing signals from feature names (same heuristics as PropertyDetail). */
 
+/** Sort key so Ceiling fan sits with Air conditioning / Heating (A-Z otherwise). */
+function propertyFeatureSortKey(name: string): string {
+  const n = name.trim().toLowerCase()
+  if (n === 'ceiling fan') return 'air conditioning\u0001'
+  return n
+}
+
+export function comparePropertyFeatureNames(a: string, b: string): number {
+  return propertyFeatureSortKey(a).localeCompare(propertyFeatureSortKey(b), 'en')
+}
+
+export function sortPropertyFeatureRows<T extends { name: string }>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => comparePropertyFeatureNames(a.name, b.name))
+}
+
 export function featureNamesFromPropertyRow(property: {
   property_features?: { features?: { name?: string | null } | null }[] | null
 } | null): string[] {
