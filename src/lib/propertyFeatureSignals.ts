@@ -1,14 +1,22 @@
 /** Derive listing signals from feature names (same heuristics as PropertyDetail). */
 
-/** Sort key so Ceiling fan sits with Air conditioning / Heating (A-Z otherwise). */
-function propertyFeatureSortKey(name: string): string {
+const CLIMATE_FEATURE_ORDER = ['air conditioning', 'ceiling fan'] as const
+
+function climateFeatureRank(name: string): number {
   const n = name.trim().toLowerCase()
-  if (n === 'ceiling fan') return 'air conditioning\u0001'
-  return n
+  return (CLIMATE_FEATURE_ORDER as readonly string[]).indexOf(n)
 }
 
+/** Ceiling fan sits immediately after Air conditioning; everything else stays A-Z. */
 export function comparePropertyFeatureNames(a: string, b: string): number {
-  return propertyFeatureSortKey(a).localeCompare(propertyFeatureSortKey(b), 'en')
+  const ia = climateFeatureRank(a)
+  const ib = climateFeatureRank(b)
+  if (ia !== -1 && ib !== -1) return ia - ib
+  const aKey = ia !== -1 ? 'air conditioning' : a.trim().toLowerCase()
+  const bKey = ib !== -1 ? 'air conditioning' : b.trim().toLowerCase()
+  const byAlpha = aKey.localeCompare(bKey, 'en')
+  if (byAlpha !== 0) return byAlpha
+  return (ia === -1 ? 1 : ia) - (ib === -1 ? 1 : ib)
 }
 
 export function sortPropertyFeatureRows<T extends { name: string }>(rows: readonly T[]): T[] {
