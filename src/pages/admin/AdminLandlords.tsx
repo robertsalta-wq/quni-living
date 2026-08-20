@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate } from './adminUi'
 import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
+import { adminNewListingPath } from '../../lib/adminConciergeListing'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -85,7 +86,18 @@ export default function AdminLandlords() {
 
   return (
     <div>
-      <AdminPageHeader title="Landlords" subtitle="Landlord accounts and verification." />
+      <AdminPageHeader
+        title="Landlords"
+        subtitle="Landlord accounts and verification."
+        actions={
+          <Link
+            to={adminNewListingPath()}
+            className="inline-flex items-center justify-center rounded-admin-sm bg-admin-coral px-3.5 py-2 text-[13px] font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+          >
+            Create listing for landlord
+          </Link>
+        }
+      />
 
       {error && (
         <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
@@ -111,6 +123,7 @@ export default function AdminLandlords() {
                 <th className={adminThClass}>Phone</th>
                 <th className={adminThClass}>Verified</th>
                 <th className={adminThClass}>Created</th>
+                <th className={adminThClass}>Listing</th>
               </tr>
             </thead>
             <tbody>
@@ -156,6 +169,14 @@ export default function AdminLandlords() {
                       </div>
                     </td>
                     <td className={adminTdClass}>{formatDate(row.created_at)}</td>
+                    <td className={adminTdClass}>
+                      <Link
+                        to={adminNewListingPath(row.id)}
+                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                      >
+                        Create listing
+                      </Link>
+                    </td>
                   </tr>
                 ))}
             </tbody>

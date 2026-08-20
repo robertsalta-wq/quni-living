@@ -2914,6 +2914,10 @@ export interface Database {
         Args: { p_property_id: string; p_change_reason: string }
         Returns: undefined
       }
+      admin_record_concierge_listing: {
+        Args: { p_property_id: string; p_landlord_profile_id: string }
+        Returns: string
+      }
       properties_near_point: {
         Args: {
           origin_lat: number
