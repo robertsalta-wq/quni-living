@@ -52,6 +52,8 @@ import {
   buildListingPhotoBadges,
   listingHighlightSignals,
 } from '../lib/listingDisplayHighlights'
+import { listingAmenityIconForName } from '../lib/listingAmenityIcon'
+import { comparePropertyFeatureNames } from '../lib/propertyFeatureSignals'
 import { CollapsibleProse } from '../components/CollapsibleProse'
 import { propertyUtilitiesQuickBarItems } from '../lib/propertyUtilitiesDisclosure'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
@@ -109,31 +111,8 @@ function amenityGridItems(amenityNames: string[], furnished: boolean): AmenityGr
     out.push({ key: label, icon, label })
   }
 
-  const matchIcon = (raw: string): string => {
-    const n = raw.trim().toLowerCase()
-    if (/air\s*conditioning|^ac$/i.test(raw)) return '❄️'
-    if (/bills?\s*included|^utilities$/i.test(n)) return '💡'
-    if (/dishwasher/i.test(n)) return '🍽️'
-    if (/dryer/i.test(n)) return '🧺'
-    if (/garden/i.test(n)) return '🌿'
-    if (/gym/i.test(n)) return '🏋️'
-    if (/heat/i.test(n)) return '🔥'
-    if (/balcony/i.test(n)) return '🪟'
-    if (/linen/i.test(n)) return '🛏️'
-    if (/clean|housekeeping|house\s*keeper|mop|maid/i.test(n)) return '🧹'
-    if (/transport|train|bus|tram|ferry/i.test(n)) return '🚌'
-    if (/parking|car\s*space|car\s*park|garage/i.test(n)) return '🚗'
-    if (/pet/i.test(n)) return '🐾'
-    if (/desk|study/i.test(n)) return '📚'
-    if (/pool|swim/i.test(n)) return '🏊'
-    if (/wifi|wi-?fi|internet|broadband/i.test(n)) return '📶'
-    if (/wash|laundry|machine/i.test(n)) return '🫧'
-    if (/furnish/i.test(n)) return '🛋️'
-    return '✓'
-  }
-
   for (const name of amenityNames) {
-    const icon = matchIcon(name)
+    const icon = listingAmenityIconForName(name)
     pushIcon(name, icon)
     if (out.length >= 12) break
   }
@@ -635,7 +614,7 @@ export default function PropertyDetail() {
     const names = rows
       .map((pf) => pf?.features?.name)
       .filter((n): n is string => Boolean(n?.trim()))
-    return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+    return [...new Set(names)].sort(comparePropertyFeatureNames)
   }, [property?.property_features])
 
   const inclusionSignals = useMemo(

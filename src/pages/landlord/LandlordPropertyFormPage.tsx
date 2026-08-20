@@ -110,6 +110,7 @@ import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
 import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
 import { findParkingFeatureId } from '../../lib/pricing/parkingFeature'
+import { sortPropertyFeatureRows } from '../../lib/propertyFeatureSignals'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
@@ -1446,7 +1447,7 @@ export default function LandlordPropertyFormPage() {
         .select('id, name, icon')
         .order('name')
       if (featErr) throw featErr
-      setFeatures((featData ?? []) as FeatureRow[])
+      setFeatures(sortPropertyFeatureRows((featData ?? []) as FeatureRow[]))
 
       const { data: hrData, error: hrErr } = await supabase
         .from('house_rules_ref')

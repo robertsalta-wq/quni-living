@@ -449,6 +449,7 @@ on conflict (slug) do nothing;
 insert into public.features (name) values
   ('WiFi'),
   ('Air conditioning'),
+  ('Ceiling fan'),
   ('Heating'),
   ('Washing machine'),
   ('Dryer'),
