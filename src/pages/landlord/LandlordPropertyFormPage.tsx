@@ -271,7 +271,7 @@ const BOND_WEEK_SELECTOR_OPTIONS = [
   { value: 4, label: '4 weeks' },
 ] as const
 
-/** Persisted new-listing draft - property fields only (no admin landlord id or auth). */
+/** Device draft for new and edit listing. Includes admin landlord id so it survives save. */
 type LandlordPropertyDraftV1 = {
   v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
   title: string
@@ -316,6 +316,10 @@ type LandlordPropertyDraftV1 = {
   selectedRules: Partial<Record<string, RulePermitted>>
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
+  adminLandlordId?: string
+  payeeAccountName?: string
+  payeeBsb?: string
+  payeeAccountNumber?: string
   utilitiesForm?: LandlordPropertyUtilitiesFormState
   ft6600Compliance?: LandlordFt6600ComplianceFormState
 }
@@ -504,6 +508,10 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
         d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
           ? d.headTenantLandlordConsent
           : null,
+      adminLandlordId: typeof d.adminLandlordId === 'string' ? d.adminLandlordId : '',
+      payeeAccountName: typeof d.payeeAccountName === 'string' ? d.payeeAccountName : '',
+      payeeBsb: typeof d.payeeBsb === 'string' ? d.payeeBsb : '',
+      payeeAccountNumber: typeof d.payeeAccountNumber === 'string' ? d.payeeAccountNumber : '',
       utilitiesForm: parseDraftUtilitiesForm(d.utilitiesForm),
       ft6600Compliance: parseDraftFt6600Compliance(d.ft6600Compliance),
     }
@@ -546,7 +554,13 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.coupleSurchargePerWeek.trim() !== '' ||
     d.parkingSurchargePerWeek.trim() !== '' ||
     d.parkingAvailable ||
-    Boolean(d.listerRole && d.listerRole !== 'owner')
+    Boolean(d.listerRole && d.listerRole !== 'owner') ||
+    Boolean(d.adminLandlordId?.trim()) ||
+    Boolean(d.payeeAccountName?.trim()) ||
+    Boolean(d.payeeBsb?.trim()) ||
+    Boolean(d.payeeAccountNumber?.trim()) ||
+    d.headTenantLandlordConsent === true ||
+    d.headTenantLandlordConsent === false
   )
 }
 
@@ -1227,6 +1241,10 @@ export default function LandlordPropertyFormPage() {
         selectedRules: { ...selectedRules },
         listerRole,
         headTenantLandlordConsent,
+        adminLandlordId,
+        payeeAccountName,
+        payeeBsb,
+        payeeAccountNumber,
         utilitiesForm,
         ft6600Compliance,
       }),
@@ -1272,6 +1290,10 @@ export default function LandlordPropertyFormPage() {
       selectedRules,
       listerRole,
       headTenantLandlordConsent,
+      adminLandlordId,
+      payeeAccountName,
+      payeeBsb,
+      payeeAccountNumber,
       utilitiesForm,
       ft6600Compliance,
     ],
@@ -1478,6 +1500,7 @@ export default function LandlordPropertyFormPage() {
         setHouseRulesResetError(null)
         setHouseRulesResetAck(false)
         setInitialServiceTier('listing')
+        setAdminLandlordId('')
       }
 
       if (role === 'admin') {
@@ -1524,6 +1547,10 @@ export default function LandlordPropertyFormPage() {
           setPageError('You do not have permission to edit this listing.')
           setLoadingPage(false)
           return
+        }
+
+        if (role === 'admin') {
+          setAdminLandlordId(prop.landlord_id ?? '')
         }
 
         setExistingSlug(prop.slug)
@@ -1771,6 +1798,10 @@ export default function LandlordPropertyFormPage() {
       if (parsed.listerRole === 'head_tenant' && parsed.headTenantLandlordConsent != null) {
         setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
       }
+      if (parsed.adminLandlordId?.trim()) setAdminLandlordId(parsed.adminLandlordId)
+      if (parsed.payeeAccountName?.trim()) setPayeeAccountName(parsed.payeeAccountName)
+      if (parsed.payeeBsb?.trim()) setPayeeBsb(parsed.payeeBsb)
+      if (parsed.payeeAccountNumber?.trim()) setPayeeAccountNumber(parsed.payeeAccountNumber)
       if (parsed.utilitiesForm) setUtilitiesForm(parsed.utilitiesForm)
       if (parsed.ft6600Compliance) setFt6600Compliance(parsed.ft6600Compliance)
 
@@ -2611,15 +2642,14 @@ export default function LandlordPropertyFormPage() {
     setSubmitting(true)
     try {
     if (role === 'admin') {
-      if (isEdit && propertyId) {
+      landlordId = adminLandlordId.trim() || null
+      if (!landlordId && isEdit && propertyId) {
         const { data: existing } = await supabase.from('properties').select('landlord_id').eq('id', propertyId).single()
         landlordId = (existing as { landlord_id: string | null } | null)?.landlord_id ?? null
-      } else {
-        landlordId = adminLandlordId.trim() || null
-        if (!landlordId) {
-          reportSubmitError('Select a landlord for this listing.')
-          return
-        }
+      }
+      if (!landlordId) {
+        reportSubmitError('Select a landlord for this listing.')
+        return
       }
     }
 
@@ -2760,6 +2790,7 @@ export default function LandlordPropertyFormPage() {
       ...waterAttestationPatch,
       ...accuracyAttestationPatch,
       lister_role: listerRole,
+      ...(role === 'admin' && landlordId ? { landlord_id: landlordId } : {}),
     }
 
     const complianceSelect =
@@ -2888,7 +2919,8 @@ export default function LandlordPropertyFormPage() {
           })
         }
         if (propertyId) {
-          clearLandlordPropertyEditDraft(propertyId)
+          editDirtyRef.current = true
+          persistLandlordPropertyDraft()
           editDirtyRef.current = false
           editBaselineJsonRef.current = JSON.stringify(landlordPropertyDraftSnapshotRef.current)
         }
@@ -3403,7 +3435,7 @@ export default function LandlordPropertyFormPage() {
             </div>
           )}
 
-          {role === 'admin' && !isEdit && (
+          {role === 'admin' && (
             <section className="rounded-2xl border border-amber-100 bg-amber-50/50 p-8 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Listing owner</h2>
               <p className="text-sm text-gray-700 mb-4">{ADMIN_CONCIERGE_DRAFT_NOTE}</p>
