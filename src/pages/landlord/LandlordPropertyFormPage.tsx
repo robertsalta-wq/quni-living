@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
+import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
 import { generatePropertySlug } from '../../lib/generatePropertySlug'
+import {
+  ADMIN_CONCIERGE_CREATED_MESSAGE,
+  ADMIN_CONCIERGE_DRAFT_NOTE,
+  ADMIN_CONCIERGE_LANDLORD_QUERY,
+  type AdminLandlordOption,
+  adminNewListingStatus,
+  filterLandlordOptionsForSearch,
+  listingStateFromLandlordProfile,
+  parseAdminConciergeLandlordProfileId,
+  skipListingAttestationsForAdmin,
+} from '../../lib/adminConciergeListing'
 import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
@@ -688,7 +699,12 @@ function scrollAndFocusTypeSpecificFields(): void {
 export default function LandlordPropertyFormPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user, profile, role } = useAuthContext()
+  const skipAttestations = skipListingAttestationsForAdmin(role === 'admin')
+  const conciergeLandlordProfileId = parseAdminConciergeLandlordProfileId(
+    searchParams.get(ADMIN_CONCIERGE_LANDLORD_QUERY),
+  )
 
   const propertyId = useMemo(() => {
     const sectionMatch = matchPath(
@@ -759,13 +775,15 @@ export default function LandlordPropertyFormPage() {
     role === 'landlord' && !landlordNonDiscriminationAccepted(landlordProfile)
 
   const [features, setFeatures] = useState<FeatureRow[]>([])
-  const [landlordOptions, setLandlordOptions] = useState<{ id: string; label: string }[]>([])
+  const [landlordOptions, setLandlordOptions] = useState<AdminLandlordOption[]>([])
+  const [adminLandlordQuery, setAdminLandlordQuery] = useState('')
   const [existingSlug, setExistingSlug] = useState<string | null>(null)
   const [existingListingStatus, setExistingListingStatus] = useState<
     Database['public']['Tables']['properties']['Row']['status'] | null
   >(null)
 
   const [adminLandlordId, setAdminLandlordId] = useState('')
+  const appliedConciergeLandlordRef = useRef<string | null>(null)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -833,6 +851,38 @@ export default function LandlordPropertyFormPage() {
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('NSW')
   const [postcode, setPostcode] = useState('')
+
+  const applyAdminLandlordProfile = useCallback(
+    (id: string) => {
+      setAdminLandlordId(id)
+      if (isEdit) return
+      const opt = landlordOptions.find((o) => o.id === id)
+      const st = listingStateFromLandlordProfile(opt?.state)
+      if (st) setState(st)
+    },
+    [isEdit, landlordOptions],
+  )
+
+  const filteredLandlordOptions = useMemo(() => {
+    const filtered = filterLandlordOptionsForSearch(landlordOptions, adminLandlordQuery)
+    const selected = landlordOptions.find((o) => o.id === adminLandlordId)
+    if (selected && !filtered.some((o) => o.id === selected.id)) return [selected, ...filtered]
+    return filtered
+  }, [landlordOptions, adminLandlordQuery, adminLandlordId])
+
+  useEffect(() => {
+    if (role !== 'admin' || isEdit || !conciergeLandlordProfileId) return
+    if (appliedConciergeLandlordRef.current === conciergeLandlordProfileId) return
+    if (!landlordOptions.some((o) => o.id === conciergeLandlordProfileId)) return
+    appliedConciergeLandlordRef.current = conciergeLandlordProfileId
+    applyAdminLandlordProfile(conciergeLandlordProfileId)
+  }, [role, isEdit, conciergeLandlordProfileId, landlordOptions, applyAdminLandlordProfile])
+
+  useEffect(() => {
+    const navState = location.state as { conciergeDraftCreated?: boolean } | null
+    if (!navState?.conciergeDraftCreated) return
+    setSubmitSuccessMessage(ADMIN_CONCIERGE_CREATED_MESSAGE)
+  }, [location.state])
 
   const listingAddressForSublet = useMemo(
     () => [address, suburb, state, postcode].filter(Boolean).join(', '),
@@ -1339,6 +1389,12 @@ export default function LandlordPropertyFormPage() {
     setSuburb('')
     setState('NSW')
     setPostcode('')
+    if (role === 'admin' && adminLandlordId) {
+      const st = listingStateFromLandlordProfile(
+        landlordOptions.find((o) => o.id === adminLandlordId)?.state,
+      )
+      if (st) setState(st)
+    }
     setLatitude(null)
     setLongitude(null)
     universityIdRef.current = ''
@@ -1366,7 +1422,6 @@ export default function LandlordPropertyFormPage() {
     setLeaseLength('Flexible')
     setAvailableFrom('')
     setImages([])
-    setAdminLandlordId('')
     setListerRole('owner')
     setHeadTenantLandlordConsent(null)
     setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
@@ -1376,7 +1431,7 @@ export default function LandlordPropertyFormPage() {
       window.clearTimeout(draftSavedHideTimerRef.current)
       draftSavedHideTimerRef.current = null
     }
-  }, [location.key, propertyId])
+  }, [location.key, propertyId, role, adminLandlordId, landlordOptions])
 
   const loadPage = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -1428,21 +1483,22 @@ export default function LandlordPropertyFormPage() {
       if (role === 'admin') {
         const { data: ll, error: llErr } = await supabase
           .from('landlord_profiles')
-          .select('id, full_name, email, first_name, last_name')
+          .select('id, full_name, email, first_name, last_name, state')
           .order('full_name')
         if (llErr) throw llErr
         const opts =
           (ll ?? []).map((r) => {
             const row = r as Pick<
               LandlordProfileRow,
-              'id' | 'full_name' | 'email' | 'first_name' | 'last_name'
+              'id' | 'full_name' | 'email' | 'first_name' | 'last_name' | 'state'
             >
             const name =
               [row.first_name, row.last_name].filter(Boolean).join(' ').trim() ||
               row.full_name?.trim() ||
               row.email ||
               row.id
-            return { id: row.id, label: name }
+            const label = row.email ? `${name} (${row.email})` : name
+            return { id: row.id, label, email: row.email, state: row.state }
           }) ?? []
         setLandlordOptions(opts)
       }
@@ -2446,6 +2502,7 @@ export default function LandlordPropertyFormPage() {
 
     const isPublishingNewListing = !isEdit
     if (
+      !skipAttestations &&
       isPublishingNewListing &&
       listerRole === 'head_tenant' &&
       !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent)
@@ -2459,6 +2516,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
     if (
+      !skipAttestations &&
       isPublishingNewListing &&
       !propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt }) &&
       !authorityToLetAgreed
@@ -2468,7 +2526,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (isNswT3Listing && (isPublishingNewListing || existingListingStatus === 'active')) {
+    if (!skipAttestations && isNswT3Listing && (isPublishingNewListing || existingListingStatus === 'active')) {
       const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
       if (t3FormErr) {
         reportSubmitError(t3FormErr)
@@ -2478,6 +2536,7 @@ export default function LandlordPropertyFormPage() {
     }
 
     if (
+      !skipAttestations &&
       waterUsageChargedSeparatelySelected &&
       !propertyHasWaterSeparatelyMeteredAttestation({
         water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
@@ -2543,7 +2602,7 @@ export default function LandlordPropertyFormPage() {
       },
       accuracyContentHash,
     )
-    if (!hasCurrentAccuracyAttestation && !accuracyAgreed) {
+    if (!skipAttestations && !hasCurrentAccuracyAttestation && !accuracyAgreed) {
       reportSubmitError(LISTING_ACCURACY_BLOCKED_MESSAGE)
       document.getElementById('section-listing-accuracy')?.scrollIntoView({ behavior: 'smooth' })
       return
@@ -2616,22 +2675,28 @@ export default function LandlordPropertyFormPage() {
             billsIncluded: billsIncludedSelected,
           })
         : null
-    const attestationPatch = authorityToLetAttestationPatch({
-      agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
-      existingAttestedAt: authorityToLetAttestedAt,
-    })
-    const waterAttestationPatch = waterSeparatelyMeteredAttestationPatch({
-      agreed: showPropertyUtilitiesSection
-        ? utilitiesForm.waterSeparatelyMeteredAgreed
-        : waterSeparatelyMeteredAgreed,
-      existingAttestedAt: waterSeparatelyMeteredAttestedAt,
-    })
-    const accuracyAttestationPatch = listingAccuracyAttestationPatch({
-      agreed: accuracyAgreed,
-      existingAttestedAt: accuracyAttestedAt,
-      existingContentHash: accuracyAttestedContentHash,
-      contentHash: accuracyContentHash,
-    })
+    const attestationPatch = skipAttestations
+      ? {}
+      : authorityToLetAttestationPatch({
+          agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
+          existingAttestedAt: authorityToLetAttestedAt,
+        })
+    const waterAttestationPatch = skipAttestations
+      ? {}
+      : waterSeparatelyMeteredAttestationPatch({
+          agreed: showPropertyUtilitiesSection
+            ? utilitiesForm.waterSeparatelyMeteredAgreed
+            : waterSeparatelyMeteredAgreed,
+          existingAttestedAt: waterSeparatelyMeteredAttestedAt,
+        })
+    const accuracyAttestationPatch = skipAttestations
+      ? {}
+      : listingAccuracyAttestationPatch({
+          agreed: accuracyAgreed,
+          existingAttestedAt: accuracyAttestedAt,
+          existingContentHash: accuracyAttestedContentHash,
+          contentHash: accuracyContentHash,
+        })
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
@@ -2703,7 +2768,7 @@ export default function LandlordPropertyFormPage() {
       if (isEdit && propertyId) {
         // Active T3 listings: record attestation before the properties UPDATE so the
         // DB publish trigger sees a complete current row (lister_role may have changed).
-        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+        if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
           const currentAttestation = await fetchCurrentNswT3ComplianceAttestation(supabase, propertyId)
           const completeForRole = isCompleteNswT3ComplianceAttestation(currentAttestation, listerRole)
           if (!completeForRole) {
@@ -2837,8 +2902,7 @@ export default function LandlordPropertyFormPage() {
             title: t,
             slug,
             landlord_id: landlordId,
-            // NSW T3: insert draft, attest, then activate (DB trigger requires attestation for active).
-            status: publishAsActive ? 'active' : 'draft',
+            status: adminNewListingStatus(role === 'admin', publishAsActive),
             featured: false,
           } as PropertyInsert & { show_add_another_university?: boolean })
           .select('id, university_id, campus_id')
@@ -2875,7 +2939,7 @@ export default function LandlordPropertyFormPage() {
           )
           if (payoutErr) throw payoutErr
         }
-        if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+        if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
           const recorded = await recordNswT3ComplianceAttestation({
             client: supabase,
             propertyId: newId,
@@ -2890,13 +2954,26 @@ export default function LandlordPropertyFormPage() {
             .eq('id', newId)
           if (activateErr) throw activateErr
         }
-        requestSiteRebuild()
+        if (role !== 'admin') {
+          requestSiteRebuild()
+        } else if (landlordId) {
+          const { error: auditErr } = await supabase.rpc('admin_record_concierge_listing', {
+            p_property_id: newId,
+            p_landlord_profile_id: landlordId,
+          })
+          if (auditErr) console.warn('[concierge listing] audit', auditErr.message)
+        }
         try {
           clearLandlordPropertyNewDraft()
         } catch {
           /* ignore */
         }
-        if (isHubSectionMode) {
+        if (role === 'admin') {
+          navigate(`/landlord/property/edit/${newId}`, {
+            replace: true,
+            state: { conciergeDraftCreated: true },
+          })
+        } else if (isHubSectionMode) {
           navigate(listingHubPath({ propertyId: newId }), { replace: true })
         } else {
           navigate('/landlord/dashboard?tab=listings', { replace: true })
@@ -2986,7 +3063,7 @@ export default function LandlordPropertyFormPage() {
           const featureIds = [...selectedFeatureIds]
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
-          if (isNswT3Listing && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
+          if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
             const recorded = await recordNswT3ComplianceAttestation({
               client: supabase,
               propertyId: newId,
@@ -2996,8 +3073,20 @@ export default function LandlordPropertyFormPage() {
             })
             if (!recorded.ok) throw new Error(recorded.error)
           }
+          if (role === 'admin') {
+            const { error: auditErr } = await supabase.rpc('admin_record_concierge_listing', {
+              p_property_id: newId,
+              p_landlord_profile_id: landlordId,
+            })
+            if (auditErr) console.warn('[concierge listing] audit', auditErr.message)
+          }
           clearLandlordPropertyNewDraft()
-          navigate(listingHubPath({ propertyId: newId }), { replace: true })
+          navigate(
+            role === 'admin'
+              ? `/landlord/property/edit/${newId}`
+              : listingHubPath({ propertyId: newId }),
+            role === 'admin' ? { replace: true, state: { conciergeDraftCreated: true } } : { replace: true },
+          )
           return
         } catch (err) {
           console.error('[LandlordPropertyFormPage] server draft save failed', err)
@@ -3067,6 +3156,8 @@ export default function LandlordPropertyFormPage() {
     hubReturnPath,
     propertyId,
     navigate,
+    skipAttestations,
+    t3ComplianceForm,
   ])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
@@ -3314,7 +3405,19 @@ export default function LandlordPropertyFormPage() {
 
           {role === 'admin' && !isEdit && (
             <section className="rounded-2xl border border-amber-100 bg-amber-50/50 p-8 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Listing owner</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Listing owner</h2>
+              <p className="text-sm text-gray-700 mb-4">{ADMIN_CONCIERGE_DRAFT_NOTE}</p>
+              <label htmlFor="admin-landlord-search" className={labelClass}>
+                Search landlords
+              </label>
+              <input
+                id="admin-landlord-search"
+                type="search"
+                value={adminLandlordQuery}
+                onChange={(e) => setAdminLandlordQuery(e.target.value)}
+                placeholder="Name or email"
+                className={`${inputClass} mb-3`}
+              />
               <label htmlFor="admin-landlord" className={labelClass}>
                 Landlord <span className="text-red-500">*</span>
               </label>
@@ -3322,16 +3425,22 @@ export default function LandlordPropertyFormPage() {
                 id="admin-landlord"
                 required
                 value={adminLandlordId}
-                onChange={(e) => setAdminLandlordId(e.target.value)}
+                onChange={(e) => applyAdminLandlordProfile(e.target.value)}
                 className={inputClass}
               >
                 <option value="">Select landlord…</option>
-                {landlordOptions.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
+                {filteredLandlordOptions.map((o) => {
+                  const listingState = listingStateFromLandlordProfile(o.state)
+                  return (
+                    <option key={o.id} value={o.id}>
+                      {listingState ? `${o.label} · ${listingState}` : o.label}
+                    </option>
+                  )
+                })}
               </select>
+              {adminLandlordQuery.trim() && filteredLandlordOptions.length === 0 ? (
+                <p className="mt-2 text-xs text-gray-600">No landlords match that search.</p>
+              ) : null}
             </section>
           )}
 
@@ -3723,6 +3832,11 @@ export default function LandlordPropertyFormPage() {
                   />
                 ) : null}
               </div>
+              {skipAttestations ? (
+                <p className="text-sm text-gray-700 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                  {ADMIN_CONCIERGE_DRAFT_NOTE}
+                </p>
+              ) : (
               <div id="section-authority-to-let">
                 <label
                   className={`flex gap-3 items-start text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 ${
@@ -3759,7 +3873,8 @@ export default function LandlordPropertyFormPage() {
                   </span>
                 </label>
               </div>
-              {isNswT3Listing ? (
+              )}
+              {isNswT3Listing && !skipAttestations ? (
                 <div
                   id="section-nsw-t3-compliance"
                   className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4 scroll-mt-below-header"
@@ -3991,6 +4106,7 @@ export default function LandlordPropertyFormPage() {
                     labelClass={labelClass}
                   />
                   {ft6600Compliance.waterUsageChargedSeparately === 'yes' &&
+                  !skipAttestations &&
                   !propertyHasWaterSeparatelyMeteredAttestation({
                     water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
                   }) ? (
@@ -4867,6 +4983,11 @@ export default function LandlordPropertyFormPage() {
               </label>
             ) : null}
             <div id="section-listing-accuracy">
+              {skipAttestations ? (
+                <p className="text-sm text-gray-700 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                  {ADMIN_CONCIERGE_DRAFT_NOTE}
+                </p>
+              ) : (
               <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <input
                   type="checkbox"
@@ -4879,6 +5000,7 @@ export default function LandlordPropertyFormPage() {
                 />
                 <span className="font-medium text-gray-900">{LISTING_ACCURACY_ATTESTATION_LABEL}</span>
               </label>
+              )}
             </div>
             <div id="listing-form-feedback-bottom" className="space-y-3">
               {submitError ? (
@@ -4903,10 +5025,14 @@ export default function LandlordPropertyFormPage() {
                   : isHubSectionMode
                     ? isEdit
                       ? 'Save'
-                      : 'Publish'
+                      : role === 'admin'
+                        ? 'Save draft'
+                        : 'Publish'
                     : isEdit
                       ? 'Save changes'
-                      : 'Publish listing'}
+                      : role === 'admin'
+                        ? 'Save draft for landlord'
+                        : 'Publish listing'}
               </button>
               <button
                 type="button"

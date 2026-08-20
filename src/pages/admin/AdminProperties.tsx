@@ -9,6 +9,13 @@ import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
+import {
+  ADMIN_ACTIVATE_NSW_T3_MESSAGE,
+  adminNewListingPath,
+  adminPropertyActivateBlockedReason,
+} from '../../lib/adminConciergeListing'
+import { isNswT3ListingFields } from '../../lib/tenancy/nswT3ComplianceAttestation'
+import { propertyHasCurrentNswT3ComplianceAttestation } from '../../lib/tenancy/nswT3ComplianceAttestationPersist'
 
 type PropertyStatus = Database['public']['Tables']['properties']['Row']['status']
 type AdminPropertyStatus = PropertyStatus | 'suspended'
@@ -39,6 +46,8 @@ function statusBadgeClass(s: AdminPropertyStatus) {
       return 'bg-gray-100 text-gray-600'
     case 'suspended':
       return 'bg-red-100 text-red-800'
+    case 'draft':
+      return 'bg-gray-100 text-gray-700'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -142,7 +151,35 @@ export default function AdminProperties() {
   }
 
   async function updateStatus(id: string, status: AdminPropertyStatus) {
-    const prev = rows.find((r) => r.id === id)?.status ?? 'inactive'
+    const row = rows.find((r) => r.id === id)
+    const prev = row?.status ?? 'inactive'
+    const activateBlock = adminPropertyActivateBlockedReason({
+      nextStatus: status,
+      authorityToLetAttestedAt: row?.authority_to_let_attested_at,
+    })
+    if (activateBlock) {
+      setError(activateBlock)
+      return
+    }
+    if (
+      status === 'active' &&
+      row &&
+      isNswT3ListingFields({
+        state: row.state,
+        propertyType: row.property_type,
+        isRegisteredRoomingHouse: row.is_registered_rooming_house,
+      })
+    ) {
+      const t3Ok = await propertyHasCurrentNswT3ComplianceAttestation(
+        supabase,
+        row.id,
+        row.lister_role === 'head_tenant' ? 'head_tenant' : 'owner',
+      )
+      if (!t3Ok) {
+        setError(ADMIN_ACTIVATE_NSW_T3_MESSAGE)
+        return
+      }
+    }
     setRows((r) => r.map((row) => (row.id === id ? { ...row, status } : row)))
     setUpdatingId(id)
     setError(null)
@@ -167,7 +204,18 @@ export default function AdminProperties() {
     <div>
       <PropertyFeeSnapshotsModal open={Boolean(feesPropertyId)} propertyId={feesPropertyId} onClose={closeFeesModal} />
 
-      <AdminPageHeader title="Properties" subtitle="All listings across every status." />
+      <AdminPageHeader
+        title="Properties"
+        subtitle="All listings across every status, including drafts."
+        actions={
+          <Link
+            to={adminNewListingPath()}
+            className="inline-flex items-center justify-center rounded-admin-sm bg-admin-coral px-3.5 py-2 text-[13px] font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+          >
+            Create listing for landlord
+          </Link>
+        }
+      />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-gray-500">Lister role:</span>
@@ -213,7 +261,7 @@ export default function AdminProperties() {
           <EmptyState
             icon="building-2"
             title="No properties yet"
-            description="Listings appear here as soon as landlords publish them."
+            description="Listings appear here when landlords publish them, or when staff save a draft for a landlord."
           />
         ) : filteredRows.length === 0 ? (
           <EmptyState
@@ -279,6 +327,8 @@ export default function AdminProperties() {
                             <option value="active">active</option>
                             <option value="inactive">inactive</option>
                             <option value="suspended">suspended</option>
+                            <option value="draft">draft</option>
+                            {row.status === 'pending' ? <option value="pending">pending</option> : null}
                           </select>
                         </div>
                       </td>
