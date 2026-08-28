@@ -237,6 +237,7 @@ export default async function handler(req, res) {
     const stripe = new Stripe(stripeSecret)
 
     if (useListing) {
+      // Listing identity: keep this check in lockstep with confirmListing.ts (shared helper).
       if (!landlordHostIdentityReadyForConfirm(landlord, { tier: 'listing' })) {
         return corsJson(
           res,

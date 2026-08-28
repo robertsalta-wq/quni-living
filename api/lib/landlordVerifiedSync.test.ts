@@ -60,6 +60,14 @@ describe('landlordHostIdentityReadyForConfirm', () => {
     ).toBe(true)
   })
 
+  it('listing: true with no charges and no override', () => {
+    expect(
+      landlordHostIdentityReadyForConfirm({ stripe_charges_enabled: false, admin_override_verified: false }, {
+        tier: 'listing',
+      }),
+    ).toBe(true)
+  })
+
   it('managed: false when only admin override is set', () => {
     expect(
       landlordHostIdentityReadyForConfirm({ stripe_charges_enabled: false, admin_override_verified: true }, {

@@ -117,6 +117,7 @@ export async function runListingConfirmBooking(
     })
   }
 
+  // Listing identity: keep this check in lockstep with confirm-booking.ts (shared helper).
   if (!landlordHostIdentityReadyForConfirm(landlord, { tier: 'listing' })) {
     return jsonFail(400, {
       error: 'host_identity_not_ready',
