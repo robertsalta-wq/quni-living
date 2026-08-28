@@ -204,10 +204,12 @@ export type LandlordReadinessDriverContent = {
 }
 
 function acceptProgress(readiness: LandlordReadiness, acceptTier: 'listing' | 'managed') {
-  const total = acceptTier === 'managed' ? 1 : 2
-  let done = readiness.accept.identityVerified ? 1 : 0
-  if (acceptTier !== 'managed' && readiness.accept.savedCard) done += 1
-  return { done, total, progress: total > 0 ? done / total : 0 }
+  if (acceptTier === 'managed') {
+    const done = readiness.accept.identityVerified ? 1 : 0
+    return { done, total: 1, progress: done }
+  }
+  const done = readiness.accept.savedCard ? 1 : 0
+  return { done, total: 1, progress: done }
 }
 
 /** Prop data for ProfileReadinessDriver (line rendered by the page). */
@@ -222,7 +224,7 @@ export function buildLandlordReadinessDriverContent(
     return {
       eyebrow: 'Step 2 of 2 · Accept bookings',
       title: "You're fully set up",
-      fraction: acceptTier === 'managed' ? '1 / 1' : '2 / 2',
+      fraction: '1 / 1',
       fractionLabel: 'ready to accept bookings',
       steps: [
         { label: 'Publish a listing', state: 'done' },

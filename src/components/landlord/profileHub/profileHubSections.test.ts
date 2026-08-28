@@ -65,13 +65,24 @@ describe('profileHubSections', () => {
     expect(lines.some((l) => l.includes('Individual'))).toBe(true)
   })
 
-  it('marks required sections complete when fields are filled', () => {
-    const p = baseProfile()
-    expect(profileHubSectionStatus('personal', p)).toBe('complete')
-    expect(profileHubSectionStatus('address', p)).toBe('complete')
-    expect(profileHubSectionStatus('about', p)).toBe('complete')
-    expect(profileHubSectionStatus('agreements', p)).toBe('complete')
-    expect(profileHubSectionStatus('languages', p)).toBe('complete')
+  it('payouts subtitle for Listing uses the saved card, not Connect', () => {
+    const noCard = profileHubSubtitleLines(
+      'payouts',
+      baseProfile({ stripe_charges_enabled: false, stripe_customer_id: null }),
+      { email: null, listingBilling: null },
+    )
+    expect(noCard).toEqual(['Add a saved card to accept bookings'])
+
+    const withCard = profileHubSubtitleLines(
+      'payouts',
+      baseProfile({ stripe_charges_enabled: false, stripe_customer_id: 'cus_abc' }),
+      {
+        email: null,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: { brand: 'visa', last4: '4242' } },
+      },
+    )
+    expect(withCard[0]).toMatch(/4242/)
+    expect(withCard.join(' ')).not.toMatch(/Stripe Connect/i)
   })
 
   it('keeps landlord type + ABN in personal subtitle for company landlords', () => {

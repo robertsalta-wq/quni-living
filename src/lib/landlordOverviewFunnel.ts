@@ -30,6 +30,11 @@ const FUNNEL_LABELS: Record<LandlordOverviewFunnelStepId, string> = {
   live: 'Live',
 }
 
+export type LandlordOverviewFunnelOpts = {
+  /** When true, Payouts and Live still require Stripe Connect (Managed properties). */
+  requireConnectPayouts?: boolean
+}
+
 /**
  * Desktop overview profile funnel: Account → Payouts → Listing → Live.
  * Mirrors the bookings progress visual language (done / current / pending).
@@ -37,12 +42,15 @@ const FUNNEL_LABELS: Record<LandlordOverviewFunnelStepId, string> = {
 export function landlordOverviewFunnel(
   profile: LandlordProfileRow | null | undefined,
   activeListings: number,
+  opts?: LandlordOverviewFunnelOpts,
 ): LandlordOverviewFunnel {
   const readiness = computeLandlordReadiness(profile)
   const accountDone = readiness.publish.complete
-  const payoutsEnabled = isLandlordStripePayoutsComplete(profile)
+  const payoutsEnabled = opts?.requireConnectPayouts
+    ? isLandlordStripePayoutsComplete(profile)
+    : readiness.accept.complete
   const listingDone = activeListings > 0
-  const liveDone = listingDone && readiness.accept.identityVerified
+  const liveDone = listingDone && payoutsEnabled
 
   const doneFlags = [accountDone, payoutsEnabled, listingDone, liveDone]
   const ids: LandlordOverviewFunnelStepId[] = ['account', 'payouts', 'listing', 'live']

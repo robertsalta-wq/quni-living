@@ -100,13 +100,19 @@ export function profileHubSubtitleLines(
         opts.listingBilling?.hasPaymentMethod && opts.listingBilling.card
           ? formatStripeCardOnFile(opts.listingBilling.card)
           : null
-      if (readiness.accept.identityVerified && cardLabel) {
+      if (profile.stripe_charges_enabled === true && cardLabel) {
         return [`Enabled · ${cardLabel}`]
       }
-      if (readiness.accept.identityVerified) {
+      if (profile.stripe_charges_enabled === true) {
         return ['Stripe Connect · Identity verified']
       }
-      return ['Connect Stripe to get paid']
+      if (cardLabel) {
+        return [`Enabled · ${cardLabel}`]
+      }
+      if (readiness.accept.savedCard) {
+        return ['Saved card on file']
+      }
+      return ['Add a saved card to accept bookings']
     }
     case 'insurance': {
       if (profile.has_landlord_insurance) return ['Landlord cover confirmed']
