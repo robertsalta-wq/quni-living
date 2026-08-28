@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { NON_DISCRIMINATION_POLICY_VERSION } from './nonDiscriminationPolicy'
-import { landlordProfileHostIdentityVerified } from './landlordBookingConfirmGate'
+import {
+  landlordBookingConfirmAllowed,
+  landlordProfileHostIdentityVerified,
+} from './landlordBookingConfirmGate'
 import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 import {
   computeLandlordReadiness,
@@ -142,6 +145,27 @@ describe('landlordProfileReadiness accept display', () => {
     expect(r.accept.identityVerified).toBe(true)
   })
 
+  it('listing landlord with saved card and no Connect is accept-complete and confirm-allowed', () => {
+    const p = baseProfile({
+      stripe_charges_enabled: false,
+      admin_override_verified: false,
+      stripe_customer_id: 'cus_abc',
+    })
+    const r = computeLandlordReadiness(p)
+    expect(r.accept.complete).toBe(true)
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: 'pending_confirmation',
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: null },
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
+        propertyPayoutComplete: true,
+      }),
+    ).toBe(true)
+  })
+
   it('listing admin override counts as identity verified', () => {
     const p = baseProfile({ admin_override_verified: true, stripe_charges_enabled: false })
     expect(computeLandlordReadiness(p).accept.identityVerified).toBe(true)
@@ -168,12 +192,13 @@ describe('landlordProfileReadiness phase', () => {
     expect(computeLandlordReadiness(baseProfile({ bio: null })).phase).toBe('publishing')
   })
 
-  it('moves to accepting when publish complete but identity pending', () => {
+  it('moves to accepting when publish complete but saved card is missing', () => {
     expect(computeLandlordReadiness(baseProfile()).phase).toBe('accepting')
   })
 
-  it('is complete when publish and identity verified', () => {
-    const p = baseProfile({ stripe_charges_enabled: true })
+  it('is complete when publish is done and accept.complete is true', () => {
+    const p = baseProfile({ stripe_customer_id: 'cus_abc' })
+    expect(computeLandlordReadiness(p).accept.complete).toBe(true)
     expect(computeLandlordReadiness(p).phase).toBe('complete')
   })
 })

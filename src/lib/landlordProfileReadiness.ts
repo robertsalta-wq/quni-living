@@ -112,7 +112,7 @@ export function computeLandlordReadiness(
     acceptTier === 'managed' ? identityVerified : identityVerified && savedCard
 
   let phase: LandlordReadinessPhase = 'publishing'
-  if (complete && identityVerified) {
+  if (complete && acceptComplete) {
     phase = 'complete'
   } else if (complete) {
     phase = 'accepting'
