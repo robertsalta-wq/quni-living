@@ -13,6 +13,7 @@ import {
   fetchPlatformConfigValueMap,
   parseBooleanConfig,
 } from './lib/platformConfig.js'
+import { isStripeMissingCustomerError } from './lib/stripeMissingCustomer.js'
 
 export const config = {
   runtime: 'edge',
@@ -120,9 +121,17 @@ export default async function handler(request) {
     }
 
     const stripe = new Stripe(stripeSecret)
-    const customer = await stripe.customers.retrieve(customerId, {
-      expand: ['invoice_settings.default_payment_method'],
-    })
+    let customer
+    try {
+      customer = await stripe.customers.retrieve(customerId, {
+        expand: ['invoice_settings.default_payment_method'],
+      })
+    } catch (e) {
+      if (isStripeMissingCustomerError(e)) {
+        return json({ moduleEnabled, hasPaymentMethod: false, card: null }, 200, origin)
+      }
+      throw e
+    }
 
     if (customer.deleted) {
       return json({ moduleEnabled, hasPaymentMethod: false, card: null }, 200, origin)
