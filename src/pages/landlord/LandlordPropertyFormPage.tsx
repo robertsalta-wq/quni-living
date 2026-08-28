@@ -188,6 +188,7 @@ import {
   landlordNonDiscriminationAccepted,
   nonDiscriminationAcceptancePatch,
 } from '../../lib/nonDiscriminationPolicy'
+import { NonDiscriminationPolicyModalLink } from '../../components/legal/NonDiscriminationPolicyModalLink'
 import HeadTenantSubletHelper from '../../components/landlord/HeadTenantSubletHelper'
 import {
   canHeadTenantAttestAuthorityToLet,
@@ -5003,14 +5004,7 @@ export default function LandlordPropertyFormPage() {
                 />
                 <span>
                   I have read and agree to Quni&apos;s{' '}
-                  <a
-                    href="/non-discrimination"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
-                  >
-                    Non-Discrimination Policy
-                  </a>
+                  <NonDiscriminationPolicyModalLink>Non-Discrimination Policy</NonDiscriminationPolicyModalLink>
                 </span>
               </label>
             ) : null}

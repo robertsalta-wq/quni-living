@@ -34,6 +34,7 @@ import {
 } from '../../lib/nonDiscriminationPolicy'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import LandlordListingPaymentModal from './LandlordListingPaymentModal'
+import { NonDiscriminationPolicyModalLink } from '../legal/NonDiscriminationPolicyModalLink'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import {
   formatStripeCardOnFile,
@@ -1510,9 +1511,7 @@ function NondiscLabel() {
   return (
     <>
       I accept the{' '}
-      <a href="/non-discrimination" target="_blank" rel="noopener noreferrer" className="font-semibold text-admin-coral hover:underline">
-        Non-discrimination policy
-      </a>
+      <NonDiscriminationPolicyModalLink>Non-discrimination policy</NonDiscriminationPolicyModalLink>
     </>
   )
 }
