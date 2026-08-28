@@ -38,6 +38,8 @@ type Props = {
   onGoBookings: () => void
   connectSetupError?: string | null
   mixedServiceNote?: string | null
+  /** Stripe Connect card - Managed properties only, and only while Managed is globally on. */
+  showStripePayouts: boolean
 }
 
 function FunnelStepper({
@@ -133,6 +135,7 @@ export default function LandlordDashboardOverviewDesktop({
   onGoBookings,
   connectSetupError,
   mixedServiceNote,
+  showStripePayouts,
 }: Props) {
   const funnel = useMemo(
     () => landlordOverviewFunnel(profile, activeListings),
@@ -240,13 +243,15 @@ export default function LandlordDashboardOverviewDesktop({
           )}
         </div>
 
-        <div className="flex min-w-0 flex-[1_1_300px]">
-          <LandlordStripePayoutsCard
-            profile={profile}
-            onRefresh={onRefresh}
-            presentation="status"
-          />
-        </div>
+        {showStripePayouts ? (
+          <div className="flex min-w-0 flex-[1_1_300px]">
+            <LandlordStripePayoutsCard
+              profile={profile}
+              onRefresh={onRefresh}
+              presentation="status"
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Row 2 - stats + need help */}
