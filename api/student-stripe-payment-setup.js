@@ -15,6 +15,7 @@ import {
 } from './lib/booking/assertRenterEligibleForBooking.js'
 import { buildBookingRejectVisibility } from './lib/booking/captureBookingRejected.js'
 import { requestContextFromRequest } from './lib/journey/requestContext.js'
+import { ensureStudentStripeCustomer } from './lib/ensureStripeCustomerOnProfile.js'
 
 export const config = {
   runtime: 'edge',
@@ -124,51 +125,11 @@ export default async function handler(request) {
 
     const stripe = new Stripe(stripeSecret)
 
-    let customerId = profile.stripe_customer_id?.trim() || null
-
-    if (!customerId) {
-      const email =
-        (typeof profile.email === 'string' && profile.email.includes('@') && profile.email) ||
-        (typeof user.email === 'string' && user.email) ||
-        undefined
-      const name =
-        (typeof profile.full_name === 'string' && profile.full_name.trim()) ||
-        [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
-        undefined
-
-      const customer = await stripe.customers.create({
-        email,
-        name: name || undefined,
-        metadata: {
-          student_profile_id: profile.id,
-          supabase_user_id: user.id,
-        },
-      })
-      customerId = customer.id
-
-      const { data: saved, error: upErr } = await admin
-        .from('student_profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', profile.id)
-        .select('stripe_customer_id')
-        .maybeSingle()
-
-      if (upErr) {
-        console.error('student_profiles stripe_customer_id update', upErr)
-        return json({ error: upErr.message || 'Could not save Stripe customer id' }, 500, origin)
-      }
-
-      if (!saved || saved.stripe_customer_id !== customerId) {
-        return json(
-          {
-            error:
-              'Could not save Stripe customer (no row updated). Check Vercel SUPABASE_SERVICE_ROLE_KEY is the service_role secret.',
-          },
-          500,
-          origin,
-        )
-      }
+    const ensured = await ensureStudentStripeCustomer({ stripe, admin, profile, user })
+    if (!ensured.ok) {
+      return json({ error: ensured.error }, ensured.status || 500, origin)
     }
+    const customerId = ensured.customerId
 
     const reqUrl = new URL(request.url)
     const siteOrigin = (

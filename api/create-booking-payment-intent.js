@@ -21,6 +21,7 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { ensureStudentStripeCustomer } from './lib/ensureStripeCustomerOnProfile.js'
 import {
   buildBookingRejectVisibility,
   captureBookingRejected,
@@ -1389,28 +1390,11 @@ export default async function handler(request) {
 
   const stripe = new Stripe(stripeSecret)
 
-  let customerId = student.stripe_customer_id?.trim() || null
-  if (!customerId) {
-    const email =
-      (typeof student.email === 'string' && student.email.includes('@') && student.email) ||
-      (typeof user.email === 'string' && user.email) ||
-      undefined
-    const name =
-      (typeof student.full_name === 'string' && student.full_name.trim()) ||
-      [student.first_name, student.last_name].filter(Boolean).join(' ').trim() ||
-      undefined
-
-    const customer = await stripe.customers.create({
-      email,
-      name: name || undefined,
-      metadata: {
-        student_profile_id: student.id,
-        supabase_user_id: user.id,
-      },
-    })
-    customerId = customer.id
-    await admin.from('student_profiles').update({ stripe_customer_id: customerId }).eq('id', student.id)
+  const ensured = await ensureStudentStripeCustomer({ stripe, admin, profile: student, user })
+  if (!ensured.ok) {
+    return json({ error: ensured.error }, ensured.status || 500, origin)
   }
+  const customerId = ensured.customerId
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountCents,
