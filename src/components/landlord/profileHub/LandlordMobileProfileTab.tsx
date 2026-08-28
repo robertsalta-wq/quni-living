@@ -29,6 +29,7 @@ import LandlordListingPaymentModal from '../LandlordListingPaymentModal'
 import { startLandlordStripeConnect } from '../../../lib/startLandlordStripeConnect'
 import {
   formatStripeCardOnFile,
+  listingHasSavedPaymentCard,
   type LandlordListingBillingSnapshot,
 } from '../../../lib/landlordListingBilling'
 import { usePlatformFeatures } from '../../../context/PlatformFeaturesContext'
@@ -219,7 +220,13 @@ export default function LandlordMobileProfileTab({
 
   const email = user?.email ?? profile.email ?? null
 
-  const readiness = useMemo(() => computeLandlordReadiness(profile), [profile])
+  const readiness = useMemo(
+    () =>
+      computeLandlordReadiness(profile, {
+        listingHasPaymentMethod: listingHasSavedPaymentCard(listingBilling),
+      }),
+    [profile, listingBilling],
+  )
   const driverContent = useMemo(() => buildLandlordReadinessDriverContent(readiness), [readiness])
 
   const [firstName, setFirstName] = useState(profile.first_name?.trim() ?? '')
@@ -677,10 +684,9 @@ export default function LandlordMobileProfileTab({
 
   useSetAppChromeActions(actionItems)
 
-  const cardLabel =
-    listingBilling?.hasPaymentMethod && listingBilling.card
-      ? formatStripeCardOnFile(listingBilling.card)
-      : null
+  const cardLabel = listingHasSavedPaymentCard(listingBilling)
+    ? formatStripeCardOnFile(listingBilling?.card)
+    : null
 
   const driverLine: ReactNode = driverContent.lineShowLock ? (
     <span className="flex items-start gap-2">
@@ -1585,7 +1591,7 @@ function PayoutsSectionForm({
         ) : null}
         {showListingCardRow ? (
           <PayoutRow
-            done={readiness.accept.savedCard}
+            done={Boolean(cardLabel)}
             title={
               <>
                 Saved payment card{' '}
@@ -1597,7 +1603,7 @@ function PayoutsSectionForm({
             subtitle="Covers the $99 fee per accepted booking. Not charged until you accept one."
             statusLabel={cardLabel ?? undefined}
             action={
-              readiness.accept.savedCard ? null : (
+              cardLabel ? null : (
                 <button
                   type="button"
                   onClick={onAddCard}

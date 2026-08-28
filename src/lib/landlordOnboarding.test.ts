@@ -35,11 +35,16 @@ function baseProfile(overrides: Partial<LandlordRow> = {}): LandlordRow {
 }
 
 describe('landlordOnboarding payment step', () => {
-  it('listing tier completes step 3 with stripe_customer_id only', () => {
+  it('listing tier completes step 3 only with a payment method', () => {
     const p = baseProfile({ stripe_customer_id: 'cus_123' })
-    expect(landlordListingBillingStepComplete(p)).toBe(true)
-    expect(landlordPaymentStepComplete(p, 'listing')).toBe(true)
-    expect(inferLandlordWizardStep(p, 'listing')).toBe(4)
+    expect(landlordListingBillingStepComplete()).toBe(false)
+    expect(landlordListingBillingStepComplete(false)).toBe(false)
+    expect(landlordPaymentStepComplete(p, 'listing')).toBe(false)
+    expect(inferLandlordWizardStep(p, 'listing')).toBe(3)
+
+    expect(landlordListingBillingStepComplete(true)).toBe(true)
+    expect(landlordPaymentStepComplete(p, 'listing', true)).toBe(true)
+    expect(inferLandlordWizardStep(p, 'listing', true)).toBe(4)
   })
 
   it('listing tier stays on step 3 without card or connect', () => {

@@ -5,7 +5,7 @@
  * (`landlordBookingConfirmGate.ts` / `landlordBookingConfirmAllowed`).
  */
 import type { Database } from '../database.types'
-import type { LandlordListingBillingSnapshot } from '../landlordListingBilling'
+import { listingHasSavedPaymentCard, type LandlordListingBillingSnapshot } from '../landlordListingBilling'
 import { landlordProfileHostIdentityVerified } from '../landlordBookingConfirmGate'
 import {
   missingNswFt6600ComplianceFieldLabels,
@@ -122,7 +122,7 @@ function payoutMethodGate(input: BookingReviewReadinessGatesInput): GateDef | nu
 /** Listing acceptance fee card - not required when fee-exempt; Managed doesn't charge a landlord card. */
 function billingCardGate(input: BookingReviewReadinessGatesInput): GateDef | null {
   if (input.selectedConfirmTier !== 'listing' || input.listingFeeExempt === true) return null
-  const done = input.listingBillingLoaded && input.listingBilling?.hasPaymentMethod === true
+  const done = input.listingBillingLoaded && listingHasSavedPaymentCard(input.listingBilling)
   return {
     id: 'billing_card',
     label: 'Confirm a billing card',

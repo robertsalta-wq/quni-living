@@ -40,6 +40,8 @@ type Props = {
   mixedServiceNote?: string | null
   /** Stripe Connect card - Managed properties only, and only while Managed is globally on. */
   showStripePayouts: boolean
+  /** Listing default payment method on file. Fail closed when omitted. */
+  listingHasPaymentMethod?: boolean
 }
 
 function FunnelStepper({
@@ -136,10 +138,15 @@ export default function LandlordDashboardOverviewDesktop({
   connectSetupError,
   mixedServiceNote,
   showStripePayouts,
+  listingHasPaymentMethod = false,
 }: Props) {
   const funnel = useMemo(
-    () => landlordOverviewFunnel(profile, activeListings, { requireConnectPayouts: showStripePayouts }),
-    [profile, activeListings, showStripePayouts],
+    () =>
+      landlordOverviewFunnel(profile, activeListings, {
+        requireConnectPayouts: showStripePayouts,
+        listingHasPaymentMethod,
+      }),
+    [profile, activeListings, showStripePayouts, listingHasPaymentMethod],
   )
   const agenda = useMemo(() => buildNext7Days(schedulingBookings), [schedulingBookings])
   const calendarHref = landlordBookingsPath('calendar')

@@ -111,10 +111,22 @@ describe('resolveBookingReviewReadinessGates', () => {
       baseInput({
         stripeChargesEnabled: true,
         propertyPayoutComplete: true,
-        listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: null },
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: { brand: 'visa', last4: '4242' } },
       }),
     )
     expect(bookingReviewReadinessHint(gates)).toBeNull()
+  })
+
+  it('billing card stays incomplete when hasPaymentMethod is true but no brand/last4', () => {
+    const gates = resolveBookingReviewReadinessGates(
+      baseInput({
+        stripeChargesEnabled: true,
+        propertyPayoutComplete: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: null },
+      }),
+    )
+    expect(gates.find((g) => g.id === 'billing_card')?.state).not.toBe('done')
+    expect(bookingReviewReadinessHint(gates)).toContain('Confirm a billing card')
   })
 
   it('omits host identity for Listing even without Connect or admin override', () => {
@@ -137,7 +149,7 @@ describe('resolveBookingReviewReadinessGates', () => {
       baseInput({
         stripeChargesEnabled: true,
         propertyPayoutComplete: true,
-        listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
+        listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: { brand: 'visa', last4: '4242' } },
       }),
     )
     expect(bookingReviewReadinessAllClear(gates)).toBe(true)

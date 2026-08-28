@@ -24,6 +24,12 @@ export function landlordTypeRequiresCompanyDetails(landlordType: string | null |
 export type LandlordReadinessOpts = {
   /** Drives identity predicate tier (listing admin override). Default `listing`. */
   acceptTier?: 'listing' | 'managed'
+  /**
+   * Stripe default payment method on file (from listing billing snapshot).
+   * Opening the save-card modal creates a Customer id before any card exists - do not treat that as done.
+   * Omit or false: fail closed.
+   */
+  listingHasPaymentMethod?: boolean
 }
 
 export type LandlordPublishReadiness = {
@@ -36,7 +42,7 @@ export type LandlordPublishReadiness = {
 
 export type LandlordAcceptReadiness = {
   identityVerified: boolean
-  /** Listing billing customer id present - authoritative default PM check stays at confirm time. */
+  /** Listing default payment method on file. Customer id alone is not enough. */
   savedCard: boolean
   complete: boolean
 }
@@ -107,7 +113,7 @@ export function computeLandlordReadiness(
   const complete = missing.length === 0
 
   const identityVerified = landlordProfileHostIdentityVerified(profile, acceptTier)
-  const savedCard = Boolean(profile?.stripe_customer_id?.trim())
+  const savedCard = opts?.listingHasPaymentMethod === true
   const acceptComplete =
     acceptTier === 'managed' ? identityVerified : identityVerified && savedCard
 

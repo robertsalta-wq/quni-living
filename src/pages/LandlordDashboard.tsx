@@ -50,6 +50,7 @@ import { dashboardProfilePageInsetClass } from '../lib/dashboardPageInset'
 import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
 import {
   fetchLandlordListingBillingSnapshot,
+  listingHasSavedPaymentCard,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
 import {
@@ -1265,7 +1266,13 @@ export default function LandlordDashboard() {
     }))
   }, [properties])
 
-  const landlordReadiness = useMemo(() => computeLandlordReadiness(profile), [profile])
+  const landlordReadiness = useMemo(
+    () =>
+      computeLandlordReadiness(profile, {
+        listingHasPaymentMethod: listingHasSavedPaymentCard(listingBilling),
+      }),
+    [profile, listingBilling],
+  )
   const profileStatCard = useMemo(
     () => landlordProfileStatCardCopy(landlordReadiness),
     [landlordReadiness],
@@ -1351,6 +1358,7 @@ export default function LandlordDashboard() {
                   : null
               }
               showStripePayouts={showStripePayouts}
+              listingHasPaymentMethod={listingHasSavedPaymentCard(listingBilling)}
             />
 
             <div className="sm:hidden">

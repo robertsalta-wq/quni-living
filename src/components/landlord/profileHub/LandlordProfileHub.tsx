@@ -117,7 +117,7 @@ export default function LandlordProfileHub({
               id={id}
               title={LANDLORD_PROFILE_HUB_SECTION_TITLES[id]}
               subtitleLines={profileHubSubtitleLines(id, profile, { email, listingBilling })}
-              status={profileHubSectionStatus(id, profile)}
+              status={profileHubSectionStatus(id, profile, listingBilling)}
               href={landlordDashboardProfilePath(id)}
             />
           ))}

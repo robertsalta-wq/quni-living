@@ -10,7 +10,11 @@ import {
   isLandlordPersonalSectionComplete,
   landlordTypeRequiresCompanyDetails,
 } from '../../../lib/landlordProfileReadiness'
-import { formatStripeCardOnFile, type LandlordListingBillingSnapshot } from '../../../lib/landlordListingBilling'
+import {
+  formatStripeCardOnFile,
+  listingHasSavedPaymentCard,
+  type LandlordListingBillingSnapshot,
+} from '../../../lib/landlordListingBilling'
 
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -95,11 +99,9 @@ export function profileHubSubtitleLines(
       return ['Accept required agreements']
     }
     case 'payouts': {
-      const readiness = computeLandlordReadiness(profile)
-      const cardLabel =
-        opts.listingBilling?.hasPaymentMethod && opts.listingBilling.card
-          ? formatStripeCardOnFile(opts.listingBilling.card)
-          : null
+      const cardLabel = listingHasSavedPaymentCard(opts.listingBilling)
+        ? formatStripeCardOnFile(opts.listingBilling?.card)
+        : null
       if (profile.stripe_charges_enabled === true && cardLabel) {
         return [`Enabled · ${cardLabel}`]
       }
@@ -108,9 +110,6 @@ export function profileHubSubtitleLines(
       }
       if (cardLabel) {
         return [`Enabled · ${cardLabel}`]
-      }
-      if (readiness.accept.savedCard) {
-        return ['Saved card on file']
       }
       return ['Add a saved card to accept bookings']
     }
@@ -130,8 +129,11 @@ export function profileHubSubtitleLines(
 export function profileHubSectionStatus(
   id: LandlordProfileHubSectionId,
   profile: LandlordProfileRow,
+  listingBilling?: LandlordListingBillingSnapshot | null,
 ): ListingHubSectionStatus {
-  const readiness = computeLandlordReadiness(profile)
+  const readiness = computeLandlordReadiness(profile, {
+    listingHasPaymentMethod: listingHasSavedPaymentCard(listingBilling),
+  })
   switch (id) {
     case 'personal':
       return isLandlordPersonalSectionComplete(profile) ? 'complete' : 'attention'

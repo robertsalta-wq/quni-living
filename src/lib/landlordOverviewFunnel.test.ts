@@ -49,9 +49,17 @@ describe('landlordOverviewFunnel', () => {
         stripe_customer_id: 'cus_abc',
       }),
       1,
+      { listingHasPaymentMethod: true },
     )
     expect(funnel.profileComplete).toBe(true)
     expect(funnel.payoutsEnabled).toBe(true)
+  })
+
+  it('does not complete Listing payouts from a customer id without a payment method', () => {
+    const funnel = landlordOverviewFunnel(baseProfile({ stripe_customer_id: 'cus_abc' }), 1)
+    expect(funnel.payoutsEnabled).toBe(false)
+    expect(funnel.profileComplete).toBe(false)
+    expect(funnel.steps.find((s) => s.id === 'payouts')?.state).toBe('current')
   })
 
   it('does not complete Listing payouts without a saved card', () => {
