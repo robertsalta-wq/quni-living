@@ -26,28 +26,27 @@ function baseInput(overrides: Partial<BookingReviewReadinessGatesInput> = {}): B
 }
 
 describe('resolveBookingReviewReadinessGates', () => {
-  it('marks identity as the first "current" gate when everything is incomplete', () => {
+  it('omits host identity for Listing and marks payout as the first current gate when incomplete', () => {
     const gates = resolveBookingReviewReadinessGates(baseInput())
-    const identity = gates.find((g) => g.id === 'host_identity')
-    expect(identity?.state).toBe('current')
-    // Later incomplete gates behind the first are "todo", not "current".
+    expect(gates.find((g) => g.id === 'host_identity')).toBeUndefined()
+    const payout = gates.find((g) => g.id === 'payout_method')
+    expect(payout?.state).toBe('current')
     const billing = gates.find((g) => g.id === 'billing_card')
     expect(billing?.state).toBe('todo')
   })
 
-  it('moves "current" to the payout method once identity is verified (ordering: first incomplete = current)', () => {
+  it('moves "current" to the payout method when listing is active but payout is incomplete', () => {
     const gates = resolveBookingReviewReadinessGates(
-      baseInput({ stripeChargesEnabled: true }),
+      baseInput({ stripeChargesEnabled: false }),
     )
-    const identity = gates.find((g) => g.id === 'host_identity')
+    expect(gates.find((g) => g.id === 'host_identity')).toBeUndefined()
     const listingActive = gates.find((g) => g.id === 'listing_active')
     const payout = gates.find((g) => g.id === 'payout_method')
-    expect(identity?.state).toBe('done')
     expect(listingActive?.state).toBe('done')
     expect(payout?.state).toBe('current')
   })
 
-  it('is all-clear (done) once identity + payout + billing card are all satisfied for a fee-exempt-false listing', () => {
+  it('is all-clear (done) once payout + billing card are satisfied for a fee-exempt-false listing', () => {
     const gates = resolveBookingReviewReadinessGates(
       baseInput({
         stripeChargesEnabled: true,
@@ -104,7 +103,7 @@ describe('resolveBookingReviewReadinessGates', () => {
 
   it('bookingReviewReadinessHint mirrors the first incomplete gate label', () => {
     const gates = resolveBookingReviewReadinessGates(baseInput())
-    expect(bookingReviewReadinessHint(gates)).toContain('Identity verified')
+    expect(bookingReviewReadinessHint(gates)).toContain('Add a payout method')
   })
 
   it('bookingReviewReadinessHint is null once all gates are done', () => {
@@ -118,11 +117,18 @@ describe('resolveBookingReviewReadinessGates', () => {
     expect(bookingReviewReadinessHint(gates)).toBeNull()
   })
 
-  it('admin_override_verified alone satisfies identity for Listing (mirrors landlordProfileHostIdentityVerified)', () => {
+  it('omits host identity for Listing even without Connect or admin override', () => {
     const gates = resolveBookingReviewReadinessGates(
-      baseInput({ stripeChargesEnabled: false, adminOverrideVerified: true }),
+      baseInput({ stripeChargesEnabled: false, adminOverrideVerified: false }),
     )
-    expect(gates.find((g) => g.id === 'host_identity')?.state).toBe('done')
+    expect(gates.find((g) => g.id === 'host_identity')).toBeUndefined()
+  })
+
+  it('keeps host identity for Managed until Stripe charges are enabled', () => {
+    const gates = resolveBookingReviewReadinessGates(
+      baseInput({ selectedConfirmTier: 'managed', stripeChargesEnabled: false, adminOverrideVerified: true }),
+    )
+    expect(gates.find((g) => g.id === 'host_identity')?.state).toBe('current')
   })
 
   it('module-disabled with all gates clear must not show the ready ribbon; surface the specific block message', () => {

@@ -138,8 +138,8 @@ export default function LandlordDashboardOverviewDesktop({
   showStripePayouts,
 }: Props) {
   const funnel = useMemo(
-    () => landlordOverviewFunnel(profile, activeListings),
-    [profile, activeListings],
+    () => landlordOverviewFunnel(profile, activeListings, { requireConnectPayouts: showStripePayouts }),
+    [profile, activeListings, showStripePayouts],
   )
   const agenda = useMemo(() => buildNext7Days(schedulingBookings), [schedulingBookings])
   const calendarHref = landlordBookingsPath('calendar')

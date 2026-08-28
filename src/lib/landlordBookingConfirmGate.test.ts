@@ -76,8 +76,9 @@ describe('landlordBookingConfirmAllowed', () => {
         listingBilling: readyListing,
         stripeChargesEnabled: false,
         adminOverrideVerified: false,
+        propertyPayoutComplete: true,
       }),
-    ).toBe(false)
+    ).toBe(true)
 
     expect(
       landlordBookingConfirmAllowed({
@@ -201,7 +202,7 @@ describe('landlordBookingConfirmBlockedBanner', () => {
     ).toBe('host_identity_required')
   })
 
-  it('listing without Stripe identity shows host identity banner before billing checks', () => {
+  it('listing without Stripe Connect does not show host identity banner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
@@ -210,8 +211,9 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
         stripeChargesEnabled: false,
         adminOverrideVerified: false,
+        propertyPayoutComplete: true,
       }),
-    ).toBe('host_identity_required')
+    ).toBe('listing_no_payment_method')
   })
 
   it('listing with admin override skips host identity banner', () => {

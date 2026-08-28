@@ -41,15 +41,45 @@ describe('landlordOverviewFunnel', () => {
     expect(funnel.stepOfTwoLabel).toBe('Step 1 of 2')
   })
 
-  it('marks profile complete when listing is live with payouts and identity', () => {
+  it('marks profile complete when listing is live and Listing accept is ready', () => {
     const funnel = landlordOverviewFunnel(
       baseProfile({
-        stripe_charges_enabled: true,
-        stripe_payouts_enabled: true,
+        stripe_charges_enabled: false,
+        stripe_payouts_enabled: false,
+        stripe_customer_id: 'cus_abc',
       }),
       1,
     )
     expect(funnel.profileComplete).toBe(true)
     expect(funnel.payoutsEnabled).toBe(true)
+  })
+
+  it('does not complete Listing payouts without a saved card', () => {
+    const funnel = landlordOverviewFunnel(baseProfile(), 1)
+    expect(funnel.payoutsEnabled).toBe(false)
+    expect(funnel.profileComplete).toBe(false)
+    expect(funnel.steps.find((s) => s.id === 'payouts')?.state).toBe('current')
+  })
+
+  it('Managed Connect payouts still require charges and payouts enabled', () => {
+    const funnel = landlordOverviewFunnel(
+      baseProfile({ stripe_customer_id: 'cus_abc' }),
+      1,
+      { requireConnectPayouts: true },
+    )
+    expect(funnel.payoutsEnabled).toBe(false)
+    expect(funnel.profileComplete).toBe(false)
+
+    const ready = landlordOverviewFunnel(
+      baseProfile({
+        stripe_customer_id: 'cus_abc',
+        stripe_charges_enabled: true,
+        stripe_payouts_enabled: true,
+      }),
+      1,
+      { requireConnectPayouts: true },
+    )
+    expect(ready.payoutsEnabled).toBe(true)
+    expect(ready.profileComplete).toBe(true)
   })
 })

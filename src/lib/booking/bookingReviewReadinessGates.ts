@@ -63,7 +63,8 @@ export type BookingReviewReadinessGatesInput = {
 
 type GateDef = Omit<BookingReviewReadinessGate, 'state'> & { done: boolean }
 
-function identityGate(input: BookingReviewReadinessGatesInput): GateDef {
+function identityGate(input: BookingReviewReadinessGatesInput): GateDef | null {
+  if (input.selectedConfirmTier === 'listing') return null
   const done = landlordProfileHostIdentityVerified(
     { stripe_charges_enabled: input.stripeChargesEnabled, admin_override_verified: input.adminOverrideVerified },
     input.selectedConfirmTier,

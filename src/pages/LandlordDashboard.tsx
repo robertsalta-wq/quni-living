@@ -1476,6 +1476,7 @@ export default function LandlordDashboard() {
             onRefresh={load}
             sectionParam={searchParams.get('section')}
             listingBilling={listingBilling}
+            showStripePayouts={showStripePayouts}
           />
         ) : null}
 

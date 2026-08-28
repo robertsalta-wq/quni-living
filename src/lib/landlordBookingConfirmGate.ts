@@ -21,9 +21,10 @@ export type ConfirmBlockedBanner =
 function landlordHostIdentityReadyForConfirm(args: {
   selectedConfirmTier: 'listing' | 'managed'
   stripeChargesEnabled: boolean
+  /** Kept on the args object for callers; listing does not consult it. */
   adminOverrideVerified: boolean
 }): boolean {
-  if (args.selectedConfirmTier === 'listing' && args.adminOverrideVerified) {
+  if (args.selectedConfirmTier === 'listing') {
     return true
   }
   return args.stripeChargesEnabled
