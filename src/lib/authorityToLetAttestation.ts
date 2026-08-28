@@ -14,6 +14,8 @@ export const AUTHORITY_TO_LET_ATTESTATION_BULLETS = [
 export const AUTHORITY_TO_LET_ATTESTATION_FOOTER =
   'I understand Quni may remove this listing if valid proof of authority is not provided on request.'
 
+export type AuthorityToLetListingIntent = 'publish' | 'reactivate'
+
 export function propertyHasAuthorityToLetAttestation(
   property: { authority_to_let_attested_at?: string | null } | null | undefined,
 ): boolean {

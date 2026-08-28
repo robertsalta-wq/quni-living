@@ -25,4 +25,13 @@ describe('authorityToLetAttestation', () => {
     expect(patch).toHaveProperty('authority_to_let_attested_at')
     expect(typeof patch.authority_to_let_attested_at).toBe('string')
   })
+
+  it('listing-tile confirm writes only through the patch helper', () => {
+    expect(authorityToLetAttestationPatch({ agreed: false, existingAttestedAt: null })).toEqual({})
+    const write = authorityToLetAttestationPatch({ agreed: true, existingAttestedAt: null })
+    expect('authority_to_let_attested_at' in write).toBe(true)
+    expect(authorityToLetAttestationPatch({ agreed: true, existingAttestedAt: '2026-06-07T00:00:00.000Z' })).toEqual(
+      {},
+    )
+  })
 })

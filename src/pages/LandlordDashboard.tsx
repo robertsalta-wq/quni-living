@@ -35,6 +35,7 @@ import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supab
 import { apiUrl } from '../lib/apiUrl'
 import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
+import LandlordAuthorityToLetModal from '../components/landlord/LandlordAuthorityToLetModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import LandlordListingsGroupedPanel from '../components/landlord/listings/LandlordListingsGroupedPanel'
@@ -1031,10 +1032,14 @@ export default function LandlordDashboard() {
     publishingListingId,
     duplicatingListingId,
     updatingListingId,
+    attestingListingId,
     duplicateConfirmProperty,
     setDuplicateConfirmProperty,
+    authorityToLetPending,
+    setAuthorityToLetPending,
     publishDraftListing,
     confirmDuplicateListing,
+    confirmAuthorityToLetAttestation,
     togglePropertyStatus,
   } = useLandlordPropertyListingActions({
     reload: load,
@@ -1500,6 +1505,7 @@ export default function LandlordDashboard() {
             publishingListingId={publishingListingId}
             duplicatingListingId={duplicatingListingId}
             updatingListingId={updatingListingId}
+            attestingListingId={attestingListingId}
             onPublish={publishDraftListing}
             onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
             onToggle={togglePropertyStatus}
@@ -2029,6 +2035,23 @@ export default function LandlordDashboard() {
           duplicatingListingId={duplicatingListingId}
           onConfirm={() => void confirmDuplicateListing()}
           onCancel={() => setDuplicateConfirmProperty(null)}
+        />
+
+        <LandlordAuthorityToLetModal
+          open={authorityToLetPending != null}
+          intent={authorityToLetPending?.intent ?? 'publish'}
+          listingTitle={authorityToLetPending?.property.title ?? ''}
+          busy={
+            authorityToLetPending != null &&
+            (attestingListingId === authorityToLetPending.property.id ||
+              publishingListingId === authorityToLetPending.property.id ||
+              updatingListingId === authorityToLetPending.property.id)
+          }
+          onConfirm={() => void confirmAuthorityToLetAttestation()}
+          onCancel={() => {
+            if (attestingListingId === authorityToLetPending?.property.id) return
+            setAuthorityToLetPending(null)
+          }}
         />
 
         <LandlordTenantInviteModal

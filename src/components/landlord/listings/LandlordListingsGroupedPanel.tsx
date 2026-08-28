@@ -25,6 +25,7 @@ type Props = {
   publishingListingId: string | null
   duplicatingListingId: string | null
   updatingListingId: string | null
+  attestingListingId?: string | null
   onPublish: (p: LandlordPropertyForListingActions) => void
   onDuplicateClick: (p: LandlordPropertyForListingActions) => void
   onToggle: (p: LandlordPropertyForListingActions) => void
@@ -44,6 +45,7 @@ export default function LandlordListingsGroupedPanel({
   publishingListingId,
   duplicatingListingId,
   updatingListingId,
+  attestingListingId = null,
   onPublish,
   onDuplicateClick,
   onToggle,
@@ -108,7 +110,7 @@ export default function LandlordListingsGroupedPanel({
     })
   }
 
-  const busyListingId = publishingListingId ?? duplicatingListingId ?? updatingListingId
+  const busyListingId = publishingListingId ?? duplicatingListingId ?? updatingListingId ?? attestingListingId
 
   const addButton = canCreateListing ? (
     <Link

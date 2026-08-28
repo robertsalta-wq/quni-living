@@ -4,7 +4,9 @@ import type { Database } from '../lib/database.types'
 import { supabase } from '../lib/supabase'
 import {
   AUTHORITY_TO_LET_BLOCKED_MESSAGE,
+  authorityToLetAttestationPatch,
   propertyHasAuthorityToLetAttestation,
+  type AuthorityToLetListingIntent,
 } from '../lib/authorityToLetAttestation'
 import {
   NSW_T3_COMPLIANCE_BLOCKED_MESSAGE,
@@ -39,6 +41,11 @@ export type LandlordPropertyForListingActions = Pick<
   | 'lister_role'
 >
 
+export type AuthorityToLetPendingListing = {
+  property: LandlordPropertyForListingActions
+  intent: AuthorityToLetListingIntent
+}
+
 async function assertNswT3ComplianceBeforeActivate(
   property: LandlordPropertyForListingActions,
 ): Promise<string | null> {
@@ -71,12 +78,14 @@ export function useLandlordPropertyListingActions(args: {
   const [duplicateConfirmProperty, setDuplicateConfirmProperty] = useState<LandlordPropertyDuplicateTarget | null>(
     null,
   )
+  const [authorityToLetPending, setAuthorityToLetPending] = useState<AuthorityToLetPendingListing | null>(null)
+  const [attestingListingId, setAttestingListingId] = useState<string | null>(null)
 
   const publishDraftListing = useCallback(
     async (property: LandlordPropertyForListingActions) => {
       if (property.status !== 'draft') return
       if (!propertyHasAuthorityToLetAttestation(property)) {
-        showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+        setAuthorityToLetPending({ property, intent: 'publish' })
         return
       }
       const t3Block = await assertNswT3ComplianceBeforeActivate(property)
@@ -131,7 +140,7 @@ export function useLandlordPropertyListingActions(args: {
       if (property.status !== 'active' && property.status !== 'inactive') return
       const nextStatus: PropertyRow['status'] = property.status === 'active' ? 'inactive' : 'active'
       if (nextStatus === 'active' && !propertyHasAuthorityToLetAttestation(property)) {
-        showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+        setAuthorityToLetPending({ property, intent: 'reactivate' })
         return
       }
       if (nextStatus === 'active') {
@@ -158,14 +167,58 @@ export function useLandlordPropertyListingActions(args: {
     [reload, reportMutErr, showToast],
   )
 
+  const confirmAuthorityToLetAttestation = useCallback(async () => {
+    const pending = authorityToLetPending
+    if (!pending) return
+    const existingAttestedAt = pending.property.authority_to_let_attested_at ?? null
+    const patch = authorityToLetAttestationPatch({
+      agreed: true,
+      existingAttestedAt,
+    })
+    const stampedAt =
+      'authority_to_let_attested_at' in patch ? patch.authority_to_let_attested_at : existingAttestedAt
+    if (!stampedAt) {
+      showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+      return
+    }
+    setAttestingListingId(pending.property.id)
+    try {
+      if ('authority_to_let_attested_at' in patch) {
+        const { error: attestError } = await supabase
+          .from('properties')
+          .update(patch)
+          .eq('id', pending.property.id)
+        if (attestError) throw attestError
+      }
+      const attested: LandlordPropertyForListingActions = {
+        ...pending.property,
+        authority_to_let_attested_at: stampedAt,
+      }
+      setAuthorityToLetPending(null)
+      if (pending.intent === 'publish') {
+        await publishDraftListing(attested)
+      } else {
+        await togglePropertyStatus(attested)
+      }
+    } catch (e) {
+      reportMutErr(messageFromSupabaseError(e))
+    } finally {
+      setAttestingListingId(null)
+    }
+  }, [authorityToLetPending, publishDraftListing, togglePropertyStatus, showToast, reportMutErr])
+
   return {
     publishingListingId,
     duplicatingListingId,
     updatingListingId,
+    attestingListingId,
     duplicateConfirmProperty,
     setDuplicateConfirmProperty,
+    authorityToLetPending,
+    setAuthorityToLetPending,
     publishDraftListing,
     confirmDuplicateListing,
+    confirmAuthorityToLetAttestation,
     togglePropertyStatus,
   }
 }
