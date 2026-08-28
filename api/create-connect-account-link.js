@@ -11,10 +11,15 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { parseLandlordServiceTier } from '../src/lib/landlordServiceTier.js'
+import { fetchServiceTierPlatformFlags } from './lib/platformConfig.js'
 import {
   buildStripeConnectAccountUpdateParams,
   buildStripeExpressAccountCreateParams,
 } from './lib/stripeConnectLandlordAccount.js'
+
+const CONNECT_LISTING_ONLY_ERROR =
+  'Stripe payouts are only needed for Quni Managed properties. Your properties are on Quni Listing, where you are paid directly by the renter.'
 
 export const config = {
   runtime: 'edge',
@@ -138,6 +143,31 @@ export default async function handler(request) {
 
     if (!profile) {
       return json({ error: 'Landlord profile not found' }, 404, origin)
+    }
+
+    let flags
+    try {
+      flags = await fetchServiceTierPlatformFlags(admin)
+    } catch (flagErr) {
+      console.error('create-connect-account-link platform flags', flagErr)
+      return json({ error: CONNECT_LISTING_ONLY_ERROR }, 403, origin)
+    }
+
+    const { data: propertyTiers, error: propertyTierErr } = await admin
+      .from('properties')
+      .select('service_tier')
+      .eq('landlord_id', profile.id)
+
+    if (propertyTierErr) {
+      console.error('create-connect-account-link property tiers', propertyTierErr)
+      return json({ error: CONNECT_LISTING_ONLY_ERROR }, 403, origin)
+    }
+
+    const hasManagedProperty = (propertyTiers ?? []).some(
+      (row) => parseLandlordServiceTier(row.service_tier) === 'managed',
+    )
+    if (flags.managedGloballyEnabled !== true || !hasManagedProperty) {
+      return json({ error: CONNECT_LISTING_ONLY_ERROR }, 403, origin)
     }
 
     const alreadyConnected = profile.stripe_charges_enabled === true && profile.stripe_payouts_enabled === true

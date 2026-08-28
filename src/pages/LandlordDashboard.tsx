@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import {
   DashboardEmpty,
@@ -508,6 +509,7 @@ function LandlordBookingPaymentErrorBanner({ onDismiss }: { onDismiss: () => voi
 
 export default function LandlordDashboard() {
   const { user, profile: authProfile, role } = useAuthContext()
+  const { managedTierEnabled } = usePlatformFeatures()
   const authLandlord =
     role === 'landlord' && authProfile && 'id' in authProfile ? (authProfile as LandlordRow) : null
   const navigate = useNavigate()
@@ -1169,6 +1171,9 @@ export default function LandlordDashboard() {
   const activeListings = properties.filter((p) => p.status === 'active').length
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
+  const showStripePayouts =
+    managedTierEnabled &&
+    properties.some((p) => parseLandlordServiceTier(p.service_tier) === 'managed')
   const pendingRequestCount = bookings.filter(
     (b) =>
       b.status === 'pending' ||
@@ -1345,6 +1350,7 @@ export default function LandlordDashboard() {
                   ? `Mixed service models: ${listingTierProperties} self-managed and ${managedTierProperties} Quni Managed - each property keeps its own tier.`
                   : null
               }
+              showStripePayouts={showStripePayouts}
             />
 
             <div className="sm:hidden">
@@ -1352,7 +1358,7 @@ export default function LandlordDashboard() {
               <DashboardErrorBanner message={connectSetupError} tone="danger" className="mb-4" />
             )}
 
-            <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
+            {showStripePayouts ? <LandlordStripePayoutsCard profile={profile} onRefresh={load} /> : null}
 
             {listingTierProperties > 0 && managedTierProperties > 0 && (
               <p className="mb-6 text-sm text-gray-600">
