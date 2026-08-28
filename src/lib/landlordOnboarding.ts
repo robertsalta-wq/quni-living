@@ -49,17 +49,18 @@ export function landlordStripeStepComplete(p: LandlordProfileRow): boolean {
   return p.stripe_charges_enabled === true
 }
 
-/** Listing landlords: saved Stripe Customer for off-session Listing fee charges. */
-export function landlordListingBillingStepComplete(p: LandlordProfileRow): boolean {
-  return Boolean(p.stripe_customer_id?.trim())
+/** Listing landlords: default payment method on file for off-session Listing fee charges. */
+export function landlordListingBillingStepComplete(listingHasPaymentMethod?: boolean): boolean {
+  return listingHasPaymentMethod === true
 }
 
 export function landlordPaymentStepComplete(
   p: LandlordProfileRow,
   intendedTier?: LandlordServiceTier | null,
+  listingHasPaymentMethod?: boolean,
 ): boolean {
   if (intendedTier === 'listing') {
-    return landlordListingBillingStepComplete(p) || landlordStripeStepComplete(p)
+    return landlordListingBillingStepComplete(listingHasPaymentMethod) || landlordStripeStepComplete(p)
   }
   return landlordStripeStepComplete(p)
 }
@@ -74,10 +75,11 @@ export type LandlordWizardStep = 1 | 2 | 3 | 4 | 5
 export function inferLandlordWizardStep(
   p: LandlordProfileRow,
   intendedTier?: LandlordServiceTier | null,
+  listingHasPaymentMethod?: boolean,
 ): LandlordWizardStep {
   if (!landlordStep1FieldsComplete(p)) return 1
   if (!landlordTermsComplete(p)) return 2
-  if (!landlordPaymentStepComplete(p, intendedTier)) return 3
+  if (!landlordPaymentStepComplete(p, intendedTier, listingHasPaymentMethod)) return 3
   if (!landlordInsuranceStepComplete(p)) return 4
   if (!isLandlordWizardComplete(p)) return 5
   return 5

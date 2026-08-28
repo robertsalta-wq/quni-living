@@ -33,6 +33,8 @@ const FUNNEL_LABELS: Record<LandlordOverviewFunnelStepId, string> = {
 export type LandlordOverviewFunnelOpts = {
   /** When true, Payouts and Live still require Stripe Connect (Managed properties). */
   requireConnectPayouts?: boolean
+  /** Listing default payment method on file. Fail closed when omitted. */
+  listingHasPaymentMethod?: boolean
 }
 
 /**
@@ -44,7 +46,9 @@ export function landlordOverviewFunnel(
   activeListings: number,
   opts?: LandlordOverviewFunnelOpts,
 ): LandlordOverviewFunnel {
-  const readiness = computeLandlordReadiness(profile)
+  const readiness = computeLandlordReadiness(profile, {
+    listingHasPaymentMethod: opts?.listingHasPaymentMethod === true,
+  })
   const accountDone = readiness.publish.complete
   const payoutsEnabled = opts?.requireConnectPayouts
     ? isLandlordStripePayoutsComplete(profile)

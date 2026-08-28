@@ -145,13 +145,13 @@ describe('landlordProfileReadiness accept display', () => {
     expect(r.accept.identityVerified).toBe(true)
   })
 
-  it('listing landlord with saved card and no Connect is accept-complete and confirm-allowed', () => {
+  it('listing landlord with a payment method and no Connect is accept-complete and confirm-allowed', () => {
     const p = baseProfile({
       stripe_charges_enabled: false,
       admin_override_verified: false,
       stripe_customer_id: 'cus_abc',
     })
-    const r = computeLandlordReadiness(p)
+    const r = computeLandlordReadiness(p, { listingHasPaymentMethod: true })
     expect(r.accept.complete).toBe(true)
     expect(
       landlordBookingConfirmAllowed({
@@ -171,19 +171,27 @@ describe('landlordProfileReadiness accept display', () => {
     expect(computeLandlordReadiness(p).accept.identityVerified).toBe(true)
   })
 
-  it('savedCard reflects stripe_customer_id only', () => {
+  it('savedCard requires a payment method, not only a Stripe customer id', () => {
     expect(computeLandlordReadiness(baseProfile()).accept.savedCard).toBe(false)
     expect(
       computeLandlordReadiness(baseProfile({ stripe_customer_id: 'cus_abc' })).accept.savedCard,
+    ).toBe(false)
+    expect(
+      computeLandlordReadiness(baseProfile({ stripe_customer_id: 'cus_abc' }), {
+        listingHasPaymentMethod: true,
+      }).accept.savedCard,
     ).toBe(true)
   })
 
-  it('accept.complete requires card on listing tier', () => {
+  it('accept.complete requires a payment method on listing tier', () => {
     const identityOnly = baseProfile({ stripe_charges_enabled: true })
     expect(computeLandlordReadiness(identityOnly).accept.complete).toBe(false)
 
-    const full = baseProfile({ stripe_charges_enabled: true, stripe_customer_id: 'cus_abc' })
-    expect(computeLandlordReadiness(full).accept.complete).toBe(true)
+    const customerOnly = baseProfile({ stripe_charges_enabled: true, stripe_customer_id: 'cus_abc' })
+    expect(computeLandlordReadiness(customerOnly).accept.complete).toBe(false)
+
+    const full = computeLandlordReadiness(customerOnly, { listingHasPaymentMethod: true })
+    expect(full.accept.complete).toBe(true)
   })
 })
 
@@ -198,7 +206,8 @@ describe('landlordProfileReadiness phase', () => {
 
   it('is complete when publish is done and accept.complete is true', () => {
     const p = baseProfile({ stripe_customer_id: 'cus_abc' })
-    expect(computeLandlordReadiness(p).accept.complete).toBe(true)
-    expect(computeLandlordReadiness(p).phase).toBe('complete')
+    expect(computeLandlordReadiness(p).accept.complete).toBe(false)
+    expect(computeLandlordReadiness(p, { listingHasPaymentMethod: true }).accept.complete).toBe(true)
+    expect(computeLandlordReadiness(p, { listingHasPaymentMethod: true }).phase).toBe('complete')
   })
 })
