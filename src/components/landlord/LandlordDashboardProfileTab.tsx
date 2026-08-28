@@ -198,6 +198,8 @@ type Props = {
   onRefresh: () => Promise<void>
   sectionParam: string | null
   listingBilling: LandlordListingBillingSnapshot | null
+  /** Same gate as dashboard Stripe Connect (#306): Managed globally on and landlord has a Managed property. */
+  showStripePayouts: boolean
 }
 
 function UserIcon() {
@@ -287,6 +289,7 @@ function formatAgreementsSummary(_p: LandlordRow): string {
 function formatPayoutsSummary(p: LandlordRow, cardLabel: string | null): string {
   if (p.stripe_charges_enabled && cardLabel) return `Stripe Connect · ${cardLabel}`
   if (p.stripe_charges_enabled) return 'Stripe Connect · Identity verified'
+  if (cardLabel) return cardLabel
   return 'Payouts & identity'
 }
 
@@ -303,6 +306,7 @@ function LandlordDesktopProfileTab({
   onRefresh,
   sectionParam,
   listingBilling,
+  showStripePayouts,
 }: Props) {
   const { user, refreshProfile } = useAuthContext()
   const { managedTierEnabled } = usePlatformFeatures()
@@ -1233,28 +1237,32 @@ function LandlordDesktopProfileTab({
           editLabel="Manage"
         >
           <div className="space-y-4">
-            <div className="flex gap-3 rounded-xl border border-admin-line-soft bg-admin-surface-2 p-4">
-              <ShieldIcon />
-              <p className="text-[13.5px] leading-relaxed text-admin-ink-3">
-                Payouts run through <strong className="text-admin-ink">Stripe Connect</strong>, which also verifies
-                your identity - <strong className="text-admin-ink">no documents to upload</strong>, and Quni never
-                stores your ID.
-              </p>
-            </div>
+            {showStripePayouts ? (
+              <div className="flex gap-3 rounded-xl border border-admin-line-soft bg-admin-surface-2 p-4">
+                <ShieldIcon />
+                <p className="text-[13.5px] leading-relaxed text-admin-ink-3">
+                  Payouts run through <strong className="text-admin-ink">Stripe Connect</strong>, which also verifies
+                  your identity - <strong className="text-admin-ink">no documents to upload</strong>, and Quni never
+                  stores your ID.
+                </p>
+              </div>
+            ) : null}
             <div className="space-y-2.5">
-              <PayoutRow
-                done={readiness.accept.identityVerified}
-                title="Stripe Connect - payouts & identity"
-                subtitle="Receive rent and verify who you are."
-                statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
-                action={
-                  readiness.accept.identityVerified ? null : (
-                    <button type="button" onClick={() => void handleConnectStripe()} disabled={connectLoading} className="rounded-admin-md bg-admin-navy px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50">
-                      {connectLoading ? 'Opening Stripe…' : 'Connect Stripe'}
-                    </button>
-                  )
-                }
-              />
+              {showStripePayouts ? (
+                <PayoutRow
+                  done={readiness.accept.identityVerified}
+                  title="Stripe Connect - payouts & identity"
+                  subtitle="Receive rent and verify who you are."
+                  statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
+                  action={
+                    readiness.accept.identityVerified ? null : (
+                      <button type="button" onClick={() => void handleConnectStripe()} disabled={connectLoading} className="rounded-admin-md bg-admin-navy px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                        {connectLoading ? 'Opening Stripe…' : 'Connect Stripe'}
+                      </button>
+                    )
+                  }
+                />
+              ) : null}
               {showListingCardRow ? (
                 <PayoutRow
                   done={readiness.accept.savedCard}
@@ -1282,7 +1290,7 @@ function LandlordDesktopProfileTab({
                 </p>
               ) : null}
             </div>
-            {readiness.accept.identityVerified ? (
+            {showStripePayouts && readiness.accept.identityVerified ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-admin-navy-tint px-3 py-1 text-xs font-semibold text-admin-navy">
                 Identity verified
               </span>

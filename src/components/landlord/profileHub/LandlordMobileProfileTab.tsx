@@ -198,6 +198,8 @@ type Props = {
   onRefresh: () => Promise<void>
   sectionParam: string | null
   listingBilling: LandlordListingBillingSnapshot | null
+  /** Same gate as dashboard Stripe Connect (#306): Managed globally on and landlord has a Managed property. */
+  showStripePayouts: boolean
 }
 
 export default function LandlordMobileProfileTab({
@@ -205,6 +207,7 @@ export default function LandlordMobileProfileTab({
   onRefresh,
   sectionParam,
   listingBilling,
+  showStripePayouts,
 }: Props) {
   const navigate = useNavigate()
   const { user, refreshProfile, signOut } = useAuthContext()
@@ -803,6 +806,7 @@ export default function LandlordMobileProfileTab({
             readiness={readiness}
             cardLabel={cardLabel}
             showListingCardRow={showListingCardRow}
+            showStripePayouts={showStripePayouts}
             managedTierEnabled={managedTierEnabled}
             connectLoading={connectLoading}
             connectError={connectError}
@@ -1527,6 +1531,7 @@ type PayoutsSectionFormProps = {
   readiness: ReturnType<typeof computeLandlordReadiness>
   cardLabel: string | null
   showListingCardRow: boolean
+  showStripePayouts: boolean
   managedTierEnabled: boolean
   connectLoading: boolean
   connectError: string | null
@@ -1538,6 +1543,7 @@ function PayoutsSectionForm({
   readiness,
   cardLabel,
   showListingCardRow,
+  showStripePayouts,
   managedTierEnabled,
   connectLoading,
   connectError,
@@ -1546,33 +1552,37 @@ function PayoutsSectionForm({
 }: PayoutsSectionFormProps) {
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 rounded-xl border border-[var(--quni-line-soft)] bg-[var(--quni-surface-2)] p-4">
-        <ShieldIcon />
-        <p className="text-[13.5px] leading-relaxed text-[var(--quni-ink-3)]">
-          Payouts run through <strong className="text-[var(--quni-ink)]">Stripe Connect</strong>, which also verifies
-          your identity - <strong className="text-[var(--quni-ink)]">no documents to upload</strong>, and Quni never
-          stores your ID.
-        </p>
-      </div>
+      {showStripePayouts ? (
+        <div className="flex gap-3 rounded-xl border border-[var(--quni-line-soft)] bg-[var(--quni-surface-2)] p-4">
+          <ShieldIcon />
+          <p className="text-[13.5px] leading-relaxed text-[var(--quni-ink-3)]">
+            Payouts run through <strong className="text-[var(--quni-ink)]">Stripe Connect</strong>, which also verifies
+            your identity - <strong className="text-[var(--quni-ink)]">no documents to upload</strong>, and Quni never
+            stores your ID.
+          </p>
+        </div>
+      ) : null}
       <div className="space-y-2.5">
-        <PayoutRow
-          done={readiness.accept.identityVerified}
-          title="Stripe Connect - payouts & identity"
-          subtitle="Receive rent and verify who you are."
-          statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
-          action={
-            readiness.accept.identityVerified ? null : (
-              <button
-                type="button"
-                onClick={onConnectStripe}
-                disabled={connectLoading}
-                className="rounded-[10px] bg-[var(--quni-navy)] px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
-              >
-                {connectLoading ? 'Opening Stripe…' : 'Connect Stripe'}
-              </button>
-            )
-          }
-        />
+        {showStripePayouts ? (
+          <PayoutRow
+            done={readiness.accept.identityVerified}
+            title="Stripe Connect - payouts & identity"
+            subtitle="Receive rent and verify who you are."
+            statusLabel={readiness.accept.identityVerified ? 'Connected' : undefined}
+            action={
+              readiness.accept.identityVerified ? null : (
+                <button
+                  type="button"
+                  onClick={onConnectStripe}
+                  disabled={connectLoading}
+                  className="rounded-[10px] bg-[var(--quni-navy)] px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {connectLoading ? 'Opening Stripe…' : 'Connect Stripe'}
+                </button>
+              )
+            }
+          />
+        ) : null}
         {showListingCardRow ? (
           <PayoutRow
             done={readiness.accept.savedCard}
@@ -1604,7 +1614,7 @@ function PayoutsSectionForm({
           </p>
         ) : null}
       </div>
-      {readiness.accept.identityVerified ? (
+      {showStripePayouts && readiness.accept.identityVerified ? (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--quni-navy-tint)] px-3 py-1 text-xs font-semibold text-[var(--quni-navy)]">
           Identity verified
         </span>
