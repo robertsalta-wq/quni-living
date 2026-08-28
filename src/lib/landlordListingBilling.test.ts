@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { formatStripeCardOnFile, normalizeListingBillingCard } from './landlordListingBilling'
+import {
+  formatStripeCardOnFile,
+  listingHasSavedPaymentCard,
+  normalizeListingBillingCard,
+} from './landlordListingBilling'
 
 describe('normalizeListingBillingCard', () => {
   it('accepts brand + last4 strings', () => {
@@ -23,6 +27,29 @@ describe('normalizeListingBillingCard', () => {
       brand: 'visa',
       last4: '4242',
     })
+  })
+})
+
+describe('listingHasSavedPaymentCard', () => {
+  it('is false when billing is missing, customer-only, or hasPaymentMethod without a card', () => {
+    expect(listingHasSavedPaymentCard(null)).toBe(false)
+    expect(listingHasSavedPaymentCard(undefined)).toBe(false)
+    expect(
+      listingHasSavedPaymentCard({ moduleEnabled: true, hasPaymentMethod: false, card: null }),
+    ).toBe(false)
+    expect(
+      listingHasSavedPaymentCard({ moduleEnabled: true, hasPaymentMethod: true, card: null }),
+    ).toBe(false)
+  })
+
+  it('is true only with hasPaymentMethod and brand/last4', () => {
+    expect(
+      listingHasSavedPaymentCard({
+        moduleEnabled: true,
+        hasPaymentMethod: true,
+        card: { brand: 'visa', last4: '4242' },
+      }),
+    ).toBe(true)
   })
 })
 

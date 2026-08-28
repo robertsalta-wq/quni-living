@@ -73,6 +73,13 @@ describe('profileHubSections', () => {
     )
     expect(noCard).toEqual(['Add a saved card to accept bookings'])
 
+    const customerOnly = profileHubSubtitleLines(
+      'payouts',
+      baseProfile({ stripe_charges_enabled: false, stripe_customer_id: 'cus_abc' }),
+      { email: null, listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null } },
+    )
+    expect(customerOnly).toEqual(['Add a saved card to accept bookings'])
+
     const withCard = profileHubSubtitleLines(
       'payouts',
       baseProfile({ stripe_charges_enabled: false, stripe_customer_id: 'cus_abc' }),
@@ -83,6 +90,20 @@ describe('profileHubSections', () => {
     )
     expect(withCard[0]).toMatch(/4242/)
     expect(withCard.join(' ')).not.toMatch(/Stripe Connect/i)
+  })
+
+  it('payouts hub status stays incomplete until a payment method exists', () => {
+    const p = baseProfile({ stripe_charges_enabled: false, stripe_customer_id: 'cus_abc' })
+    expect(profileHubSectionStatus('payouts', p, { moduleEnabled: true, hasPaymentMethod: false, card: null })).toBe(
+      'attention',
+    )
+    expect(
+      profileHubSectionStatus('payouts', p, {
+        moduleEnabled: true,
+        hasPaymentMethod: true,
+        card: { brand: 'visa', last4: '4242' },
+      }),
+    ).toBe('complete')
   })
 
   it('keeps landlord type + ABN in personal subtitle for company landlords', () => {

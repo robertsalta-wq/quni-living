@@ -23,6 +23,10 @@ import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUp
 import { reportProfilePhotoUploadFailure } from '../../lib/reportProfilePhotoUploadFailure'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import {
+  fetchLandlordListingBillingSnapshot,
+  listingHasSavedPaymentCard,
+} from '../../lib/landlordListingBilling'
+import {
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
   parseLandlordServiceTier,
   type LandlordServiceTier,
@@ -258,7 +262,7 @@ export default function LandlordOnboarding() {
   }, [landlordOnboardingDraftSnapshot])
 
   const hydrateFromProfile = useCallback(
-    (row: LandlordRow, tier: LandlordServiceTier) => {
+    (row: LandlordRow, tier: LandlordServiceTier, listingHasPaymentMethod?: boolean) => {
       setFirstName(row.first_name?.trim() ?? '')
       setLastName(row.last_name?.trim() ?? '')
       setPhone(row.phone?.trim() ?? '')
@@ -272,9 +276,10 @@ export default function LandlordOnboarding() {
       setBio(row.bio?.trim() ?? '')
       setAvatarUrl(row.avatar_url?.trim() ?? null)
       setHasInsurance(row.has_landlord_insurance === true)
+      if (listingHasPaymentMethod) setCardSaved(true)
       if (!initialStepSet.current) {
         initialStepSet.current = true
-        setStep(inferLandlordWizardStep(row, tier))
+        setStep(inferLandlordWizardStep(row, tier, listingHasPaymentMethod))
       }
     },
     [],
@@ -396,9 +401,13 @@ export default function LandlordOnboarding() {
         return
       }
       setProfile(row)
+      const billing = await fetchLandlordListingBillingSnapshot()
+      const listingHasPaymentMethod = listingHasSavedPaymentCard(billing)
       if (!formHydratedFromServerRef.current) {
         formHydratedFromServerRef.current = true
-        hydrateFromProfile(row, effectiveIntendedTier)
+        hydrateFromProfile(row, effectiveIntendedTier, listingHasPaymentMethod)
+      } else if (listingHasPaymentMethod) {
+        setCardSaved(true)
       }
     } catch (e) {
       setLoadError(messageFromSupabaseError(e))
@@ -1296,8 +1305,11 @@ export default function LandlordOnboarding() {
             open={cardModalOpen}
             onClose={() => setCardModalOpen(false)}
             onSuccess={() => {
-              setCardSaved(true)
-              setCardModalOpen(false)
+              void (async () => {
+                const billing = await fetchLandlordListingBillingSnapshot()
+                setCardSaved(listingHasSavedPaymentCard(billing))
+                setCardModalOpen(false)
+              })()
             }}
           />
 

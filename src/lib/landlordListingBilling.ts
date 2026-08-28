@@ -55,6 +55,13 @@ export async function fetchLandlordListingBillingSnapshot(): Promise<LandlordLis
   }
 }
 
+/** True only when Stripe has a default payment method we can show (brand + last4). Customer id is not enough. */
+export function listingHasSavedPaymentCard(
+  snapshot: LandlordListingBillingSnapshot | null | undefined,
+): boolean {
+  return snapshot?.hasPaymentMethod === true && snapshot.card != null
+}
+
 export function formatStripeCardOnFile(card: { brand: string; last4: string } | null | undefined): string {
   if (!card || typeof card !== 'object') return 'your saved card'
   const b = (card.brand ?? '').trim().toLowerCase()
