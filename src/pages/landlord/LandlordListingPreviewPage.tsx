@@ -159,7 +159,7 @@ export default function LandlordListingPreviewPage() {
       <Seo title="Preview listing" noindex description="Owner preview of a Quni listing. Not public." />
       <div className="sticky top-0 z-30 border-b border-[var(--quni-line-soft)] bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 px-4 py-2.5">
-          <span className="rounded-full border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.04em] text-[#5C5326]">
+          <span className="rounded-full border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--quni-warning-fg)]">
             {isDraft ? 'Draft preview' : 'Listing preview'}
           </span>
           <p className="min-w-0 flex-1 text-[12.5px] text-[var(--quni-ink-4)]">
