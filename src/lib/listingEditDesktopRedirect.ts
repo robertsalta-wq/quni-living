@@ -4,6 +4,7 @@ import {
   LISTING_HUB_SECTIONS,
   type ListingHubSectionId,
 } from './listingEditHubHealth'
+import { isListingPreviewPath } from './listingHubWizard'
 
 function formAnchorForHubSection(sectionId: ListingHubSectionId | 'basic'): string {
   if (sectionId === 'basic') {
@@ -19,6 +20,8 @@ function formAnchorForHubSection(sectionId: ListingHubSectionId | 'basic'): stri
  */
 export function resolveListingEditDesktopRedirect(pathname: string): string | null {
   const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+
+  if (isListingPreviewPath(p)) return null
 
   const newBasic = matchPath({ path: '/landlord/property/new/basic', end: true }, p)
   if (newBasic) return `/landlord/property/new#${formAnchorForHubSection('basic')}`

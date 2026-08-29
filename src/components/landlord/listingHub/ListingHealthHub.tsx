@@ -11,20 +11,14 @@ import {
   ListingHubSectionIcon,
   ListingHubStatusDot,
 } from './ListingHubVisuals'
-import LandlordListingPublishButton from '../listings/LandlordListingPublishButton'
-
 type Props = {
   propertyId: string | null
   listingName: string
   thumbUrl: string | null
   statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
   health: ListingHubHealthResult
-  /** Public listing URL when live - otherwise Preview is disabled. */
+  /** Owner preview for drafts, public page when live. */
   previewHref?: string | null
-  showPublish?: boolean
-  publishing?: boolean
-  publishError?: string | null
-  onPublish?: () => void
 }
 
 /**
@@ -39,10 +33,6 @@ export default function ListingHealthHub({
   statusLabel,
   health,
   previewHref = null,
-  showPublish = false,
-  publishing = false,
-  publishError = null,
-  onPublish,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -76,8 +66,6 @@ export default function ListingHealthHub({
           {previewHref ? (
             <Link
               to={previewHref}
-              target="_blank"
-              rel="noopener noreferrer"
               className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
@@ -86,7 +74,7 @@ export default function ListingHealthHub({
           ) : (
             <span
               className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line-soft)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-5)]"
-              title="Publish the listing to preview the public page"
+              title="Save this listing to your account to preview it"
             >
               <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
               Preview
@@ -177,16 +165,16 @@ export default function ListingHealthHub({
           })}
         </div>
 
-        {showPublish && onPublish ? (
+        {isSetup && previewHref ? (
           <div className="mt-4 space-y-2">
-            {publishError ? (
-              <p className="text-sm text-[var(--quni-danger-fg)]" role="alert">
-                {publishError}
-              </p>
-            ) : null}
-            <LandlordListingPublishButton onClick={onPublish} busy={publishing} />
+            <Link
+              to={previewHref}
+              className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            >
+              Preview listing
+            </Link>
             <p className="text-[12px] leading-snug text-[var(--quni-ink-5)]">
-              Publishes this listing so students can find it. You can still edit after it is live.
+              See how students will see this listing, then publish from the preview.
             </p>
           </div>
         ) : null}

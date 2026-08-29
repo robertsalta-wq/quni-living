@@ -67,6 +67,28 @@ export function prefetchPropertyDetail(slug: string): void {
   inflightBySlug.set(key, inflight)
 }
 
+/** Owner/admin draft preview - fetch by id (RLS hides other people's drafts). */
+export async function loadPropertyDetailById(
+  id: string,
+  options?: { abortSignal?: AbortSignal },
+): Promise<Property | null> {
+  const key = id.trim()
+  if (!key || !isSupabaseConfigured) return null
+  if (options?.abortSignal?.aborted) {
+    throw new DOMException('The operation was aborted.', 'AbortError')
+  }
+
+  let query = supabase.from('properties').select(PROPERTY_DETAIL_SELECT).eq('id', key)
+  if (options?.abortSignal) {
+    query = query.abortSignal(options.abortSignal)
+  }
+
+  const { data, error } = await query.maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return data as Property
+}
+
 export async function loadPropertyDetailBySlug(
   slug: string,
   options?: { abortSignal?: AbortSignal },

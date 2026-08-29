@@ -223,6 +223,7 @@ export function appShellFocusTitle(pathname: string): string {
     return 'New listing'
   }
   if (pathname.startsWith('/landlord/property/edit/')) {
+    if (pathname.endsWith('/preview')) return 'Preview listing'
     if (pathname.endsWith('/basic')) return 'Basic info'
     if (pathname.includes('/section/')) return 'Edit section'
     return 'Edit listing'

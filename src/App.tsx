@@ -167,6 +167,14 @@ function App() {
                 }
               />
               <Route
+                path="/landlord/property/edit/:id/preview"
+                element={
+                  <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                    <Lazy.LandlordListingEditEntry />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/booking/:propertyId"
                 element={
                   <ProtectedRoute

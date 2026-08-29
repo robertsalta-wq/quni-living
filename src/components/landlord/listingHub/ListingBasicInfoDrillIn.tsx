@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
+import { Check, ChevronLeft, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import {
   fieldsFromHubListingTypeTile,
@@ -194,9 +194,9 @@ export default function ListingBasicInfoDrillIn({
     })
     return specs.map((spec) => ({
       ...spec,
-      icon: spec.primary ? Check : X,
+      icon: spec.id === 'prev' ? ChevronLeft : spec.primary ? Check : X,
       onClick:
-        spec.id === 'cancel'
+        spec.id === 'cancel' || spec.id === 'prev'
           ? onCancel
           : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
     }))
@@ -403,7 +403,7 @@ export default function ListingBasicInfoDrillIn({
                 type="button"
                 disabled={disabled}
                 onClick={() => {
-                  if (spec.id === 'cancel') {
+                  if (spec.id === 'cancel' || spec.id === 'prev') {
                     onCancel()
                     return
                   }

@@ -14,6 +14,7 @@ describe('knownRoutes', () => {
     expect(isKnownAppPath('/')).toBe(true)
     expect(isKnownAppPath('/login')).toBe(true)
     expect(isKnownAppPath('/listings/auchenflower-3m1ji')).toBe(true)
+    expect(isKnownAppPath('/landlord/property/edit/abc/preview')).toBe(true)
     expect(isKnownAppPath('/student-accommodation/unsw/kensington-campus')).toBe(true)
     expect(isKnownAppPath('/admin/properties')).toBe(true)
   })

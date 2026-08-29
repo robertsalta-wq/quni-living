@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { listingPageShowsPublishButton } from './listingPagePublish'
 
 describe('listingPageShowsPublishButton', () => {
-  it('shows Publish on a saved draft for a landlord', () => {
+  it('shows Publish on owner preview for a saved draft landlord listing', () => {
     expect(
       listingPageShowsPublishButton({
         status: 'draft',

@@ -4,7 +4,7 @@ import type { Database } from './database.types'
 type PropertyStatus = Database['public']['Tables']['properties']['Row']['status']
 
 /**
- * Draft listings already saved to the account get an in-page Publish control.
+ * First publish is on the owner preview screen.
  * Admin concierge create-for-landlord stays draft-only.
  */
 export function listingPageShowsPublishButton(opts: {

@@ -97,6 +97,7 @@ describe('bar item sets - browse vs edit', () => {
     }).map((i) => i.id)
     expect(ids).toEqual(['draft', 'save'])
     expect(ids).not.toContain('exit-listings')
+    expect(ids).not.toContain('prev')
   })
 })
 
@@ -180,6 +181,7 @@ describe('listing edit path helper', () => {
     expect(isListingEditPath('/landlord/property/edit/1')).toBe(true)
     expect(isListingEditPath('/landlord/property/edit/1/basic')).toBe(true)
     expect(isListingEditPath('/landlord/property/edit/1/section/pricing')).toBe(true)
+    expect(isListingEditPath('/landlord/property/edit/1/preview')).toBe(true)
     expect(isListingEditPath('/landlord/dashboard')).toBe(false)
   })
 })

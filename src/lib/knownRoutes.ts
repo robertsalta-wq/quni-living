@@ -87,6 +87,7 @@ const PATTERNS: RegExp[] = [
   /^\/landlord\/property\/edit\/[^/]+\/?$/,
   /^\/landlord\/property\/edit\/[^/]+\/basic\/?$/,
   /^\/landlord\/property\/edit\/[^/]+\/section\/[^/]+\/?$/,
+  /^\/landlord\/property\/edit\/[^/]+\/preview\/?$/,
   /^\/admin(?:\/.*)?$/,
 ]
 

@@ -50,6 +50,7 @@ import LandlordDashboardPageHeader, {
 import { dashboardProfilePageInsetClass } from '../lib/dashboardPageInset'
 import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
 import LandlordDraftPublishPrompt from '../components/landlord/LandlordDraftPublishPrompt'
+import { listingPreviewPath } from '../lib/listingHubWizard'
 import {
   countDraftListingsWaiting,
   landlordActiveListingsCardSubline,
@@ -1042,7 +1043,6 @@ export default function LandlordDashboard() {
     setDuplicateConfirmProperty,
     authorityToLetPending,
     setAuthorityToLetPending,
-    publishDraftListing,
     confirmDuplicateListing,
     confirmAuthorityToLetAttestation,
     togglePropertyStatus,
@@ -1528,7 +1528,7 @@ export default function LandlordDashboard() {
             duplicatingListingId={duplicatingListingId}
             updatingListingId={updatingListingId}
             attestingListingId={attestingListingId}
-            onPublish={publishDraftListing}
+            onPublish={(prop) => navigate(listingPreviewPath(prop.id))}
             onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
             onToggle={togglePropertyStatus}
             onDeleteDraft={(listing) => {
