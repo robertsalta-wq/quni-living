@@ -11,6 +11,7 @@ import {
   ListingHubSectionIcon,
   ListingHubStatusDot,
 } from './ListingHubVisuals'
+import LandlordListingPublishButton from '../listings/LandlordListingPublishButton'
 
 type Props = {
   propertyId: string | null
@@ -20,6 +21,10 @@ type Props = {
   health: ListingHubHealthResult
   /** Public listing URL when live - otherwise Preview is disabled. */
   previewHref?: string | null
+  showPublish?: boolean
+  publishing?: boolean
+  publishError?: string | null
+  onPublish?: () => void
 }
 
 /**
@@ -34,6 +39,10 @@ export default function ListingHealthHub({
   statusLabel,
   health,
   previewHref = null,
+  showPublish = false,
+  publishing = false,
+  publishError = null,
+  onPublish,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -167,6 +176,20 @@ export default function ListingHealthHub({
             )
           })}
         </div>
+
+        {showPublish && onPublish ? (
+          <div className="mt-4 space-y-2">
+            {publishError ? (
+              <p className="text-sm text-[var(--quni-danger-fg)]" role="alert">
+                {publishError}
+              </p>
+            ) : null}
+            <LandlordListingPublishButton onClick={onPublish} busy={publishing} />
+            <p className="text-[12px] leading-snug text-[var(--quni-ink-5)]">
+              Publishes this listing so students can find it. You can still edit after it is live.
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   )

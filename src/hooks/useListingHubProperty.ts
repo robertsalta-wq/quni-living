@@ -36,6 +36,13 @@ export type ListingHubPropertySnapshot = {
   availableFrom: string | null
   openToNonStudents: boolean
   thumbUrl: string | null
+  authorityToLetAttestedAt: string | null
+  serviceTier: PropertyRow['service_tier']
+  maxOccupants: number | null
+  coupleSurchargePerWeek: number | null
+  parkingSurchargePerWeek: number | null
+  parkingAvailable: boolean
+  listerRole: string | null
 }
 
 function toHealthInput(p: ListingHubPropertySnapshot | null): ListingHubHealthInput {
@@ -121,6 +128,13 @@ function mapRow(
     availableFrom: prop.available_from,
     openToNonStudents: Boolean(prop.open_to_non_students),
     thumbUrl: firstPropertyImageUrl(prop.images),
+    authorityToLetAttestedAt: prop.authority_to_let_attested_at,
+    serviceTier: prop.service_tier,
+    maxOccupants: prop.max_occupants,
+    coupleSurchargePerWeek: prop.couple_surcharge_per_week,
+    parkingSurchargePerWeek: prop.parking_surcharge_per_week,
+    parkingAvailable: Boolean(prop.parking_available),
+    listerRole: prop.lister_role,
   }
 }
 
