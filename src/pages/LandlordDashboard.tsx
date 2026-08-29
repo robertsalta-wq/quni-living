@@ -49,6 +49,11 @@ import LandlordDashboardPageHeader, {
 } from '../components/landlord/LandlordDashboardPageHeader'
 import { dashboardProfilePageInsetClass } from '../lib/dashboardPageInset'
 import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
+import LandlordDraftPublishPrompt from '../components/landlord/LandlordDraftPublishPrompt'
+import {
+  countDraftListingsWaiting,
+  landlordActiveListingsCardSubline,
+} from '../lib/landlordDraftPublishPrompt'
 import {
   fetchLandlordListingBillingSnapshot,
   listingHasSavedPaymentCard,
@@ -1175,6 +1180,18 @@ export default function LandlordDashboard() {
   }, [load])
 
   const activeListings = properties.filter((p) => p.status === 'active').length
+  const draftCount = countDraftListingsWaiting(properties)
+  const waitingDraft = properties.find((p) => p.status === 'draft') ?? null
+  const draftPublishBusy =
+    waitingDraft != null &&
+    (publishingListingId === waitingDraft.id || attestingListingId === waitingDraft.id)
+  const publishWaitingDraft = useCallback(() => {
+    if (draftCount === 1 && waitingDraft) {
+      void publishDraftListing(waitingDraft)
+      return
+    }
+    selectDashboardTab('listings')
+  }, [draftCount, waitingDraft, publishDraftListing, selectDashboardTab])
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
   const showStripePayouts =
@@ -1364,12 +1381,22 @@ export default function LandlordDashboard() {
               }
               showStripePayouts={showStripePayouts}
               listingHasPaymentMethod={listingHasSavedPaymentCard(listingBilling)}
+              draftCount={draftCount}
+              draftPublishBusy={draftPublishBusy}
+              onPublishWaitingDraft={publishWaitingDraft}
             />
 
             <div className="sm:hidden">
             {connectSetupError && (
               <DashboardErrorBanner message={connectSetupError} tone="danger" className="mb-4" />
             )}
+
+            <LandlordDraftPublishPrompt
+              draftCount={draftCount}
+              busy={draftPublishBusy}
+              onPublish={publishWaitingDraft}
+              onGoListings={() => selectDashboardTab('listings')}
+            />
 
             {showStripePayouts ? <LandlordStripePayoutsCard profile={profile} onRefresh={load} /> : null}
 
@@ -1390,7 +1417,7 @@ export default function LandlordDashboard() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
                 <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
                 <p className="text-xs text-gray-500 mt-auto pt-1">
-                  {activeListings > 0 ? 'Published as active' : 'None published yet'}
+                  {landlordActiveListingsCardSubline(activeListings, draftCount)}
                 </p>
               </button>
               <Link
