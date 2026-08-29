@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Activity, ChevronLeft, Eye } from 'lucide-react'
 import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
@@ -7,7 +7,9 @@ import ListingBasicInfoDrillIn, {
   type ListingBasicInfoValues,
 } from '../../components/landlord/listingHub/ListingBasicInfoDrillIn'
 import ListingHealthHub from '../../components/landlord/listingHub/ListingHealthHub'
+import LandlordAuthorityToLetModal from '../../components/landlord/LandlordAuthorityToLetModal'
 import { useListingHubProperty } from '../../hooks/useListingHubProperty'
+import { useLandlordPropertyListingActions } from '../../hooks/useLandlordPropertyListingActions'
 import { LANDLORD_LISTINGS_EXIT_HREF, listingHubActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import {
   computeListingHubHealth,
@@ -124,6 +126,25 @@ export default function LandlordListingEditHubPage() {
   const [draftTick, setDraftTick] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
+
+  const showToast = useCallback((t: { kind: 'success' | 'error'; message: string }) => {
+    setToast(t)
+    window.setTimeout(() => setToast(null), 4000)
+  }, [])
+
+  const {
+    publishingListingId,
+    attestingListingId,
+    authorityToLetPending,
+    setAuthorityToLetPending,
+    publishDraftListing,
+    confirmAuthorityToLetAttestation,
+  } = useLandlordPropertyListingActions({
+    reload,
+    navigate,
+    showToast,
+  })
 
   const draftHealth = useMemo(() => {
     void draftTick
@@ -313,13 +334,54 @@ export default function LandlordListingEditHubPage() {
   }
 
   return (
-    <ListingHealthHub
-      propertyId={propertyId}
-      listingName={listingName}
-      thumbUrl={property?.thumbUrl ?? null}
-      statusLabel={statusLabel}
-      health={health}
-      previewHref={previewHref}
-    />
+    <>
+      <ListingHealthHub
+        propertyId={propertyId}
+        listingName={listingName}
+        thumbUrl={property?.thumbUrl ?? null}
+        statusLabel={statusLabel}
+        health={health}
+        previewHref={previewHref}
+        canPublish={property?.status === 'draft'}
+        publishBusy={
+          property != null &&
+          (publishingListingId === property.id || attestingListingId === property.id)
+        }
+        onPublish={
+          property?.status === 'draft'
+            ? () => void publishDraftListing(property.actionListing)
+            : undefined
+        }
+      />
+      <LandlordAuthorityToLetModal
+        open={authorityToLetPending != null}
+        intent={authorityToLetPending?.intent ?? 'publish'}
+        listingTitle={authorityToLetPending?.property.title ?? ''}
+        busy={
+          authorityToLetPending != null &&
+          (attestingListingId === authorityToLetPending.property.id ||
+            publishingListingId === authorityToLetPending.property.id)
+        }
+        onConfirm={() => void confirmAuthorityToLetAttestation()}
+        onCancel={() => {
+          if (attestingListingId === authorityToLetPending?.property.id) return
+          setAuthorityToLetPending(null)
+        }}
+      />
+      {toast ? (
+        <div
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4 sm:bottom-6"
+          role={toast.kind === 'success' ? 'status' : 'alert'}
+        >
+          <div
+            className={`rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
+              toast.kind === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+            }`}
+          >
+            {toast.message}
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

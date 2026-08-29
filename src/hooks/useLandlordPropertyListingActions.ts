@@ -41,6 +41,47 @@ export type LandlordPropertyForListingActions = Pick<
   | 'lister_role'
 >
 
+export function toLandlordPropertyForListingActions(
+  prop: Pick<
+    PropertyRow,
+    | 'id'
+    | 'title'
+    | 'slug'
+    | 'status'
+    | 'authority_to_let_attested_at'
+    | 'service_tier'
+    | 'open_to_non_students'
+    | 'rent_per_week'
+    | 'max_occupants'
+    | 'couple_surcharge_per_week'
+    | 'parking_surcharge_per_week'
+    | 'parking_available'
+    | 'state'
+    | 'property_type'
+    | 'is_registered_rooming_house'
+    | 'lister_role'
+  >,
+): LandlordPropertyForListingActions {
+  return {
+    id: prop.id,
+    title: prop.title,
+    slug: prop.slug,
+    status: prop.status,
+    authority_to_let_attested_at: prop.authority_to_let_attested_at,
+    service_tier: prop.service_tier,
+    open_to_non_students: prop.open_to_non_students,
+    rent_per_week: prop.rent_per_week,
+    max_occupants: prop.max_occupants,
+    couple_surcharge_per_week: prop.couple_surcharge_per_week,
+    parking_surcharge_per_week: prop.parking_surcharge_per_week,
+    parking_available: prop.parking_available,
+    state: prop.state,
+    property_type: prop.property_type,
+    is_registered_rooming_house: prop.is_registered_rooming_house,
+    lister_role: prop.lister_role,
+  }
+}
+
 export type AuthorityToLetPendingListing = {
   property: LandlordPropertyForListingActions
   intent: AuthorityToLetListingIntent

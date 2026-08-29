@@ -6,6 +6,7 @@ import {
   type ListingHubHealthResult,
   type ListingHubSectionId,
 } from '../../../lib/listingEditHubHealth'
+import { dashboardPrimaryBtnClass } from '../../../lib/dashboardButtons'
 import {
   ListingHubQualityRing,
   ListingHubSectionIcon,
@@ -20,6 +21,9 @@ type Props = {
   health: ListingHubHealthResult
   /** Public listing URL when live - otherwise Preview is disabled. */
   previewHref?: string | null
+  canPublish?: boolean
+  publishBusy?: boolean
+  onPublish?: () => void
 }
 
 /**
@@ -34,6 +38,9 @@ export default function ListingHealthHub({
   statusLabel,
   health,
   previewHref = null,
+  canPublish = false,
+  publishBusy = false,
+  onPublish,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -88,6 +95,16 @@ export default function ListingHealthHub({
 
       {/* Body */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3 sm:px-4">
+        {canPublish && onPublish ? (
+          <button
+            type="button"
+            disabled={publishBusy}
+            onClick={onPublish}
+            className={`${dashboardPrimaryBtnClass} mb-3 w-full`}
+          >
+            {publishBusy ? 'Publishing…' : 'Publish listing'}
+          </button>
+        ) : null}
         <div className="quni-card mb-2.5 flex items-center gap-3 px-3.5 py-2.5">
           <ListingHubQualityRing score={health.score} />
           <div className="min-w-0">

@@ -7,6 +7,10 @@ import {
   type ListingHubHealthResult,
 } from '../lib/listingEditHubHealth'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import {
+  toLandlordPropertyForListingActions,
+  type LandlordPropertyForListingActions,
+} from './useLandlordPropertyListingActions'
 
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 
@@ -36,6 +40,7 @@ export type ListingHubPropertySnapshot = {
   availableFrom: string | null
   openToNonStudents: boolean
   thumbUrl: string | null
+  actionListing: LandlordPropertyForListingActions
 }
 
 function toHealthInput(p: ListingHubPropertySnapshot | null): ListingHubHealthInput {
@@ -121,6 +126,7 @@ function mapRow(
     availableFrom: prop.available_from,
     openToNonStudents: Boolean(prop.open_to_non_students),
     thumbUrl: firstPropertyImageUrl(prop.images),
+    actionListing: toLandlordPropertyForListingActions(prop),
   }
 }
 
