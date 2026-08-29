@@ -27,6 +27,8 @@ import {
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
+import { listingPageShowsPublishButton } from '../../lib/listingPagePublish'
+import LandlordListingPublishButton from '../../components/landlord/listings/LandlordListingPublishButton'
 import {
   clearLandlordPropertyEditDraft,
   clearLandlordPropertyNewDraft,
@@ -750,6 +752,7 @@ export default function LandlordPropertyFormPage() {
   const isHubSectionMode = hubSectionId != null
   const hubReturnPath = listingHubPath({ propertyId })
   const formRef = useRef<HTMLFormElement>(null)
+  const publishDraftOnSubmitRef = useRef(false)
   const hubSectionMeta = hubSectionId
     ? LISTING_HUB_SECTIONS.find((s) => s.id === hubSectionId) ?? null
     : null
@@ -765,6 +768,7 @@ export default function LandlordPropertyFormPage() {
   const [loadingPage, setLoadingPage] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null)
+  const [submitMode, setSubmitMode] = useState<'save' | 'publish'>('save')
   const [submitting, setSubmitting] = useState(false)
   const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
   const [authorityToLetAgreed, setAuthorityToLetAgreed] = useState(false)
@@ -2420,6 +2424,10 @@ export default function LandlordPropertyFormPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    const publishDraft =
+      publishDraftOnSubmitRef.current && isEdit && existingListingStatus === 'draft' && role !== 'admin'
+    publishDraftOnSubmitRef.current = false
+    setSubmitMode(publishDraft ? 'publish' : 'save')
     setSubmitError(null)
     setSubmitSuccessMessage(null)
     if (!user?.id) {
@@ -2531,10 +2539,10 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    const isPublishingNewListing = !isEdit
+    const isPublishingListing = !isEdit || publishDraft
     if (
       !skipAttestations &&
-      isPublishingNewListing &&
+      isPublishingListing &&
       listerRole === 'head_tenant' &&
       !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent)
     ) {
@@ -2548,7 +2556,7 @@ export default function LandlordPropertyFormPage() {
     }
     if (
       !skipAttestations &&
-      isPublishingNewListing &&
+      isPublishingListing &&
       !propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt }) &&
       !authorityToLetAgreed
     ) {
@@ -2557,7 +2565,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (!skipAttestations && isNswT3Listing && (isPublishingNewListing || existingListingStatus === 'active')) {
+    if (!skipAttestations && isNswT3Listing && (isPublishingListing || existingListingStatus === 'active')) {
       const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
       if (t3FormErr) {
         reportSubmitError(t3FormErr)
@@ -2904,6 +2912,15 @@ export default function LandlordPropertyFormPage() {
         if (existingListingStatus === 'active') {
           requestSiteRebuild()
         }
+        if (publishDraft) {
+          const { error: activateErr } = await supabase
+            .from('properties')
+            .update({ status: 'active' })
+            .eq('id', propertyId)
+          if (activateErr) throw activateErr
+          requestSiteRebuild()
+          setExistingListingStatus('active')
+        }
         if (isHubSectionMode) {
           navigate(hubReturnPath, { replace: true })
         } else if (existingListingStatus === 'draft') {
@@ -3191,6 +3208,12 @@ export default function LandlordPropertyFormPage() {
     skipAttestations,
     t3ComplianceForm,
   ])
+
+  const showListingPagePublish = listingPageShowsPublishButton({
+    status: existingListingStatus,
+    role,
+    hasSavedProperty: isEdit && Boolean(propertyId),
+  })
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
@@ -5046,13 +5069,28 @@ export default function LandlordPropertyFormPage() {
                 </div>
               ) : null}
             </div>
-            <div className={isHubSectionMode ? 'hidden gap-3 sm:flex' : 'flex gap-3'}>
+            <div className={isHubSectionMode ? 'hidden flex-wrap gap-3 sm:flex' : 'flex flex-wrap gap-3'}>
+              {showListingPagePublish ? (
+                <LandlordListingPublishButton
+                  busy={submitting && submitMode === 'publish'}
+                  disabled={submitting}
+                  onClick={() => {
+                    publishDraftOnSubmitRef.current = true
+                    formRef.current?.requestSubmit()
+                  }}
+                  className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                />
+              ) : null}
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                className={
+                  showListingPagePublish
+                    ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
+                    : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50'
+                }
               >
-                {submitting
+                {submitting && submitMode !== 'publish'
                   ? 'Saving…'
                   : isHubSectionMode
                     ? isEdit
