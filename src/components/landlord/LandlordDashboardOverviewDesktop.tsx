@@ -9,11 +9,13 @@ import {
   type SchedulingBooking,
 } from '../../lib/landlordBookingsScheduling'
 import { landlordOverviewFunnel } from '../../lib/landlordOverviewFunnel'
+import { landlordActiveListingsCardSubline } from '../../lib/landlordDraftPublishPrompt'
 import {
   landlordBookingsPath,
   landlordDashboardTabPath,
 } from '../../lib/userDashboardNav'
 import { LandlordStripePayoutsCard } from './LandlordStripePayoutsCard'
+import LandlordDraftPublishPrompt from './LandlordDraftPublishPrompt'
 
 const cardHover =
   'transition-[transform,box-shadow] duration-200 ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]'
@@ -42,6 +44,9 @@ type Props = {
   showStripePayouts: boolean
   /** Listing default payment method on file. Fail closed when omitted. */
   listingHasPaymentMethod?: boolean
+  draftCount?: number
+  draftPublishBusy?: boolean
+  onPublishWaitingDraft?: () => void
 }
 
 function FunnelStepper({
@@ -139,6 +144,9 @@ export default function LandlordDashboardOverviewDesktop({
   mixedServiceNote,
   showStripePayouts,
   listingHasPaymentMethod = false,
+  draftCount = 0,
+  draftPublishBusy = false,
+  onPublishWaitingDraft,
 }: Props) {
   const funnel = useMemo(
     () =>
@@ -167,6 +175,15 @@ export default function LandlordDashboardOverviewDesktop({
 
       {mixedServiceNote ? (
         <p className="mb-5 text-sm text-[var(--quni-ink-4)]">{mixedServiceNote}</p>
+      ) : null}
+
+      {onPublishWaitingDraft ? (
+        <LandlordDraftPublishPrompt
+          draftCount={draftCount}
+          busy={draftPublishBusy}
+          onPublish={onPublishWaitingDraft}
+          onGoListings={onGoListings}
+        />
       ) : null}
 
       {/* Row 1 - profile + payouts */}
@@ -277,7 +294,7 @@ export default function LandlordDashboardOverviewDesktop({
                 {activeListings}
               </p>
               <p className="m-0 text-xs text-[var(--quni-ink-4)]">
-                {activeListings > 0 ? 'Published as active' : 'None published yet'}
+                {landlordActiveListingsCardSubline(activeListings, draftCount)}
               </p>
             </button>
 
