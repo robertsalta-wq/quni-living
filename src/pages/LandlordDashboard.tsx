@@ -1182,16 +1182,13 @@ export default function LandlordDashboard() {
   const activeListings = properties.filter((p) => p.status === 'active').length
   const draftCount = countDraftListingsWaiting(properties)
   const waitingDraft = properties.find((p) => p.status === 'draft') ?? null
-  const draftPublishBusy =
-    waitingDraft != null &&
-    (publishingListingId === waitingDraft.id || attestingListingId === waitingDraft.id)
-  const publishWaitingDraft = useCallback(() => {
+  const reviewWaitingDraft = useCallback(() => {
     if (draftCount === 1 && waitingDraft) {
-      void publishDraftListing(waitingDraft)
+      navigate(`/landlord/property/edit/${waitingDraft.id}`)
       return
     }
     selectDashboardTab('listings')
-  }, [draftCount, waitingDraft, publishDraftListing, selectDashboardTab])
+  }, [draftCount, waitingDraft, navigate, selectDashboardTab])
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
   const showStripePayouts =
@@ -1382,8 +1379,7 @@ export default function LandlordDashboard() {
               showStripePayouts={showStripePayouts}
               listingHasPaymentMethod={listingHasSavedPaymentCard(listingBilling)}
               draftCount={draftCount}
-              draftPublishBusy={draftPublishBusy}
-              onPublishWaitingDraft={publishWaitingDraft}
+              onReviewWaitingDraft={reviewWaitingDraft}
             />
 
             <div className="sm:hidden">
@@ -1393,8 +1389,7 @@ export default function LandlordDashboard() {
 
             <LandlordDraftPublishPrompt
               draftCount={draftCount}
-              busy={draftPublishBusy}
-              onPublish={publishWaitingDraft}
+              onReview={reviewWaitingDraft}
               onGoListings={() => selectDashboardTab('listings')}
             />
 

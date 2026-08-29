@@ -45,8 +45,7 @@ type Props = {
   /** Listing default payment method on file. Fail closed when omitted. */
   listingHasPaymentMethod?: boolean
   draftCount?: number
-  draftPublishBusy?: boolean
-  onPublishWaitingDraft?: () => void
+  onReviewWaitingDraft?: () => void
 }
 
 function FunnelStepper({
@@ -145,8 +144,7 @@ export default function LandlordDashboardOverviewDesktop({
   showStripePayouts,
   listingHasPaymentMethod = false,
   draftCount = 0,
-  draftPublishBusy = false,
-  onPublishWaitingDraft,
+  onReviewWaitingDraft,
 }: Props) {
   const funnel = useMemo(
     () =>
@@ -177,11 +175,10 @@ export default function LandlordDashboardOverviewDesktop({
         <p className="mb-5 text-sm text-[var(--quni-ink-4)]">{mixedServiceNote}</p>
       ) : null}
 
-      {onPublishWaitingDraft ? (
+      {onReviewWaitingDraft ? (
         <LandlordDraftPublishPrompt
           draftCount={draftCount}
-          busy={draftPublishBusy}
-          onPublish={onPublishWaitingDraft}
+          onReview={onReviewWaitingDraft}
           onGoListings={onGoListings}
         />
       ) : null}

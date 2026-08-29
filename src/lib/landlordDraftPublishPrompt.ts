@@ -17,13 +17,13 @@ export function landlordDraftPublishPromptCopy(
   if (draftCount === 1) {
     return {
       title: 'Listing waiting to be published',
-      body: 'You have a listing in Draft. Publish it so students can find it.',
-      actionLabel: 'Publish listing',
+      body: 'You have a listing in Draft. Review it before students can find it.',
+      actionLabel: 'Review listing',
     }
   }
   return {
     title: 'Listings waiting to be published',
-    body: `You have ${draftCount} listings in Draft. Open Listings to publish them.`,
+    body: `You have ${draftCount} listings in Draft. Open Listings to review them.`,
     actionLabel: 'Go to listings',
   }
 }

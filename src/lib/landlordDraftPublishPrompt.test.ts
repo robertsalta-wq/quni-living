@@ -22,16 +22,18 @@ describe('landlordDraftPublishPrompt', () => {
     expect(landlordDraftPublishPromptCopy(0)).toBeNull()
   })
 
-  it('offers a direct publish action for a single draft', () => {
+  it('offers a review action for a single draft', () => {
     const copy = landlordDraftPublishPromptCopy(1)
     expect(copy?.title).toBe('Listing waiting to be published')
-    expect(copy?.actionLabel).toBe('Publish listing')
+    expect(copy?.body).toContain('Review it')
+    expect(copy?.actionLabel).toBe('Review listing')
   })
 
   it('sends multiple drafts to the listings tab', () => {
     const copy = landlordDraftPublishPromptCopy(3)
     expect(copy?.title).toBe('Listings waiting to be published')
     expect(copy?.body).toContain('3 listings')
+    expect(copy?.body).toContain('review them')
     expect(copy?.actionLabel).toBe('Go to listings')
   })
 
