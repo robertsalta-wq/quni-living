@@ -3,20 +3,18 @@ import { dashboardPrimaryBtnClass } from '../../lib/dashboardButtons'
 
 type Props = {
   draftCount: number
-  busy?: boolean
-  onPublish: () => void
+  onReview: () => void
   onGoListings: () => void
 }
 
 export default function LandlordDraftPublishPrompt({
   draftCount,
-  busy,
-  onPublish,
+  onReview,
   onGoListings,
 }: Props) {
   const copy = landlordDraftPublishPromptCopy(draftCount)
   if (!copy) return null
-  const publishNow = draftCount === 1
+  const reviewNow = draftCount === 1
 
   return (
     <div
@@ -30,11 +28,10 @@ export default function LandlordDraftPublishPrompt({
         </div>
         <button
           type="button"
-          disabled={busy}
-          onClick={publishNow ? onPublish : onGoListings}
+          onClick={reviewNow ? onReview : onGoListings}
           className={`${dashboardPrimaryBtnClass} shrink-0`}
         >
-          {busy && publishNow ? 'Publishing…' : copy.actionLabel}
+          {copy.actionLabel}
         </button>
       </div>
     </div>

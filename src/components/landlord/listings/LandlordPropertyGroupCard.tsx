@@ -6,7 +6,7 @@ import {
   type LandlordPropertyGroup,
 } from '../../../lib/landlordListingsGrouped'
 import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
-import LandlordListingPublishButton from './LandlordListingPublishButton'
+import LandlordListingReviewButton from './LandlordListingReviewButton'
 import LandlordListingRoomRow from './LandlordListingRoomRow'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
@@ -130,10 +130,7 @@ export function LandlordWholePlaceListingCard({
           <LandlordListingStatusPill status={uiStatus} />
         </div>
         {listing.status === 'draft' ? (
-          <LandlordListingPublishButton
-            busy={busyListingId === listing.id}
-            onClick={() => onPublish(listing)}
-          />
+          <LandlordListingReviewButton onClick={() => onEdit(listing)} />
         ) : null}
         <LandlordListingOverflowMenu
           listing={listing}

@@ -1,7 +1,7 @@
 import { firstPropertyImageUrl } from '../../../lib/propertyImages'
 import type { LandlordListingForGroup, LandlordListingUiStatus } from '../../../lib/landlordListingsGrouped'
 import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
-import LandlordListingPublishButton from './LandlordListingPublishButton'
+import LandlordListingReviewButton from './LandlordListingReviewButton'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
 type Props = {
@@ -84,8 +84,8 @@ export default function LandlordListingRoomRow({
             <LandlordListingStatusPill status={uiStatus} />
           </div>
         </div>
-        {listing.status === 'draft' && onPublish ? (
-          <LandlordListingPublishButton busy={busy} onClick={onPublish} />
+        {listing.status === 'draft' ? (
+          <LandlordListingReviewButton onClick={onOpenDetail} />
         ) : null}
         <LandlordListingOverflowMenu
           listing={listing}
