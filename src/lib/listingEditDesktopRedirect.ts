@@ -2,6 +2,8 @@ import { matchPath } from 'react-router-dom'
 import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
+  hubSectionIdFromFormSectionId,
+  listingHubPath,
   type ListingHubSectionId,
 } from './listingEditHubHealth'
 import { isListingPreviewPath } from './listingHubWizard'
@@ -63,4 +65,35 @@ export function isListingEditSectionPath(pathname: string): boolean {
     matchPath({ path: '/landlord/property/new/section/:sectionId', end: true }, p) ||
       matchPath({ path: '/landlord/property/edit/:id/section/:sectionId', end: true }, p),
   )
+}
+
+/**
+ * Mobile: a leftover desktop hash (`#section-pricing-availability`) on the hub URL
+ * must become the section route again. Landscape ≥ sm rewrites the drill-in to a
+ * hash; rotating back otherwise dumps the landlord on listing health.
+ */
+export function resolveListingEditMobileHashRedirect(
+  pathname: string,
+  hash: string,
+): string | null {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const cleaned = hash.replace(/^#/, '').trim()
+  if (!cleaned) return null
+
+  const section =
+    hubSectionIdFromFormSectionId(cleaned) ??
+    ((LISTING_HUB_SECTION_IDS as readonly string[]).includes(cleaned)
+      ? (cleaned as ListingHubSectionId)
+      : null)
+  if (!section) return null
+
+  const edit = matchPath({ path: '/landlord/property/edit/:id', end: true }, p)
+  if (edit?.params.id) {
+    return listingHubPath({ propertyId: edit.params.id, view: section })
+  }
+  const created = matchPath({ path: '/landlord/property/new', end: true }, p)
+  if (created) {
+    return listingHubPath({ propertyId: null, view: section })
+  }
+  return null
 }

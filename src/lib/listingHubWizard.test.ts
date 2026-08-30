@@ -1,13 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  clearListingWizardResume,
   isListingPreviewPath,
   listingHubWizardNextHref,
   listingHubWizardPrevHref,
   listingHubWizardStepCaption,
   listingHubWizardStepError,
+  listingHubWizardStepFocusId,
   listingHubWizardStepProgress,
   listingOwnerOrPublicPreviewHref,
   listingPreviewPath,
+  readListingWizardResume,
+  writeListingWizardResume,
 } from './listingHubWizard'
 
 describe('listingHubWizard', () => {
@@ -72,10 +76,38 @@ describe('listingHubWizard', () => {
     expect(listingHubWizardStepError('property', { rentPerWeek: 0 })).toBeNull()
     expect(listingHubWizardStepError('photos', { rentPerWeek: '' })).toBeNull()
     expect(listingHubWizardStepError('pricing', { rentPerWeek: 0 })).toBe(
-      'Rent per week must be a positive number.',
+      'Rent per week cannot be empty.',
     )
     expect(listingHubWizardStepError('pricing', { rentPerWeek: 320 })).toBeNull()
     expect(listingHubWizardStepError('basic', { title: '  ' })).toBe('Add a listing title to continue.')
     expect(listingHubWizardStepError('basic', { title: 'Sunny room' })).toBeNull()
   })
+
+  it('focuses the gated field when Next is blocked', () => {
+    expect(listingHubWizardStepFocusId('pricing')).toBe('pf-rent')
+    expect(listingHubWizardStepFocusId('basic')).toBe('pf-title')
+    expect(listingHubWizardStepFocusId('photos')).toBeNull()
+  })
+
+  it('remembers the last wizard section for resume', () => {
+    const store = new Map<string, string>()
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value)
+      },
+      removeItem: (key: string) => {
+        store.delete(key)
+      },
+    })
+    writeListingWizardResume('abc', 'pricing')
+    expect(readListingWizardResume('abc')).toBe('pricing')
+    expect(readListingWizardResume('other')).toBeNull()
+    clearListingWizardResume('abc')
+    expect(readListingWizardResume('abc')).toBeNull()
+  })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })

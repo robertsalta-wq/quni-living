@@ -71,6 +71,8 @@ export function listingHubWizardNextHref(
   return listingHubPath({ propertyId, view: LISTING_HUB_SECTION_IDS[i + 1] })
 }
 
+export const LISTING_HUB_RENT_REQUIRED_MESSAGE = 'Rent per week cannot be empty.'
+
 /** Per-step Next gates. Rent is only required on pricing. */
 export function listingHubWizardStepError(
   sectionId: ListingHubSectionId,
@@ -82,8 +84,49 @@ export function listingHubWizardStepError(
   if (sectionId === 'pricing') {
     const rent = Number(input.rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
-      return 'Rent per week must be a positive number.'
+      return LISTING_HUB_RENT_REQUIRED_MESSAGE
     }
   }
   return null
+}
+
+/** Field to reveal when a step gate fails. */
+export function listingHubWizardStepFocusId(sectionId: ListingHubSectionId): string | null {
+  if (sectionId === 'basic') return 'pf-title'
+  if (sectionId === 'pricing') return 'pf-rent'
+  return null
+}
+
+const LISTING_WIZARD_RESUME_KEY = 'quni.listingWizard.resume.v1'
+
+function listingWizardStorage(): Storage | null {
+  try {
+    if (typeof sessionStorage === 'undefined') return null
+    return sessionStorage
+  } catch {
+    return null
+  }
+}
+
+export function listingWizardResumeStorageKey(propertyId: string | null): string {
+  return `${LISTING_WIZARD_RESUME_KEY}:${propertyId ?? 'new'}`
+}
+
+export function writeListingWizardResume(
+  propertyId: string | null,
+  sectionId: ListingHubSectionId,
+): void {
+  listingWizardStorage()?.setItem(listingWizardResumeStorageKey(propertyId), sectionId)
+}
+
+export function readListingWizardResume(propertyId: string | null): ListingHubSectionId | null {
+  const raw = listingWizardStorage()?.getItem(listingWizardResumeStorageKey(propertyId))
+  if (raw && (LISTING_HUB_SECTION_IDS as readonly string[]).includes(raw)) {
+    return raw as ListingHubSectionId
+  }
+  return null
+}
+
+export function clearListingWizardResume(propertyId: string | null): void {
+  listingWizardStorage()?.removeItem(listingWizardResumeStorageKey(propertyId))
 }

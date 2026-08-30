@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isListingEditSectionPath,
   resolveListingEditDesktopRedirect,
+  resolveListingEditMobileHashRedirect,
 } from './listingEditDesktopRedirect'
 
 describe('listingEditDesktopRedirect', () => {
@@ -33,5 +34,24 @@ describe('listingEditDesktopRedirect', () => {
     expect(isListingEditSectionPath('/landlord/property/new/section/rules')).toBe(true)
     expect(isListingEditSectionPath('/landlord/property/edit/abc/section/location')).toBe(true)
     expect(isListingEditSectionPath('/landlord/property/edit/abc')).toBe(false)
+  })
+
+  it('restores a desktop hash on the mobile hub URL to the section route', () => {
+    expect(
+      resolveListingEditMobileHashRedirect(
+        '/landlord/property/edit/abc',
+        '#section-pricing-availability',
+      ),
+    ).toBe('/landlord/property/edit/abc/section/pricing')
+    expect(
+      resolveListingEditMobileHashRedirect('/landlord/property/new', '#section-basic-info'),
+    ).toBe('/landlord/property/new/basic')
+    expect(resolveListingEditMobileHashRedirect('/landlord/property/edit/abc', '')).toBeNull()
+    expect(
+      resolveListingEditMobileHashRedirect(
+        '/landlord/property/edit/abc/section/pricing',
+        '#section-pricing-availability',
+      ),
+    ).toBeNull()
   })
 })

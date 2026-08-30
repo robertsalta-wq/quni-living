@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Activity, ChevronLeft, Eye } from 'lucide-react'
-import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import ListingBasicInfoDrillIn, {
@@ -14,7 +14,7 @@ import {
   listingHubPath,
   type ListingHubHealthInput,
 } from '../../lib/listingEditHubHealth'
-import { listingOwnerOrPublicPreviewHref } from '../../lib/listingHubWizard'
+import { listingOwnerOrPublicPreviewHref, readListingWizardResume } from '../../lib/listingHubWizard'
 import {
   patchLandlordPropertyDraftBasic,
   patchLandlordPropertyEditDraftBasic,
@@ -120,6 +120,10 @@ export default function LandlordListingEditHubPage() {
     matchPath({ path: '/landlord/property/edit/:id/basic', end: true }, location.pathname) ||
       matchPath({ path: '/landlord/property/new/basic', end: true }, location.pathname),
   )
+  const listingHubIntent = Boolean(
+    (location.state as { listingHubIntent?: boolean } | null)?.listingHubIntent,
+  )
+  const resumeSection = !isBasic && !listingHubIntent ? readListingWizardResume(propertyId) : null
 
   const { loading, error, property, health: remoteHealth, reload } = useListingHubProperty(propertyId)
 
@@ -212,7 +216,7 @@ export default function LandlordListingEditHubPage() {
         if (intent === 'next') {
           navigate(listingHubPath({ propertyId: null, view: 'property' }))
         } else {
-          navigate(listingHubPath({ propertyId: null }))
+          navigate(listingHubPath({ propertyId: null }), { state: { listingHubIntent: true } })
         }
         return
       }
@@ -243,7 +247,7 @@ export default function LandlordListingEditHubPage() {
           roomType: values.roomType || 'apartment',
           isRegisteredRoomingHouse: values.isRegisteredRoomingHouse,
         })
-        navigate(listingHubPath({ propertyId }))
+        navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
         return
       }
 
@@ -270,7 +274,7 @@ export default function LandlordListingEditHubPage() {
       if (intent === 'next') {
         navigate(listingHubPath({ propertyId, view: 'property' }))
       } else {
-        navigate(listingHubPath({ propertyId }))
+        navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
       }
     } catch (err) {
       setSaveError(formatUserFacingRequestError(err, 'Could not save Basic info.'))
@@ -293,6 +297,10 @@ export default function LandlordListingEditHubPage() {
    * `null` when `isBasic` - ListingBasicInfoDrillIn owns registration.
    */
   useSetAppChromeActions(isBasic ? null : hubActionItems)
+
+  if (resumeSection) {
+    return <Navigate to={listingHubPath({ propertyId, view: resumeSection })} replace />
+  }
 
   if (propertyId && loading) {
     return (
@@ -335,7 +343,7 @@ export default function LandlordListingEditHubPage() {
         saving={saving}
         error={saveError}
         onSave={saveBasic}
-        onCancel={() => navigate(listingHubPath({ propertyId }))}
+        onCancel={() => navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })}
       />
     )
   }
