@@ -52,12 +52,13 @@ describe('Listing hub action bar - ‹ Listings · Health · Preview', () => {
 })
 
 describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', () => {
-  it('setup mode → Prev · Save draft · Next', () => {
+  it('setup mode → Prev · Step · Next · Save draft', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: false, canSubmit: true })
-    expect(items.map((i) => i.id)).toEqual(['prev', 'draft', 'next'])
+    expect(items.map((i) => i.id)).toEqual(['prev', 'step', 'next', 'draft'])
     expect(items[0]).toMatchObject({ label: 'Prev' })
-    expect(items[1]).toMatchObject({ label: 'Save draft' })
+    expect(items[1]).toMatchObject({ id: 'step', label: 'Step 1 of 8', stepProgress: { current: 1, total: 8 } })
     expect(items[2]).toMatchObject({ label: 'Next', primary: true })
+    expect(items[3]).toMatchObject({ label: 'Save draft' })
   })
 
   it('live listing → Prev · Next · Save (no Save draft)', () => {
@@ -82,7 +83,7 @@ describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', ()
   it('saving disables Prev and Save draft too', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: true, canSubmit: true })
     expect(items[0]).toMatchObject({ id: 'prev', disabled: true })
-    expect(items[1]).toMatchObject({ id: 'draft', disabled: true })
+    expect(items[3]).toMatchObject({ id: 'draft', disabled: true })
   })
 })
 
@@ -100,12 +101,17 @@ describe('AppActionBar - section drill-in, LandlordPropertyFormPage hub-section 
     expect(items.map((i) => i.id)).not.toContain('draft')
   })
 
-  it('setup / draft → Prev · Save draft · Next (never Publish)', () => {
-    const items = listingSectionDrillInActionBarItemSpecs({ saving: false, isSetupMode: true })
-    expect(items.map((i) => i.id)).toEqual(['prev', 'draft', 'next'])
+  it('setup / draft → Prev · Step · Next · Save draft (never Publish)', () => {
+    const items = listingSectionDrillInActionBarItemSpecs({
+      saving: false,
+      isSetupMode: true,
+      wizardStep: { current: 5, total: 8 },
+    })
+    expect(items.map((i) => i.id)).toEqual(['prev', 'step', 'next', 'draft'])
     expect(items[0]).toMatchObject({ label: 'Prev' })
-    expect(items[1]).toMatchObject({ label: 'Save draft' })
+    expect(items[1]).toMatchObject({ id: 'step', label: 'Step 5 of 8', stepProgress: { current: 5, total: 8 } })
     expect(items[2]).toMatchObject({ label: 'Next', primary: true })
+    expect(items[3]).toMatchObject({ label: 'Save draft' })
     expect(items.map((i) => i.label).join(' ')).not.toMatch(/Publish/i)
   })
 

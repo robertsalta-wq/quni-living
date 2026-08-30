@@ -30,7 +30,9 @@ import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarI
 import {
   listingHubWizardNextHref,
   listingHubWizardPrevHref,
+  listingHubWizardStepCaption,
   listingHubWizardStepError,
+  listingHubWizardStepProgress,
   listingOwnerOrPublicPreviewHref,
   listingPreviewPath,
 } from '../../lib/listingHubWizard'
@@ -3367,19 +3369,22 @@ export default function LandlordPropertyFormPage() {
         saving: submitting,
         isSetupMode: isWizardSetupMode,
         isLiveListing: !isWizardSetupMode,
+        wizardStep: listingHubWizardStepProgress(hubSectionId),
       }).map((spec) => ({
         ...spec,
-        icon: listingChromeActionIcon(spec),
+        icon: spec.stepProgress ? undefined : listingChromeActionIcon(spec),
         onClick:
-          spec.id === 'draft'
-            ? () => void handleSaveDraftAndLeave()
-            : spec.id === 'prev'
-              ? () => handleWizardPrev()
-              : spec.id === 'next'
-                ? () => void handleWizardNext()
-                : () => formRef.current?.requestSubmit(),
+          spec.id === 'step'
+            ? undefined
+            : spec.id === 'draft'
+              ? () => void handleSaveDraftAndLeave()
+              : spec.id === 'prev'
+                ? () => handleWizardPrev()
+                : spec.id === 'next'
+                  ? () => void handleWizardNext()
+                  : () => formRef.current?.requestSubmit(),
       })),
-    [submitting, isWizardSetupMode, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
+    [submitting, isWizardSetupMode, hubSectionId, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -3483,7 +3488,7 @@ export default function LandlordPropertyFormPage() {
                 ) : null}
                 {hubSectionMeta ? (
                   <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
-                    Step {hubSectionMeta.step} of 8
+                    {listingHubWizardStepCaption(listingHubWizardStepProgress(hubSectionId))}
                   </span>
                 ) : null}
               </div>

@@ -9,6 +9,7 @@ import {
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
+import { listingHubWizardStepCaption, listingHubWizardStepProgress } from '../../../lib/listingHubWizard'
 import { patchLandlordPropertyDraftBasic, patchLandlordPropertyEditDraftBasic, writeListingHeadline } from '../../../lib/listingHubDraft'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
@@ -191,24 +192,27 @@ export default function ListingBasicInfoDrillIn({
       isSetupMode,
       saving,
       canSubmit: Boolean(title.trim()),
+      wizardStep: listingHubWizardStepProgress('basic'),
     })
     return specs.map((spec) => ({
       ...spec,
-        icon: listingChromeActionIcon(spec),
+      icon: spec.stepProgress ? undefined : listingChromeActionIcon(spec),
       onClick:
-        spec.id === 'cancel' || spec.id === 'prev'
-          ? onCancel
-          : () =>
-              onSave(
-                values,
-                spec.id === 'draft'
-                  ? 'draft'
-                  : spec.id === 'next'
-                    ? isSetupMode
-                      ? 'next'
-                      : 'advance'
-                    : 'save',
-              ),
+        spec.id === 'step'
+          ? undefined
+          : spec.id === 'cancel' || spec.id === 'prev'
+            ? onCancel
+            : () =>
+                onSave(
+                  values,
+                  spec.id === 'draft'
+                    ? 'draft'
+                    : spec.id === 'next'
+                      ? isSetupMode
+                        ? 'next'
+                        : 'advance'
+                      : 'save',
+                ),
     }))
   }, [isSetupMode, saving, title, values, onSave, onCancel])
   useSetAppChromeActions(actionItems)
@@ -217,7 +221,8 @@ export default function ListingBasicInfoDrillIn({
     isSetupMode,
     saving,
     canSubmit: Boolean(title.trim()),
-  })
+    wizardStep: listingHubWizardStepProgress('basic'),
+  }).filter((spec) => !spec.stepProgress)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--quni-surface-2)]">
@@ -239,7 +244,9 @@ export default function ListingBasicInfoDrillIn({
                 Draft saved
               </p>
             ) : null}
-            <span className="text-xs font-semibold text-[var(--quni-ink-5)]">Step 1 of 8</span>
+            <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
+              {listingHubWizardStepCaption(listingHubWizardStepProgress('basic'))}
+            </span>
           </div>
         </div>
       </div>
