@@ -121,6 +121,10 @@ import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 import {
+  listingAddressReadyForNearbyCampusLookup,
+  shouldStartNearbyCampusLookup,
+} from '../../lib/listingNearbyCampus'
+import {
   fetchLockedPricingSnapshotsForProperty,
   fetchPricingForPropertyTier,
   formatFeeForDisplay,
@@ -1440,6 +1444,8 @@ export default function LandlordPropertyFormPage() {
     loadedPropertyAddressSigRef.current = ''
     addressDirtyRef.current = false
     lastNearbySigRef.current = ''
+    nearbyRequestIdRef.current += 1
+    setNearbyCampusLoading(false)
     setNearbyCampusSuggestions([])
     setNearbyCampusError(null)
     setShowAddAnotherUniversity(false)
@@ -1498,8 +1504,21 @@ export default function LandlordPropertyFormPage() {
         editCampusLookupQueuedRef.current = false
         runNearbyLookupRef.current = false
         loadedPropertyAddressSigRef.current = ''
+        addressDirtyRef.current = false
+        lastNearbySigRef.current = ''
+        nearbyRequestIdRef.current += 1
+        setNearbyCampusLoading(false)
+        setNearbyCampusSuggestions([])
+        setNearbyCampusError(null)
         setShowAddAnotherUniversity(false)
-        // Navigated from edit → new without unmounting - clear stale edit state.
+        // Navigated from edit → new without unmounting - clear stale listing address
+        // so Create listing does not immediately geocode the previous property.
+        setAddress('')
+        setSuburb('')
+        setState('NSW')
+        setPostcode('')
+        setLatitude(null)
+        setLongitude(null)
         setUniversityId('')
         setCampusId('')
         universityIdRef.current = ''
@@ -1814,15 +1833,26 @@ export default function LandlordPropertyFormPage() {
       if (parsed.utilitiesForm) setUtilitiesForm(parsed.utilitiesForm)
       if (parsed.ft6600Compliance) setFt6600Compliance(parsed.ft6600Compliance)
 
-      const addrDirty =
-        Boolean(parsed.address.trim()) ||
-        Boolean(parsed.suburb.trim()) ||
-        Boolean(parsed.postcode.trim()) ||
-        parsed.state.trim().toUpperCase() !== 'NSW'
-      addressDirtyRef.current = addrDirty
-      lastNearbySigRef.current = ''
-      if (addrDirty) {
+      const restoredAddressReady = listingAddressReadyForNearbyCampusLookup(
+        parsed.address,
+        parsed.suburb,
+        parsed.state,
+        parsed.postcode,
+      )
+      // Restoring a previous draft is not the same as typing an address. Create listing
+      // must not block on "Finding nearby campuses" before the user enters one.
+      if (isEdit && restoredAddressReady) {
+        addressDirtyRef.current = true
+        lastNearbySigRef.current = ''
         setNearbyLookupNonce((n) => n + 1)
+      } else {
+        addressDirtyRef.current = false
+        lastNearbySigRef.current = [parsed.address, parsed.suburb, parsed.state, parsed.postcode]
+          .map((x) => x.trim())
+          .join('|')
+          .toLowerCase()
+        nearbyRequestIdRef.current += 1
+        setNearbyCampusLoading(false)
       }
 
       if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
@@ -2101,24 +2131,30 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     const campusCount = campusRefRows.length
     const uniCount = uniRefRows.length
-    if (!addressDirtyRef.current && !runNearbyLookupRef.current) return
-    if (refsLoading) return
-    if (campusCount === 0 || uniCount === 0) return
-
     const addr = address.trim()
     const sub = suburb.trim()
     const st = state.trim()
     const pc = postcode.trim()
-    const allAddressFieldsFilled = Boolean(addr && sub && st && pc)
+    const addressReady = listingAddressReadyForNearbyCampusLookup(addr, sub, st, pc)
+    const startLookup = shouldStartNearbyCampusLookup({
+      isEdit,
+      userChangedAddressThisSession: addressDirtyRef.current,
+      editBootstrapRequested: runNearbyLookupRef.current,
+      addressReady,
+    })
 
-    if (!allAddressFieldsFilled) {
-      nearbyRequestIdRef.current += 1
-      setNearbyCampusLoading(false)
-      setNearbyCampusSuggestions([])
-      setNearbyCampusError(null)
-      lastNearbySigRef.current = ''
+    if (!startLookup) {
+      if (!addressReady || !isEdit) {
+        nearbyRequestIdRef.current += 1
+        setNearbyCampusLoading(false)
+        setNearbyCampusSuggestions([])
+        setNearbyCampusError(null)
+        if (!addressReady) lastNearbySigRef.current = ''
+      }
       return
     }
+    if (refsLoading) return
+    if (campusCount === 0 || uniCount === 0) return
 
     const sig = [addr, sub, st, pc].join('|').toLowerCase()
     if (sig.length < 6) return
@@ -3519,6 +3555,11 @@ export default function LandlordPropertyFormPage() {
                 onClick={() => {
                   resumeDraftBannerDismissedKeyRef.current = location.key
                   setShowResumeDraftBanner(false)
+                  if (listingAddressReadyForNearbyCampusLookup(address, suburb, state, postcode)) {
+                    addressDirtyRef.current = true
+                    lastNearbySigRef.current = ''
+                    setNearbyLookupNonce((n) => n + 1)
+                  }
                 }}
                 className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
               >
