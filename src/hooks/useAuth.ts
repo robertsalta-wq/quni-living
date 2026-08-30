@@ -17,6 +17,7 @@ import { isAuthCallbackRoute } from '../lib/authCallbackRoute'
 import {
   authEventArmsPostLoginRedirect,
   authEventClearsPostLoginRedirect,
+  authEventIsExistingSessionSignedIn,
 } from '../lib/postLoginRedirectFlag'
 import { subscribeAuthReconcile } from '../lib/authReconcileBridge'
 import { syncSentryUser } from '../lib/sentry'
@@ -52,6 +53,8 @@ export function useProvideAuth(): AuthState {
   const [awaitingSignInOnboardingRedirect, setAwaitingSignInOnboardingRedirect] = useState(false)
   const bootstrapDoneRef = useRef(false)
   const hydrateGenRef = useRef(0)
+  /** Last established session user id - used to ignore focus-recovery SIGNED_IN. */
+  const userIdRef = useRef<string | null>(null)
 
   const clearAwaitingSignInOnboardingRedirect = useCallback(() => {
     setAwaitingSignInOnboardingRedirect(false)
@@ -60,6 +63,7 @@ export function useProvideAuth(): AuthState {
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
       clearProfileHydrateInflight()
+      userIdRef.current = null
       setUser(null)
       setProfile(null)
       setRole(null)
@@ -76,6 +80,7 @@ export function useProvideAuth(): AuthState {
         clearOnboardingDismissed()
         clearAuthSnapshot()
         await supabase.auth.signOut()
+        userIdRef.current = null
         setUser(null)
         setSession(null)
         setProfile(null)
@@ -85,6 +90,7 @@ export function useProvideAuth(): AuthState {
       }
       resolved = data.user ?? u
     }
+    userIdRef.current = resolved.id
     setUser(resolved)
     syncSentryUser(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfileDeduped(resolved)
@@ -120,6 +126,7 @@ export function useProvideAuth(): AuthState {
       if (cancelled) return
       const sessionUser = s?.user ?? null
       setSession(s ?? null)
+      userIdRef.current = sessionUser?.id ?? null
       setUser(sessionUser)
 
       if (isAuthCallbackRoute()) {
@@ -146,14 +153,23 @@ export function useProvideAuth(): AuthState {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
+      const incomingUserId = s?.user?.id ?? null
+      const establishedUserId = userIdRef.current
+      const existingSessionSignedIn = authEventIsExistingSessionSignedIn(
+        event,
+        incomingUserId,
+        establishedUserId,
+      )
+
       setSession(s)
-      if (authEventArmsPostLoginRedirect(event)) {
+      if (authEventArmsPostLoginRedirect(event, incomingUserId, establishedUserId)) {
         setAwaitingSignInOnboardingRedirect(true)
       }
       if (authEventClearsPostLoginRedirect(event)) {
         setAwaitingSignInOnboardingRedirect(false)
       }
       if (event === 'SIGNED_OUT') {
+        userIdRef.current = null
         setUser(null)
         setProfile(null)
         setRole(null)
@@ -161,6 +177,7 @@ export function useProvideAuth(): AuthState {
         syncSentryUser(null)
         return
       }
+      userIdRef.current = incomingUserId
       setUser(s?.user ?? null)
 
       if (isAuthCallbackRoute()) {
@@ -168,8 +185,9 @@ export function useProvideAuth(): AuthState {
         return
       }
 
-      // Silent events: refresh profile without remounting protected routes (onboarding wizard, etc.).
-      if (isSilentAuthEvent(event)) {
+      // Silent events + same-user SIGNED_IN (tab/window focus recovery): refresh
+      // profile without remounting protected routes (listing edit, onboarding, etc.).
+      if (isSilentAuthEvent(event) || existingSessionSignedIn) {
         void hydrateFromUser(s?.user ?? null)
         return
       }
@@ -199,6 +217,7 @@ export function useProvideAuth(): AuthState {
     clearAuthSnapshot()
     clearProfileHydrateInflight()
     await supabase.auth.signOut()
+    userIdRef.current = null
     setUser(null)
     setSession(null)
     setProfile(null)
