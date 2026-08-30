@@ -76,7 +76,7 @@ describe('listingHubWizard', () => {
     expect(listingHubWizardStepError('property', { rentPerWeek: 0 })).toBeNull()
     expect(listingHubWizardStepError('photos', { rentPerWeek: '' })).toBeNull()
     expect(listingHubWizardStepError('pricing', { rentPerWeek: 0 })).toBe(
-      'Rent per week must be a positive number.',
+      'Rent per week cannot be empty.',
     )
     expect(listingHubWizardStepError('pricing', { rentPerWeek: 320 })).toBeNull()
     expect(listingHubWizardStepError('basic', { title: '  ' })).toBe('Add a listing title to continue.')

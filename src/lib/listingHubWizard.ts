@@ -71,6 +71,8 @@ export function listingHubWizardNextHref(
   return listingHubPath({ propertyId, view: LISTING_HUB_SECTION_IDS[i + 1] })
 }
 
+export const LISTING_HUB_RENT_REQUIRED_MESSAGE = 'Rent per week cannot be empty.'
+
 /** Per-step Next gates. Rent is only required on pricing. */
 export function listingHubWizardStepError(
   sectionId: ListingHubSectionId,
@@ -82,7 +84,7 @@ export function listingHubWizardStepError(
   if (sectionId === 'pricing') {
     const rent = Number(input.rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
-      return 'Rent per week must be a positive number.'
+      return LISTING_HUB_RENT_REQUIRED_MESSAGE
     }
   }
   return null

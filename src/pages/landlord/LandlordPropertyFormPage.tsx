@@ -31,6 +31,7 @@ import { getAppShellScrollElement } from '../../lib/appShellScroll'
 import {
   listingHubWizardNextHref,
   listingHubWizardPrevHref,
+  LISTING_HUB_RENT_REQUIRED_MESSAGE,
   listingHubWizardStepCaption,
   listingHubWizardStepError,
   listingHubWizardStepFocusId,
@@ -2478,7 +2479,7 @@ export default function LandlordPropertyFormPage() {
     }
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
-      setSubmitError('Rent per week must be a positive number.')
+      setSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE)
       return
     }
 
