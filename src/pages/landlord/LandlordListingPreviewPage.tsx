@@ -13,6 +13,7 @@ import {
 } from '../../lib/listingPagePublish'
 import { listingHubPath } from '../../lib/listingEditHubHealth'
 import { loadPropertyDetailById } from '../../lib/propertyDetailCache'
+import { formatUserFacingRequestError } from '../../lib/supabaseErrorMessage'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import type { Property } from '../../lib/listings'
 import { useLandlordPropertyListingActions } from '../../hooks/useLandlordPropertyListingActions'
@@ -56,7 +57,7 @@ export default function LandlordListingPreviewPage() {
       setProperty(row)
     } catch (e) {
       setProperty(null)
-      setError(e instanceof Error ? e.message : 'Could not load this listing.')
+      setError(formatUserFacingRequestError(e, 'Could not load this listing.'))
     } finally {
       setLoading(false)
     }

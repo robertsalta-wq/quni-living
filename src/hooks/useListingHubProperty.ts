@@ -7,6 +7,7 @@ import {
   type ListingHubHealthResult,
 } from '../lib/listingEditHubHealth'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { formatUserFacingRequestError } from '../lib/supabaseErrorMessage'
 
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 
@@ -160,7 +161,7 @@ export function useListingHubProperty(propertyId: string | null) {
       .eq('id', propertyId)
       .maybeSingle()
     if (qErr) {
-      setError(qErr.message)
+      setError(formatUserFacingRequestError(qErr, 'Could not load this listing.'))
       setProperty(null)
       setLoading(false)
       return
