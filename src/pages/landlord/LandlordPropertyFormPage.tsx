@@ -3456,6 +3456,23 @@ export default function LandlordPropertyFormPage() {
   const inputClass =
     'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
   const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
+  const desktopTopPreviewButton = (className: string) =>
+    footerPreviewHref && !isHubSectionMode ? (
+      <button
+        type="button"
+        disabled={submitting}
+        onClick={() => void handleOpenPreview()}
+        className={className}
+      >
+        Preview listing
+      </button>
+    ) : null
+  const desktopBannerPreviewButton = desktopTopPreviewButton(
+    'hidden sm:inline-flex items-center rounded-lg bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+  )
+  const desktopHeaderPreviewButton = desktopTopPreviewButton(
+    'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+  )
 
   return (
     <div
@@ -3537,11 +3554,14 @@ export default function LandlordPropertyFormPage() {
                 </h1>
                 {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
               </div>
-              {draftSavedVisible && (
-                <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
-                  Draft saved
-                </p>
-              )}
+              <div className="flex shrink-0 items-center gap-2">
+                {!showResumeDraftBanner ? desktopHeaderPreviewButton : null}
+                {draftSavedVisible ? (
+                  <p className="text-xs text-gray-400 tabular-nums" aria-live="polite">
+                    Draft saved
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         )}
@@ -3564,6 +3584,7 @@ export default function LandlordPropertyFormPage() {
               >
                 Continue editing
               </button>
+              {desktopBannerPreviewButton}
               <button
                 type="button"
                 onClick={handleDraftStartFresh}
@@ -3593,6 +3614,7 @@ export default function LandlordPropertyFormPage() {
               >
                 Continue editing
               </button>
+              {desktopBannerPreviewButton}
               <button
                 type="button"
                 onClick={() => {
