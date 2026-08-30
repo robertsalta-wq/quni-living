@@ -24,6 +24,7 @@ import {
   writeListingHeadline,
 } from '../../lib/listingHubDraft'
 import type { PropertyListingType, RoomType } from '../../lib/listings'
+import { formatUserFacingRequestError } from '../../lib/supabaseErrorMessage'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 
@@ -272,7 +273,7 @@ export default function LandlordListingEditHubPage() {
         navigate(listingHubPath({ propertyId }))
       }
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save Basic info.')
+      setSaveError(formatUserFacingRequestError(err, 'Could not save Basic info.'))
     } finally {
       setSaving(false)
     }
@@ -305,13 +306,22 @@ export default function LandlordListingEditHubPage() {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-[var(--quni-surface-2)] p-8 text-center">
         <p className="text-sm text-[var(--quni-danger-fg)]">{error}</p>
-        <button
-          type="button"
-          onClick={() => navigate(LANDLORD_LISTINGS_EXIT_HREF)}
-          className="rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white"
-        >
-          Back to listings
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => void reload()}
+            className="rounded-lg border border-[var(--quni-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--quni-ink)]"
+          >
+            Try again
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(LANDLORD_LISTINGS_EXIT_HREF)}
+            className="rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white"
+          >
+            Back to listings
+          </button>
+        </div>
       </div>
     )
   }

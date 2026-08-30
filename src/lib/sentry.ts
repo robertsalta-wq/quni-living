@@ -36,6 +36,8 @@ if (sentryEnabled) {
       replaysSessionSampleRate: isNative ? 0 : 0.1,
       replaysOnErrorSampleRate: isNative ? 0 : 1.0,
       sendDefaultPii: false,
+      // Keep original TypeError messages for the UI; still attach hostname in Sentry.
+      enhanceFetchErrorMessages: 'report-only',
       // Ignore known Supabase browser auth lock race noise.
       beforeSend(event, hint) {
         const msg =
