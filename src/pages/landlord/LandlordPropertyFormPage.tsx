@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, ChevronLeft, X } from 'lucide-react'
+import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { useAuthContext } from '../../context/AuthContext'
@@ -3369,7 +3369,7 @@ export default function LandlordPropertyFormPage() {
         isLiveListing: !isWizardSetupMode,
       }).map((spec) => ({
         ...spec,
-        icon: spec.id === 'prev' ? ChevronLeft : spec.primary ? Check : X,
+        icon: listingChromeActionIcon(spec),
         onClick:
           spec.id === 'draft'
             ? () => void handleSaveDraftAndLeave()

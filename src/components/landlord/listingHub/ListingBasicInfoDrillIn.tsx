@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronLeft, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
+import { listingChromeActionIcon } from '../../../lib/listingChromeActionIcons'
 import {
   fieldsFromHubListingTypeTile,
   hubListingTypeTileFromFields,
@@ -194,7 +194,7 @@ export default function ListingBasicInfoDrillIn({
     })
     return specs.map((spec) => ({
       ...spec,
-      icon: spec.id === 'prev' ? ChevronLeft : spec.primary ? Check : X,
+        icon: listingChromeActionIcon(spec),
       onClick:
         spec.id === 'cancel' || spec.id === 'prev'
           ? onCancel
