@@ -53,6 +53,9 @@ describe('listingHubWizard', () => {
     expect(listingHubWizardNextHref('abc', 'pricing')).toBe('/landlord/property/edit/abc/section/photos')
     expect(listingHubWizardNextHref('abc', 'photos')).toBe('/landlord/property/edit/abc/preview')
     expect(listingHubWizardNextHref(null, 'photos')).toBe('/landlord/property/new')
+    expect(
+      listingHubWizardNextHref('abc', 'photos', { status: 'active', slug: 'sunny-room' }),
+    ).toBe('/properties/sunny-room')
   })
 
   it('only gates rent on pricing and title on basic', () => {

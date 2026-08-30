@@ -3300,9 +3300,12 @@ export default function LandlordPropertyFormPage() {
     }
     setSubmitError(null)
     persistLandlordPropertyDraft()
-    const href = listingHubWizardNextHref(propertyId, hubSectionId)
-    const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId)
-    if (goingToPreview || propertyId) {
+    const href = listingHubWizardNextHref(propertyId, hubSectionId, {
+      status: existingListingStatus,
+      slug: existingSlug,
+    })
+    const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId) && isWizardSetupMode
+    if (isWizardSetupMode && (goingToPreview || propertyId)) {
       try {
         if (goingToPreview) setSubmitting(true)
         await flushDraftToAccount()
@@ -3328,6 +3331,9 @@ export default function LandlordPropertyFormPage() {
     rentPerWeek,
     persistLandlordPropertyDraft,
     propertyId,
+    existingListingStatus,
+    existingSlug,
+    isWizardSetupMode,
     flushDraftToAccount,
     navigate,
   ])
@@ -3360,6 +3366,7 @@ export default function LandlordPropertyFormPage() {
       listingSectionDrillInActionBarItemSpecs({
         saving: submitting,
         isSetupMode: isWizardSetupMode,
+        isLiveListing: !isWizardSetupMode,
       }).map((spec) => ({
         ...spec,
         icon: spec.id === 'prev' ? ChevronLeft : spec.primary ? Check : X,
@@ -5241,6 +5248,32 @@ export default function LandlordPropertyFormPage() {
                     {submitting ? 'Saving…' : 'Next'}
                   </button>
                 </>
+              ) : isHubSectionMode ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => handleWizardPrev()}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleWizardNext()}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving…' : 'Save'}
+                  </button>
+                </>
               ) : (
                 <>
                   {footerPreviewHref ? (
@@ -5264,22 +5297,22 @@ export default function LandlordPropertyFormPage() {
                   >
                     {submitting && submitMode !== 'publish'
                       ? 'Saving…'
-                      : isHubSectionMode
-                        ? 'Save'
-                        : isEdit
-                          ? 'Save changes'
-                          : role === 'admin'
-                            ? 'Save draft for landlord'
-                            : 'Save draft'}
+                      : isEdit
+                        ? 'Save changes'
+                        : role === 'admin'
+                          ? 'Save draft for landlord'
+                          : 'Save draft'}
                   </button>
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => void handleSaveDraftAndLeave()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-                  >
-                    Save draft
-                  </button>
+                  {isWizardSetupMode ? (
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => void handleSaveDraftAndLeave()}
+                      className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    >
+                      Save draft
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     disabled={submitting}

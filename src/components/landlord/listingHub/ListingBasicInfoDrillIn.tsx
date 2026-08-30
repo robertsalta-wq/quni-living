@@ -37,7 +37,7 @@ type Props = {
   initial: ListingBasicInfoValues
   saving: boolean
   error: string | null
-  onSave: (values: ListingBasicInfoValues, intent: 'save' | 'draft' | 'next') => void
+  onSave: (values: ListingBasicInfoValues, intent: 'save' | 'draft' | 'next' | 'advance') => void
   onCancel: () => void
 }
 
@@ -198,7 +198,17 @@ export default function ListingBasicInfoDrillIn({
       onClick:
         spec.id === 'cancel' || spec.id === 'prev'
           ? onCancel
-          : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
+          : () =>
+              onSave(
+                values,
+                spec.id === 'draft'
+                  ? 'draft'
+                  : spec.id === 'next'
+                    ? isSetupMode
+                      ? 'next'
+                      : 'advance'
+                    : 'save',
+              ),
     }))
   }, [isSetupMode, saving, title, values, onSave, onCancel])
   useSetAppChromeActions(actionItems)
@@ -407,7 +417,16 @@ export default function ListingBasicInfoDrillIn({
                     onCancel()
                     return
                   }
-                  onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save')
+                  onSave(
+                    values,
+                    spec.id === 'draft'
+                      ? 'draft'
+                      : spec.id === 'next'
+                        ? isSetupMode
+                          ? 'next'
+                          : 'advance'
+                        : 'save',
+                  )
                 }}
                 className={
                   primary
