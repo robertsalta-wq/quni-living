@@ -29,6 +29,20 @@ export function listingOwnerOrPublicPreviewHref(opts: {
   return listingPreviewPath(opts.propertyId)
 }
 
+/** Same current/total as the listing drill-in header "Step X of Y". */
+export function listingHubWizardStepProgress(
+  sectionId: ListingHubSectionId | null | undefined,
+): { current: number; total: number } {
+  const total = LISTING_HUB_SECTION_IDS.length
+  if (!sectionId) return { current: 1, total }
+  const i = LISTING_HUB_SECTION_IDS.indexOf(sectionId)
+  return { current: i >= 0 ? i + 1 : 1, total }
+}
+
+export function listingHubWizardStepCaption(progress: { current: number; total: number }): string {
+  return `Step ${progress.current} of ${progress.total}`
+}
+
 export function listingHubWizardPrevHref(
   propertyId: string | null,
   sectionId: ListingHubSectionId,

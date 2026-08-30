@@ -1,13 +1,30 @@
+import { listingHubWizardStepCaption, listingHubWizardStepProgress } from './listingHubWizard'
+
 /**
  * Pure, framework-agnostic item specs for `AppActionBar` - and for desktop
  * in-page footers (same source, two targets). See docs/app-chrome-brief.md.
  */
+export type AppChromeBarStepProgress = {
+  current: number
+  total: number
+}
+
 export type AppChromeBarItemSpec = {
   id: string
   label: string
   active?: boolean
   primary?: boolean
   disabled?: boolean
+  /** Wizard step indicator - dots + caption, not a button. */
+  stepProgress?: AppChromeBarStepProgress
+}
+
+function listingWizardStepItem(progress: AppChromeBarStepProgress): AppChromeBarItemSpec {
+  return {
+    id: 'step',
+    label: listingHubWizardStepCaption(progress),
+    stepProgress: progress,
+  }
 }
 
 /** Fixed hub exit - listings tab. */
@@ -40,23 +57,25 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in - Prev · Save draft · Next (setup) / Prev · Next · Save (live). */
+/** Basic-info drill-in - Prev · Step · Next · Save draft (setup) / Prev · Next · Save (live). */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
   canSubmit: boolean
+  wizardStep?: AppChromeBarStepProgress
 }): AppChromeBarItemSpec[] {
   const prev: AppChromeBarItemSpec = { id: 'prev', label: 'Prev', disabled: opts.saving }
   if (opts.isSetupMode) {
     return [
       prev,
-      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      listingWizardStepItem(opts.wizardStep ?? listingHubWizardStepProgress('basic')),
       {
         id: 'next',
         label: opts.saving ? 'Saving…' : 'Next',
         primary: true,
         disabled: opts.saving || !opts.canSubmit,
       },
+      { id: 'draft', label: 'Save draft', disabled: opts.saving },
     ]
   }
   return [
@@ -73,7 +92,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
 
 /**
  * Section drill-in.
- * Setup / draft: Prev · Save draft · Next (Next does not run the full form submit).
+ * Setup / draft: Prev · Step · Next · Save draft (Next does not run the full form submit).
  * Live listing: Prev · Next · Save (Next only navigates; Save submits).
  * Other callers (profile): Save draft · Save.
  */
@@ -81,6 +100,7 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
   saving: boolean
   isSetupMode?: boolean
   isLiveListing?: boolean
+  wizardStep?: AppChromeBarStepProgress
   /** @deprecated Use isSetupMode. Kept so older callers still type-check. */
   isNewListing?: boolean
 }): AppChromeBarItemSpec[] {
@@ -88,13 +108,14 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
   if (setup) {
     return [
       { id: 'prev', label: 'Prev', disabled: opts.saving },
-      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      listingWizardStepItem(opts.wizardStep ?? listingHubWizardStepProgress('basic')),
       {
         id: 'next',
         label: opts.saving ? 'Saving…' : 'Next',
         primary: true,
         disabled: opts.saving,
       },
+      { id: 'draft', label: 'Save draft', disabled: opts.saving },
     ]
   }
   if (opts.isLiveListing) {

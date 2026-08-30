@@ -3,7 +3,9 @@ import {
   isListingPreviewPath,
   listingHubWizardNextHref,
   listingHubWizardPrevHref,
+  listingHubWizardStepCaption,
   listingHubWizardStepError,
+  listingHubWizardStepProgress,
   listingOwnerOrPublicPreviewHref,
   listingPreviewPath,
 } from './listingHubWizard'
@@ -56,6 +58,14 @@ describe('listingHubWizard', () => {
     expect(
       listingHubWizardNextHref('abc', 'photos', { status: 'active', slug: 'sunny-room' }),
     ).toBe('/properties/sunny-room')
+  })
+
+  it('step progress follows hub section order and total section count', () => {
+    expect(listingHubWizardStepProgress('basic')).toEqual({ current: 1, total: 8 })
+    expect(listingHubWizardStepProgress('location')).toEqual({ current: 5, total: 8 })
+    expect(listingHubWizardStepProgress('photos')).toEqual({ current: 8, total: 8 })
+    expect(listingHubWizardStepProgress(null)).toEqual({ current: 1, total: 8 })
+    expect(listingHubWizardStepCaption({ current: 1, total: 8 })).toBe('Step 1 of 8')
   })
 
   it('only gates rent on pricing and title on basic', () => {

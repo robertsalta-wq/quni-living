@@ -130,6 +130,26 @@ function NavBar({ role }: { role: 'landlord' | 'renter' }) {
 }
 
 function ActionBarItemContent({ item }: { item: AppActionBarItem }) {
+  if (item.stepProgress) {
+    const { current, total } = item.stepProgress
+    const count = Math.max(1, total)
+    return (
+      <>
+        <span className="inline-flex items-center justify-center gap-[3px]" aria-hidden>
+          {Array.from({ length: count }, (_, i) => (
+            <span
+              key={i}
+              className={[
+                'h-[5px] w-[5px] shrink-0 rounded-full',
+                i + 1 === current ? 'bg-[var(--quni-coral)]' : 'bg-[var(--quni-line)]',
+              ].join(' ')}
+            />
+          ))}
+        </span>
+        <span className="text-[11px] font-medium leading-none text-[var(--quni-ink-3)]">{item.label}</span>
+      </>
+    )
+  }
   const coral = Boolean(item.active || item.primary)
   const Icon = item.icon
   return (
@@ -146,7 +166,7 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
     <nav className={barContainerClass} style={barContainerStyle} aria-label="Page actions">
       <div className="flex w-full items-stretch justify-between gap-0">
         {items.map((item) => {
-          const coral = Boolean(item.active || item.primary)
+          const coral = !item.stepProgress && Boolean(item.active || item.primary)
           if (item.to && !item.disabled) {
             return (
               <Link key={item.id} to={item.to} className={itemClass(coral)} draggable={false}>
@@ -157,7 +177,12 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
           // Indicator-only (e.g. hub "Health" current view) - not a dead button.
           if (!item.onClick && !item.to) {
             return (
-              <span key={item.id} className={itemClass(coral)} aria-current={item.active ? 'page' : undefined}>
+              <span
+                key={item.id}
+                className={itemClass(coral)}
+                aria-label={item.stepProgress ? item.label : undefined}
+                aria-current={item.active ? 'page' : undefined}
+              >
                 <ActionBarItemContent item={item} />
               </span>
             )

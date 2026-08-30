@@ -19,6 +19,8 @@ export type AppActionBarItem = {
   /** Primary call to action - coral. */
   primary?: boolean
   disabled?: boolean
+  /** Listing wizard progress - dots + caption instead of an icon. */
+  stepProgress?: { current: number; total: number }
   /** Renders as a `Link` when set. */
   to?: string
   onClick?: () => void
@@ -58,7 +60,15 @@ export function appChromeActionsSignature(items: AppActionBarItem[] | null): str
   if (items == null) return null
   return items
     .map((i) =>
-      [i.id, i.label, i.active ? '1' : '0', i.primary ? '1' : '0', i.disabled ? '1' : '0', i.to ?? ''].join(
+      [
+        i.id,
+        i.label,
+        i.active ? '1' : '0',
+        i.primary ? '1' : '0',
+        i.disabled ? '1' : '0',
+        i.to ?? '',
+        i.stepProgress ? `${i.stepProgress.current}/${i.stepProgress.total}` : '',
+      ].join(
         ':',
       ),
     )
