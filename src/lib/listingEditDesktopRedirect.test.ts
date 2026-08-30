@@ -23,9 +23,10 @@ describe('listingEditDesktopRedirect', () => {
     )
   })
 
-  it('returns null for base edit/new paths', () => {
+  it('returns null for base edit/new paths and owner preview', () => {
     expect(resolveListingEditDesktopRedirect('/landlord/property/new')).toBeNull()
     expect(resolveListingEditDesktopRedirect('/landlord/property/edit/abc')).toBeNull()
+    expect(resolveListingEditDesktopRedirect('/landlord/property/edit/abc/preview')).toBeNull()
   })
 
   it('detects section drill-in paths', () => {

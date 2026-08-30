@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
+import { Check, ChevronLeft, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { useAuthContext } from '../../context/AuthContext'
@@ -27,8 +27,13 @@ import {
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
-import { listingPageShowsPublishButton } from '../../lib/listingPagePublish'
-import LandlordListingPublishButton from '../../components/landlord/listings/LandlordListingPublishButton'
+import {
+  listingHubWizardNextHref,
+  listingHubWizardPrevHref,
+  listingHubWizardStepError,
+  listingOwnerOrPublicPreviewHref,
+  listingPreviewPath,
+} from '../../lib/listingHubWizard'
 import {
   clearLandlordPropertyEditDraft,
   clearLandlordPropertyNewDraft,
@@ -2943,7 +2948,7 @@ export default function LandlordPropertyFormPage() {
         }
       } else {
         const slug = generatePropertySlug(t)
-        const publishAsActive = !isNswT3Listing
+        const publishAsActive = false
         const { data: inserted, error: insErr } = await supabase
           .from('properties')
           .insert({
@@ -2997,11 +3002,6 @@ export default function LandlordPropertyFormPage() {
             form: t3ComplianceForm,
           })
           if (!recorded.ok) throw new Error(recorded.error)
-          const { error: activateErr } = await supabase
-            .from('properties')
-            .update({ status: 'active' })
-            .eq('id', newId)
-          if (activateErr) throw activateErr
         }
         if (role !== 'admin') {
           requestSiteRebuild()
@@ -3025,7 +3025,7 @@ export default function LandlordPropertyFormPage() {
         } else if (isHubSectionMode) {
           navigate(listingHubPath({ propertyId: newId }), { replace: true })
         } else {
-          navigate('/landlord/dashboard?tab=listings', { replace: true })
+          navigate(listingPreviewPath(newId), { replace: true })
         }
       }
     } catch (err) {
@@ -3209,26 +3209,170 @@ export default function LandlordPropertyFormPage() {
     t3ComplianceForm,
   ])
 
-  const showListingPagePublish = listingPageShowsPublishButton({
+  const isWizardSetupMode = !isEdit || existingListingStatus === 'draft' || existingListingStatus == null
+  const footerPreviewHref = listingOwnerOrPublicPreviewHref({
+    propertyId,
     status: existingListingStatus,
-    role,
-    hasSavedProperty: isEdit && Boolean(propertyId),
+    slug: existingSlug,
   })
+
+  const flushDraftToAccount = useCallback(async () => {
+    persistLandlordPropertyDraft()
+    if (!propertyId || !user?.id) return
+    const t = title.trim()
+    if (!t) return
+    const rent = Number(rentPerWeek)
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const { error: upErr } = await supabase
+      .from('properties')
+      .update({
+        title: t,
+        description: description.trim() || null,
+        bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
+        bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
+        room_type: accommodation.roomType,
+        property_type: accommodation.propertyListingType,
+        furnished,
+        linen_supplied: linenSupplied,
+        weekly_cleaning_service: weeklyCleaning,
+        address: address.trim() || null,
+        suburb: suburb.trim() || null,
+        state: state.trim() || 'NSW',
+        postcode: postcode.trim() || null,
+        latitude,
+        longitude,
+        university_id: universityId.trim() || null,
+        campus_id: campusId.trim() || null,
+        open_to_non_students: openToNonStudents,
+        rent_per_week: Number.isFinite(rent) && rent > 0 ? rent : 0,
+        max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        available_from: availableFrom.trim() || null,
+        images: images.length ? serializePropertyImages(images) : null,
+        house_rules: houseRules.trim() || null,
+      })
+      .eq('id', propertyId)
+    if (upErr) throw upErr
+    await savePropertyFeatures(propertyId, [...selectedFeatureIds])
+    await savePropertyHouseRules(propertyId, selectedRules)
+  }, [
+    persistLandlordPropertyDraft,
+    propertyId,
+    user?.id,
+    title,
+    rentPerWeek,
+    propertyListingType,
+    roomType,
+    description,
+    bedrooms,
+    bathrooms,
+    furnished,
+    linenSupplied,
+    weeklyCleaning,
+    address,
+    suburb,
+    state,
+    postcode,
+    latitude,
+    longitude,
+    universityId,
+    campusId,
+    openToNonStudents,
+    maxOccupants,
+    availableFrom,
+    images,
+    houseRules,
+    selectedFeatureIds,
+    selectedRules,
+  ])
+
+  const handleWizardPrev = useCallback(() => {
+    if (!hubSectionId) return
+    persistLandlordPropertyDraft()
+    navigate(listingHubWizardPrevHref(propertyId, hubSectionId))
+  }, [hubSectionId, persistLandlordPropertyDraft, navigate, propertyId])
+
+  const handleWizardNext = useCallback(async () => {
+    if (!hubSectionId) return
+    const stepError = listingHubWizardStepError(hubSectionId, { title, rentPerWeek })
+    if (stepError) {
+      setSubmitError(stepError)
+      return
+    }
+    setSubmitError(null)
+    persistLandlordPropertyDraft()
+    const href = listingHubWizardNextHref(propertyId, hubSectionId)
+    const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId)
+    if (goingToPreview || propertyId) {
+      try {
+        if (goingToPreview) setSubmitting(true)
+        await flushDraftToAccount()
+      } catch (err) {
+        console.error('[LandlordPropertyFormPage] wizard flush failed', err)
+        if (goingToPreview) {
+          setSubmitError(
+            err instanceof Error
+              ? `Could not save this step before preview: ${err.message}`
+              : 'Could not save this step before preview.',
+          )
+          setSubmitting(false)
+          return
+        }
+      } finally {
+        if (goingToPreview) setSubmitting(false)
+      }
+    }
+    navigate(href)
+  }, [
+    hubSectionId,
+    title,
+    rentPerWeek,
+    persistLandlordPropertyDraft,
+    propertyId,
+    flushDraftToAccount,
+    navigate,
+  ])
+
+  const handleOpenPreview = useCallback(async () => {
+    if (!footerPreviewHref) return
+    persistLandlordPropertyDraft()
+    if (propertyId && isWizardSetupMode) {
+      try {
+        setSubmitting(true)
+        await flushDraftToAccount()
+      } catch (err) {
+        console.error('[LandlordPropertyFormPage] preview flush failed', err)
+        setSubmitError(
+          err instanceof Error
+            ? `Could not save before preview: ${err.message}`
+            : 'Could not save before preview.',
+        )
+        setSubmitting(false)
+        return
+      } finally {
+        setSubmitting(false)
+      }
+    }
+    navigate(footerPreviewHref)
+  }, [footerPreviewHref, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
       listingSectionDrillInActionBarItemSpecs({
         saving: submitting,
-        isNewListing: !isEdit,
+        isSetupMode: isWizardSetupMode,
       }).map((spec) => ({
         ...spec,
-        icon: spec.primary ? Check : X,
+        icon: spec.id === 'prev' ? ChevronLeft : spec.primary ? Check : X,
         onClick:
           spec.id === 'draft'
             ? () => void handleSaveDraftAndLeave()
-            : () => formRef.current?.requestSubmit(),
+            : spec.id === 'prev'
+              ? () => handleWizardPrev()
+              : spec.id === 'next'
+                ? () => void handleWizardNext()
+                : () => formRef.current?.requestSubmit(),
       })),
-    [submitting, isEdit, handleSaveDraftAndLeave],
+    [submitting, isWizardSetupMode, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -5070,62 +5214,88 @@ export default function LandlordPropertyFormPage() {
               ) : null}
             </div>
             <div className={isHubSectionMode ? 'hidden flex-wrap gap-3 sm:flex' : 'flex flex-wrap gap-3'}>
-              {showListingPagePublish ? (
-                <LandlordListingPublishButton
-                  busy={submitting && submitMode === 'publish'}
-                  disabled={submitting}
-                  onClick={() => {
-                    publishDraftOnSubmitRef.current = true
-                    formRef.current?.requestSubmit()
-                  }}
-                  className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
-                />
-              ) : null}
-              <button
-                type="submit"
-                disabled={submitting}
-                className={
-                  showListingPagePublish
-                    ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
-                    : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50'
-                }
-              >
-                {submitting && submitMode !== 'publish'
-                  ? 'Saving…'
-                  : isHubSectionMode
-                    ? isEdit
-                      ? 'Save'
-                      : role === 'admin'
-                        ? 'Save draft'
-                        : 'Publish'
-                    : isEdit
-                      ? 'Save changes'
-                      : role === 'admin'
-                        ? 'Save draft for landlord'
-                        : 'Publish listing'}
-              </button>
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => void handleSaveDraftAndLeave()}
-                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-              >
-                Save draft
-              </button>
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => {
-                  editDirtyRef.current = true
-                  persistLandlordPropertyDraft()
-                  if (isHubSectionMode) navigate(hubReturnPath)
-                  else if (isEdit && propertyId) navigate(listingHubPath({ propertyId }))
-                  else navigate('/landlord/dashboard?tab=listings')
-                }}
-                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
-              >
-                Cancel
-              </button>
+              {isHubSectionMode && isWizardSetupMode ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => handleWizardPrev()}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleSaveDraftAndLeave()}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Save draft
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleWizardNext()}
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving…' : 'Next'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {footerPreviewHref ? (
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => void handleOpenPreview()}
+                      className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                    >
+                      Preview listing
+                    </button>
+                  ) : null}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={
+                      footerPreviewHref
+                        ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
+                        : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50'
+                    }
+                  >
+                    {submitting && submitMode !== 'publish'
+                      ? 'Saving…'
+                      : isHubSectionMode
+                        ? 'Save'
+                        : isEdit
+                          ? 'Save changes'
+                          : role === 'admin'
+                            ? 'Save draft for landlord'
+                            : 'Save draft'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleSaveDraftAndLeave()}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Save draft
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => {
+                      editDirtyRef.current = true
+                      persistLandlordPropertyDraft()
+                      if (isHubSectionMode) navigate(hubReturnPath)
+                      else if (isEdit && propertyId) navigate(listingHubPath({ propertyId }))
+                      else navigate('/landlord/dashboard?tab=listings')
+                    }}
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
           </div>

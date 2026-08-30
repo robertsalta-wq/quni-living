@@ -4,6 +4,7 @@ import {
   RENTER_NAV_BAR_ITEMS,
   listingBasicInfoActionBarItemSpecs,
   listingHubActionBarItemSpecs,
+  listingPreviewActionBarItemSpecs,
   listingSectionDrillInActionBarItemSpecs,
 } from './appChromeBarItems'
 
@@ -51,11 +52,12 @@ describe('Listing hub action bar - ‹ Listings · Health · Preview', () => {
 })
 
 describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', () => {
-  it('setup mode → Save draft · Next', () => {
+  it('setup mode → Prev · Save draft · Next', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: false, canSubmit: true })
-    expect(items.map((i) => i.id)).toEqual(['draft', 'next'])
-    expect(items[0]).toMatchObject({ label: 'Save draft' })
-    expect(items[1]).toMatchObject({ label: 'Next', primary: true })
+    expect(items.map((i) => i.id)).toEqual(['prev', 'draft', 'next'])
+    expect(items[0]).toMatchObject({ label: 'Prev' })
+    expect(items[1]).toMatchObject({ label: 'Save draft' })
+    expect(items[2]).toMatchObject({ label: 'Next', primary: true })
   })
 
   it('edit mode → Save draft · Save', () => {
@@ -76,30 +78,46 @@ describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', ()
     ).toMatchObject({ disabled: false })
   })
 
-  it('saving disables the secondary item too', () => {
-    expect(
-      listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: true, canSubmit: true })[0],
-    ).toMatchObject({ id: 'draft', disabled: true })
+  it('saving disables Prev and Save draft too', () => {
+    const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: true, saving: true, canSubmit: true })
+    expect(items[0]).toMatchObject({ id: 'prev', disabled: true })
+    expect(items[1]).toMatchObject({ id: 'draft', disabled: true })
   })
 })
 
 describe('AppActionBar - section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
-  it('edit listing → Save draft · Save', () => {
+  it('live listing → Save draft · Save', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: false })
     expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
     expect(items[1]).toMatchObject({ label: 'Save', primary: true })
   })
 
-  it('new listing → Save draft · Publish', () => {
-    const items = listingSectionDrillInActionBarItemSpecs({ saving: false, isNewListing: true })
-    expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
-    expect(items[0]).toMatchObject({ label: 'Save draft' })
-    expect(items[1]).toMatchObject({ label: 'Publish', primary: true })
+  it('setup / draft → Prev · Save draft · Next (never Publish)', () => {
+    const items = listingSectionDrillInActionBarItemSpecs({ saving: false, isSetupMode: true })
+    expect(items.map((i) => i.id)).toEqual(['prev', 'draft', 'next'])
+    expect(items[0]).toMatchObject({ label: 'Prev' })
+    expect(items[1]).toMatchObject({ label: 'Save draft' })
+    expect(items[2]).toMatchObject({ label: 'Next', primary: true })
+    expect(items.map((i) => i.label).join(' ')).not.toMatch(/Publish/i)
   })
 
-  it('saving disables both and relabels the primary item', () => {
+  it('saving disables items and relabels the primary item', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: true })
     expect(items[0]).toMatchObject({ disabled: true })
     expect(items[1]).toMatchObject({ disabled: true, label: 'Saving…' })
+  })
+})
+
+describe('AppActionBar - owner draft preview', () => {
+  it('shows Edit and Publish on a draft the landlord can publish', () => {
+    const items = listingPreviewActionBarItemSpecs({ canPublish: true, publishing: false })
+    expect(items.map((i) => i.id)).toEqual(['edit', 'publish'])
+    expect(items[1]).toMatchObject({ label: 'Publish', primary: true })
+  })
+
+  it('hides Publish when the listing cannot be published here', () => {
+    expect(listingPreviewActionBarItemSpecs({ canPublish: false, publishing: false }).map((i) => i.id)).toEqual([
+      'edit',
+    ])
   })
 })

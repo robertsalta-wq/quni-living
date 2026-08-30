@@ -73,6 +73,7 @@ describe('appShell membership', () => {
     expect(appShellFocusTitle('/landlord/property/edit/1')).toBe('Edit listing')
     expect(appShellFocusTitle('/landlord/property/new')).toBe('New listing')
     expect(appShellFocusTitle('/landlord/property/edit/1/basic')).toBe('Basic info')
+    expect(appShellFocusTitle('/landlord/property/edit/1/preview')).toBe('Preview listing')
   })
 
   it('applies listing hub chrome only on mobile listing-edit paths', () => {

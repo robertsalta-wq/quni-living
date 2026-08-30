@@ -311,12 +311,20 @@ export function formatListingBondDisplayLabel(
   return `$${formatBondAudDisplay(singleBond)}`
 }
 
-export default function PropertyDetail() {
+export default function PropertyDetail({
+  ownerPreviewListing = null,
+}: {
+  /** Owner/admin draft preview - skip the public slug fetch and hide Apply/Share. */
+  ownerPreviewListing?: Property | null
+} = {}) {
+  const ownerDraftPreview = ownerPreviewListing != null
   const { slug: slugParam } = useParams<{ slug: string }>()
-  const slug = slugParam?.trim() ?? ''
+  const slug = ownerDraftPreview
+    ? ownerPreviewListing.slug?.trim() || ownerPreviewListing.id
+    : (slugParam?.trim() ?? '')
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const shouldFetch = Boolean(slug) && isSupabaseConfigured
+  const shouldFetch = !ownerDraftPreview && Boolean(slugParam?.trim()) && isSupabaseConfigured
 
   const filterMoveInRaw = searchParams.get('move_in')?.trim() ?? ''
   const filterMoveIn = isIsoDateString(filterMoveInRaw) ? filterMoveInRaw : ''
@@ -371,7 +379,7 @@ export default function PropertyDetail() {
     return m
   }, [campusRefRows])
   const [property, setProperty] = useState<Property | null>(() =>
-    slug ? peekPropertyDetailCache(slug) : null,
+    ownerPreviewListing ?? (slug && !ownerDraftPreview ? peekPropertyDetailCache(slug) : null),
   )
   const listingFromForPicker = useMemo(
     () => normalizeListingBound(property?.available_from),
@@ -379,7 +387,8 @@ export default function PropertyDetail() {
   )
   const listingToForPicker = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
   /** Previous route slug can remain in `property` until the next fetch settles - avoid running gates on stale rows. */
-  const listingRowStale = Boolean(slug && property && property.slug !== slug)
+  const listingRowStale =
+    !ownerDraftPreview && Boolean(slug && property && property.slug !== slug)
   const [loading, setLoading] = useState(() => shouldFetch && !peekPropertyDetailCache(slug))
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
@@ -392,9 +401,16 @@ export default function PropertyDetail() {
   const propertyFetchGenRef = useRef(0)
 
   useLayoutEffect(() => {
-    if (!slug) return
+    if (!slug && !ownerDraftPreview) return
     resetWindowScrollSync()
-  }, [slug, loading])
+  }, [slug, loading, ownerDraftPreview])
+
+  useEffect(() => {
+    if (!ownerPreviewListing) return
+    setProperty(ownerPreviewListing)
+    setLoading(false)
+    setError(null)
+  }, [ownerPreviewListing])
 
   const isPreview = !user
   const userId = user?.id ?? null
@@ -981,7 +997,7 @@ export default function PropertyDetail() {
     )
   }
 
-  if (!slug) {
+  if (!slug && !ownerDraftPreview) {
     return (
       <>
         <Seo title="Invalid listing" noindex description="This link is not valid." />
@@ -1271,9 +1287,12 @@ export default function PropertyDetail() {
       <Seo
         title={property.title}
         description={listingMetaDesc}
-        canonicalPath={`/listings/${slug}`}
-        image={listingOg}
-        jsonLd={propertyListingJsonLd(property, slug, { campusDisplay, roomLabel })}
+        noindex={ownerDraftPreview}
+        canonicalPath={ownerDraftPreview ? undefined : `/listings/${slug}`}
+        image={ownerDraftPreview ? undefined : listingOg}
+        jsonLd={
+          ownerDraftPreview ? undefined : propertyListingJsonLd(property, slug, { campusDisplay, roomLabel })
+        }
       />
       {showNotYetAvailableBanner && (
         <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 mb-1`} role="status">
@@ -1457,12 +1476,14 @@ export default function PropertyDetail() {
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--quni-coral)] tracking-tight text-balance min-w-0 flex-1">
                   {property.title}
                 </h1>
+                {ownerDraftPreview ? null : (
                 <ShareListingButton
                   slug={slug}
                   title={property.title}
                   subtitle={previewSubtitleLine}
                   className="shrink-0"
                 />
+                )}
               </div>
               <p className="text-base text-stone-700">{previewSubtitleLine}</p>
               <ListingAccommodationStats property={property} roomLabel={roomLabel} />
@@ -1531,12 +1552,14 @@ export default function PropertyDetail() {
                 <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--quni-coral)] tracking-tight text-balance min-w-0 flex-1">
                   {property.title}
                 </h1>
+                {ownerDraftPreview ? null : (
                 <ShareListingButton
                   slug={slug}
                   title={property.title}
                   subtitle={previewSubtitleLine}
                   className="shrink-0"
                 />
+                )}
               </div>
 
               <ListingAccommodationStats property={property} roomLabel={roomLabel} />
@@ -1869,7 +1892,11 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="pt-4 flex flex-col gap-3">
-                    {isRenterRole(role) && !studentListingActionsOk ? (
+                    {ownerDraftPreview ? (
+                      <p className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3.5 text-center text-sm font-medium text-stone-600">
+                        Students will apply here when this listing is live.
+                      </p>
+                    ) : isRenterRole(role) && !studentListingActionsOk ? (
                       <div className="rounded-xl border border-admin-coral/25 bg-[var(--quni-cream)] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
                           {renterReadinessBlockMessage}
@@ -1921,11 +1948,13 @@ export default function PropertyDetail() {
                         )}
                       </>
                     )}
+                    {ownerDraftPreview ? null : (
                     <SavePropertyButton
                       propertyId={property.id}
                       listingPath={`/properties/${property.slug}`}
                       variant="detail"
                     />
+                    )}
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-stone-100 space-y-2 text-xs text-stone-500">
@@ -1951,18 +1980,20 @@ export default function PropertyDetail() {
                 </div>
               </div>
 
+              {ownerDraftPreview ? null : (
               <div className="mt-4">
                 <ChatEmbed
                   defaultOpen={false}
                   listingContext={{ propertyId: property.id, sourcePage: 'property_detail' }}
                 />
               </div>
+              )}
             </aside>
           </div>
         </div>
       )}
 
-      {!isPreview && (
+      {!isPreview && !ownerDraftPreview && (
         <div
           className="md:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white border-t border-stone-200 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.12)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3"
           role="region"

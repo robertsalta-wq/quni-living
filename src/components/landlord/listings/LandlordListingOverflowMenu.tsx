@@ -231,7 +231,7 @@ export default function LandlordListingOverflowMenu({
                   onPublish?.()
                 }}
               >
-                Publish
+                Preview
               </button>
             ) : null}
             {canPause && onTogglePause ? (

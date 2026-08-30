@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Activity, ChevronLeft, Eye } from 'lucide-react'
 import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
@@ -7,19 +7,14 @@ import ListingBasicInfoDrillIn, {
   type ListingBasicInfoValues,
 } from '../../components/landlord/listingHub/ListingBasicInfoDrillIn'
 import ListingHealthHub from '../../components/landlord/listingHub/ListingHealthHub'
-import LandlordAuthorityToLetModal from '../../components/landlord/LandlordAuthorityToLetModal'
 import { useListingHubProperty } from '../../hooks/useListingHubProperty'
-import { useLandlordPropertyListingActions } from '../../hooks/useLandlordPropertyListingActions'
 import { LANDLORD_LISTINGS_EXIT_HREF, listingHubActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import {
   computeListingHubHealth,
   listingHubPath,
   type ListingHubHealthInput,
 } from '../../lib/listingEditHubHealth'
-import {
-  listingActionsFromPageSnapshot,
-  listingPageShowsPublishButton,
-} from '../../lib/listingPagePublish'
+import { listingOwnerOrPublicPreviewHref } from '../../lib/listingHubWizard'
 import {
   patchLandlordPropertyDraftBasic,
   patchLandlordPropertyEditDraftBasic,
@@ -110,7 +105,7 @@ function healthFromDraft(): ListingHubHealthInput {
  * Other section cards deep-link into LandlordPropertyFormPage section routes.
  */
 export default function LandlordListingEditHubPage() {
-  const { user, role } = useAuthContext()
+  const { user } = useAuthContext()
   const location = useLocation()
   const navigate = useNavigate()
   const params = useParams<{ id?: string; sectionId?: string }>()
@@ -130,27 +125,6 @@ export default function LandlordListingEditHubPage() {
   const [draftTick, setDraftTick] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [publishMessage, setPublishMessage] = useState<{ kind: 'success' | 'error'; message: string } | null>(
-    null,
-  )
-
-  const showPublishToast = useCallback((t: { kind: 'success' | 'error'; message: string }) => {
-    setPublishMessage(t)
-  }, [])
-
-  const {
-    publishingListingId,
-    attestingListingId,
-    authorityToLetPending,
-    setAuthorityToLetPending,
-    publishDraftListing,
-    confirmAuthorityToLetAttestation,
-  } = useLandlordPropertyListingActions({
-    reload,
-    navigate,
-    showToast: showPublishToast,
-  })
-
   const draftHealth = useMemo(() => {
     void draftTick
     return computeListingHubHealth(healthFromDraft(), { isNewListing: true })
@@ -167,33 +141,11 @@ export default function LandlordListingEditHubPage() {
       })()
 
   const statusLabel = statusLabelFrom(property?.status, !propertyId)
-  const previewHref =
-    property?.slug && property.status === 'active' ? `/properties/${property.slug}` : null
-  const showPublish = listingPageShowsPublishButton({
+  const previewHref = listingOwnerOrPublicPreviewHref({
+    propertyId: propertyId && property ? property.id : null,
     status: property?.status,
-    role,
-    hasSavedProperty: Boolean(propertyId && property),
+    slug: property?.slug,
   })
-  const listingForPublish = property
-    ? listingActionsFromPageSnapshot({
-        id: property.id,
-        title: property.title,
-        slug: property.slug,
-        status: property.status,
-        authorityToLetAttestedAt: property.authorityToLetAttestedAt,
-        serviceTier: property.serviceTier,
-        openToNonStudents: property.openToNonStudents,
-        rentPerWeek: property.rentPerWeek,
-        maxOccupants: property.maxOccupants,
-        coupleSurchargePerWeek: property.coupleSurchargePerWeek,
-        parkingSurchargePerWeek: property.parkingSurchargePerWeek,
-        parkingAvailable: property.parkingAvailable,
-        state: property.state,
-        propertyType: property.propertyType,
-        isRegisteredRoomingHouse: property.isRegisteredRoomingHouse,
-        listerRole: property.listerRole,
-      })
-    : null
 
   const basicInitial: ListingBasicInfoValues = useMemo(() => {
     if (property) {
@@ -364,7 +316,6 @@ export default function LandlordListingEditHubPage() {
   }
 
   return (
-    <>
     <ListingHealthHub
       propertyId={propertyId}
       listingName={listingName}
@@ -372,43 +323,6 @@ export default function LandlordListingEditHubPage() {
       statusLabel={statusLabel}
       health={health}
       previewHref={previewHref}
-      showPublish={showPublish}
-      publishing={Boolean(propertyId && publishingListingId === propertyId)}
-      publishError={publishMessage?.kind === 'error' ? publishMessage.message : null}
-      onPublish={
-        listingForPublish
-          ? () => {
-              setPublishMessage(null)
-              void publishDraftListing(listingForPublish)
-            }
-          : undefined
-      }
     />
-    <LandlordAuthorityToLetModal
-      open={authorityToLetPending != null}
-      intent={authorityToLetPending?.intent ?? 'publish'}
-      listingTitle={authorityToLetPending?.property.title ?? ''}
-      busy={
-        authorityToLetPending != null &&
-        (attestingListingId === authorityToLetPending.property.id ||
-          publishingListingId === authorityToLetPending.property.id)
-      }
-      onConfirm={() => void confirmAuthorityToLetAttestation()}
-      onCancel={() => {
-        if (attestingListingId === authorityToLetPending?.property.id) return
-        setAuthorityToLetPending(null)
-      }}
-    />
-    {publishMessage?.kind === 'success' ? (
-      <div
-        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4 sm:bottom-6"
-        role="status"
-      >
-        <div className="rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
-          {publishMessage.message}
-        </div>
-      </div>
-    ) : null}
-    </>
   )
 }
