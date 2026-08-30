@@ -9,7 +9,11 @@ import {
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
-import { listingHubWizardStepCaption, listingHubWizardStepProgress } from '../../../lib/listingHubWizard'
+import {
+  listingHubWizardStepCaption,
+  listingHubWizardStepProgress,
+  writeListingWizardResume,
+} from '../../../lib/listingHubWizard'
 import { patchLandlordPropertyDraftBasic, patchLandlordPropertyEditDraftBasic, writeListingHeadline } from '../../../lib/listingHubDraft'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
@@ -154,6 +158,10 @@ export default function ListingBasicInfoDrillIn({
   }
 
   useEffect(() => {
+    writeListingWizardResume(propertyId, 'basic')
+  }, [propertyId])
+
+  useEffect(() => {
     const id = window.setTimeout(() => {
       persistBasicDraft()
       if (suppressInitialDraftFlashRef.current) {
@@ -229,6 +237,7 @@ export default function ListingBasicInfoDrillIn({
       <div className="shrink-0 border-b border-[var(--quni-line-soft)] bg-white px-4 py-3">
         <Link
           to={hubHref}
+          state={{ listingHubIntent: true }}
           className="mb-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--quni-ink-4)] hover:text-[var(--quni-ink)]"
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

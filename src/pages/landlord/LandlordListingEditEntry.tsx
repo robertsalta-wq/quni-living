@@ -3,6 +3,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import {
   isListingEditSectionPath,
   resolveListingEditDesktopRedirect,
+  resolveListingEditMobileHashRedirect,
 } from '../../lib/listingEditDesktopRedirect'
 import { isListingPreviewPath } from '../../lib/listingHubWizard'
 import LandlordListingEditHubPage from './LandlordListingEditHubPage'
@@ -28,6 +29,11 @@ export default function LandlordListingEditEntry() {
       return <Navigate to={redirectTo} replace />
     }
     return <LandlordPropertyFormPage />
+  }
+
+  const fromHash = resolveListingEditMobileHashRedirect(location.pathname, location.hash)
+  if (fromHash) {
+    return <Navigate to={fromHash} replace />
   }
 
   if (isListingEditSectionPath(location.pathname)) {

@@ -27,14 +27,17 @@ import {
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
+import { getAppShellScrollElement } from '../../lib/appShellScroll'
 import {
   listingHubWizardNextHref,
   listingHubWizardPrevHref,
   listingHubWizardStepCaption,
   listingHubWizardStepError,
+  listingHubWizardStepFocusId,
   listingHubWizardStepProgress,
   listingOwnerOrPublicPreviewHref,
   listingPreviewPath,
+  writeListingWizardResume,
 } from '../../lib/listingHubWizard'
 import {
   clearLandlordPropertyEditDraft,
@@ -763,6 +766,11 @@ export default function LandlordPropertyFormPage() {
   const hubSectionMeta = hubSectionId
     ? LISTING_HUB_SECTIONS.find((s) => s.id === hubSectionId) ?? null
     : null
+
+  useEffect(() => {
+    if (!hubSectionId) return
+    writeListingWizardResume(propertyId, hubSectionId)
+  }, [hubSectionId, propertyId])
 
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
   const { managedTierEnabled } = usePlatformFeatures()
@@ -2089,7 +2097,25 @@ export default function LandlordPropertyFormPage() {
   }
 
   function scrollToFormFeedback(anchorId: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
-    document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (anchorId === 'listing-form-feedback-top') {
+      const scroller = getAppShellScrollElement()
+      if (scroller) scroller.scrollTo({ top: 0, behavior: 'smooth' })
+      else window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    document.getElementById(anchorId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: anchorId === 'listing-form-feedback-top' ? 'start' : 'nearest',
+    })
+  }
+
+  function revealWizardStepError(sectionId: ListingHubSectionId, message: string) {
+    reportSubmitError(message, 'listing-form-feedback-top')
+    const focusId = listingHubWizardStepFocusId(sectionId)
+    window.requestAnimationFrame(() => {
+      if (!focusId) return
+      const el = document.getElementById(focusId)
+      if (el instanceof HTMLElement) el.focus({ preventScroll: true })
+    })
   }
 
   function reportSubmitError(message: string, anchorId?: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
@@ -2929,7 +2955,7 @@ export default function LandlordPropertyFormPage() {
           setExistingListingStatus('active')
         }
         if (isHubSectionMode) {
-          navigate(hubReturnPath, { replace: true })
+          navigate(hubReturnPath, { replace: true, state: { listingHubIntent: true } })
         } else if (existingListingStatus === 'draft') {
           navigate('/landlord/dashboard?tab=listings', { replace: true })
         } else {
@@ -3153,9 +3179,9 @@ export default function LandlordPropertyFormPage() {
     }
 
     if (isHubSectionMode) {
-      navigate(hubReturnPath)
+      navigate(hubReturnPath, { state: { listingHubIntent: true } })
     } else if (isEdit && propertyId) {
-      navigate(listingHubPath({ propertyId }))
+      navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
     } else {
       navigate('/landlord/dashboard?tab=listings')
     }
@@ -3297,7 +3323,7 @@ export default function LandlordPropertyFormPage() {
     if (!hubSectionId) return
     const stepError = listingHubWizardStepError(hubSectionId, { title, rentPerWeek })
     if (stepError) {
-      setSubmitError(stepError)
+      revealWizardStepError(hubSectionId, stepError)
       return
     }
     setSubmitError(null)
@@ -3469,6 +3495,7 @@ export default function LandlordPropertyFormPage() {
           <div className="mb-4 min-w-0">
             <Link
               to={hubReturnPath}
+              state={{ listingHubIntent: true }}
               className="mb-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--quni-ink-4)] hover:text-[var(--quni-ink)]"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -3597,7 +3624,11 @@ export default function LandlordPropertyFormPage() {
           {submitError && (
             <div
               id="listing-form-feedback-top"
-              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className={
+                isHubSectionMode
+                  ? 'sticky top-0 z-40 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm'
+                  : 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
+              }
               role="alert"
             >
               {submitError}
@@ -5214,7 +5245,7 @@ export default function LandlordPropertyFormPage() {
               )}
             </div>
             <div id="listing-form-feedback-bottom" className="space-y-3">
-              {submitError ? (
+              {submitError && !isHubSectionMode ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                   {submitError}
                 </div>
@@ -5324,8 +5355,10 @@ export default function LandlordPropertyFormPage() {
                     onClick={() => {
                       editDirtyRef.current = true
                       persistLandlordPropertyDraft()
-                      if (isHubSectionMode) navigate(hubReturnPath)
-                      else if (isEdit && propertyId) navigate(listingHubPath({ propertyId }))
+                      if (isHubSectionMode) navigate(hubReturnPath, { state: { listingHubIntent: true } })
+                      else if (isEdit && propertyId) {
+                        navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
+                      }
                       else navigate('/landlord/dashboard?tab=listings')
                     }}
                     className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
