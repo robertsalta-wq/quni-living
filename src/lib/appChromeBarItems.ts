@@ -40,34 +40,47 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in - Prev · Save draft · Next (setup) / Save draft · Save (edit). */
+/** Basic-info drill-in - Prev · Save draft · Next (setup) / Prev · Next · Save (live). */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
   canSubmit: boolean
 }): AppChromeBarItemSpec[] {
-  const primaryLabel = opts.saving ? 'Saving…' : opts.isSetupMode ? 'Next' : 'Save'
-  const primary: AppChromeBarItemSpec = {
-    id: opts.isSetupMode ? 'next' : 'save',
-    label: primaryLabel,
-    primary: true,
-    disabled: opts.saving || !opts.canSubmit,
-  }
-  const draft: AppChromeBarItemSpec = { id: 'draft', label: 'Save draft', disabled: opts.saving }
+  const prev: AppChromeBarItemSpec = { id: 'prev', label: 'Prev', disabled: opts.saving }
   if (opts.isSetupMode) {
-    return [{ id: 'prev', label: 'Prev', disabled: opts.saving }, draft, primary]
+    return [
+      prev,
+      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      {
+        id: 'next',
+        label: opts.saving ? 'Saving…' : 'Next',
+        primary: true,
+        disabled: opts.saving || !opts.canSubmit,
+      },
+    ]
   }
-  return [draft, primary]
+  return [
+    prev,
+    { id: 'next', label: 'Next', disabled: opts.saving },
+    {
+      id: 'save',
+      label: opts.saving ? 'Saving…' : 'Save',
+      primary: true,
+      disabled: opts.saving || !opts.canSubmit,
+    },
+  ]
 }
 
 /**
  * Section drill-in.
  * Setup / draft: Prev · Save draft · Next (Next does not run the full form submit).
- * Live edit: Save draft · Save (Save still submits the form).
+ * Live listing: Prev · Next · Save (Next only navigates; Save submits).
+ * Other callers (profile): Save draft · Save.
  */
 export function listingSectionDrillInActionBarItemSpecs(opts: {
   saving: boolean
   isSetupMode?: boolean
+  isLiveListing?: boolean
   /** @deprecated Use isSetupMode. Kept so older callers still type-check. */
   isNewListing?: boolean
 }): AppChromeBarItemSpec[] {
@@ -79,6 +92,18 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
       {
         id: 'next',
         label: opts.saving ? 'Saving…' : 'Next',
+        primary: true,
+        disabled: opts.saving,
+      },
+    ]
+  }
+  if (opts.isLiveListing) {
+    return [
+      { id: 'prev', label: 'Prev', disabled: opts.saving },
+      { id: 'next', label: 'Next', disabled: opts.saving },
+      {
+        id: 'save',
+        label: opts.saving ? 'Saving…' : 'Save',
         primary: true,
         disabled: opts.saving,
       },

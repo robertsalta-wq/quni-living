@@ -41,11 +41,18 @@ export function listingHubWizardPrevHref(
 export function listingHubWizardNextHref(
   propertyId: string | null,
   sectionId: ListingHubSectionId,
+  opts?: { status?: string | null; slug?: string | null },
 ): string {
   const i = LISTING_HUB_SECTION_IDS.indexOf(sectionId)
   if (i < 0) return listingHubPath({ propertyId })
   if (i >= LISTING_HUB_SECTION_IDS.length - 1) {
-    return propertyId ? listingPreviewPath(propertyId) : listingHubPath({ propertyId })
+    return (
+      listingOwnerOrPublicPreviewHref({
+        propertyId,
+        status: opts?.status,
+        slug: opts?.slug,
+      }) ?? listingHubPath({ propertyId })
+    )
   }
   return listingHubPath({ propertyId, view: LISTING_HUB_SECTION_IDS[i + 1] })
 }

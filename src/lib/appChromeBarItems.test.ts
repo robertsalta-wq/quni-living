@@ -60,21 +60,22 @@ describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', ()
     expect(items[2]).toMatchObject({ label: 'Next', primary: true })
   })
 
-  it('edit mode → Save draft · Save', () => {
+  it('live listing → Prev · Next · Save (no Save draft)', () => {
     const items = listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: true })
-    expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
-    expect(items[1]).toMatchObject({ label: 'Save', primary: true })
+    expect(items.map((i) => i.id)).toEqual(['prev', 'next', 'save'])
+    expect(items[2]).toMatchObject({ label: 'Save', primary: true })
+    expect(items.map((i) => i.id)).not.toContain('draft')
   })
 
   it('primary item disables when saving or when the form cannot submit yet', () => {
     expect(
-      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: false })[1],
+      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: false })[2],
     ).toMatchObject({ disabled: true })
     expect(
-      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: true, canSubmit: true })[1],
+      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: true, canSubmit: true })[2],
     ).toMatchObject({ disabled: true, label: 'Saving…' })
     expect(
-      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: true })[1],
+      listingBasicInfoActionBarItemSpecs({ isSetupMode: false, saving: false, canSubmit: true })[2],
     ).toMatchObject({ disabled: false })
   })
 
@@ -86,10 +87,17 @@ describe('AppActionBar - Basic info drill-in (§3 row 7 edit / row 8 setup)', ()
 })
 
 describe('AppActionBar - section drill-in, LandlordPropertyFormPage hub-section mode (§3 row 7)', () => {
-  it('live listing → Save draft · Save', () => {
+  it('profile / default → Save draft · Save', () => {
     const items = listingSectionDrillInActionBarItemSpecs({ saving: false })
     expect(items.map((i) => i.id)).toEqual(['draft', 'save'])
     expect(items[1]).toMatchObject({ label: 'Save', primary: true })
+  })
+
+  it('live listing → Prev · Next · Save (no Save draft)', () => {
+    const items = listingSectionDrillInActionBarItemSpecs({ saving: false, isLiveListing: true })
+    expect(items.map((i) => i.id)).toEqual(['prev', 'next', 'save'])
+    expect(items[2]).toMatchObject({ label: 'Save', primary: true })
+    expect(items.map((i) => i.id)).not.toContain('draft')
   })
 
   it('setup / draft → Prev · Save draft · Next (never Publish)', () => {

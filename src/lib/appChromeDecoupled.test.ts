@@ -89,15 +89,15 @@ describe('bar item sets - browse vs edit', () => {
     expect(LANDLORD_LISTINGS_EXIT_HREF).toBe('/landlord/dashboard?tab=listings')
   })
 
-  it('drill-in page-actions are Save draft · Save (no separate ‹ Listings)', () => {
+  it('live basic-info page-actions are Prev · Next · Save (no ‹ Listings, no Save draft)', () => {
     const ids = listingBasicInfoActionBarItemSpecs({
       isSetupMode: false,
       saving: false,
       canSubmit: true,
     }).map((i) => i.id)
-    expect(ids).toEqual(['draft', 'save'])
+    expect(ids).toEqual(['prev', 'next', 'save'])
     expect(ids).not.toContain('exit-listings')
-    expect(ids).not.toContain('prev')
+    expect(ids).not.toContain('draft')
   })
 })
 

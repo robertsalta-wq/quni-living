@@ -191,7 +191,7 @@ export default function LandlordListingEditHubPage() {
     }
   }, [property, draftTick])
 
-  async function saveBasic(values: ListingBasicInfoValues, intent: 'save' | 'draft' | 'next') {
+  async function saveBasic(values: ListingBasicInfoValues, intent: 'save' | 'draft' | 'next' | 'advance') {
     setSaving(true)
     setSaveError(null)
     try {
@@ -213,6 +213,21 @@ export default function LandlordListingEditHubPage() {
         } else {
           navigate(listingHubPath({ propertyId: null }))
         }
+        return
+      }
+
+      // Live Next: keep device draft only. Do not write the public listing.
+      if (intent === 'advance') {
+        patchLandlordPropertyEditDraftBasic(propertyId, {
+          title: values.title,
+          headline: values.headline,
+          availableFrom: values.availableFrom,
+          openToNonStudents: values.openToNonStudents,
+          propertyListingType: values.propertyListingType,
+          roomType: values.roomType || 'apartment',
+          isRegisteredRoomingHouse: values.isRegisteredRoomingHouse,
+        })
+        navigate(listingHubPath({ propertyId, view: 'property' }))
         return
       }
 
