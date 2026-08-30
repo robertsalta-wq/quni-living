@@ -3,6 +3,7 @@ import {
   resolvePropertyInclusionSignals,
   type PropertyInclusionSignals,
 } from './propertyInclusionSignals'
+import { comparePropertyFeatureNames } from './propertyFeatureSignals'
 
 function featureDisplayNamesFromPropertyRow(property: ListingHighlightSource): string[] {
   const raw = property.property_features
@@ -13,6 +14,7 @@ function featureDisplayNamesFromPropertyRow(property: ListingHighlightSource): s
       return typeof n === 'string' ? n.trim() : ''
     })
     .filter(Boolean)
+    .sort(comparePropertyFeatureNames)
 }
 
 export type ListingHighlightSource = {
