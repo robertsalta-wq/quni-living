@@ -10,7 +10,12 @@ export default function Terms() {
         description="Terms of Service for the Quni Living accommodation marketplace - accounts, listings, bookings, and acceptable use."
         canonicalPath="/terms"
       />
-      <LegalPageShell bandTitle="Terms of Service" pageTitle="Platform Terms of Service" toc={TERMS_TOC}>
+      <LegalPageShell
+        bandTitle="Terms of Service"
+        pageTitle="Platform Terms of Service"
+        toc={TERMS_TOC}
+        lastUpdated="3 September 2026"
+      >
         <TermsContent />
       </LegalPageShell>
     </>

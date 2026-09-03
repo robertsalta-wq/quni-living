@@ -10,7 +10,12 @@ export default function Privacy() {
         description="How Quni Living collects, uses, and protects your personal information when you use our verified accommodation marketplace."
         canonicalPath="/privacy"
       />
-      <LegalPageShell bandTitle="Privacy Policy" pageTitle="Privacy Policy" toc={PRIVACY_TOC}>
+      <LegalPageShell
+        bandTitle="Privacy Policy"
+        pageTitle="Privacy Policy"
+        toc={PRIVACY_TOC}
+        lastUpdated="3 September 2026"
+      >
         <PrivacyContent />
       </LegalPageShell>
     </>

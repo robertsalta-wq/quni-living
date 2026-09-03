@@ -3,7 +3,7 @@
  * Values themselves come from `platform_config`; these helpers format and compose lines.
  */
 
-export const DEFAULT_PLATFORM_LEGAL_NAME = 'Quni Living Pty Ltd'
+export const DEFAULT_PLATFORM_LEGAL_NAME = 'Quinnvestments Pty Ltd'
 
 /** Strip non-digits and format Australian ABN as XX XXX XXX XXX when 11 digits; otherwise return trimmed input. */
 export function formatAustralianAbn(raw: string): string {

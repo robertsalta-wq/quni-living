@@ -16,6 +16,7 @@ type LegalPageShellProps = {
   pageTitle: string
   toc: LegalTocItem[]
   children: ReactNode
+  lastUpdated?: string
 }
 
 function scrollToId(id: string) {
@@ -26,7 +27,13 @@ function scrollToId(id: string) {
 const legalNavLinkClass =
   'block w-full text-left rounded-lg px-2 py-1.5 text-stone-600 hover:bg-white hover:text-stone-900 hover:shadow-sm transition-colors text-sm'
 
-export function LegalPageShell({ bandTitle, pageTitle, toc, children }: LegalPageShellProps) {
+export function LegalPageShell({
+  bandTitle,
+  pageTitle,
+  toc,
+  children,
+  lastUpdated = '23 March 2026',
+}: LegalPageShellProps) {
   const location = useLocation()
   const otherLegalLinks = LEGAL_DOC_LINKS.filter((d) => d.to !== location.pathname)
 
@@ -80,7 +87,7 @@ export function LegalPageShell({ bandTitle, pageTitle, toc, children }: LegalPag
             </div>
             <header className="mb-8 pb-6 border-b border-stone-100">
               <h2 className="font-display text-3xl sm:text-[2rem] font-bold text-[var(--quni-coral)] tracking-tight">{pageTitle}</h2>
-              <p className="mt-2 text-sm text-stone-500">Last updated: 23 March 2026</p>
+              <p className="mt-2 text-sm text-stone-500">Last updated: {lastUpdated}</p>
             </header>
             <div>{children}</div>
           </article>

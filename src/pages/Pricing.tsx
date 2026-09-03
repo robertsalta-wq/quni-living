@@ -90,7 +90,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'money-fees-1',
         question: 'What does a landlord pay on Quni Listing?',
         answer:
-          'A flat acceptance fee per accepted booking (amount shown above; fees may change with notice). Renters do not pay this fee.',
+          'A flat $99 when you accept a booking. No commission on rent, no subscription, no letting fee. Nothing if you never accept. Fees may change on notice; we will not introduce a rent commission on Listing. Renters do not pay this fee.',
       },
       {
         id: 'money-fees-2',
@@ -177,13 +177,14 @@ const faqBuckets: FaqBucket[] = [
     items: [
       {
         id: 'support-disputes-0',
-        question: 'Something went wrong with my tenancy - can Quni decide bond disputes?',
+        question: 'What if a tenant stops paying or damages the property?',
         answerText:
-          'Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may help with platform or payment administration where it handles funds; see /refunds for money Quni actually receives.',
+          'On Quni Listing that is between you and your tenant. Quni is not your agent, does not chase rent, and does not run damage claims. You have the signed agreement, ID verification, and in-app messages. Bond and tenancy disputes go to the parties or the state tribunal. See /refunds for money Quni actually receives.',
         answer: (
           <>
-            Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
-            help with platform or payment administration where it handles funds; see our{' '}
+            On Quni Listing that is between you and your tenant. Quni is not your agent, does not chase rent, and does
+            not run damage claims. You have the signed agreement, ID verification, and in-app messages. Bond and tenancy
+            disputes go to the parties or the state tribunal. See our{' '}
             <Link to="/refunds" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
               Refund Policy
             </Link>{' '}
@@ -195,6 +196,12 @@ const faqBuckets: FaqBucket[] = [
         id: 'support-disputes-1',
         question: 'Who do I contact?',
         answer: 'Email hello@quni.com.au - we respond as soon as we can.',
+      },
+      {
+        id: 'support-disputes-2',
+        question: 'Can I see a sample tenancy agreement before I list?',
+        answer:
+          'Watermarked sample agreements are available after you create an account. Sign up, then open Sample agreements from your dashboard. They are for layout and wording review only, not for signing.',
       },
     ],
   },
@@ -367,7 +374,7 @@ export default function Pricing() {
                       }
                       name="Listing fee"
                       value={listingFeeText}
-                      description="One-off, only when you accept a tenant. No subscription."
+                      description="One-off when you accept a tenant. No subscription. No commission on rent."
                       valueKind="coralLg"
                     />
                     <LineItem
@@ -477,7 +484,7 @@ export default function Pricing() {
                       }
                       name="Disputes & maintenance"
                       value="Self-managed"
-                      description="You handle directly with your tenant."
+                      description="You deal with your tenant directly. Quni does not chase rent or run damage claims."
                       tone="muted"
                       valueKind="mutedSm"
                     />
