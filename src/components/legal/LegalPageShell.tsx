@@ -1,12 +1,13 @@
 import { type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../lib/landlordServiceAgreementTitle'
 import PageHeroBand from '../PageHeroBand'
 
 const LEGAL_DOC_LINKS = [
   { to: '/terms', label: 'Terms of Service' },
   { to: '/privacy', label: 'Privacy Policy' },
   { to: '/non-discrimination', label: 'Non-Discrimination Policy' },
-  { to: '/landlord-service-agreement', label: 'Landlord Service Agreement' },
+  { to: '/landlord-service-agreement', label: LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE },
 ] as const
 
 export type LegalTocItem = { id: string; label: string }

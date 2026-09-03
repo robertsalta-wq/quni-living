@@ -5,7 +5,10 @@ import {
   LandlordServiceAgreementContent,
 } from '../components/legal/LandlordServiceAgreementContent'
 import Seo from '../components/Seo'
-import { LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE } from '../lib/landlordServiceAgreement'
+import {
+  LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE,
+  LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE,
+} from '../lib/landlordServiceAgreement'
 
 const LEGACY_FEE_HASHES = new Set(['fees-deduction', 'fees-payout'])
 
@@ -28,13 +31,13 @@ export default function LandlordServiceAgreement() {
   return (
     <>
       <Seo
-        title="Landlord Service Agreement"
+        title={LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
         description="Agreement for landlords on Quni Listing: marketplace terms, $99 on accept, and what Quni does not do as an agent."
         canonicalPath="/landlord-service-agreement"
       />
       <LegalPageShell
-        bandTitle="Landlord Service Agreement"
-        pageTitle="Landlord Service Agreement"
+        bandTitle={LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
+        pageTitle={LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
         toc={LANDLORD_SERVICE_AGREEMENT_TOC}
         lastUpdated={LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE}
       >

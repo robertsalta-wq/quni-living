@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LandlordServiceAgreementContent } from './LandlordServiceAgreementContent'
 import {
   LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE,
+  LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE,
   LANDLORD_SERVICE_AGREEMENT_VERSION,
   persistLandlordServiceAgreementAcceptance,
 } from '../../lib/landlordServiceAgreement'
@@ -44,7 +45,7 @@ export function LandlordServiceAgreementReacceptModal({ userId, onAccepted }: Pr
       >
         <div className="border-b border-stone-100 px-5 py-4 sm:px-6">
           <h2 id="lsa-reaccept-title" className="font-display text-xl font-bold text-stone-900">
-            Updated Landlord Service Agreement
+            Updated {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
           </h2>
           <p className="mt-1 text-sm text-stone-600">
             Quni Listing · Version {LANDLORD_SERVICE_AGREEMENT_VERSION.replace('listing-', '')} · Effective{' '}
@@ -67,7 +68,7 @@ export function LandlordServiceAgreementReacceptModal({ userId, onAccepted }: Pr
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 accent-[var(--quni-coral)]"
             />
             <span>
-              I accept the Quni Listing Landlord Service Agreement (version{' '}
+              I accept the {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE} (version{' '}
               {LANDLORD_SERVICE_AGREEMENT_VERSION.replace('listing-', '')}).
             </span>
           </label>

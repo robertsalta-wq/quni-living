@@ -22,6 +22,7 @@ import {
   type LegalDocumentKind,
 } from '../components/legal/LegalDocumentModal'
 import { LandlordServiceAgreementContent } from '../components/legal/LandlordServiceAgreementContent'
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../lib/landlordServiceAgreementTitle'
 import { PrivacyContent } from '../components/legal/PrivacyContent'
 import { TermsContent } from '../components/legal/TermsContent'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
@@ -121,7 +122,7 @@ const LEGAL_DOC_MODAL: Record<
     subtitle: 'Last updated: 3 September 2026',
   },
   'landlord-agreement': {
-    title: 'Landlord Service Agreement',
+    title: LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE,
     content: <LandlordServiceAgreementContent />,
     subtitle: 'Last updated: 3 September 2026',
   },
@@ -186,7 +187,7 @@ function SignupTermsFields({
           <span>
             I agree to the{' '}
             <SignupLegalDocLink kind="landlord-agreement" onOpen={setOpenLegalDoc}>
-              Landlord Service Agreement
+              {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
             </SignupLegalDocLink>
           </span>
         </label>
@@ -216,7 +217,7 @@ function SignupImpliedConsentNotice({ includeLandlordAgreement }: { includeLandl
           <>
             , and{' '}
             <SignupLegalDocLink kind="landlord-agreement" onOpen={setOpenLegalDoc}>
-              Landlord Service Agreement
+              {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
             </SignupLegalDocLink>
           </>
         ) : null}

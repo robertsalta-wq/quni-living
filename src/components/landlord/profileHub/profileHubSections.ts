@@ -1,3 +1,4 @@
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../../lib/landlordServiceAgreementTitle'
 import type { LandlordDashboardProfileSectionKey } from '../../../lib/landlordDashboardProfilePaths'
 import type { ListingHubSectionStatus } from '../../../lib/listingEditHubHealth'
 import type { Database } from '../../../lib/database.types'
@@ -94,7 +95,7 @@ export function profileHubSubtitleLines(
     }
     case 'agreements': {
       if (isLandlordAgreementsSectionComplete(profile)) {
-        return ['Terms, Privacy, Landlord Service Agreement & Non-discrimination accepted']
+        return [`Terms, Privacy, ${LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE} & Non-discrimination accepted`]
       }
       return ['Accept required agreements']
     }

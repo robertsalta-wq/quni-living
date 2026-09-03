@@ -2,6 +2,7 @@ import type { Database } from './database.types'
 import { looksLikeMissingDbColumn } from './supabaseErrorMessage'
 import { supabase } from './supabase'
 
+export { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from './landlordServiceAgreementTitle'
 export const LANDLORD_SERVICE_AGREEMENT_PATH = '/landlord-service-agreement' as const
 
 /** Listing LSA version. Prefix encodes the product this acceptance is for. Bump when text changes materially. */

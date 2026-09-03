@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../lib/landlordServiceAgreementTitle'
 
 export type VerificationChecklistFocus = 'students' | 'working-tenants' | 'landlords' | 'overview'
 
@@ -86,7 +87,7 @@ const LANDLORD_STEPS: VerificationStep[] = [
         </Link>
         , and the{' '}
         <Link to="/landlord-service-agreement" className="font-medium text-[var(--quni-coral)] hover:underline">
-          Landlord Service Agreement
+          {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
         </Link>
         .
       </>

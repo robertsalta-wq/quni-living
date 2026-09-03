@@ -17,7 +17,7 @@ import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT } from '../../lib/managedComingSoonCopy'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { nonDiscriminationAcceptancePatch } from '../../lib/nonDiscriminationPolicy'
-import { landlordServiceAgreementAcceptancePatch } from '../../lib/landlordServiceAgreement'
+import { landlordServiceAgreementAcceptancePatch, LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../lib/landlordServiceAgreement'
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
@@ -1123,7 +1123,7 @@ export default function LandlordOnboarding() {
                     rel="noopener noreferrer"
                     className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
                   >
-                    Landlord Service Agreement
+                    {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
                   </a>
                 </span>
               </label>

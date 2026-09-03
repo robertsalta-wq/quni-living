@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MARKETPLACE_TAGLINE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { listGuideNavItems } from '../lib/guides/nav'
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../lib/landlordServiceAgreementTitle'
 import AiSparkleIcon from './AiSparkleIcon'
 import LegalFooter from './LegalFooter'
 import SiteSocialLinks from './SiteSocialLinks'
@@ -176,7 +177,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/landlord-service-agreement" className={linkClass}>
-                  Landlord Service Agreement
+                  {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
                 </Link>
               </li>
             </ul>

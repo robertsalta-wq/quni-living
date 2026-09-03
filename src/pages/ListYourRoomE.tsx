@@ -12,6 +12,7 @@ import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
 import { LIST_YOUR_ROOM_D_PREVIEW_SLUG } from '../lib/listYourRoomDCampuses'
 import { LEGAL_ENTITY_ACN, LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
+import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../lib/landlordServiceAgreementTitle'
 import type { Property } from '../lib/listings'
 import { formatAustralianAbn } from '../lib/platformIdentity'
 import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
@@ -266,7 +267,7 @@ function PapersFooter() {
             Terms
           </Link>
           <Link to="/landlord-service-agreement" className="hover:text-[var(--quni-ink)] hover:underline">
-            Landlord Service Agreement
+            {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
           </Link>
           <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
             Refunds
