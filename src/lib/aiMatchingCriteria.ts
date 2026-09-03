@@ -154,6 +154,7 @@ export const LANDLORD_PROFILE_FIELD_STATUS = {
   stripe_customer_id: 'NOT_MATCHING',
   terms_accepted_at: 'NOT_MATCHING',
   landlord_terms_accepted_at: 'NOT_MATCHING',
+  landlord_service_agreement_version: 'NOT_MATCHING',
   non_discrimination_policy_accepted_at: 'NOT_MATCHING',
   non_discrimination_policy_version: 'NOT_MATCHING',
   has_landlord_insurance: 'NOT_MATCHING',

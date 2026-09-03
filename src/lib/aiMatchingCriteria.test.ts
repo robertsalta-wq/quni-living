@@ -153,6 +153,7 @@ describe('aiMatchingCriteria classification drift', () => {
       'stripe_customer_id',
       'terms_accepted_at',
       'landlord_terms_accepted_at',
+      'landlord_service_agreement_version',
       'non_discrimination_policy_accepted_at',
       'non_discrimination_policy_version',
       'has_landlord_insurance',

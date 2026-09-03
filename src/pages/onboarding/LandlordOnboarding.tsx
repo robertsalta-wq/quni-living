@@ -17,6 +17,7 @@ import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT } from '../../lib/managedComingSoonCopy'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { nonDiscriminationAcceptancePatch } from '../../lib/nonDiscriminationPolicy'
+import { landlordServiceAgreementAcceptancePatch } from '../../lib/landlordServiceAgreement'
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
@@ -653,18 +654,24 @@ export default function LandlordOnboarding() {
     setSubmitting(true)
     try {
       const now = new Date().toISOString()
-      const { error, data } = await withSentryMonitoring('LandlordOnboarding/update-terms', () =>
-        supabase
-          .from('landlord_profiles')
-          .update({
-            terms_accepted_at: now,
-            landlord_terms_accepted_at: now,
-            ...nonDiscriminationAcceptancePatch(now),
-          })
-          .eq('user_id', user.id)
-          .select('*')
-          .single(),
+      const patch = {
+        terms_accepted_at: now,
+        ...landlordServiceAgreementAcceptancePatch(now),
+        ...nonDiscriminationAcceptancePatch(now),
+      }
+      const first = await withSentryMonitoring('LandlordOnboarding/update-terms', () =>
+        supabase.from('landlord_profiles').update(patch).eq('user_id', user.id).select('*').single(),
       )
+      let error = first.error
+      let data = first.data
+      if (error && looksLikeMissingDbColumn(error)) {
+        const { landlord_service_agreement_version: _ignored, ...rest } = patch
+        const retry = await withSentryMonitoring('LandlordOnboarding/update-terms-legacy', () =>
+          supabase.from('landlord_profiles').update(rest).eq('user_id', user.id).select('*').single(),
+        )
+        error = retry.error
+        data = retry.data
+      }
       if (error) throw error
       if (data) setProfile(data as LandlordRow)
       await refreshProfile()

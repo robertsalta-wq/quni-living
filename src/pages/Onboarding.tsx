@@ -22,6 +22,8 @@ import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { marketplaceRoleForWrite } from '../lib/marketplaceRole'
+import { landlordServiceAgreementAcceptancePatch } from '../lib/landlordServiceAgreement'
+import { looksLikeMissingDbColumn } from '../lib/supabaseErrorMessage'
 
 type Choice = 'renter' | 'landlord'
 
@@ -59,39 +61,78 @@ async function saveProfileRow(
 
   if (selErr) return { error: new Error(selErr.message) }
 
-  const termsPatch =
-    table === 'landlord_profiles'
-      ? {
-          full_name: payload.full_name,
-          email: payload.email,
-          terms_accepted_at: acceptedAt,
-          landlord_terms_accepted_at: acceptedAt,
+  if (existing) {
+    if (table === 'landlord_profiles') {
+      const termsPatch = {
+        full_name: payload.full_name,
+        email: payload.email,
+        terms_accepted_at: acceptedAt,
+        ...landlordServiceAgreementAcceptancePatch(acceptedAt),
+      }
+      const { error: upErr } = await withSentryMonitoring('Onboarding/update-profile-terms', () =>
+        supabase.from(table).update(termsPatch).eq('user_id', payload.user_id),
+      )
+      if (!upErr) return { error: null }
+      if (looksLikeMissingDbColumn(upErr)) {
+        const rest = {
+          full_name: termsPatch.full_name,
+          email: termsPatch.email,
+          terms_accepted_at: termsPatch.terms_accepted_at,
+          landlord_terms_accepted_at: termsPatch.landlord_terms_accepted_at,
         }
-      : {
+        const retry = await withSentryMonitoring('Onboarding/update-profile-terms-legacy', () =>
+          supabase.from(table).update(rest).eq('user_id', payload.user_id),
+        )
+        return { error: retry.error ? new Error(retry.error.message) : null }
+      }
+      return { error: new Error(upErr.message) }
+    }
+    const { error: upErr } = await withSentryMonitoring('Onboarding/update-profile-terms', () =>
+      supabase
+        .from(table)
+        .update({
           full_name: payload.full_name,
           preferred_name: payload.full_name,
           email: payload.email,
           terms_accepted_at: acceptedAt,
-        }
-
-  if (existing) {
-    const { error: upErr } = await withSentryMonitoring('Onboarding/update-profile-terms', () =>
-      supabase.from(table).update(termsPatch).eq('user_id', payload.user_id),
+        })
+        .eq('user_id', payload.user_id),
     )
     return { error: upErr ? new Error(upErr.message) : null }
   }
 
-  const insertPayload =
-    table === 'landlord_profiles'
-      ? { ...payload, terms_accepted_at: acceptedAt, landlord_terms_accepted_at: acceptedAt }
-      : {
-          ...payload,
-          preferred_name: payload.full_name,
-          terms_accepted_at: acceptedAt,
-        }
+  if (table === 'landlord_profiles') {
+    const insertPayload = {
+      ...payload,
+      terms_accepted_at: acceptedAt,
+      ...landlordServiceAgreementAcceptancePatch(acceptedAt),
+    }
+    const { error: insErr } = await withSentryMonitoring('Onboarding/insert-profile-terms', () =>
+      supabase.from(table).insert(insertPayload),
+    )
+    if (!insErr) return { error: null }
+    if (looksLikeMissingDbColumn(insErr)) {
+      const rest = {
+        user_id: insertPayload.user_id,
+        full_name: insertPayload.full_name,
+        email: insertPayload.email,
+        terms_accepted_at: insertPayload.terms_accepted_at,
+        landlord_terms_accepted_at: insertPayload.landlord_terms_accepted_at,
+      }
+      const retry = await withSentryMonitoring('Onboarding/insert-profile-terms-legacy', () =>
+        supabase.from(table).insert(rest),
+      )
+      return { error: retry.error ? new Error(retry.error.message) : null }
+    }
+    return { error: new Error(insErr.message) }
+  }
 
   const { error: insErr } = await withSentryMonitoring('Onboarding/insert-profile-terms', () =>
-    supabase.from(table).insert(insertPayload),
+    supabase.from(table).insert({
+      ...payload,
+      preferred_name: payload.full_name,
+      terms_accepted_at: acceptedAt,
+    }),
   )
   return { error: insErr ? new Error(insErr.message) : null }
 }
