@@ -138,8 +138,8 @@ function FinishHereNote() {
         Found on Quni or somewhere else? Finish it here.
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-[var(--quni-ink-3)]">
-        List with us or bring a tenant from Facebook, Flatmates, or word of mouth. Quni handles ID verification, digital
-        leases, and bond lodging, so it&apos;s done properly, not on a handshake.
+        List with us or bring a tenant from Facebook, Flatmates, or word of mouth. Quni handles ID verification and
+        digital leases, so it&apos;s done properly, not on a handshake.
       </p>
     </section>
   )
