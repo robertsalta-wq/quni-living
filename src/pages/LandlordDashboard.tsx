@@ -38,6 +38,8 @@ import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordAuthorityToLetModal from '../components/landlord/LandlordAuthorityToLetModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
+import { LandlordServiceAgreementReacceptModal } from '../components/legal/LandlordServiceAgreementReacceptModal'
+import { landlordServiceAgreementAccepted } from '../lib/landlordServiceAgreement'
 import LandlordListingsGroupedPanel from '../components/landlord/listings/LandlordListingsGroupedPanel'
 import LandlordTenantInviteModal from '../components/landlord/LandlordTenantInviteModal'
 import LandlordDashboardProfileTab from '../components/landlord/LandlordDashboardProfileTab'
@@ -1337,6 +1339,9 @@ export default function LandlordDashboard() {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
       {welcomeToast ? <DashboardWelcomeToast message={welcomeToast} /> : null}
+      {!landlordServiceAgreementAccepted(profile) ? (
+        <LandlordServiceAgreementReacceptModal userId={user?.id ?? profile.user_id} onAccepted={load} />
+      ) : null}
 
       <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : landlordDashboardPageInsetClass}>
         <LandlordDashboardPageHeader

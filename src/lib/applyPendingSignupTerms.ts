@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { looksLikeMissingDbColumn } from './supabaseErrorMessage'
 import {
   consumeSignupTermsAcceptedAt,
   landlordSignupTermsPatch,
@@ -14,24 +15,51 @@ export async function applyPendingSignupTerms(
   const acceptedAt = peekSignupTermsAcceptedAt()
   if (!acceptedAt) return
 
-  const table = role === 'landlord' ? 'landlord_profiles' : 'student_profiles'
-  const patch = role === 'landlord' ? landlordSignupTermsPatch(acceptedAt) : renterSignupTermsPatch(acceptedAt)
+  if (role === 'landlord') {
+    const patch = landlordSignupTermsPatch(acceptedAt)
+    const { data: row } = await supabase
+      .from('landlord_profiles')
+      .select('terms_accepted_at')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (row?.terms_accepted_at) {
+      consumeSignupTermsAcceptedAt()
+      return
+    }
+    const first = await supabase.from('landlord_profiles').update(patch).eq('user_id', userId)
+    if (!first.error) {
+      consumeSignupTermsAcceptedAt()
+      return
+    }
+    if (looksLikeMissingDbColumn(first.error)) {
+      const rest = {
+        terms_accepted_at: patch.terms_accepted_at,
+        landlord_terms_accepted_at: patch.landlord_terms_accepted_at,
+      }
+      const second = await supabase.from('landlord_profiles').update(rest).eq('user_id', userId)
+      if (!second.error) consumeSignupTermsAcceptedAt()
+    }
+    return
+  }
 
-  const { data: row } = await supabase.from(table).select('terms_accepted_at').eq('user_id', userId).maybeSingle()
-
+  const patch = renterSignupTermsPatch(acceptedAt)
+  const { data: row } = await supabase
+    .from('student_profiles')
+    .select('terms_accepted_at')
+    .eq('user_id', userId)
+    .maybeSingle()
   if (row?.terms_accepted_at) {
     consumeSignupTermsAcceptedAt()
     return
   }
-
-  const { error } = await supabase.from(table).update(patch).eq('user_id', userId)
+  const { error } = await supabase.from('student_profiles').update(patch).eq('user_id', userId)
   if (!error) consumeSignupTermsAcceptedAt()
 }
 
 export function mergeSignupTermsIntoInsert<T extends Record<string, unknown>>(
   role: 'renter' | 'landlord',
   row: T,
-): T & { terms_accepted_at?: string; landlord_terms_accepted_at?: string } {
+): T & { terms_accepted_at?: string; landlord_terms_accepted_at?: string; landlord_service_agreement_version?: string } {
   const acceptedAt = peekSignupTermsAcceptedAt()
   if (!acceptedAt) return row
   if (role === 'landlord') {

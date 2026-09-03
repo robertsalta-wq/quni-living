@@ -1,3 +1,5 @@
+import { landlordServiceAgreementAcceptancePatch } from './landlordServiceAgreement'
+
 const KEY = 'quni_signup_terms_accepted_at'
 
 /** Stash terms acceptance from /signup until the profile row is created or updated. */
@@ -36,9 +38,10 @@ export function renterSignupTermsPatch(acceptedAt: string): { terms_accepted_at:
 export function landlordSignupTermsPatch(acceptedAt: string): {
   terms_accepted_at: string
   landlord_terms_accepted_at: string
+  landlord_service_agreement_version: string
 } {
   return {
     terms_accepted_at: acceptedAt,
-    landlord_terms_accepted_at: acceptedAt,
+    ...landlordServiceAgreementAcceptancePatch(acceptedAt),
   }
 }
