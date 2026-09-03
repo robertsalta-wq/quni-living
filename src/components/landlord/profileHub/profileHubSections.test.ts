@@ -5,6 +5,7 @@ import {
   profileHubSectionStatus,
   profileHubSubtitleLines,
 } from './profileHubSections'
+import { LANDLORD_SERVICE_AGREEMENT_VERSION } from '../../../lib/landlordServiceAgreement'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -30,6 +31,7 @@ function baseProfile(overrides: Partial<LandlordRow> = {}): LandlordRow {
     languages_spoken: ['english'],
     terms_accepted_at: '2026-01-01T00:00:00Z',
     landlord_terms_accepted_at: '2026-01-01T00:00:00Z',
+    landlord_service_agreement_version: LANDLORD_SERVICE_AGREEMENT_VERSION,
     non_discrimination_policy_accepted_at: '2026-01-01T00:00:00Z',
     non_discrimination_policy_version: '2026-06-05',
     has_landlord_insurance: true,

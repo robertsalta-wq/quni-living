@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { NON_DISCRIMINATION_POLICY_VERSION } from './nonDiscriminationPolicy'
+import { LANDLORD_SERVICE_AGREEMENT_VERSION } from './landlordServiceAgreement'
 import { landlordOverviewFunnel } from './landlordOverviewFunnel'
 import type { Database } from './database.types'
 
@@ -20,6 +21,7 @@ function baseProfile(overrides: Partial<LandlordRow> = {}): LandlordRow {
     state: 'NSW',
     terms_accepted_at: '2026-01-01T00:00:00Z',
     landlord_terms_accepted_at: '2026-01-01T00:00:00Z',
+    landlord_service_agreement_version: LANDLORD_SERVICE_AGREEMENT_VERSION,
     non_discrimination_policy_accepted_at: '2026-01-01T00:00:00Z',
     non_discrimination_policy_version: NON_DISCRIMINATION_POLICY_VERSION,
     onboarding_complete: false,

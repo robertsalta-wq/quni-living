@@ -32,6 +32,11 @@ import {
   landlordNonDiscriminationAccepted,
   nonDiscriminationAcceptancePatch,
 } from '../../lib/nonDiscriminationPolicy'
+import {
+  landlordServiceAgreementAccepted,
+  landlordServiceAgreementAcceptancePatch,
+  updateLandlordProfileAcceptanceFields,
+} from '../../lib/landlordServiceAgreement'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import LandlordListingPaymentModal from './LandlordListingPaymentModal'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
@@ -175,7 +180,7 @@ function agreementsSectionFieldErrors(
   if (!profile.terms_accepted_at && !agreeTerms) {
     fieldErrors.agreeTerms = 'Terms of Service acceptance is required.'
   }
-  if (!profile.landlord_terms_accepted_at && !agreeLandlordTerms) {
+  if (!landlordServiceAgreementAccepted(profile) && !agreeLandlordTerms) {
     fieldErrors.agreeLandlordTerms = 'Landlord Service Agreement acceptance is required.'
   }
   if (!landlordNonDiscriminationAccepted(profile) && !agreeNonDiscrimination) {
@@ -642,14 +647,16 @@ function LandlordDesktopProfileTab({
     const now = new Date().toISOString()
     const patch: Record<string, string> = {}
     if (!profile.terms_accepted_at && agreeTerms) patch.terms_accepted_at = now
-    if (!profile.landlord_terms_accepted_at && agreeLandlordTerms) patch.landlord_terms_accepted_at = now
+    if (!landlordServiceAgreementAccepted(profile) && agreeLandlordTerms) {
+      Object.assign(patch, landlordServiceAgreementAcceptancePatch(now))
+    }
     if (!landlordNonDiscriminationAccepted(profile) && agreeNonDiscrimination) {
       Object.assign(patch, nonDiscriminationAcceptancePatch(now))
     }
     if (Object.keys(patch).length === 0) return
     setSavingSection('agreements')
     try {
-      const { error } = await supabase.from('landlord_profiles').update(patch).eq('user_id', user.id)
+      const { error } = await updateLandlordProfileAcceptanceFields(user.id, patch)
       if (error) throw error
       setAgreeTerms(false)
       setAgreeLandlordTerms(false)
@@ -1184,7 +1191,7 @@ function LandlordDesktopProfileTab({
                   errorId="ldp-agree-terms-error"
                 />
               ) : null}
-              {!profile.landlord_terms_accepted_at ? (
+              {!landlordServiceAgreementAccepted(profile) ? (
                 <AgreementCheckbox
                   checked={agreeLandlordTerms}
                   onChange={(v) => {

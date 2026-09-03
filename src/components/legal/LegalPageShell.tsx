@@ -126,3 +126,21 @@ export function LegalUl({ items }: { items: string[] }) {
     </ul>
   )
 }
+
+/** Plain-English lead that is not part of the legal text. */
+export function LegalSummary({
+  titleId = 'legal-summary-heading',
+  children,
+}: {
+  titleId?: string
+  children: ReactNode
+}) {
+  return (
+    <aside
+      className="mb-10 rounded-xl border border-stone-200 bg-[var(--quni-trust-bg)] px-5 py-5 sm:px-6"
+      aria-labelledby={titleId}
+    >
+      {children}
+    </aside>
+  )
+}
