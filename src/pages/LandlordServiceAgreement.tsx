@@ -11,13 +11,18 @@ const LEGACY_FEE_HASHES = new Set(['fees-deduction', 'fees-payout'])
 
 export default function LandlordServiceAgreement() {
   useEffect(() => {
-    const raw = window.location.hash.replace(/^#/, '')
-    if (!LEGACY_FEE_HASHES.has(raw)) return
-    const el = document.getElementById('fees')
-    if (!el) return
-    const url = `${window.location.pathname}${window.location.search}#fees`
-    window.history.replaceState(null, '', url)
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    function redirectLegacyFeeHash() {
+      const raw = window.location.hash.replace(/^#/, '')
+      if (!LEGACY_FEE_HASHES.has(raw)) return
+      const el = document.getElementById('fees')
+      if (!el) return
+      const url = `${window.location.pathname}${window.location.search}#fees`
+      window.history.replaceState(null, '', url)
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    redirectLegacyFeeHash()
+    window.addEventListener('hashchange', redirectLegacyFeeHash)
+    return () => window.removeEventListener('hashchange', redirectLegacyFeeHash)
   }, [])
 
   return (
