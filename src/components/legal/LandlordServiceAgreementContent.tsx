@@ -199,7 +199,7 @@ export function LandlordServiceAgreementContent() {
       <LegalUl
         items={[
           'Listing is free. There is no fee to create an account, publish a listing, receive applications, or message applicants.',
-          'You pay $99 once, when you accept an applicant through the platform. That is the only Listing fee.',
+          'You pay $99 once (including GST), when you accept an applicant through the platform. That is the only Listing fee.',
           'There is no commission on rent, no subscription, no monthly fee and no letting fee.',
           'If you never accept anyone on the platform, you never pay anything.',
         ]}
@@ -212,8 +212,8 @@ export function LandlordServiceAgreementContent() {
       </LegalP>
       <LegalH3 id="fees-how">7.3 How it is charged</LegalH3>
       <LegalP>
-        The fee is $99, charged to the card you hold on file at the time you accept. We issue a tax invoice. GST
-        treatment is as shown on that invoice.
+        The fee is $99 including GST, charged to the card you hold on file at the time you accept. We issue a tax
+        invoice.
       </LegalP>
       <LegalH3 id="fees-refunds">7.4 Refunds</LegalH3>
       <LegalP>
