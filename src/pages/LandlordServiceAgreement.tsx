@@ -10,13 +10,14 @@ export default function LandlordServiceAgreement() {
     <>
       <Seo
         title="Landlord Service Agreement"
-        description="Agreement for landlords listing accommodation on Quni Living - listings, bookings, fees, and obligations."
+        description="Agreement for landlords on Quni Listing: marketplace terms, $99 on accept, and what Quni does not do as an agent."
         canonicalPath="/landlord-service-agreement"
       />
       <LegalPageShell
         bandTitle="Landlord Service Agreement"
         pageTitle="Landlord Service Agreement"
         toc={LANDLORD_SERVICE_AGREEMENT_TOC}
+        lastUpdated="3 September 2026"
       >
         <LandlordServiceAgreementContent />
       </LegalPageShell>

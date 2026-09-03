@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { formatContractingPartyName, LEGAL_ENTITY_ABN, LEGAL_ENTITY_ACN } from '../../lib/legalEntity'
+import { formatAustralianAbn } from '../../lib/platformIdentity'
 import { LegalH2, LegalH3, LegalP, LegalUl, type LegalTocItem } from './LegalPageShell'
 
 export const TERMS_TOC: LegalTocItem[] = [
@@ -22,8 +24,9 @@ export function TermsContent() {
       <LegalH2 id="about">1. About These Terms</LegalH2>
       <LegalP>
         These Terms of Service (&quot;Terms&quot;) govern your use of the Quni Living platform, website, and services
-        (&quot;Platform&quot;), operated by Quni Living Pty Ltd (&quot;Quni Living&quot;, &quot;we&quot;, &quot;us&quot;,
-        &quot;our&quot;). By creating an account or using our Platform, you agree to be bound by these Terms and our{' '}
+        (&quot;Platform&quot;), operated by {formatContractingPartyName()} (&quot;Quni Living&quot;, &quot;we&quot;,
+        &quot;us&quot;, &quot;our&quot;). By creating an account or using our Platform, you agree to be bound by these
+        Terms and our{' '}
         <Link to="/non-discrimination" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
           Non-Discrimination Policy
         </Link>
@@ -145,9 +148,12 @@ export function TermsContent() {
       />
       <LegalH3 id="landlord-tenancy">4.3 Tenancy Agreements</LegalH3>
       <LegalP>
-        Landlords are responsible for preparing and providing tenancy agreements that comply with applicable state and
-        territory legislation. Quni Living does not provide tenancy agreement templates and is not responsible for the
-        terms of any tenancy agreement between a landlord and student.
+        When you accept a booking on Quni Listing, the Platform generates a tenancy or occupancy agreement appropriate
+        to the property&apos;s state, together with a platform addendum, for electronic signature. You are the lessor
+        and a party to that agreement. Quni Living is not. Watermarked sample agreements are available after you create
+        an account, from Sample agreements in your dashboard. Those samples are for layout and wording review only. They
+        are not for signing. Quni Living is not responsible for the terms of any tenancy agreement between a landlord
+        and renter, and the documents are not legal advice.
       </LegalP>
       <LegalH3 id="landlord-bond">4.4 Bond Lodgement</LegalH3>
       <LegalP>
@@ -188,11 +194,12 @@ export function TermsContent() {
         <strong>rent</strong>) to your landlord or through payment flows that lawfully handle tenancy funds.
       </LegalP>
       <LegalP>
-        <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a <strong>flat acceptance fee</strong> per
-        accepted booking (amount shown on the pricing page and in the product). <strong>Landlords</strong> on{' '}
-        <strong>Quni Managed</strong> pay a <strong>percentage of weekly rent</strong> while a managed tenancy is active,
-        collected as part of managed rent flows via our payment provider. Fee details may change with notice; the terms
-        in effect at the time of the relevant action apply.
+        <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a flat <strong>$99</strong> acceptance fee per
+        accepted booking. There is no commission on rent, no subscription, and no letting fee on Listing.{' '}
+        <strong>Landlords</strong> on <strong>Quni Managed</strong> pay a <strong>percentage of weekly rent</strong>{' '}
+        while a managed tenancy is active, collected as part of managed rent flows via our payment provider. We may
+        change the Listing acceptance fee on notice. We will not introduce a commission on rent for Quni Listing. The
+        terms in effect at the time of the relevant action apply.
       </LegalP>
       <LegalH3 id="payments-stripe">6.2 Payment Processing</LegalH3>
       <LegalP>
@@ -283,7 +290,9 @@ export function TermsContent() {
       </LegalP>
 
       <LegalH2 id="contact">12. Contact Us</LegalH2>
-      <LegalP>Quni Living Pty Ltd</LegalP>
+      <LegalP>
+        {formatContractingPartyName()} · ABN {formatAustralianAbn(LEGAL_ENTITY_ABN)} · ACN {LEGAL_ENTITY_ACN}
+      </LegalP>
       <LegalP>Email: hello@quni.com.au</LegalP>
       <LegalP>Website: quni.com.au</LegalP>
     </>

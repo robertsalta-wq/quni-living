@@ -20,7 +20,7 @@ import {
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
-import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
+import { MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
@@ -89,8 +89,8 @@ const LANDLORD_HOW_STEPS = [
   },
   {
     n: 3,
-    title: 'Get paid',
-    desc: 'Accept a tenant and receive weekly rent via Stripe Connect',
+    title: 'Collect rent',
+    desc: 'The tenant pays you directly. Quni does not collect rent or bond.',
   },
 ] as const
 
@@ -113,7 +113,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-4',
     q: 'What if something goes wrong with my tenancy?',
-    a: 'Contact us at hello@quni.com.au. We have a dispute resolution process and will work with both parties to resolve issues fairly.',
+    a: 'Bond and tenancy disputes are between you and the other party, or through the relevant state tribunal. Email hello@quni.com.au for platform issues. Quni is not an agent and does not decide those disputes.',
   },
   {
     id: 'faq-s-5',
@@ -127,7 +127,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-1',
     q: 'How much does Quni charge landlords?',
-    a: 'Landlords choose Listing (flat fee per accepted booking) or Managed (percentage fee on weekly rent). There are no charges until a booking is accepted.',
+    a: 'On Quni Listing, $99 once when you accept a booking. No commission on rent, no subscription, no letting fee. There is no charge until you accept.',
   },
   {
     id: 'faq-l-2',
@@ -142,7 +142,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-3',
     q: 'How do I receive rent payments?',
-    a: 'Via Stripe Connect direct to your bank account. You see exactly what Quni earns and what you receive in your landlord dashboard.',
+    a: 'On Quni Listing, rent is paid by your tenant directly to you. Quni does not collect rent or bond.',
   },
   {
     id: 'faq-l-4',
@@ -152,7 +152,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-5',
     q: 'Will my home address appear on the tenancy agreement?',
-    a: 'It depends which Quni service you use. On Quni Listing, you self-manage the tenancy - NSW law requires the landlord\'s address for service of notices on the residential agreement when there\'s no managing agent, so your address is included on the lease. On Quni Managed, Quni acts as your appointed managing agent, so our business address is used for service of notices and your home address does not appear on the lease. Your name and a contact number still appear (as the law requires), and if you live outside NSW the state or territory is noted. Applies to NSW residential tenancies. Quni Managed availability varies by location.',
+    a: 'On Quni Listing you self-manage the tenancy. NSW law requires the landlord\'s address for service of notices on the residential agreement when there is no managing agent, so your address is included on the lease. Your name and a contact number still appear, as the law requires. Applies to NSW residential tenancies.',
   },
 ] as const
 
@@ -718,11 +718,9 @@ export default function Home() {
                 const answer =
                   item.id === 'faq-l-1'
                     ? managedTierEnabled
-                      ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
-                      : `${MANAGED_LISTING_DUAL_INTRO} Listing fee: ${dynamicListingFeeText} per accepted booking; Managed service fee: ${dynamicManagedFeeText} of weekly rent when it launches.`
-                    : item.id === 'faq-l-3' && !managedTierEnabled
-                      ? `On Quni Listing, bond and rent are paid directly to you. Quni Managed will add Stripe Connect weekly rent payouts - ${MANAGED_COMING_SOON_SHORT.toLowerCase()}`
-                      : item.a
+                      ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent. Quni Managed is ${dynamicManagedFeeText} of weekly rent.`
+                      : `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. ${MANAGED_LISTING_DUAL_INTRO}`
+                    : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button

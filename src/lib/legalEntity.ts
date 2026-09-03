@@ -3,8 +3,22 @@ import { formatAustralianAbn } from './platformIdentity'
 /** ASIC-registered entity (not GTM operating area). Build-time fallback when Supabase is unavailable. */
 export const LEGAL_ENTITY_NAME = 'Quinnvestments Pty Ltd'
 
-/** Set when available from ASIC extract; omitted from public line when empty. */
-export const LEGAL_ENTITY_ABN = ''
+export const LEGAL_ENTITY_TRADING_NAME = 'Quni Living'
+
+/** ABN 65 675 990 968 (ABR). */
+export const LEGAL_ENTITY_ABN = '65675990968'
+
+/** ACN 675 990 968 (ABR / ASIC). Hardcoded: public_legal_entity has no ACN column. */
+export const LEGAL_ENTITY_ACN = '675 990 968'
+
+export function formatContractingPartyName(
+  legalName: string = LEGAL_ENTITY_NAME,
+  tradingName: string = LEGAL_ENTITY_TRADING_NAME,
+): string {
+  const legal = legalName.trim() || LEGAL_ENTITY_NAME
+  const trading = tradingName.trim()
+  return trading ? `${legal} t/a ${trading}` : legal
+}
 
 export const REGISTERED_OFFICE = {
   line1: 'Level 2 Suite 4, 90 Phillip Street',
@@ -41,7 +55,7 @@ export type LegalEntity = {
 export function getFallbackLegalEntity(): LegalEntity {
   return {
     legalName: LEGAL_ENTITY_NAME,
-    tradingName: '',
+    tradingName: LEGAL_ENTITY_TRADING_NAME,
     abn: LEGAL_ENTITY_ABN,
     registeredAddressLine1: REGISTERED_OFFICE.line1,
     registeredAddressLine2: REGISTERED_OFFICE.line2,
@@ -104,10 +118,11 @@ export function formatRegisteredOfficeFromEntity(entity: LegalEntity): string {
   return [street, locality].filter(Boolean).join(', ')
 }
 
-/** Single-line legal footer: entity · optional ABN · registered office. */
+/** Single-line legal footer: contracting party · ABN · ACN · registered office. */
 export function buildLegalFooterText(entity: LegalEntity = getFallbackLegalEntity()): string {
-  const legalName = entity.legalName.trim() || LEGAL_ENTITY_NAME
-  const abn = entity.abn.trim()
+  const party = formatContractingPartyName(entity.legalName, entity.tradingName)
+  const abn = entity.abn.trim() || LEGAL_ENTITY_ABN
   const abnSegment = abn ? ` · ABN ${formatAustralianAbn(abn)}` : ''
-  return `${legalName}${abnSegment} · Registered office: ${formatRegisteredOfficeFromEntity(entity)}`
+  const acnSegment = LEGAL_ENTITY_ACN ? ` · ACN ${LEGAL_ENTITY_ACN}` : ''
+  return `${party}${abnSegment}${acnSegment} · Registered office: ${formatRegisteredOfficeFromEntity(entity)}`
 }

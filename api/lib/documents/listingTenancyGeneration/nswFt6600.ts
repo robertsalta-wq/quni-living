@@ -398,7 +398,7 @@ async function loadNswFt6600Context(
         fetchPlatformRegisteredContactForDocuments(admin),
       ])
       platformAgentForManaged = {
-        name: platformIdentity.legalName || 'Quni Living Pty Ltd',
+        name: platformIdentity.legalName || 'Quinnvestments Pty Ltd',
         businessAddress: platformContact.registeredAddressLine,
         suburb: platformContact.suburb,
         phone: platformContact.phone,

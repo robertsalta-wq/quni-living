@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import SiteSocialLinks from '../SiteSocialLinks'
 import { useLegalEntity } from '../../lib/useLegalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
+import { LEGAL_ENTITY_ACN } from '../../lib/legalEntity'
 
 const linkClass =
   'text-[11px] font-semibold tracking-[0.03em] text-[var(--quni-ink-3)] no-underline [font-variant:small-caps] border-b border-dotted border-[var(--quni-cream-border)] hover:text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]'
@@ -18,7 +19,7 @@ export default function PapersBlock({ compact = false, homeReturn = false }: Pap
   const entity = useLegalEntity()
   const abn = entity.abn.trim()
   const abnLine = abn
-    ? `ABN ${formatAustralianAbn(abn)} · ${entity.registeredSuburb}, ${entity.registeredState}`
+    ? `ABN ${formatAustralianAbn(abn)} · ACN ${LEGAL_ENTITY_ACN} · ${entity.registeredSuburb}, ${entity.registeredState}`
     : `${entity.registeredSuburb}, ${entity.registeredState}, Australia`
 
   return (

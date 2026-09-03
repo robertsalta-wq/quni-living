@@ -108,13 +108,22 @@ type SignupTermsFieldsProps = {
 
 const LEGAL_DOC_MODAL: Record<
   LegalDocumentKind,
-  { title: string; content: ReactNode }
+  { title: string; content: ReactNode; subtitle: string }
 > = {
-  terms: { title: 'Platform Terms of Service', content: <TermsContent /> },
-  privacy: { title: 'Privacy Policy', content: <PrivacyContent /> },
+  terms: {
+    title: 'Platform Terms of Service',
+    content: <TermsContent />,
+    subtitle: 'Last updated: 3 September 2026',
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    content: <PrivacyContent />,
+    subtitle: 'Last updated: 3 September 2026',
+  },
   'landlord-agreement': {
     title: 'Landlord Service Agreement',
     content: <LandlordServiceAgreementContent />,
+    subtitle: 'Last updated: 3 September 2026',
   },
 }
 
@@ -158,6 +167,7 @@ function SignupTermsFields({
           open={openLegalDoc !== null}
           onClose={() => setOpenLegalDoc(null)}
           title={activeLegalDoc.title}
+          subtitle={activeLegalDoc.subtitle}
         >
           {activeLegalDoc.content}
         </LegalDocumentModal>
@@ -217,6 +227,7 @@ function SignupImpliedConsentNotice({ includeLandlordAgreement }: { includeLandl
           open={openLegalDoc !== null}
           onClose={() => setOpenLegalDoc(null)}
           title={activeLegalDoc.title}
+          subtitle={activeLegalDoc.subtitle}
         >
           {activeLegalDoc.content}
         </LegalDocumentModal>

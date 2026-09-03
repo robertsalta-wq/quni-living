@@ -110,7 +110,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   3: {
     id: 3,
     label: 'ABN and legal entity name in footer',
-    description: 'Format: © 2025 Quni Living Pty Ltd · ABN XX XXX XXX XXX · Sydney, NSW.',
+    description: 'Format: © 2026 Quinnvestments Pty Ltd t/a Quni Living · ABN XX XXX XXX XXX · Sydney, NSW.',
   },
   4: {
     id: 4,

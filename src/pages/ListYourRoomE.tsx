@@ -11,7 +11,7 @@ import { QuniLogoHomeLink } from '../components/SiteBrandLockup'
 import { LegalDocumentModal } from '../components/legal/LegalDocumentModal'
 import Seo from '../components/Seo'
 import { LIST_YOUR_ROOM_D_PREVIEW_SLUG } from '../lib/listYourRoomDCampuses'
-import { LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
+import { LEGAL_ENTITY_ACN, LEGAL_ENTITY_NAME, getFallbackLegalEntity } from '../lib/legalEntity'
 import type { Property } from '../lib/listings'
 import { formatAustralianAbn } from '../lib/platformIdentity'
 import { loadPropertyDetailBySlug } from '../lib/propertyDetailCache'
@@ -254,7 +254,7 @@ function PapersFooter() {
       <p className="w-full font-footer text-xs text-[var(--quni-ink-3)]">
         {legalName} t/a Quni Living
         <span className="block md:inline">
-          <span className="hidden md:inline"> · </span>ABN {formatAustralianAbn(abn)}
+          <span className="hidden md:inline"> · </span>ABN {formatAustralianAbn(abn)} · ACN {LEGAL_ENTITY_ACN}
         </span>
       </p>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -264,6 +264,9 @@ function PapersFooter() {
           </Link>
           <Link to="/terms" className="hover:text-[var(--quni-ink)] hover:underline">
             Terms
+          </Link>
+          <Link to="/landlord-service-agreement" className="hover:text-[var(--quni-ink)] hover:underline">
+            Landlord Service Agreement
           </Link>
           <Link to="/refunds" className="hover:text-[var(--quni-ink)] hover:underline">
             Refunds

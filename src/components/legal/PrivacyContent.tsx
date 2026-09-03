@@ -1,3 +1,5 @@
+import { formatContractingPartyName, LEGAL_ENTITY_ABN, LEGAL_ENTITY_ACN } from '../../lib/legalEntity'
+import { formatAustralianAbn } from '../../lib/platformIdentity'
 import { LegalH2, LegalH3, LegalP, LegalUl, type LegalTocItem } from './LegalPageShell'
 
 export const PRIVACY_TOC: LegalTocItem[] = [
@@ -20,9 +22,9 @@ export function PrivacyContent() {
     <>
       <LegalH2 id="intro">1. Introduction</LegalH2>
       <LegalP>
-        Quni Living Pty Ltd (&quot;Quni Living&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is committed to
-        protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your personal
-        information when you use the Quni Living platform (&quot;Platform&quot;).
+        {formatContractingPartyName()} (&quot;Quni Living&quot;, &quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is
+        committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard
+        your personal information when you use the Quni Living platform (&quot;Platform&quot;).
       </LegalP>
       <LegalP>
         This policy is compliant with the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs). By using our
@@ -226,7 +228,9 @@ export function PrivacyContent() {
       </LegalP>
 
       <LegalH2 id="contact">12. Contact Us</LegalH2>
-      <LegalP>Quni Living Pty Ltd</LegalP>
+      <LegalP>
+        {formatContractingPartyName()} · ABN {formatAustralianAbn(LEGAL_ENTITY_ABN)} · ACN {LEGAL_ENTITY_ACN}
+      </LegalP>
       <LegalP>Email: hello@quni.com.au</LegalP>
       <LegalP>Website: quni.com.au</LegalP>
     </>
