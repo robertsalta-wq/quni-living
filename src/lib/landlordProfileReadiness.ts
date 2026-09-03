@@ -2,7 +2,7 @@ import type { Database } from './database.types'
 import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 import { landlordProfileHostIdentityVerified } from './landlordBookingConfirmGate'
 import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
-import { landlordServiceAgreementAccepted } from './landlordServiceAgreement'
+import { landlordServiceAgreementAccepted, LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from './landlordServiceAgreement'
 
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -160,7 +160,7 @@ export function landlordPublishFirstIncompleteAction(
         }
         if (!landlordServiceAgreementAccepted(profile)) {
           return {
-            label: 'Accept landlord service agreement →',
+            label: `Accept ${LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE} →`,
             href: landlordDashboardProfilePath('agreements'),
           }
         }

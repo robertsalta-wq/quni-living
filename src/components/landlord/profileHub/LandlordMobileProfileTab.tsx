@@ -27,6 +27,7 @@ import {
 import {
   landlordServiceAgreementAccepted,
   landlordServiceAgreementAcceptancePatch,
+  LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE,
   updateLandlordProfileAcceptanceFields,
 } from '../../../lib/landlordServiceAgreement'
 import { messageFromSupabaseError } from '../../../lib/supabaseErrorMessage'
@@ -91,7 +92,7 @@ const FIELD_HINT_LABELS: Partial<Record<string, string>> = {
   residenceLocation: 'residence location',
   bio: 'bio',
   agreeTerms: 'Terms of Service acceptance',
-  agreeLandlordTerms: 'Landlord Service Agreement acceptance',
+  agreeLandlordTerms: `${LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE} acceptance`,
   agreeNonDiscrimination: 'Non-discrimination policy acceptance',
 }
 
@@ -175,7 +176,7 @@ function agreementsSectionFieldErrors(
     fieldErrors.agreeTerms = 'Terms of Service acceptance is required.'
   }
   if (!landlordServiceAgreementAccepted(profile) && !agreeLandlordTerms) {
-    fieldErrors.agreeLandlordTerms = 'Landlord Service Agreement acceptance is required.'
+    fieldErrors.agreeLandlordTerms = `${LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE} acceptance is required.`
   }
   if (!landlordNonDiscriminationAccepted(profile) && !agreeNonDiscrimination) {
     fieldErrors.agreeNonDiscrimination = 'Non-discrimination policy acceptance is required.'
@@ -1518,7 +1519,7 @@ function LsaLabel() {
         rel="noopener noreferrer"
         className="font-semibold text-[var(--quni-coral)] hover:underline"
       >
-        Landlord Service Agreement
+        {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
       </a>
     </>
   )

@@ -22,7 +22,7 @@ import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { marketplaceRoleForWrite } from '../lib/marketplaceRole'
-import { landlordServiceAgreementAcceptancePatch } from '../lib/landlordServiceAgreement'
+import { landlordServiceAgreementAcceptancePatch, LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../lib/landlordServiceAgreement'
 import { looksLikeMissingDbColumn } from '../lib/supabaseErrorMessage'
 
 type Choice = 'renter' | 'landlord'
@@ -429,7 +429,7 @@ export default function Onboarding() {
                 rel="noopener noreferrer"
                 className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
               >
-                Landlord Service Agreement
+                {LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
               </a>
             </span>
           </label>
