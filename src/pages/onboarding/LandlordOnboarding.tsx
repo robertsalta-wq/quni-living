@@ -33,6 +33,7 @@ import {
   type LandlordServiceTier,
 } from '../../lib/landlordServiceTier'
 import { useScrollToTopOnChange } from '../../hooks/useScrollToTopOnChange'
+import { NonDiscriminationPolicyModalLink } from '../../components/legal/NonDiscriminationPolicyModalLink'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -1140,14 +1141,7 @@ export default function LandlordOnboarding() {
                 />
                 <span>
                   I have read and agree to Quni&apos;s{' '}
-                  <a
-                    href="/non-discrimination"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
-                  >
-                    Non-Discrimination Policy
-                  </a>
+                  <NonDiscriminationPolicyModalLink>Non-Discrimination Policy</NonDiscriminationPolicyModalLink>
                 </span>
               </label>
 
