@@ -93,13 +93,15 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 
 ### Trust, Stripe & payments - Live
 
-- **Verified host** (core trust feature): landlords complete **Stripe Connect identity verification** (regulated KYC by Stripe, not manual Quni ID review) before they can **accept** any booking; when Stripe enables charges, a **Verified host** badge shows on profile and listings so renters get peace of mind
-- Renters may **browse, message, and submit booking requests** before a host finishes Stripe - only **acceptance** is gated on verification
-- **Renters**: no Quni booking/platform/service fees; booking **deposit** via Stripe (card hold/charge at application); ongoing rent via **Quni card** (Stripe Customer) or **bank transfer**; bond is tenancy money between parties (Quni is not the bond custodian)
-- **Landlords - Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
+- **Verified host** badge: shown when Stripe Connect has `charges_enabled` (optional Listing signal; required path on Managed)
+- **Quni Listing identity**: Quni verifies landlords (manual today). Listing **accept is not gated** on Stripe Identity or Connect
+- **Quni Managed identity**: landlords complete **Stripe Connect** KYC before they can **accept**, because rent is collected through Stripe
+- Renters may **browse, message, and submit booking requests** before host verification is complete
+- **Renters**: no Quni booking/platform/service fees. **Listing apply** has **no deposit hold**. **Managed apply** authorises a Stripe deposit hold. Bond and rent are tenancy money (Quni is not the bond custodian)
+- **Landlords - Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); **payee bank details** for the tenant; bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
 - **Landlords - Quni Managed**: **Stripe Connect** for identity + **weekly rent collection**; service fee deducted before payout to bank (~2–3 business days typical). Product UI is **feature-flagged** (`managed_tier_enabled`; default off → “coming soon” in marketing/listing tier picker until enabled)
 - Native apps (Capacitor iOS/Android) with push notifications where installed; primary product surface remains the web app
-- Declined bookings: deposit hold **released/refunded** via automated Stripe flows (often 5–7 business days)
+- Declined bookings: **Listing** has no renter deposit to release. **Managed** deposit hold is **released/refunded** via automated Stripe flows (often 5-7 business days)
 - Legal/info: Terms, Privacy, Refunds, How it works, FAQ, Contact, About, Landlord Service Agreement
 - Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) - no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
 
@@ -194,10 +196,10 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Move-in (min 7 days), lease length, **1–2 occupants**, **co-tenant** fields when 2
 - Optional parking surcharge; message to landlord
 - Rent: **Quni card** or **bank transfer**
-- Bond acknowledgment; Stripe **booking deposit**
+- Bond acknowledgment; Stripe **booking deposit** on **Managed** only. **Listing** apply does not authorise a deposit hold
 - **Booking draft** in localStorage; date overlap / conflict UI
 - Cannot book own listings (if user is also landlord)
-- **Listing-tier** properties: deposit/booking request allowed before host finishes Stripe identity; **Managed-tier** blocked until host Connect ready
+- **Listing-tier** properties: booking request with **no** Quni deposit hold; host Stripe Identity is **not** required to accept. **Managed-tier** blocked until host Connect ready; apply authorises a deposit hold
 - Statuses: `pending`, `pending_payment`, `pending_confirmation`, `awaiting_info`, `bond_pending`, `confirmed`, `active`, `declined`, `expired`, `payment_failed`, `cancelled`, `completed`, etc.
 - Tenant invite accept flow: `/invite/:token`
 
@@ -294,7 +296,7 @@ Per listing:
 - **Bond received from renter** (Listing); **Cancel booking**
 - Boarding/lodger: **Mark bond received** → **generate bond receipt**
 - **Tenancy agreement**: draft, sign, download + addendum (NSW / QLD / VIC packages)
-- Blockers: **Stripe identity** (`stripe_charges_enabled`), Listing saved card, billing module
+- Blockers: **Listing** saved card, payee bank details, NSW FT6600 compliance where applicable. **Managed** also needs Stripe identity (`stripe_charges_enabled`)
 - **Verified host** badge (Stripe-synced; admin manual override with lock)
 
 ### Bookings tab (dashboard) - Live
@@ -318,15 +320,15 @@ Per listing:
 ### Host identity & trust - Live
 
 - **Verified host** badge when Stripe Connect has `charges_enabled` (webhook + sync; flips off if Stripe disables)
-- **Accept booking** gated on Stripe identity for **both** Listing and Managed; Listing also needs saved card for acceptance fee
-- List, message, and receive booking **requests** without verification; only **accept** requires Stripe
+- **Accept booking**: Listing is **not** gated on Stripe identity; Listing needs saved card, payee bank details, and compliance fields. Managed **is** gated on Stripe Connect identity
+- List, message, and receive booking **requests** without Stripe; only **Managed accept** requires Connect
 - Admin **manual verified** toggle sets `admin_override_verified` so webhooks do not overwrite
 
 ### Payments & payouts - Live
 
 - **Stripe Connect** (Managed rent payouts; host identity KYC)
 - **Listing fee card**; charge on accept via `/api/confirm-booking` (3DS when needed)
-- Refund deposit on decline; Listing cancel with fee rules
+- Refund deposit on Managed decline; Listing cancel with fee rules
 
 ### Service tiers - Live / flagged
 
@@ -377,7 +379,7 @@ Per listing:
 
 | Date | Change |
 |------|--------|
-| 2026-07-25 | Full codebase rescan: profile-first onboarding redirects; renter situation hub + readiness chrome; landlord Overview/Profile tabs + Listing Health; invite tenant; shared app chrome / incomplete nudge; deprecate profile Bookings tab; Managed flag; reinstatement; T3 rooming gap; AI proofread |
+| 2026-09-04 | Listing legal copy: Quni verifies Listing hosts (not Stripe-before-accept); Listing apply has no deposit hold; Refunds matches $99 charge-on-accept |
 | 2026-06-02 | Trust/Stripe/payments section for AI; sample agreements; knowledge sync script |
 | 2026-05-29 | **Verified host** (Stripe-driven): accept gated on identity; Listing deposits without host Connect; FAQ/How it works/AI guardrails aligned |
 | 2026-05-27 | Initial inventory from codebase review |

@@ -15,7 +15,7 @@ export const RENTER_PLATFORM_TRUST_POINTS = [
   {
     id: 'verification',
     title: 'Both sides verified',
-    body: 'Landlords complete Stripe identity checks before they can accept a booking. Renters verify before a request is confirmed.',
+    body: 'Quni verifies landlords. Renters verify before they apply. On Quni Listing, rent and bond are paid directly to the landlord after accept.',
   },
   {
     id: 'agreements',

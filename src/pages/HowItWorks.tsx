@@ -36,7 +36,7 @@ const LISTING_STUDENT: Step[] = [
   {
     title: '2. Apply',
     description:
-      'Authorise a refundable deposit hold only. You pay no booking fee, platform fee, service fee, or surcharge to Quni - ever.',
+      'Apply through the platform. You pay no booking fee, platform fee, service fee, or surcharge to Quni - ever. Listing applications do not authorise a deposit hold.',
   },
   {
     title: '3. Complete tenancy directly',
@@ -53,7 +53,7 @@ const LISTING_LANDLORD: Step[] = [
   {
     title: '2. Accept a booking',
     description:
-      'Complete Stripe identity verification, then review the renter and confirm. The flat Listing acceptance fee is charged to your saved card when you accept (see Pricing). A Verified host badge appears once Stripe approves your account.',
+      'Quni verifies your identity. Review the renter and confirm. The flat Listing acceptance fee is charged to your saved card when you accept (see Pricing). You do not need Stripe Connect to receive rent.',
   },
   {
     title: '3. Run the tenancy',

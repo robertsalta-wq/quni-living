@@ -137,7 +137,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'bookings-cancellations-1',
         question: 'What if my booking is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank.',
+          'On Quni Listing, applying does not authorise a deposit hold, so a decline does not hold or refund any card payment. On Quni Managed, any authorised deposit hold is released or refunded per automated flows - typically 5-7 business days to your card or bank.',
       },
       {
         id: 'bookings-cancellations-2',

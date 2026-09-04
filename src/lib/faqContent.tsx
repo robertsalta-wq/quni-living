@@ -93,7 +93,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-landlord-trust',
         question: 'How do I know the landlord is legitimate?',
         answer:
-          'Hosts complete Stripe identity verification before they can accept a booking. When approved, they show a Verified host badge on their profile and listing. You can still browse, message, and apply beforehand.',
+          'Quni verifies landlords. On Quni Listing, that check is done by Quni and is not a Stripe payment setup. On Quni Managed, landlords also complete Stripe identity checks before they can accept, because rent is collected through Stripe. You can still browse, message, and apply beforehand.',
       },
       {
         id: 'students-agreements',
@@ -111,7 +111,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-declined',
         question: 'What if my booking request is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
+          'On Quni Listing, applying does not authorise a deposit hold, so a decline does not hold or refund any card payment. On Quni Managed, any authorised deposit hold is released or refunded per automated flows - typically 5-7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
       },
       {
         id: 'students-data-residency',
@@ -226,7 +226,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-host-verify',
         question: 'How does Quni verify landlords?',
         answer:
-          'Before you can accept a booking (Listing or Managed), you complete Stripe Connect identity verification. When Stripe enables charges on your account, you may show a Verified host badge on your profile and listings. Quni does not manually review profiles or check property titles. Quni Listing also requires a saved card for the acceptance fee when you confirm.',
+          'On Quni Listing, Quni verifies your identity. That check is done by Quni today; we may introduce an automated provider later. Listing accept also requires a saved card for the $99 fee and bank details the tenant will use to pay you. Stripe Connect is not required to receive rent. On Quni Managed, you complete Stripe Connect identity verification before you can accept, because rent is collected through Stripe. When Stripe enables charges, you may show a Verified host badge.',
       },
       {
         id: 'landlords-rent',
