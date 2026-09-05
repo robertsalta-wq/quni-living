@@ -1,11 +1,11 @@
 # QLD rooming ungate plan
 
-**Status:** Stage 1 approved to build on the accept-only gate as written. Stages 2 to 6 are not approved. Revised 5 Sep 2026 evening: Stage 3 prerequisite done; Stage 3 is a generator (not a static download).
+**Status:** Stage 1 is on Production. Stages 2, 4 and 6 are not approved. Stage 3's revised generator scope is accepted and **can ship immediately after Stage 1, before Stage 2.** Not approved to build until Rob says go. Revised 5 Sep 2026 night: reorder, delivery surface, LSA v1.1 2.2 instruction withdrawn.
 **Canonical rule:** [`docs/legal/qld-classification-rule.md`](legal/qld-classification-rule.md). Do not restate the test here.
 **What the router does today:** [`docs/qld-rooming-accommodation-audit.md`](qld-rooming-accommodation-audit.md).
 **Contradiction inventory:** [`docs/qld-rule-reconciliation.md`](qld-rule-reconciliation.md).
 
-No product code in this document except Stage 1, which is approved. Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
+No product code in this document except Stage 1, which has shipped. Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
 
 ---
 
@@ -200,7 +200,7 @@ The confirm API still returns `agreement_preflight_failed` with that reason if a
 
 ### Stage 2. Form inputs the rule and the signature need
 
-Not approved. Starts four to six days after Stage 1 is approved. Does not wait on the four form decisions.
+Not approved. Starts after Stage 3, not after Stage 1. Does not wait on the four form decisions.
 
 **DoD:** A QLD rooming listing can persist without the registered card, and the row is complete enough for later preflight:
 
@@ -228,39 +228,52 @@ Listing save and publish stay allowed (Stage 1). Accept stays gated until Stage 
 
 **Estimate:** 1 engineer-day (spent).
 
-### Stage 3. House-rules generator, two outputs, attestation as offence gate
+### Stage 3. House-rules generator, two outputs
 
-Not approved. This is the whole of Stage 3. There is no 3b. It is not a static download.
+Not approved. This is the whole of Stage 3. There is no 3b. It is not a static download. It does not wait on Stage 2.
 
 Source: [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md) only.
 
-**DoD:**
+**Why it can precede Stage 2.** The PDF body needs a common-areas description (Sch 7 r 3(5)) and optional extras under the seven s 268(1) headings. That is not Item 5, Item 11, Item 13.2, room identity, persons, utilities relabel, or the Level 1 lock. Those are R18 listing fields. The generator does not read them.
 
-- Before signature, the provider attests that he has given the resident a copy of the house rules. Item 17 is Yes only if that attestation is present. The generator refuses to run without it. Gate copy: entering the agreement without giving the rules is an offence under s 275 (10 penalty units). The refusal protects him from that offence. Do not present it as a form requirement.
+It needs the Stage 1 classifier only as a **gate**: show this for QLD rooming, not for entire-place 18a and not for on-site ≤3 occupancy. It does not need a new classifier input. The known studio/self-contained hole (open decision 1) is the same hole R18 has; shipping Stage 3 first does not create it.
+
+It does not reuse the listing form's existing House rules section (`house_rules` free text plus `property_house_rules` yes/no/approval chips). Those are marketing flags for every state. Schedule 7 must land in new fields. Do not write the generated instrument into `properties.house_rules`. For QLD rooming listings, the structured editor sits in that section and the free-text box is not the legal document.
+
+**Attestation is not in the early ship.** Item 17 attestation and "refuse to generate R18 without it" need a signing path. That path does not exist until Stage 4. Collecting "I have given the rules" on a listing with no resident is the wrong moment. Early Stage 3 is generate and download. Attestation moves to Stage 4 (1 engineer-day). Gate copy when it lands still names the s 275 offence.
+
+**DoD (early ship):**
+
 - Prescribed rules are locked text from Schedule 7. Golden tests match the source file. Do not paraphrase.
-- Schedule 7 rule 3(5) is an input. The provider describes the common areas. Generation refuses if that insert is blank.
-- Provider extras are a closed list. The landlord picks among the seven s 268(1) subjects (shared facilities, parking, alcohol or illegal drugs, smoking, noise, pets, guests) and writes under a heading. No open "add your own rules" box. No heading that is not in s 268(1). Empty heading means no extra rule on that subject. Prescribed rules still apply (s 266(2)).
-- Two outputs from the same content: a resident copy (s 275, given before the agreement; this one is appended to DocuSeal) and a wall-display copy (s 276, formatted to put up where residents will see it). Both offences are 10 penalty units. Tell the landlord the wall copy is for display, not a nice-to-have.
-- Carve-outs survive into the generated text: Sch 7 r 7(2) (no-animals rule does not apply to a working dog); Sch 7 r 3(2) (provider's obligation to keep common areas clean is subject to any agreement with the resident). Do not generate a rule assigning common-area cleaning to all residents. Form R18 clause 16(2) allows a cleaning agreement only for a common area used by the resident and a minority of other residents. If that agreement exists it belongs on R18, not as a house rule dumped onto everyone.
+- Schedule 7 rule 3(5) is an input. Generation refuses if that insert is blank.
+- Provider extras are a closed list. Seven s 268(1) subjects only. No open "add your own rules" box.
+- Two outputs from the same content: resident copy (s 275) and wall-display copy (s 276). Tell the landlord the wall copy is for display, not a nice-to-have.
+- Carve-outs survive: Sch 7 r 7(2) working dog; Sch 7 r 3(2) cleaning subject to agreement. Do not generate a rule assigning common-area cleaning to all residents.
 - Still not a premises object. No versioning, no s 270 to 274 clocks.
+- Persist on a QLD rooming listing when one exists, so Stage 4 can append the resident copy later.
 
-Out of this stage: optional PDF upload, free-text extras, change-of-rules product.
+Out of this stage: optional PDF upload, free-text extras, change-of-rules product, Item 17 attestation (Stage 4).
 
-**Unblocks:** Truthful Item 17. s 275 / s 276 copies in the landlord's hand. Stage 4 pack has the resident copy to append.
+**Delivery surface (accept is gated until Stage 6):**
 
-**Estimate:** 10 engineer-days.
+- **With a listing:** the listing House rules section when Stage 1 says QLD rooming. Download both PDFs on a live or draft listing. Not on booking review, not on accept.
+- **Without a listing:** a public generator page, no account. Same renderer. Common-areas insert, seven headings, optional premises line for the PDF header. No property row. No save. Disclaimer: not legal advice, Quni is not the agent, prescribed rules apply whether or not they use this. Rate-limit the POST. Preview-or-flag; 302 until Rob says go.
+
+The public page is the cold-DM surface. An account wall in front of the only thing we can offer Brisbane landlords who are not on Quni yet would kill the standalone value. It is worth the extra days. Optional "save to my listing" later is out.
+
+**Unblocks:** Compliant copies in the landlord's hand now, including people signing a paper R18 from the RTA. Stage 4 later appends the listing-bound resident copy.
+
+**Estimate:** 9 engineer-days listing-bound (attestation deferred) + **2 for the public page** = **11**.
 
 | Slice | Days | Why |
 |---|---|---|
-| Attestation + s 275 offence copy + refuse without it | 1 | Copy change on top of a small gate |
 | Schedule 7 locked renderer + golden verbatim tests | 2 | Source file is the test oracle |
-| Common-areas insert (r 3(5)), persist, refuse if blank | 1 | One required field, listing-scoped |
+| Common-areas insert (r 3(5)), persist on listing, refuse if blank | 1 | One required field, listing-scoped |
 | s 268(1) structured editor, seven headings, no free box | 2 | Listing UI plus JSON store. Structure is the offence control |
 | Two PDF layouts (resident copy and wall-display) | 2 | Same body, two jobs |
-| Carve-outs + negative test (no all-residents cleaning rule) | 1 | r 7(2) and r 3(2) must print; clause 16(2) must not become a house rule |
-| Listing persist + Stage 4 preflight hook | 1 | Common areas and extras on the row the generator reads |
-
-The jump from 5 is the generator (locked text + one insert + constrained extras + two PDFs). Dropping optional upload saves the old 2 days and removes a path that would let him write a s 268(4) offence.
+| Carve-outs + negative test (no all-residents cleaning rule) | 1 | r 7(2) and r 3(2) must print |
+| Listing persist (new columns, not `house_rules` text) | 1 | Stage 4 will read this row |
+| Public no-account page | 2 | Same renderer. Route, disclaimer, rate limit, no persist |
 
 ### Stage 4. Form R18, rooming addendum, signing flow
 
@@ -274,7 +287,7 @@ Fill:
 - Item 5 from the consent projection. No hardcoded channel
 - Item 11 method 1, method 2, **and** the direct-credit block
 - Item 13.2 from the optional date, else blank
-- Item 17 Yes only with attestation
+- Item 17 Yes only with attestation. Attestation is collected at accept/sign, not at listing. Gate copy names the s 275 offence. The generator refuses to run without it.
 
 New rooming addendum; **do not** reuse [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Clauses 2(4) to 2(6) are why special terms are allowed and why they lose to the Act and to standard terms.
 
@@ -284,7 +297,7 @@ The generator exists in this stage. The service matrix still withholds accept un
 
 **Unblocks:** A signing package that is the right form.
 
-**Estimate:** 12 engineer-days. Item 5 fill (many yes/no + address fields on the official PDF) plus wiring the resident house-rules PDF on the new send path. Always-on third document is simpler than the old optional-upload branch. The field-map / rename pass remains the bulk.
+**Estimate:** 13 engineer-days. Was 12. Plus the 1 day of attestation that left early Stage 3. Item 5 fill remains the bulk.
 
 ### Stage 5. Form R1. Out of v1
 
@@ -300,9 +313,12 @@ Not approved.
 
 **DoD:** [`LANDLORD_SERVICE_AGREEMENT_VERSION`](../src/lib/landlordServiceAgreement.ts) bumps to `listing-1.1` in the **same release** as accept becoming possible for QLD rooming. Reaccept modal. Package `supported: true`, generator `qld-form-r18`. Managed stays unsupported. Quang path: list → apply → accept → preflight → sign. Admin probe supported.
 
-LSA v1.1 prose is already drafted with a change log. Rob will hand it over at Stage 6. Clause 2.2 previously had to stop promising a house-rules document Quni prepares, because Stage 3 was a static download the landlord adapted. That is no longer the model. Stage 3 generates from Schedule 7 plus his common-areas insert and optional s 268(1) extras. Rob rewords 2.2 to match generation, not "bring your own document."
+LSA v1.1 prose is already drafted with a change log. Rob supplies the final text at Stage 6. Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
 
-Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
+The earlier instruction to reword clause 2.2 to "we do not prepare house rules" is **withdrawn**. Stage 3 generates. The original 2.2 posture stands, with two tightenings Rob will put in the v1.1 text:
+
+- **2.2:** make the two outputs explicit. "...prepared from the rules prescribed by law together with the additional rules you choose, in two forms: a copy to give your renter before they sign, and a copy formatted to display at the property."
+- **6.4:** add that the platform limits additional rules to the subjects the Act permits, while whether a rule is reasonable, and displaying the rules at the property, remain the landlord's. (v1.0 has no 6.4; this is a v1.1 add under tenancy documents.)
 
 **Unblocks:** Done.
 
@@ -312,21 +328,21 @@ Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
 
 ## Totals
 
-One engineer, no branches. Stage 3 prerequisite is done. Stage 3 generator does not start until Stage 2 can persist the common-areas insert (or Stage 3 lands that field itself).
+One engineer. Stage 1 has shipped. Stage 3 does not wait on Stage 2.
 
-| Stage | Engineer-days |
-|---|---|
-| 1 Accept-gate classifier | 5 |
-| 2 Listing + apply fields (incl. Item 5 events) | 10 |
-| 3 prerequisite (Schedule 7) | 1 (done) |
-| 3 House-rules generator, two outputs, offence-gate attestation | 10 |
-| 4 R18 + rooming addendum + Item 5 fill | 12 |
-| 6 LSA v1.1 + ungate | 4 |
-| **Total** | **42 engineer-days** |
+| Stage | Engineer-days | Order |
+|---|---|---|
+| 1 Accept-gate classifier | 5 (done) | Done |
+| 3 prerequisite (Schedule 7) | 1 (done) | Done |
+| 3 House-rules generator, two outputs, public page | 11 | Next |
+| 2 Listing + apply fields (incl. Item 5 events) | 10 | After 3 |
+| 4 R18 + rooming addendum + Item 5 fill + attestation | 13 | After 2 |
+| 6 LSA v1.1 + ungate | 4 | Last |
+| **Total** | **44 engineer-days** | |
 
-Was 37. Plus 5 on Stage 3 (generator and two PDFs, minus optional upload). Prerequisite 1 is spent and stays in the total.
+Was 42. Plus 2 for the public no-account page. Attestation moved from Stage 3 to Stage 4 (net zero).
 
-**Calendar: 9 weeks** from Stage 1 approval to Quang-done, if Stage 1 ships in week 1 and later stages run serially after it.
+**Calendar: 9 weeks** from Stage 1 (already shipped) to Quang-done if Stage 3 starts now and later stages run serially. Brisbane landlords can hold compliant copies after Stage 3, before R18 exists.
 
 ---
 
@@ -356,4 +372,4 @@ Accept-only gating is safe if Stage 1 actually breaks the 18a mapping. It is not
 
 ## Explicitly not this plan
 
-Stage 1 is approved to build. Nothing else is. No R18 generator, no Item 5 schema, no LSA publish, until a later brief says to build a named stage.
+Stage 1 has shipped. Stage 3 is accepted in scope and can precede Stage 2. Nothing else is approved to build until a later brief names the stage.
