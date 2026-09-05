@@ -1,6 +1,6 @@
 # QLD rooming ungate plan
 
-**Status:** Stage 1 approved to build on the accept-only gate as written. Stages 2 to 6 are not approved. Revised 5 Sep 2026 for Item 5, Item 11, Item 13.2, and optional house-rules attach.
+**Status:** Stage 1 approved to build on the accept-only gate as written. Stages 2 to 6 are not approved. Revised 5 Sep 2026 evening: Stage 3 prerequisite done; Stage 3 is a generator (not a static download).
 **Canonical rule:** [`docs/legal/qld-classification-rule.md`](legal/qld-classification-rule.md). Do not restate the test here.
 **What the router does today:** [`docs/qld-rooming-accommodation-audit.md`](qld-rooming-accommodation-audit.md).
 **Contradiction inventory:** [`docs/qld-rule-reconciliation.md`](qld-rule-reconciliation.md).
@@ -17,8 +17,8 @@ Quang Dinh lists a room at Jamboree Heights (QLD, landlord off site, two rooms l
 - Item 3 (Manager/provider's agent) blank. Never Quni. Quni never signs.
 - Item 5 filled from consents each party actually chose, not from a hardcoded email-Yes
 - Item 13.2 filled when the landlord knows the last increase date for the room, blank if not previously increased
-- Item 17 Yes, driven off a landlord attestation given before signature that he has house rules and has given them to the resident
-- House rules appended to the DocuSeal pack when the landlord uploaded them. Optional. Absence of the file does not block Item 17
+- Item 17 Yes, driven off a landlord attestation given before signature that he has given the house rules to the resident. The generator refuses to run without that attestation because entering the agreement without giving the rules is an offence (s 275, 10 penalty units), not only a breach of a standard term
+- Generated house rules in the pack: Schedule 7 locked text with the common-areas insert completed, plus any provider rules written under the s 268(1) headings. Resident copy appended to DocuSeal. Wall-display copy for the landlord to put up (s 276)
 
 Nothing wrong is produced. Form R1, R9, R12 and R13 stay with the landlord and the RTA's free forms, the same way Form 1a and Form 9 stay with a QLD general-tenancy landlord today. Quang with a bond lodges it (Form 2 copy we already give) and completes his own R1.
 
@@ -35,10 +35,11 @@ Ungated means nothing wrong is produced, not that everything is built. Anything 
 - Item 5 notice-consent capture (data). The notice *service* layer stays out
 - Item 11: at least two nominated payment methods **and** the direct-credit block (bank, BSB, account name, account number, payment reference). Section 98 and the form are "and", not "or"
 - Item 13.2 optional date: last rent increase for the room. Blank means not previously increased. Not a ledger
-- Landlord house-rules attestation (Item 17) plus a static downloadable template built from the prescribed schedule
-- Optional landlord upload of his adapted house rules, appended to the DocuSeal pack when present
+- Landlord house-rules attestation (Item 17). Gate copy names the s 275 offence
+- House-rules generator from [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md). Do not re-derive Schedule 7 or ss 266 to 276 from RTA fact sheets
+- Two house-rules outputs: resident copy (s 275) and wall-display copy (s 276)
 - R18 generator
-- DocuSeal package: R18 + rooming Quni addendum + house-rules PDF if uploaded
+- DocuSeal package: R18 + rooming Quni addendum + generated resident house-rules copy
 - Rooming variant of the Quni addendum
 - 2-week rent-in-advance cap
 - Existing Form 2 / RTA lodgement copy
@@ -48,7 +49,8 @@ Ungated means nothing wrong is produced, not that everything is built. Anything 
 
 - Form R1 generator. Follow-on brief, with R9, R12 and R13.
 - R9 / R12 / R13 notice engine and clocks. Item 5 *data* is in. Serving notices, deemed receipt, and withdrawal-as-a-product-flow are not.
-- Premises-level house-rules object, versioning, immutable issued versions, display copy, 7-day change notice, objection handling. Follow-on brief. Those are the landlord's obligations, discharged with his own document, and none of them happen before signature.
+- Premises-level house-rules object, versioning, immutable issued versions, 7-day change notice (s 270), objection and tribunal path (ss 271 to 274). Follow-on. A wall-display PDF at signature is in (s 276). Changing rules after residents are in is out.
+- Free-text "add your own rules" and optional upload of an adapted PDF. Both invite a s 268(4) offence. Provider extras are structured by the seven s 268(1) subjects only.
 - A room-level rent-increase **ledger**. Item 13.2 is a single optional date on the listing.
 - General-tenancy opt-in election (known path; Quni does not offer it).
 - VIC rooming.
@@ -74,7 +76,7 @@ Root cause: [`src/lib/pricing/index.ts`](../src/lib/pricing/index.ts) `resolvePr
 
 `property_group_id` groups duplicates for the landlord UI. It is not a legal entity. Independent second listings at the same address can miss the group. Quang's two rooms are exactly that shape.
 
-v1 does not try to share a premises object across them. Each listing carries its own house-rules attestation. The template is a static download. Optional upload, if used, is per listing. Two rooms, two attestations, one landlord.
+v1 does not try to share a premises object across them. Each listing carries its own house-rules attestation, common-areas insert, and optional s 268(1) extras. Two rooms, two generated packs, one landlord. He can type the same common-areas description twice. We do not join them.
 
 ---
 
@@ -87,17 +89,25 @@ flowchart TD
   classifier["qldClassification.ts cites canonical rule"]
   tierFn["resolvePropertyTierFromListing takes state"]
   router["resolveTenancyPackage QLD uses classifier not registration"]
-  attest["Landlord house-rules attestation"]
-  optionalRules["Optional landlord house-rules PDF"]
-  preflight["preflight: attestation present, Level 1, room id, item 5"]
-  package["DocuSeal: R18 + addendum + rules PDF if uploaded"]
+  attest["Landlord house-rules attestation (s 275 offence copy)"]
+  commonAreas["Schedule 7 r 3(5) common-areas insert"]
+  providerRules["Optional extras under s 268(1) headings only"]
+  rulesGen["House-rules generator from sch7.md"]
+  residentCopy["Resident copy (s 275)"]
+  wallCopy["Wall-display copy (s 276)"]
+  preflight["preflight: attestation, common areas, Level 1, room id, item 5"]
+  package["DocuSeal: R18 + addendum + resident house-rules copy"]
   listingFacts --> classifier
   classifier --> tierFn
   classifier --> router
   router --> preflight
   item5 --> preflight
   attest --> preflight
-  optionalRules --> package
+  commonAreas --> rulesGen
+  providerRules --> rulesGen
+  rulesGen --> residentCopy
+  rulesGen --> wallCopy
+  residentCopy --> package
   preflight --> package
 ```
 
@@ -107,13 +117,13 @@ During Stages 1 to 5 the router classifies QLD rooming correctly and returns `su
 
 ## Item 17 and the addendum, settled on the instrument
 
-**Item 17.** Form R18 standard terms clause 18(2) places the obligation to give the house rules on the **provider**, before entering into the agreement. Item 17 is the provider's statement about whether he discharged his own obligation, on his own form. Quni is not a party and does not sign. Item 17 is truthfully Yes when the landlord attests before signature that he has house rules and has given them to the resident. Nothing in the Act or the form requires Quni to hold or generate that document. Optional upload does not change that key: Item 17 follows the attestation, not the file.
+**Item 17.** Form R18 standard terms clause 18(2) places the obligation to give the house rules on the **provider**, before entering into the agreement. s 275 makes entering the agreement without having given a copy an **offence** (10 penalty units). Item 17 is the provider's statement that he discharged that obligation. Quni is not a party and does not sign. Item 17 is truthfully Yes when the landlord attests before signature that he has given the resident the generated house rules. The generator refuses to run without that attestation. Gate copy says that in those terms: we are stopping him committing an offence, not ticking a form box.
 
 **Addendum.** Form R18 standard terms clauses 2(4) to 2(6): the parties may agree special terms; a duty or entitlement under the Act overrides any term inconsistent with it; a standard term overrides an inconsistent special term. The Quni rooming addendum is subordinate special terms. That is stated on the instrument. The addendum must not tell the parties to use Form 9, Form 1a, or Form 14a. On this path those are R9 and R1, which the landlord downloads from the RTA when he needs them.
 
-**House rules in the pack.** Clause 2(3) makes house rules terms of the agreement. When the landlord uploads his adapted rules, they are appended so the resident signs a pack that contains those terms. When he does not, Item 17 can still be Yes on the attestation. Quni is not the author and not the administrator.
+**House rules in the pack.** Clause 2(3) makes house rules terms of the agreement. The generated resident copy is appended so the resident signs a pack that contains those terms. The wall-display copy is for s 276. Quni generates from the Schedule 7 source file plus the landlord's common-areas insert and any extras under the s 268(1) headings. Quni does not author extra subjects, does not version a premises object, and does not run the s 270 to 274 change process.
 
-Do not route these points to counsel. Cite the form.
+Do not route these points to counsel. Cite the form and the Act.
 
 ---
 
@@ -214,37 +224,43 @@ Listing save and publish stay allowed (Stage 1). Accept stays gated until Stage 
 
 ### Stage 3 prerequisite. Read the prescribed house rules schedule
 
-Not approved.
+**Done.** [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md) holds Schedule 7 verbatim plus Act ss 266 to 276, read from legislation.qld.gov.au, not from a fact sheet. That file is the source. Do not re-derive any of this from RTA summaries.
 
-Every version of the prescribed house rules we hold is an RTA fact sheet summary, not the instrument. A summary of a summary is how the four-room half-rule got into the router.
+**Estimate:** 1 engineer-day (spent).
 
-**DoD:** Read Schedule 7 of the Residential Tenancies and Rooming Accommodation Regulation 2025 (SL 2025-89) from the Queensland legislation text, not from an RTA fact sheet. Record the schedule text in the repo (for example `docs/legal/qld-prescribed-house-rules-sch7.md`) as the source the Stage 3 template is built from. This is a reading task, not a legal opinion.
+### Stage 3. House-rules generator, two outputs, attestation as offence gate
 
-Source of truth to open: [SL 2025-89](https://www.legislation.qld.gov.au/view/html/inforce/current/sl-2025-0089). AustLII mirror of Schedule 7 exists; prefer the legislation site.
+Not approved. This is the whole of Stage 3. There is no 3b. It is not a static download.
 
-**Unblocks:** Stage 3 template. Stage 3 does not start without this file.
-
-**Estimate:** 1 engineer-day.
-
-### Stage 3. Attestation, static template, optional attach
-
-Not approved. This is the whole of Stage 3. There is no 3b.
+Source: [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md) only.
 
 **DoD:**
 
-- Before signature, the provider attests that he has house rules and has given them to the resident.
-- Item 17 is driven off that attestation. Yes only if the attestation is present. The generator refuses to run without it.
-- A static house-rules template, built from the Stage 3 prerequisite schedule, covering the prescribed categories. The landlord downloads it and adapts it.
-- Optional upload: the landlord may attach his adapted house rules (PDF). When present, Stage 4 appends that file to the DocuSeal pack. When absent, the pack is R18 + addendum only. Item 17 still keys off the attestation, not off the upload.
-- Quni does not version the file, does not make a premises object, and does not author or administer the rules. It is a landlord-supplied attachment.
+- Before signature, the provider attests that he has given the resident a copy of the house rules. Item 17 is Yes only if that attestation is present. The generator refuses to run without it. Gate copy: entering the agreement without giving the rules is an offence under s 275 (10 penalty units). The refusal protects him from that offence. Do not present it as a form requirement.
+- Prescribed rules are locked text from Schedule 7. Golden tests match the source file. Do not paraphrase.
+- Schedule 7 rule 3(5) is an input. The provider describes the common areas. Generation refuses if that insert is blank.
+- Provider extras are a closed list. The landlord picks among the seven s 268(1) subjects (shared facilities, parking, alcohol or illegal drugs, smoking, noise, pets, guests) and writes under a heading. No open "add your own rules" box. No heading that is not in s 268(1). Empty heading means no extra rule on that subject. Prescribed rules still apply (s 266(2)).
+- Two outputs from the same content: a resident copy (s 275, given before the agreement; this one is appended to DocuSeal) and a wall-display copy (s 276, formatted to put up where residents will see it). Both offences are 10 penalty units. Tell the landlord the wall copy is for display, not a nice-to-have.
+- Carve-outs survive into the generated text: Sch 7 r 7(2) (no-animals rule does not apply to a working dog); Sch 7 r 3(2) (provider's obligation to keep common areas clean is subject to any agreement with the resident). Do not generate a rule assigning common-area cleaning to all residents. Form R18 clause 16(2) allows a cleaning agreement only for a common area used by the resident and a minority of other residents. If that agreement exists it belongs on R18, not as a house rule dumped onto everyone.
+- Still not a premises object. No versioning, no s 270 to 274 clocks.
 
-Out of this stage: premises-level object, versioning, immutable issued versions, display copy, 7-day change notice, objection handling.
+Out of this stage: optional PDF upload, free-text extras, change-of-rules product.
 
-**Optional attach estimate: 2 engineer-days.** Listing file input, store a path on the property, pass the bytes into the new Stage 4 DocuSeal `documents[]` as a third PDF when present. No extra sign tags. Stage 4 is a new send path, so this does not have to teach the existing Form 18a two-file webhook split a third branch. If it were a bolt-on to [`docuseal.ts`](../api/lib/docuseal.ts) 18a reconcile (agreement vs addendum signed paths), it would blow past two days. It is not that bolt-on. Keep it.
+**Unblocks:** Truthful Item 17. s 275 / s 276 copies in the landlord's hand. Stage 4 pack has the resident copy to append.
 
-**Unblocks:** Truthful Item 17. Credible Item 17 when the file is attached. Stage 4 preflight.
+**Estimate:** 10 engineer-days.
 
-**Estimate:** 5 engineer-days (3 attestation + template, 2 optional attach).
+| Slice | Days | Why |
+|---|---|---|
+| Attestation + s 275 offence copy + refuse without it | 1 | Copy change on top of a small gate |
+| Schedule 7 locked renderer + golden verbatim tests | 2 | Source file is the test oracle |
+| Common-areas insert (r 3(5)), persist, refuse if blank | 1 | One required field, listing-scoped |
+| s 268(1) structured editor, seven headings, no free box | 2 | Listing UI plus JSON store. Structure is the offence control |
+| Two PDF layouts (resident copy and wall-display) | 2 | Same body, two jobs |
+| Carve-outs + negative test (no all-residents cleaning rule) | 1 | r 7(2) and r 3(2) must print; clause 16(2) must not become a house rule |
+| Listing persist + Stage 4 preflight hook | 1 | Common areas and extras on the row the generator reads |
+
+The jump from 5 is the generator (locked text + one insert + constrained extras + two PDFs). Dropping optional upload saves the old 2 days and removes a path that would let him write a s 268(4) offence.
 
 ### Stage 4. Form R18, rooming addendum, signing flow
 
@@ -262,13 +278,13 @@ Fill:
 
 New rooming addendum; **do not** reuse [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Clauses 2(4) to 2(6) are why special terms are allowed and why they lose to the Act and to standard terms.
 
-DocuSeal package: R18 + addendum, plus the landlord house-rules PDF when uploaded. Emails and explainer say rooming accommodation / Form R18, not general tenancy. Sample PDF. Golden tests: Item 3 blank, Item 5 matches stored consents, Item 11 has two methods and the bank block, Item 13.2 blank unless dated, Item 17 Yes only with attestation, no "Form 18a", no Form 9 / 1a / 14a on this path.
+DocuSeal package: R18 + addendum + generated resident house-rules copy. Wall-display copy is a landlord download, not a DocuSeal signer document. Emails and explainer say rooming accommodation / Form R18, not general tenancy. Sample PDF. Golden tests: Item 3 blank, Item 5 matches stored consents, Item 11 has two methods and the bank block, Item 13.2 blank unless dated, Item 17 Yes only with attestation, house-rules resident copy present, no "Form 18a", no Form 9 / 1a / 14a on this path.
 
 The generator exists in this stage. The service matrix still withholds accept until Stage 6, or Stage 6 lands in the same release. Do not publish LSA v1.1 in this stage alone.
 
 **Unblocks:** A signing package that is the right form.
 
-**Estimate:** 12 engineer-days. The jump from 10 is Item 5 fill (many yes/no + address fields on the official PDF) plus wiring the optional third document on the new send path. The field-map / rename pass remains the bulk.
+**Estimate:** 12 engineer-days. Item 5 fill (many yes/no + address fields on the official PDF) plus wiring the resident house-rules PDF on the new send path. Always-on third document is simpler than the old optional-upload branch. The field-map / rename pass remains the bulk.
 
 ### Stage 5. Form R1. Out of v1
 
@@ -284,7 +300,7 @@ Not approved.
 
 **DoD:** [`LANDLORD_SERVICE_AGREEMENT_VERSION`](../src/lib/landlordServiceAgreement.ts) bumps to `listing-1.1` in the **same release** as accept becoming possible for QLD rooming. Reaccept modal. Package `supported: true`, generator `qld-form-r18`. Managed stays unsupported. Quang path: list → apply → accept → preflight → sign. Admin probe supported.
 
-LSA v1.1 prose is already drafted with a change log. Rob will hand it over at Stage 6. One clause (2.2, which currently promises a house rules document we prepare) needs to be reworded to match Stage 3's template-and-attestation model, and Rob will do that.
+LSA v1.1 prose is already drafted with a change log. Rob will hand it over at Stage 6. Clause 2.2 previously had to stop promising a house-rules document Quni prepares, because Stage 3 was a static download the landlord adapted. That is no longer the model. Stage 3 generates from Schedule 7 plus his common-areas insert and optional s 268(1) extras. Rob rewords 2.2 to match generation, not "bring your own document."
 
 Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
 
@@ -296,25 +312,29 @@ Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
 
 ## Totals
 
-One engineer, no branches, Stage 3 read overlapping Stage 2:
+One engineer, no branches. Stage 3 prerequisite is done. Stage 3 generator does not start until Stage 2 can persist the common-areas insert (or Stage 3 lands that field itself).
 
 | Stage | Engineer-days |
 |---|---|
 | 1 Accept-gate classifier | 5 |
 | 2 Listing + apply fields (incl. Item 5 events) | 10 |
-| 3 prerequisite (Schedule 7) | 1 |
-| 3 Attestation, template, optional attach | 5 |
+| 3 prerequisite (Schedule 7) | 1 (done) |
+| 3 House-rules generator, two outputs, offence-gate attestation | 10 |
 | 4 R18 + rooming addendum + Item 5 fill | 12 |
 | 6 LSA v1.1 + ungate | 4 |
-| **Total** | **37 engineer-days** |
+| **Total** | **42 engineer-days** |
 
-**Calendar: 8 weeks** from Stage 1 approval to Quang-done, if Stage 1 ships in week 1 and later stages run serially after it (Stage 3 read during Stage 2).
+Was 37. Plus 5 on Stage 3 (generator and two PDFs, minus optional upload). Prerequisite 1 is spent and stays in the total.
+
+**Calendar: 9 weeks** from Stage 1 approval to Quang-done, if Stage 1 ships in week 1 and later stages run serially after it.
 
 ---
 
 ## Single thing most likely to blow the estimate
 
-**The Form R18 AcroForm fill**, now including Item 5's consent matrix on the official PDF. Official PDF, field rename, golden tests, plus a new rooming addendum that must not inherit Form 9 / 1a / 14a from [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Form 18a already proved that path is a multi-week document job hiding inside "just fill the form." Premises-level house rules is not in this build. Optional attach stays inside two days because it rides a new DocuSeal path, not the 18a two-file split.
+**The Form R18 AcroForm fill**, including Item 5's consent matrix on the official PDF. Official PDF, field rename, golden tests, plus a new rooming addendum that must not inherit Form 9 / 1a / 14a from [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Form 18a already proved that path is a multi-week document job hiding inside "just fill the form."
+
+Second risk is Stage 3: two layouts plus a constrained editor. It stays at 10 only if we do not grow a premises object or a change-of-rules product. ss 269 to 274 stay out.
 
 ---
 
