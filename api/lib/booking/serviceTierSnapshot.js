@@ -20,13 +20,19 @@ export function computeServiceTierAtRequestSnapshot({
   state,
   propertyType,
   isRegisteredRoomingHouse,
+  roomsRentedToResidents,
   moduleEnabled,
   managedGloballyEnabled,
   managedOverrides,
   propertyServiceTier,
 }) {
   if (propertyServiceTier === 'listing' || propertyServiceTier === 'managed') return propertyServiceTier
-  const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
+  const pt = resolvePropertyTierFromListing({
+    state,
+    propertyType,
+    isRegisteredRoomingHouse,
+    roomsRentedToResidents,
+  })
   const a = resolveServiceTierAvailability(
     state,
     pt,
@@ -51,6 +57,7 @@ export function resolveEffectiveConfirmTier({
   state,
   propertyType,
   isRegisteredRoomingHouse,
+  roomsRentedToResidents,
   moduleEnabled,
   managedGloballyEnabled,
   managedOverrides,
@@ -63,6 +70,7 @@ export function resolveEffectiveConfirmTier({
     state,
     propertyType,
     isRegisteredRoomingHouse,
+    roomsRentedToResidents,
     moduleEnabled,
     managedGloballyEnabled,
     managedOverrides,
@@ -84,10 +92,16 @@ export function validateLandlordConfirmTierChoice(
     state,
     propertyType,
     isRegisteredRoomingHouse,
+    roomsRentedToResidents,
     propertyServiceTier,
   },
 ) {
-  const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
+  const pt = resolvePropertyTierFromListing({
+    state,
+    propertyType,
+    isRegisteredRoomingHouse,
+    roomsRentedToResidents,
+  })
   const a = resolveServiceTierAvailability(
     state,
     pt,

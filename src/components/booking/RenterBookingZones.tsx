@@ -62,6 +62,7 @@ type PropertyEmbed = Record<string, any> & {
   state?: string | null
   property_type?: string | null
   is_registered_rooming_house?: boolean | null
+  rooms_rented_to_residents?: number | null
   bond?: number | null
   bond_weeks?: number | null
   rent_per_week?: number | null
@@ -552,6 +553,7 @@ export default function RenterBookingZones({
                       state={property.state ?? ''}
                       propertyType={property.property_type ?? ''}
                       isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                      roomsRentedToResidents={property.rooms_rented_to_residents}
                       embedded
                     />
                     <BookingLeasePanel bookingId={booking.id} embedded />

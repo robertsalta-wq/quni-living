@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isQldRoomingFormR18Pending,
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
   type TenancyPackageInput,
@@ -149,11 +150,12 @@ describe('resolveTenancyPackage', () => {
   })
 
   describe('truth table - QLD', () => {
-    it('T1 private_room_landlord_on_site → qld-occupancy, bond scheme on (RTA)', () => {
+    it('on-site ≤3 rooms → qld-occupancy', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_on_site',
         is_registered_rooming_house: false,
+        rooms_rented_to_residents: 3,
       })
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T1')
@@ -170,10 +172,10 @@ describe('resolveTenancyPackage', () => {
       expect(r.unsupportedReason).toBeNull()
     })
 
-    it('T2 private_room_landlord_off_site → qld-form18a', () => {
+    it('entire_property → qld-form18a', () => {
       const r = pkg({
         state: 'qld',
-        property_type: 'private_room_landlord_off_site',
+        property_type: 'entire_property',
         is_registered_rooming_house: false,
       })
       expect(r.supported).toBe(true)
@@ -186,7 +188,32 @@ describe('resolveTenancyPackage', () => {
       expect(r.storagePaths?.signed).toBe('qld_form18a_general_tenancy_agreement_signed.pdf')
     })
 
-    it('T3 off_site + rooming house → deferred', () => {
+    it('entire_property with registered flag still → qld-form18a (registration is not an input)', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'entire_property',
+        is_registered_rooming_house: true,
+      })
+      expect(r.supported).toBe(true)
+      expect(r.generator).toBe('qld-form18a')
+      expect(r.tier).toBe('T2')
+    })
+
+    it('off-site room, unregistered → rooming, Form R18 not generated', () => {
+      const r = pkg({
+        state: 'qld',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+      })
+      expect(r.supported).toBe(false)
+      expect(r.tier).toBe('T3')
+      expect(r.generator).toBeNull()
+      expect(r.rules).toBeNull()
+      expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(r.ragState).toBe('QLD')
+    })
+
+    it('off-site room, registered flag true → same rooming outcome (registration is not an input)', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_off_site',
@@ -195,9 +222,53 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(false)
       expect(r.tier).toBe('T3')
       expect(r.generator).toBeNull()
-      expect(r.rules).toBeNull()
-      expect(r.unsupportedReason).toMatch(/not available/i)
-      expect(r.ragState).toBe('QLD')
+      expect(r.unsupportedReason).toMatch(/Form R18/)
+    })
+
+    it('shared_room → rooming, Form R18 not generated', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'shared_room',
+        is_registered_rooming_house: false,
+      })
+      expect(r.supported).toBe(false)
+      expect(r.tier).toBe('T3')
+      expect(r.unsupportedReason).toMatch(/Form R18/)
+    })
+
+    it('on-site 4 rooms → rooming, Form R18 not generated', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+        rooms_rented_to_residents: 4,
+      })
+      expect(r.supported).toBe(false)
+      expect(r.tier).toBe('T3')
+      expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(isQldRoomingFormR18Pending(r)).toBe(true)
+    })
+
+    it('isQldRoomingFormR18Pending is false for occupancy and 18a', () => {
+      expect(
+        isQldRoomingFormR18Pending(
+          pkg({
+            state: 'QLD',
+            property_type: 'entire_property',
+            is_registered_rooming_house: false,
+          }),
+        ),
+      ).toBe(false)
+      expect(
+        isQldRoomingFormR18Pending(
+          pkg({
+            state: 'QLD',
+            property_type: 'private_room_landlord_on_site',
+            rooms_rented_to_residents: 3,
+            is_registered_rooming_house: false,
+          }),
+        ),
+      ).toBe(false)
     })
   })
 

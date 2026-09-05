@@ -94,7 +94,7 @@ export async function runListingConfirmBooking(
       service_tier_at_request,
       move_in_date,
       start_date,
-      properties ( state, property_type, is_registered_rooming_house )
+      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents )
     `,
     )
     .eq('id', bookingId)

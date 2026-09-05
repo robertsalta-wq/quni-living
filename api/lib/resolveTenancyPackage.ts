@@ -6,6 +6,17 @@ import type { TenancyRules } from './tenancy/rules/types.js'
 import { nswTenancyRules } from './tenancy/rules/nsw.js'
 import { qldTenancyRules } from './tenancy/rules/qld.js'
 import { vicTenancyRules } from './tenancy/rules/vic.js'
+import {
+  classifyQldArrangement,
+  qldFactsFromListing,
+  QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
+  parseRoomsOccupiedOrAvailableToResidents,
+} from './tenancy/qldClassification.js'
+
+export {
+  QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
+  classifyQldArrangement,
+} from './tenancy/qldClassification.js'
 
 export type TenancyTier = 'T1' | 'T2' | 'T3'
 
@@ -18,8 +29,13 @@ export interface TenancyPackageInput {
   state: string
   /** properties.property_type */
   property_type: string
-  /** properties.is_registered_rooming_house */
+  /** properties.is_registered_rooming_house. NSW/VIC routing only. Not a QLD input. */
   is_registered_rooming_house: boolean
+  /**
+   * properties.rooms_rented_to_residents.
+   * QLD live-in branch only. Ignored off site and outside QLD.
+   */
+  rooms_rented_to_residents?: number | null
   /**
    * Tenancy start / agreement date for future rule versioning - v1 ignored.
    */
@@ -116,8 +132,57 @@ function unsupportedBase(
   }
 }
 
+function resolveQldTenancyPackage(
+  propertyType: string,
+  roomsRentedToResidents: unknown,
+  ragState: RagState,
+): TenancyPackageResult {
+  const facts = qldFactsFromListing({
+    propertyType,
+    roomsRentedToResidents,
+  })
+  if (!facts) {
+    return unsupportedBase('T2', 'unknown_property_type', ragState)
+  }
+  const outcome = classifyQldArrangement(facts)
+  if (outcome === 'general_tenancy') {
+    const rules = qldTenancyRules('T2')
+    return {
+      tier: 'T2',
+      supported: true,
+      generator: 'qld-form18a',
+      pdfKind: 'residential_tenancy_agreement',
+      rules,
+      signingPackageName: 'QLD Form 18a - General Tenancy Agreement',
+      storagePaths: qldForm18aPaths(),
+      ragState,
+      unsupportedReason: null,
+    }
+  }
+  if (outcome === 'outside_act') {
+    const rules = qldTenancyRules('T1')
+    return {
+      tier: 'T1',
+      supported: true,
+      generator: 'qld-occupancy',
+      pdfKind: 'occupancy_agreement',
+      rules,
+      signingPackageName: 'QLD occupancy agreement',
+      storagePaths: qldOccupancyPaths(),
+      ragState,
+      unsupportedReason: null,
+    }
+  }
+  return unsupportedBase('T3', QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON, ragState)
+}
+
+export function isQldRoomingFormR18Pending(pkg: TenancyPackageResult): boolean {
+  return !pkg.supported && pkg.ragState === 'QLD' && pkg.tier === 'T3'
+}
+
 /**
  * Truth table (property_type × rooming house × state) → package metadata.
+ * QLD ignores is_registered_rooming_house. Cite docs/legal/qld-classification-rule.md.
  * `date` is accepted for future versioned rules; v1 ignores it.
  */
 export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackageResult {
@@ -146,6 +211,10 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   ])
   if (!knownTypes.has(propertyType)) {
     return unsupportedBase('T2', 'unknown_property_type', ragState)
+  }
+
+  if (state === 'QLD') {
+    return resolveQldTenancyPackage(propertyType, input.rooms_rented_to_residents, ragState)
   }
 
   if (isRooming && propertyType !== 'private_room_landlord_off_site') {
@@ -192,20 +261,6 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         unsupportedReason: null,
       }
     }
-    if (state === 'QLD') {
-      const rules = qldTenancyRules('T1')
-      return {
-        tier: 'T1',
-        supported: true,
-        generator: 'qld-occupancy',
-        pdfKind: 'occupancy_agreement',
-        rules,
-        signingPackageName: 'QLD occupancy agreement',
-        storagePaths: qldOccupancyPaths(),
-        ragState,
-        unsupportedReason: null,
-      }
-    }
     const rules = vicTenancyRules('T1')
     return {
       tier: 'T1',
@@ -240,20 +295,6 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         unsupportedReason: null,
       }
     }
-    if (state === 'QLD') {
-      const rules = qldTenancyRules('T2')
-      return {
-        tier: 'T2',
-        supported: true,
-        generator: 'qld-form18a',
-        pdfKind: 'residential_tenancy_agreement',
-        rules,
-        signingPackageName: 'QLD Form 18a - General Tenancy Agreement',
-        storagePaths: qldForm18aPaths(),
-        ragState,
-        unsupportedReason: null,
-      }
-    }
     const rules = vicTenancyRules('T2')
     return {
       tier: 'T2',
@@ -281,6 +322,7 @@ export function tenancyPackageInputFromPropertyRow(
     state: typeof p.state === 'string' ? p.state : '',
     property_type: typeof p.property_type === 'string' ? p.property_type : '',
     is_registered_rooming_house: Boolean(p.is_registered_rooming_house),
+    rooms_rented_to_residents: parseRoomsOccupiedOrAvailableToResidents(p.rooms_rented_to_residents),
     date: opts?.date,
   }
 }

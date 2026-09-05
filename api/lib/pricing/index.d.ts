@@ -45,7 +45,9 @@ export function calculateBookingFeeCents(
   },
 ): Promise<number>
 
-export function resolvePropertyTierFromListing(
-  propertyType: string,
-  isRegisteredRoomingHouse: boolean,
-): 't1' | 't2' | 't3'
+export function resolvePropertyTierFromListing(input: {
+  state: string | null | undefined
+  propertyType: string | null | undefined
+  isRegisteredRoomingHouse?: boolean | null
+  roomsRentedToResidents?: unknown
+}): 't1' | 't2' | 't3'

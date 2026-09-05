@@ -27,6 +27,7 @@ export function landlordAcceptTierUiModel(args: {
   state: string | null | undefined
   propertyType: string | null | undefined
   isRegisteredRoomingHouse: boolean | null | undefined
+  roomsRentedToResidents?: unknown
   moduleEnabled: boolean
   managedGloballyEnabled?: boolean
   managedOverrides?: ManagedOverridesMap
@@ -35,10 +36,12 @@ export function landlordAcceptTierUiModel(args: {
   studentDepositAuthorized?: boolean
 }): LandlordAcceptTierUiModel {
   const propertyServiceTier = parseLandlordServiceTier(args.propertyServiceTier) ?? 'listing'
-  const propertyTier = resolvePropertyTierFromListing(
-    args.propertyType,
-    args.isRegisteredRoomingHouse,
-  ) as PropertyTier
+  const propertyTier = resolvePropertyTierFromListing({
+    state: args.state,
+    propertyType: args.propertyType,
+    isRegisteredRoomingHouse: args.isRegisteredRoomingHouse,
+    roomsRentedToResidents: args.roomsRentedToResidents,
+  }) as PropertyTier
   const resolverOptions: ResolveServiceTierOptions = {
     managedGloballyEnabled: args.managedGloballyEnabled,
     managedOverrides: args.managedOverrides,

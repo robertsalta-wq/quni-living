@@ -75,6 +75,17 @@ describe('serviceTierSnapshot', () => {
     expect(err?.code).toBe('tier_not_available')
   })
 
+  it('QLD off-site room fallback snapshot is listing (Managed unsupported)', () => {
+    expect(
+      computeServiceTierAtRequestSnapshot({
+        state: 'QLD',
+        propertyType: 'private_room_landlord_off_site',
+        isRegisteredRoomingHouse: false,
+        moduleEnabled: true,
+      }),
+    ).toBe('listing')
+  })
+
   it('computeServiceTierAtRequestSnapshot uses listing when Managed is globally disabled', () => {
     expect(
       computeServiceTierAtRequestSnapshot({

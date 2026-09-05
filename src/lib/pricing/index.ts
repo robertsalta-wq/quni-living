@@ -1,4 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  classifyQldArrangement,
+  qldFactsFromListing,
+  qldPropertyTierFromOutcome,
+} from '../../../api/lib/tenancy/qldClassification.js'
 import { apiUrl } from '../apiUrl'
 import type { Database } from '../database.types'
 
@@ -104,13 +109,28 @@ export function calculateBookingFeeCents(cell: PricingCell, weeklyRentCents: num
   return Math.round(fixed)
 }
 
+export type ResolvePropertyTierFromListingInput = {
+  state: string | null | undefined
+  propertyType: string | null | undefined
+  isRegisteredRoomingHouse?: boolean | null
+  roomsRentedToResidents?: unknown
+}
+
 export function resolvePropertyTierFromListing(
-  propertyType: string | null | undefined,
-  isRegisteredRoomingHouse: boolean | null | undefined,
+  input: ResolvePropertyTierFromListingInput,
 ): 't1' | 't2' | 't3' {
-  const pt = String(propertyType || '').trim()
-  if (pt === 'private_room_landlord_on_site') return 't1'
-  if (pt === 'private_room_landlord_off_site' && Boolean(isRegisteredRoomingHouse)) return 't3'
+  const state = String(input.state || '').trim().toUpperCase()
+  const propertyType = String(input.propertyType || '').trim()
+  if (state === 'QLD') {
+    const facts = qldFactsFromListing({
+      propertyType,
+      roomsRentedToResidents: input.roomsRentedToResidents,
+    })
+    if (!facts) return 't2'
+    return qldPropertyTierFromOutcome(classifyQldArrangement(facts))
+  }
+  if (propertyType === 'private_room_landlord_on_site') return 't1'
+  if (propertyType === 'private_room_landlord_off_site' && Boolean(input.isRegisteredRoomingHouse)) return 't3'
   return 't2'
 }
 

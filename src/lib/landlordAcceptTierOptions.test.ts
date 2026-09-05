@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { landlordAcceptTierUiModel } from './landlordAcceptTierOptions'
 
 describe('landlordAcceptTierUiModel', () => {
+  it('QLD off-site room: Listing available, Managed hidden', () => {
+    const m = landlordAcceptTierUiModel({
+      state: 'QLD',
+      propertyType: 'private_room_landlord_off_site',
+      isRegisteredRoomingHouse: false,
+      moduleEnabled: true,
+      propertyServiceTier: 'listing',
+    })
+    expect(m.showListing).toBe(true)
+    expect(m.showManaged).toBe(false)
+    expect(m.propertyTier).toBe('t3')
+    expect(m.defaultTier).toBe('listing')
+  })
+
   it('QLD Listing property: shows Listing with Managed upgrade, default Listing', () => {
     const m = landlordAcceptTierUiModel({
       state: 'QLD',

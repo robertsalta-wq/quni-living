@@ -481,7 +481,7 @@ async function handleListingBookingCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -553,6 +553,7 @@ async function handleListingBookingCommit(request, origin, body) {
     state: property.state,
     propertyType: property.property_type,
     isRegisteredRoomingHouse: property.is_registered_rooming_house,
+    roomsRentedToResidents: property.rooms_rented_to_residents,
     moduleEnabled: tierContext.moduleEnabled,
     managedGloballyEnabled: tierContext.managedGloballyEnabled,
     managedOverrides: tierContext.managedOverrides,
@@ -851,7 +852,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -969,6 +970,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     state: property.state,
     propertyType: property.property_type,
     isRegisteredRoomingHouse: property.is_registered_rooming_house,
+    roomsRentedToResidents: property.rooms_rented_to_residents,
     moduleEnabled: tierContext.moduleEnabled,
     managedGloballyEnabled: tierContext.managedGloballyEnabled,
     managedOverrides: tierContext.managedOverrides,

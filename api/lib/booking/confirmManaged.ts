@@ -90,7 +90,7 @@ export async function runManagedConfirmBooking(params) {
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier, bond, bond_weeks ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier, bond, bond_weeks ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -148,6 +148,10 @@ export async function runManagedConfirmBooking(params) {
       state: tenancyState,
       property_type: tenancyPt,
       is_registered_rooming_house: tenancyRooming,
+      rooms_rented_to_residents:
+        typeof propForTenancy.rooms_rented_to_residents === 'number'
+          ? propForTenancy.rooms_rented_to_residents
+          : null,
       date: moveIn || undefined,
     })
     if (!tenancyPackage.supported) {

@@ -2,11 +2,13 @@ import {
   tenancyAgreementExplainerCopy,
   type TenancyAgreementExplainerCopy,
 } from '../lib/tenancy/jurisdictionCopy'
+import { parseRoomsRentedToResidents } from '../lib/tenancy/qldBoarderLodger'
 
 type Props = {
   state: string
   propertyType: string
   isRegisteredRoomingHouse?: boolean
+  roomsRentedToResidents?: unknown
   className?: string
   /** Strip bordered card chrome when nested inside Section / another panel. */
   embedded?: boolean
@@ -17,6 +19,7 @@ export default function TenancyAgreementExplainer({
   state,
   propertyType,
   isRegisteredRoomingHouse = false,
+  roomsRentedToResidents,
   className = '',
   embedded = false,
 }: Props) {
@@ -24,6 +27,7 @@ export default function TenancyAgreementExplainer({
     state,
     property_type: propertyType,
     is_registered_rooming_house: isRegisteredRoomingHouse,
+    rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
   })
 
   if (!copy) return null

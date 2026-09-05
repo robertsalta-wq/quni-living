@@ -36,7 +36,11 @@ import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
-import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
+import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import {
+  qldRoomingAcceptGateHeadline,
+  qldRoomingAcceptGateParagraphs,
+} from '../../lib/tenancy/qldRoomingCopy'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
@@ -291,6 +295,7 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state,
       propertyType: data.property.property_type,
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
+      roomsRentedToResidents: data.property.rooms_rented_to_residents,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
       managedGloballyEnabled: serviceTierResolverOptions.managedGloballyEnabled,
       managedOverrides: serviceTierResolverOptions.managedOverrides,
@@ -302,6 +307,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.state,
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
+    data?.property?.rooms_rented_to_residents,
     data?.property?.service_tier,
     data?.booking?.stripe_payment_intent_id,
     data?.booking?.service_tier_at_request,
@@ -346,6 +352,7 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? 'NSW',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       date: moveIn,
     })
     if (!pkg.supported) return null
@@ -361,12 +368,37 @@ export default function LandlordBookingReviewPage() {
     data?.property?.state,
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
+    data?.property?.rooms_rented_to_residents,
     data?.property?.qld_bond_remittance_preference,
+  ])
+
+  const qldRoomingAcceptBlocked = useMemo(() => {
+    if (!data?.property) return false
+    const moveIn =
+      (typeof data.booking.move_in_date === 'string' && data.booking.move_in_date.trim()) ||
+      (typeof data.booking.start_date === 'string' && data.booking.start_date.trim()) ||
+      undefined
+    const pkg = resolveTenancyPackage({
+      state: data.property.state ?? '',
+      property_type: data.property.property_type ?? '',
+      is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+      date: moveIn,
+    })
+    return isQldRoomingFormR18Pending(pkg)
+  }, [
+    data?.booking?.move_in_date,
+    data?.booking?.start_date,
+    data?.property?.state,
+    data?.property?.property_type,
+    data?.property?.is_registered_rooming_house,
+    data?.property?.rooms_rented_to_residents,
   ])
 
   const canConfirm =
     !!data &&
     !!tierModel &&
+    !qldRoomingAcceptBlocked &&
     (tierModel.showListing || tierModel.showManaged) &&
     landlordBookingConfirmAllowed({
       bookingStatus: data.booking.status,
@@ -436,7 +468,7 @@ export default function LandlordBookingReviewPage() {
   )
 
   const onConfirm = useCallback(async () => {
-    if (!bookingId) return
+    if (!bookingId || qldRoomingAcceptBlocked) return
     setActionError(null)
     setConfirmPhase('submitting')
     setActionBusy(true)
@@ -472,7 +504,7 @@ export default function LandlordBookingReviewPage() {
       setConfirmPhase('idle')
       setActionBusy(false)
     }
-  }, [bookingId, navigate, reload, selectedConfirmTier])
+  }, [bookingId, navigate, qldRoomingAcceptBlocked, reload, selectedConfirmTier])
 
   const onDecline = useCallback(async () => {
     if (!bookingId) return
@@ -1213,11 +1245,22 @@ export default function LandlordBookingReviewPage() {
                 } else if (primaryActionKind === 'accept-decline-info') {
                   primaryBlock = (
                     <div className="flex flex-col gap-2.5">
+                      {qldRoomingAcceptBlocked ? (
+                        <div className="rounded-admin-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                          <p className="font-semibold">{qldRoomingAcceptGateHeadline()}</p>
+                          {qldRoomingAcceptGateParagraphs().map((para) => (
+                            <p key={para} className="mt-2 leading-relaxed">
+                              {para}
+                            </p>
+                          ))}
+                        </div>
+                      ) : null}
                       <button
                         type="button"
                         disabled={!canConfirm || actionBusy}
                         aria-disabled={!canConfirm || actionBusy}
                         onClick={() => {
+                          if (qldRoomingAcceptBlocked) return
                           if (!canConfirm) {
                             document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             return
@@ -1243,7 +1286,7 @@ export default function LandlordBookingReviewPage() {
                           'Accept as Quni Managed'
                         )}
                       </button>
-                      {!canConfirm && !actionBusy && showReadinessDriver ? (
+                      {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked ? (
                         <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
                       ) : null}
                       <button
@@ -1703,6 +1746,7 @@ export default function LandlordBookingReviewPage() {
                         state={property.state ?? ''}
                         propertyType={property.property_type ?? ''}
                         isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                        roomsRentedToResidents={property.rooms_rented_to_residents}
                         embedded
                       />
                       <BookingLeasePanel
