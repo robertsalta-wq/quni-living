@@ -26,6 +26,23 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.body).toContain('Rooming Accommodation Act 2008')
   })
 
+  it('returns null for QLD off-site room (Form R18 not generated)', () => {
+    expect(
+      tenancyAgreementExplainerCopy({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+      }),
+    ).toBeNull()
+    expect(
+      tenancyAgreementExplainerCopy({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: true,
+      }),
+    ).toBeNull()
+  })
+
   it('returns NSW T3 boarding-house copy', () => {
     const copy = tenancyAgreementExplainerCopy({
       state: 'NSW',
@@ -36,12 +53,23 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.body).toContain('Boarding Houses Act 2012')
   })
 
-  it('returns null for QLD T3 (still deferred)', () => {
+  it('returns QLD occupancy copy for on-site ≤3 rooms', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'QLD',
+      property_type: 'private_room_landlord_on_site',
+      is_registered_rooming_house: false,
+      rooms_rented_to_residents: 3,
+    })
+    expect(copy?.headline).toContain('occupancy agreement')
+  })
+
+  it('returns null for QLD on-site 4+ (Form R18 not generated)', () => {
     expect(
       tenancyAgreementExplainerCopy({
         state: 'QLD',
-        property_type: 'private_room_landlord_off_site',
-        is_registered_rooming_house: true,
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+        rooms_rented_to_residents: 4,
       }),
     ).toBeNull()
   })

@@ -20,7 +20,7 @@ export async function resolveListingTenancyGenerator(
       id,
       property_id,
       move_in_date,
-      properties ( state, property_type, is_registered_rooming_house )
+      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents )
     `,
     )
     .eq('id', bookingId)

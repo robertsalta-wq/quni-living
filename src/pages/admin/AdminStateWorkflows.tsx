@@ -155,10 +155,10 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 2',
     rowLabel: 'QLD',
     section: 'supported',
-    intent: 'Residential tenancy–style (off-site / entire / shared)',
+    intent: 'General tenancy (entire place) - Form 18a',
     input: {
       state: 'QLD',
-      property_type: 'private_room_landlord_off_site',
+      property_type: 'entire_property',
       is_registered_rooming_house: false,
     },
   },
@@ -167,11 +167,11 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'QLD',
     section: 'supported',
-    intent: 'Registered rooming house - deferred',
+    intent: 'Rooming accommodation (off-site room) - Form R18 not generated yet',
     input: {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
-      is_registered_rooming_house: true,
+      is_registered_rooming_house: false,
     },
   },
   {

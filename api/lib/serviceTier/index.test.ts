@@ -36,6 +36,15 @@ describe('resolveServiceTierAvailability', () => {
     })
   })
 
+  it('QLD T3 → Listing available, Managed unsupported', () => {
+    expect(resolveServiceTierAvailability('QLD', 't3')).toEqual({
+      listing: 'available',
+      managed: 'unsupported',
+      notes:
+        'Quni does not generate Form R18 yet. Listing is available; you cannot accept an applicant until that form ships.',
+    })
+  })
+
   it('forces Managed gated when managedGloballyEnabled is false', () => {
     expect(resolveServiceTierAvailability('QLD', 't2', { managedGloballyEnabled: false })).toEqual({
       listing: 'available',

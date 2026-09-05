@@ -98,6 +98,7 @@ export function maxBondWeeksForProperty(property) {
     state: typeof property.state === 'string' ? property.state : '',
     property_type: typeof property.property_type === 'string' ? property.property_type : '',
     is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    rooms_rented_to_residents: property.rooms_rented_to_residents,
   })
   if (r.supported && r.tier === 'T3') return T3_MAX_SECURITY_DEPOSIT_WEEKS
   return MAX_BOND_WEEKS

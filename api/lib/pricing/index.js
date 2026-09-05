@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { isLandlordFeeExempt } from './resolvePlatformFee.js'
+import {
+  classifyQldArrangement,
+  qldFactsFromListing,
+  qldPropertyTierFromOutcome,
+} from '../tenancy/qldClassification.js'
 
 const VALID_PROPERTY_TIERS = new Set(['t1', 't2', 't3'])
 const VALID_SERVICE_TIERS = new Set(['listing', 'managed'])
@@ -160,10 +165,20 @@ export async function calculateBookingFeeCents(cell, weeklyRentCents, leaseWeeks
   return Math.round(fixed)
 }
 
-export function resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse) {
-  const pt = String(propertyType || '').trim()
-  if (pt === 'private_room_landlord_on_site') return 't1'
-  if (pt === 'private_room_landlord_off_site' && Boolean(isRegisteredRoomingHouse)) return 't3'
+export function resolvePropertyTierFromListing(input) {
+  const args = input && typeof input === 'object' && !Array.isArray(input) ? input : {}
+  const state = String(args.state || '').trim().toUpperCase()
+  const propertyType = String(args.propertyType || '').trim()
+  if (state === 'QLD') {
+    const facts = qldFactsFromListing({
+      propertyType,
+      roomsRentedToResidents: args.roomsRentedToResidents,
+    })
+    if (!facts) return 't2'
+    return qldPropertyTierFromOutcome(classifyQldArrangement(facts))
+  }
+  if (propertyType === 'private_room_landlord_on_site') return 't1'
+  if (propertyType === 'private_room_landlord_off_site' && Boolean(args.isRegisteredRoomingHouse)) return 't3'
   return 't2'
 }
 

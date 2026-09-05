@@ -64,14 +64,16 @@ import {
   parseRoomsRentedToResidents,
   qldOnSiteListingCallout,
   qldRoomsRentedFieldError,
+  qldRoomsRentedRoomingNotice,
 } from '../../lib/tenancy/qldBoarderLodger'
+import { qldOffSiteRoomListingNote } from '../../lib/tenancy/qldRoomingCopy'
 import {
   QLD_BOND_REMITTANCE_OPTIONS,
   parseQldBondRemittancePreference,
   type QldBondRemittancePreference,
 } from '../../lib/tenancy/qldBondRemittance'
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
-import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
   EMPTY_NSW_T3_SHARED_AREAS,
   emptyNswT3ChargeRow,
@@ -978,6 +980,13 @@ export default function LandlordPropertyFormPage() {
         : null,
     [qldOnSiteBoarderLodger, roomsRentedToResidents],
   )
+  const qldRoomsRentedNotice = useMemo(
+    () =>
+      qldOnSiteBoarderLodger
+        ? qldRoomsRentedRoomingNotice(parseRoomsRentedToResidents(roomsRentedToResidents))
+        : null,
+    [qldOnSiteBoarderLodger, roomsRentedToResidents],
+  )
 
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
@@ -1066,8 +1075,14 @@ export default function LandlordPropertyFormPage() {
   }, [rentPerWeek, maxOccupants, coupleSurchargePerWeek, parkingSurchargePerWeek, parkingAvailable])
 
   const resolvedPropertyTier = useMemo(
-    () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
-    [propertyListingType, isRegisteredRoomingHouse],
+    () =>
+      resolvePropertyTierFromListing({
+        state,
+        propertyType: propertyListingType,
+        isRegisteredRoomingHouse,
+        roomsRentedToResidents: parseRoomsRentedToResidents(roomsRentedToResidents),
+      }),
+    [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents],
   )
   const isNswT3Listing = useMemo(
     () =>
@@ -1106,14 +1121,16 @@ export default function LandlordPropertyFormPage() {
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
   const showQldBondRemittance = useMemo(() => {
-    if ((state.trim() || '').toUpperCase() !== 'QLD' || isRegisteredRoomingHouse) return false
+    if ((state.trim() || '').toUpperCase() !== 'QLD') return false
     const pkg = resolveTenancyPackage({
       state: 'QLD',
       property_type: propertyListingType,
       is_registered_rooming_house: false,
+      rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
     })
+    if (isQldRoomingFormR18Pending(pkg)) return true
     return pkg.supported && pkg.rules.bond.schemeApplies
-  }, [state, propertyListingType, isRegisteredRoomingHouse])
+  }, [state, propertyListingType, roomsRentedToResidents])
   const showListingPayeeBankDetails = useMemo(
     () => listingTierRequiresPropertyPayoutDetails(serviceTier),
     [serviceTier],
@@ -3760,6 +3777,11 @@ export default function LandlordPropertyFormPage() {
                     )
                   })}
                 </div>
+                {(state.trim() || '').toUpperCase() === 'QLD' &&
+                (accommodationChoice === 'private_room_landlord_off_site' ||
+                  accommodationChoice === 'shared_room') ? (
+                  <p className="text-sm text-amber-950 leading-relaxed">{qldOffSiteRoomListingNote()}</p>
+                ) : null}
               </div>
               {showRoomForRentSelect(accommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
@@ -3771,8 +3793,7 @@ export default function LandlordPropertyFormPage() {
                       Rooms you rent to residents in this home
                     </label>
                     <p className="text-xs text-gray-600 mt-0.5 mb-1">
-                      Include this listing and any other bedrooms you rent to residents while you live on site (max 3
-                      for the usual boarder/lodger exemption under s 43).
+                      Include this listing and any other rooms you rent to residents while you live on site. Do not count the room you sleep in. Three or fewer is the usual s 43 boarder/lodger path. Four or more is rooming accommodation.
                     </p>
                     <input
                       id="pf-qld-rooms-rented"
@@ -3787,6 +3808,11 @@ export default function LandlordPropertyFormPage() {
                     {qldRoomsRentedError ? (
                       <p className="mt-2 text-sm text-amber-800" role="alert">
                         {qldRoomsRentedError}
+                      </p>
+                    ) : null}
+                    {qldRoomsRentedNotice ? (
+                      <p className="mt-2 text-sm text-amber-900" role="status">
+                        {qldRoomsRentedNotice}
                       </p>
                     ) : null}
                   </div>

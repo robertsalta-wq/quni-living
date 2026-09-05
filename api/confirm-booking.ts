@@ -170,7 +170,7 @@ export default async function handler(req, res) {
     const { data: propertyLite, error: propLiteErr } = await admin
       .from('properties')
       .select(
-        `state, property_type, is_registered_rooming_house, service_tier,
+        `state, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier,
         smoke_alarm_type,
         smoke_alarm_battery_tenant_replaceable,
         smoke_alarm_battery_type,
@@ -197,6 +197,7 @@ export default async function handler(req, res) {
       state: propertyLite.state,
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
+      roomsRentedToResidents: propertyLite.rooms_rented_to_residents,
       moduleEnabled: tierContext.moduleEnabled,
       managedGloballyEnabled: tierContext.managedGloballyEnabled,
       managedOverrides: tierContext.managedOverrides,
@@ -210,6 +211,7 @@ export default async function handler(req, res) {
       state: propertyLite.state,
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
+      roomsRentedToResidents: propertyLite.rooms_rented_to_residents,
       propertyServiceTier: propertyLite.service_tier,
     })
     if (tierErr) {

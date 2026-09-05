@@ -4,5 +4,9 @@ export function qldServiceTierAvailability(propertyTier: PropertyTier): ServiceT
   if (propertyTier === 't1' || propertyTier === 't2') {
     return { listing: 'available', managed: 'available' }
   }
-  return { listing: 'unsupported', managed: 'unsupported', notes: 'Quni does not support rooming accommodation (registered rooming houses) yet.' }
+  return {
+    listing: 'available',
+    managed: 'unsupported',
+    notes: 'Quni does not generate Form R18 yet. Listing is available; you cannot accept an applicant until that form ships.',
+  }
 }

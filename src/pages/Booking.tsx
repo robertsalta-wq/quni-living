@@ -54,7 +54,8 @@ import {
   fallbackBondAuthorityPublicLine,
   fallbackSchemeLodgementDeadlineBold,
 } from '../lib/tenancy/bondCopy'
-import { resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
+import { qldRoomingApplyHoldingCopy } from '../lib/tenancy/qldRoomingCopy'
 import { statutoryRentBankTransferCopy, normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
 import {
   earliestSelectableMoveInIso,
@@ -954,10 +955,12 @@ export default function Booking() {
     let cancelled = false
     void (async () => {
       try {
-        const propertyTier = resolvePropertyTierFromListing(
-          property.property_type,
-          property.is_registered_rooming_house,
-        ) as 't1' | 't2' | 't3'
+        const propertyTier = resolvePropertyTierFromListing({
+          state: property.state,
+          propertyType: property.property_type,
+          isRegisteredRoomingHouse: property.is_registered_rooming_house,
+          roomsRentedToResidents: property.rooms_rented_to_residents,
+        }) as 't1' | 't2' | 't3'
         const cell = await fetchPricingForPropertyTier(propertyTier, 'managed')
         if (!cancelled) setManagedPricingCell(cell)
       } catch {
@@ -1723,10 +1726,13 @@ export default function Booking() {
         state: property?.state ?? '',
         property_type: property?.property_type ?? '',
         is_registered_rooming_house: Boolean(property?.is_registered_rooming_house),
+        rooms_rented_to_residents: property?.rooms_rented_to_residents,
         date: moveIn || undefined,
       }),
-    [property?.state, property?.property_type, property?.is_registered_rooming_house, moveIn],
+    [property?.state, property?.property_type, property?.is_registered_rooming_house, property?.rooms_rented_to_residents, moveIn],
   )
+
+  const qldRoomingApplyHold = tenancyPackage ? isQldRoomingFormR18Pending(tenancyPackage) : false
 
   const bondRegulatoryCopy = useMemo(() => {
     if (!tenancyPackage.supported) {
@@ -1902,6 +1908,9 @@ export default function Booking() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Apply</p>
+          {qldRoomingApplyHold ? (
+            <p className="mt-2 text-sm text-amber-950 leading-relaxed">{qldRoomingApplyHoldingCopy()}</p>
+          ) : null}
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mt-1">{property.title}</h1>
           {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
           <p className="text-lg font-semibold text-gray-900 mt-2">
