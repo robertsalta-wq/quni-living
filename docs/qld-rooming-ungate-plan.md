@@ -246,7 +246,7 @@ Source: [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-h
 - Still not a premises object. No versioning, no s 270 to 274 clocks.
 - Persist on a QLD rooming listing when one exists, in `qld_rooming_house_rules`, not `house_rules`.
 - Listing House rules section when Stage 1 says QLD rooming. Download both PDFs. Not on booking review or accept.
-- Public no-account page at `/qld-house-rules`. Same renderer. Preview-or-flag; Production 302 until Rob says go.
+- Public no-account page at `/qld-house-rules`. Same renderer. Live on Production. Kill switch `QLD_HOUSE_RULES_PAGE_ENABLED=false` 302s (never 301).
 
 Out of this stage: optional PDF upload, free-text extras, change-of-rules product, Item 17 attestation (Stage 4).
 
