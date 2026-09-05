@@ -1,3 +1,4 @@
+/** Per isolate. Not a global cap. Bots that rotate instances bypass this. */
 const WINDOW_MS = 15 * 60 * 1000
 const MAX_HITS = 20
 

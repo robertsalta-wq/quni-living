@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import {
@@ -11,10 +11,15 @@ import {
   type QldHouseRuleExtras,
   type QldHouseRuleSubject,
 } from '../lib/tenancy/qldHouseRules'
+import { trackVercelEvent } from '../lib/vercelAnalytics'
+
+const PAGE_TITLE = 'Queensland rooming accommodation house rules'
+const PAGE_DESCRIPTION =
+  'Generate Queensland prescribed house rules for rooming accommodation. Download a resident copy and a wall-display copy. Free, no account, nothing saved.'
 
 /**
  * Public QLD rooming house-rules generator. No account. No save.
- * Preview-gated; Production 302s away until Rob says go.
+ * Not in nav. Indexable. Kill switch: QLD_HOUSE_RULES_PAGE_ENABLED=false (302).
  */
 export default function QldHouseRulesPage() {
   const [livesAtPremises, setLivesAtPremises] = useState<boolean | null>(null)
@@ -29,6 +34,11 @@ export default function QldHouseRulesPage() {
     roomsLetToResidents: roomsParsed,
   })
 
+  useEffect(() => {
+    if (access === 'ask') return
+    trackVercelEvent('qld_hr_classified', { outcome: access })
+  }, [access])
+
   function onExtraChange(subject: QldHouseRuleSubject, value: string) {
     setExtras((prev) => {
       const next = { ...prev }
@@ -41,12 +51,12 @@ export default function QldHouseRulesPage() {
   return (
     <div className="bg-[var(--quni-surface-1)]">
       <Seo
-        title="QLD rooming house rules"
-        description="Generate Queensland prescribed house rules for rooming accommodation: a resident copy and a wall-display copy."
-        noindex
+        title={PAGE_TITLE}
+        description={PAGE_DESCRIPTION}
+        canonicalPath="/qld-house-rules"
       />
       <PageHeroBand
-        title="QLD rooming house rules"
+        title={PAGE_TITLE}
         subtitle="For Queensland rooming accommodation: a room with shared facilities. Two PDFs: one to give the proposed resident, one to put on the wall."
       />
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -132,6 +142,7 @@ export default function QldHouseRulesPage() {
                 commonAreas={commonAreas}
                 extras={extras}
                 premisesLine={premisesLine}
+                onGenerated={(variant) => trackVercelEvent('qld_hr_pdf', { variant })}
               />
             </div>
           </>

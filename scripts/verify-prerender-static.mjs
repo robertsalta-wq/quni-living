@@ -90,11 +90,29 @@ assert(existsSync(path.join(dist, 'list-your-room/index.html')), 'missing list-y
   }
 }
 
+assert(existsSync(path.join(dist, 'qld-house-rules/index.html')), 'missing qld-house-rules/index.html')
+{
+  const html = loadDistHtml('qld-house-rules/index.html')
+  if (html) {
+    assertPrerenderedPage('qld-house-rules/index.html', {
+      titleSnippet: 'Queensland rooming accommodation house rules',
+      bodySnippet: 'Does the provider live at the rental premises',
+    })
+    assert(!html.includes('noindex'), 'qld-house-rules: must be indexable')
+    assert(
+      html.includes('content="https://quni.com.au/qld-house-rules"'),
+      'qld-house-rules: canonical/og:url must be /qld-house-rules',
+    )
+    console.log('Static prerender check: dist/qld-house-rules/index.html')
+  }
+}
+
 const llms = path.join(dist, 'llms.txt')
 assert(existsSync(llms), 'missing dist/llms.txt (copy from public/)')
 if (existsSync(llms)) {
   const text = readFileSync(llms, 'utf8')
   assert(text.includes('Sitemap: https://quni.com.au/sitemap.xml'), 'llms.txt: missing sitemap line')
+  assert(text.includes('https://quni.com.au/qld-house-rules'), 'llms.txt: missing qld-house-rules')
   assert(!text.includes('<!doctype html>'), 'llms.txt: HTML leaked into text file')
 }
 

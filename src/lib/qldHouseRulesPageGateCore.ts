@@ -1,6 +1,6 @@
 /**
  * Edge-safe gate for `/qld-house-rules` public generator.
- * Preview ON / Production OFF (302). Override: QLD_HOUSE_RULES_PAGE_ENABLED.
+ * Preview ON / Production ON. Override `QLD_HOUSE_RULES_PAGE_ENABLED=false` 302s (never 301).
  */
 
 export const QLD_HOUSE_RULES_PAGE_PATH = '/qld-house-rules' as const
@@ -24,7 +24,7 @@ export function resolveQldHouseRulesPageEnabled(opts: {
   const vercelEnv = String(opts.vercelEnv ?? '')
     .trim()
     .toLowerCase()
-  if (vercelEnv === 'production') return false
+  if (vercelEnv === 'production') return true
   if (vercelEnv === 'preview') return true
 
   return Boolean(opts.treatUnknownAsEnabled)
