@@ -103,7 +103,7 @@ const LANDLORD_STEPS: VerificationStep[] = [
   },
   {
     step: 'Verify your identity',
-    what: 'Confirmed securely through payment setup before your first acceptance.',
+    what: 'Quni verifies who you are. This is a verification step only. It does not create a payment relationship, and you do not need Stripe Connect to receive rent on Listing.',
   },
 ]
 
@@ -172,7 +172,7 @@ export function VerificationOverviewSection() {
         <h3 className="font-display text-base font-bold text-gray-900">Landlords</h3>
         <p className="mt-2">
           Profile, terms, insurance confirmation, a saved card for the $99 acceptance fee, and identity verification
-          before your first acceptance.
+          completed by Quni.
         </p>
       </div>
     </div>

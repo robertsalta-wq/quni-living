@@ -72,7 +72,7 @@ const STUDENT_HOW_STEPS = [
   {
     n: 3,
     title: 'Book',
-    desc: 'Pay your deposit securely and complete signing in one place where supported',
+    desc: 'Apply through the platform. After you are accepted, pay bond and rent directly to your landlord.',
   },
 ] as const
 
@@ -103,7 +103,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-2',
     q: 'How do I know the landlord is legitimate?',
-    a: 'Hosts complete Stripe identity verification before they can accept a booking. When approved, they show a Verified host badge on their profile and listing. You can still browse, message, and apply before that step.',
+    a: 'Quni verifies landlords on Quni Listing. You can browse, message, and apply while that check is in progress. Bond and rent are paid directly to the landlord after you are accepted.',
   },
   {
     id: 'faq-s-3',
@@ -137,7 +137,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-2b',
     q: 'How does Quni verify landlords?',
-    a: 'You complete Stripe identity verification before you can accept a booking. When approved, a Verified host badge appears on your profile and listings. You can list and receive booking requests before that step.',
+    a: 'Quni verifies your identity. You can list and receive booking requests before that is complete. To accept, you need a saved card for the $99 fee and bank details the tenant will use to pay you.',
   },
   {
     id: 'faq-l-3',
