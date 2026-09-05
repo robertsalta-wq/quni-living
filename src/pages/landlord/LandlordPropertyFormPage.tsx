@@ -4499,6 +4499,11 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'House rules',
             <div className="space-y-6">
+              {showQldRoomingHouseRules ? (
+                <p className="text-xs text-gray-600">
+                  These ticks show on your listing. They are not the house rules for the agreement.
+                </p>
+              ) : null}
               <div className="space-y-2">
                 {houseRulesRef.map((r) => (
                   <div

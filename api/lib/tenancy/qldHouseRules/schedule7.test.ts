@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  SCHEDULE_7_INSTRUMENT_CITATION,
   SCHEDULE_7_RULE_2_1,
   SCHEDULE_7_RULE_3_2,
   SCHEDULE_7_RULE_3_5_SOURCE,
@@ -10,8 +11,12 @@ import {
   formatSchedule7Rule35,
 } from './schedule7'
 
+function readSch7SourceFile(): string {
+  return readFileSync(join(process.cwd(), 'docs/legal/qld-prescribed-house-rules-sch7.md'), 'utf8')
+}
+
 function unwrapSchedule7Source(): string {
-  const md = readFileSync(join(process.cwd(), 'docs/legal/qld-prescribed-house-rules-sch7.md'), 'utf8')
+  const md = readSch7SourceFile()
   const start = md.indexOf('## Schedule 7')
   const end = md.indexOf('## Act,')
   expect(start).toBeGreaterThanOrEqual(0)
@@ -41,6 +46,14 @@ describe('Schedule 7 locked strings', () => {
       'Common areas in these rental premises include kitchen, bathrooms, hallway.',
     )
     expect(SCHEDULE_7_RULE_3_5_SOURCE.startsWith('Common areas in these rental premises include')).toBe(true)
+  })
+
+  it('names the Regulation reprint used as the source', () => {
+    const file = compact(readSch7SourceFile())
+    expect(file).toContain('SL 2025-89')
+    expect(file).toContain('reprint current from 1 September 2026')
+    expect(compact(SCHEDULE_7_INSTRUMENT_CITATION)).toContain('SL 2025-89')
+    expect(compact(SCHEDULE_7_INSTRUMENT_CITATION)).toContain('reprint current from 1 September 2026')
   })
 
   it('keeps the working-dog and provider-cleaning carve-outs as locked text', () => {

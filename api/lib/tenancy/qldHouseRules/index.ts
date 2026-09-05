@@ -15,6 +15,8 @@ export {
   SCHEDULE_7_RULE_3_5_PREFIX,
   SCHEDULE_7_RULE_3_5_SOURCE,
   SCHEDULE_7_RULE_7_2,
+  SCHEDULE_7_INSTRUMENT_CITATION,
+  formatQldHouseRulesGeneratedAt,
   formatSchedule7Rule35,
 } from './schedule7.js'
 
@@ -43,3 +45,5 @@ export {
   toQldRoomingHouseRulesStored,
   type QldRoomingHouseRulesStored,
 } from './stored.js'
+
+export { qldPublicHouseRulesAccess, type QldPublicHouseRulesAccess } from './publicAccess.js'

@@ -69,6 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const element = React.createElement(QldHouseRulesPdf, {
     variant: variantRaw,
     document: built.document,
+    generatedAtLabel: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' }),
   })
   const pdfBuffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
   const filename =

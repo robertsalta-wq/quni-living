@@ -18,6 +18,14 @@ export type Schedule7Rule = {
 /** Instrument: "Residents must maintain their rooms—" then (a) and (b). */
 const RULE_2_1_STEM = 'Residents must maintain their rooms\u2014'
 
+/** Citation printed on generated copies. Matches docs/legal/qld-prescribed-house-rules-sch7.md. */
+export const SCHEDULE_7_INSTRUMENT_CITATION =
+  'Residential Tenancies and Rooming Accommodation Regulation 2025 (SL 2025-89), Schedule 7, reprint current from 1 September 2026'
+
+export function formatQldHouseRulesGeneratedAt(at: Date = new Date()): string {
+  return at.toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' })
+}
+
 export const SCHEDULE_7_RULE_1_TITLE = "Residents' and guests' behaviour"
 export const SCHEDULE_7_RULE_1_1 =
   'Residents must not interfere with the reasonable peace, comfort or privacy of other residents.'

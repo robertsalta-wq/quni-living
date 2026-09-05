@@ -1,5 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { QldHouseRulesDocument, QldHouseRulesVariant } from '../lib/tenancy/qldHouseRules/document.js'
+import { SCHEDULE_7_INSTRUMENT_CITATION } from '../lib/tenancy/qldHouseRules/schedule7.js'
 
 const ink = '#1a1a1a'
 
@@ -61,6 +62,12 @@ const residentStyles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: '#ddd',
     paddingTop: 6,
+  },
+  meta: {
+    fontSize: 8,
+    color: '#555',
+    marginBottom: 10,
+    lineHeight: 1.35,
   },
 })
 
@@ -124,6 +131,12 @@ const wallStyles = StyleSheet.create({
     borderTopColor: '#ddd',
     paddingTop: 6,
   },
+  meta: {
+    fontSize: 10,
+    color: '#555',
+    marginBottom: 12,
+    lineHeight: 1.35,
+  },
 })
 
 const RESIDENT_BANNER =
@@ -132,8 +145,9 @@ const RESIDENT_BANNER =
 const WALL_BANNER =
   'Display this copy at a place in the rental premises where it is likely to be seen by the residents. Residential Tenancies and Rooming Accommodation Act 2008 s 276.'
 
-const FOOTER =
-  "Prescribed house rules: Residential Tenancies and Rooming Accommodation Regulation 2025, Schedule 7. Additional rules, if any, are limited to the subjects in the Act s 268(1). Quni Living Pty Ltd is not the provider or the provider's agent. This is not legal advice."
+const PLATFORM_ENTITY = 'Quinnvestments Pty Ltd trading as Quni Living'
+
+const FOOTER = `${PLATFORM_ENTITY} is not the provider or the provider's agent. This is not legal advice. Additional rules, if any, are limited to the subjects in the Act s 268(1).`
 
 function clauseDisplayPrefix(id: string): string {
   const m = /^\d+\((.+)\)$/.exec(id)
@@ -143,9 +157,10 @@ function clauseDisplayPrefix(id: string): string {
 export type QldHouseRulesPdfProps = {
   variant: QldHouseRulesVariant
   document: QldHouseRulesDocument
+  generatedAtLabel: string
 }
 
-export function QldHouseRulesPdf({ variant, document }: QldHouseRulesPdfProps) {
+export function QldHouseRulesPdf({ variant, document, generatedAtLabel }: QldHouseRulesPdfProps) {
   const styles = variant === 'wall' ? wallStyles : residentStyles
   const title = variant === 'wall' ? 'HOUSE RULES' : 'House rules for rooming accommodation'
   const banner = variant === 'wall' ? WALL_BANNER : RESIDENT_BANNER
@@ -157,6 +172,10 @@ export function QldHouseRulesPdf({ variant, document }: QldHouseRulesPdfProps) {
           <Text>{banner}</Text>
         </View>
         <Text style={styles.title}>{title}</Text>
+        <Text style={styles.meta}>
+          Source: {SCHEDULE_7_INSTRUMENT_CITATION}.{'\n'}
+          Generated: {generatedAtLabel} (Australia/Brisbane).
+        </Text>
         {document.premisesLine ? <Text style={styles.premises}>{document.premisesLine}</Text> : null}
         <Text style={styles.sectionHeading}>Prescribed house rules</Text>
         {document.prescribedRules.map((rule) => (
@@ -194,6 +213,8 @@ export const QLD_HOUSE_RULES_PDF_MARKERS = {
   residentBanner: RESIDENT_BANNER,
   wallBanner: WALL_BANNER,
   footer: FOOTER,
+  platformEntity: PLATFORM_ENTITY,
   prescribedHeading: 'Prescribed house rules',
   extrasHeading: 'Additional house rules made by the provider',
+  instrumentCitation: SCHEDULE_7_INSTRUMENT_CITATION,
 } as const

@@ -10,6 +10,8 @@ import {
 import { SCHEDULE_7_RULE_3_2, SCHEDULE_7_RULE_7_2 } from '../lib/tenancy/qldHouseRules/schedule7'
 import { QldHouseRulesPdf, QLD_HOUSE_RULES_PDF_MARKERS } from './QldHouseRulesPdf.tsx'
 
+const GENERATED_AT = '5 September 2026, 8:00:00 pm'
+
 async function pdfText(variant: QldHouseRulesVariant, extras?: Record<string, string>): Promise<string> {
   const built = buildQldHouseRulesDocument({
     commonAreas: 'kitchen, bathrooms, hallway',
@@ -21,6 +23,7 @@ async function pdfText(variant: QldHouseRulesVariant, extras?: Record<string, st
     React.createElement(QldHouseRulesPdf, {
       variant,
       document: built.document,
+      generatedAtLabel: GENERATED_AT,
     }) as Parameters<typeof renderToBuffer>[0],
   )
   const parser = new PDFParse({ data: buf })
@@ -39,6 +42,11 @@ describe('QldHouseRulesPdf', () => {
       expect(text).toContain(QLD_HOUSE_RULES_PDF_MARKERS.prescribedHeading)
       expect(text).not.toContain(QLD_HOUSE_RULES_FORBIDDEN_ALL_RESIDENTS_CLEANING)
       expect(text).toContain('12 Example Street, Jamboree Heights QLD 4074')
+      expect(text).toContain('SL 2025-89')
+      expect(text).toContain('reprint current from 1 September 2026')
+      expect(text).toContain(GENERATED_AT)
+      expect(text).toContain(QLD_HOUSE_RULES_PDF_MARKERS.platformEntity)
+      expect(text).not.toContain('Quni Living Pty Ltd')
     }
   })
 

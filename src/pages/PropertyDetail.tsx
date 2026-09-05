@@ -34,6 +34,7 @@ import {
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus, isListingAvailableNow } from '../lib/propertyListingDateWindow'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
+import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
@@ -1261,7 +1262,15 @@ export default function PropertyDetail({
 
   const houseRuleRows = property.property_house_rules ?? []
   const hasHouseRuleBadges = houseRuleRows.length > 0
-  const hasWrittenHouseRules = Boolean(property.house_rules?.trim())
+  const qldRoomingListing = isQldRoomingFormR18Pending(
+    resolveTenancyPackage({
+      state: property.state ?? '',
+      property_type: property.property_type ?? '',
+      is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+      rooms_rented_to_residents: property.rooms_rented_to_residents,
+    }),
+  )
+  const hasWrittenHouseRules = Boolean(property.house_rules?.trim()) && !qldRoomingListing
   const quickInfoItems: { icon: string; text: string }[] = (() => {
     const items: { icon: string; text: string }[] = [{ icon: '📍', text: quickLocation }]
     if (universityForQuickBar) items.push({ icon: '🏫', text: `Near ${universityForQuickBar}` })
