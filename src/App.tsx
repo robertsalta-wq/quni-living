@@ -15,6 +15,7 @@ import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePath
 import Home from './pages/Home'
 import NotFoundPage from './pages/NotFoundPage'
 import { isDeskShellEnabled } from './lib/deskShell'
+import { isQldHouseRulesPageEnabled } from './lib/qldHouseRulesPageGate'
 import * as Lazy from './lazyPages'
 import * as Marketing from './marketingRoutePages'
 import { prefetchRouteChunks } from './lib/routePrefetch'
@@ -310,6 +311,16 @@ function App() {
                 <Route path="/list-your-room" element={<Marketing.ListYourRoomE />} />
                 <Route path="/list-your-room-b" element={<Lazy.ListYourRoomB />} />
                 <Route path="/list-your-room-c" element={<Lazy.ListYourRoomC />} />
+                <Route
+                  path="/qld-house-rules"
+                  element={
+                    isQldHouseRulesPageEnabled() ? (
+                      <Lazy.QldHouseRulesPage />
+                    ) : (
+                      <Navigate to="/services/landlord-partnerships" replace />
+                    )
+                  }
+                />
                 <Route
                   path="/list-your-room-e"
                   element={<Navigate to="/list-your-room" replace />}

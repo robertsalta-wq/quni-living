@@ -39,6 +39,7 @@ const EXACT = new Set([
   '/list-your-room-b',
   '/list-your-room-c',
   '/list-your-room-e',
+  '/qld-house-rules',
   '/landlords/ai',
   '/auth/callback',
   '/login',

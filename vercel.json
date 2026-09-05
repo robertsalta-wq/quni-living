@@ -81,6 +81,10 @@
     "api/documents/generate-qld-occupancy.ts": {
       "maxDuration": 60
     },
+    "api/documents/generate-qld-house-rules.ts": {
+      "maxDuration": 30,
+      "includeFiles": "api/documents/QldHouseRulesPdf.tsx"
+    },
     "api/documents/generate-residential-tenancy.ts": {
       "maxDuration": 60,
       "includeFiles": "docs/nsw/ft6600-renamed.pdf"

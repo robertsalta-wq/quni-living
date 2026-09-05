@@ -1,11 +1,11 @@
 # QLD rooming ungate plan
 
-**Status:** Stage 1 approved to build on the accept-only gate as written. Stages 2 to 6 are not approved. Revised 5 Sep 2026 evening: Stage 3 prerequisite done; Stage 3 is a generator (not a static download).
+**Status:** Stage 1 is on Production. Stage 3 early ship (generate and download, no Item 17 attestation) is approved to build. Preview PR only until Rob says go. Stage 2 is not approved and follows Stage 3. Stages 4 and 6 are not approved.
 **Canonical rule:** [`docs/legal/qld-classification-rule.md`](legal/qld-classification-rule.md). Do not restate the test here.
 **What the router does today:** [`docs/qld-rooming-accommodation-audit.md`](qld-rooming-accommodation-audit.md).
 **Contradiction inventory:** [`docs/qld-rule-reconciliation.md`](qld-rule-reconciliation.md).
 
-No product code in this document except Stage 1, which is approved. Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
+No product code in this document except Stage 1 (shipped) and Stage 3 (Preview). Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
 
 ---
 
@@ -200,7 +200,7 @@ The confirm API still returns `agreement_preflight_failed` with that reason if a
 
 ### Stage 2. Form inputs the rule and the signature need
 
-Not approved. Starts four to six days after Stage 1 is approved. Does not wait on the four form decisions.
+Not approved. Starts after Stage 3, not after Stage 1.
 
 **DoD:** A QLD rooming listing can persist without the registered card, and the row is complete enough for later preflight:
 
@@ -228,23 +228,27 @@ Listing save and publish stay allowed (Stage 1). Accept stays gated until Stage 
 
 **Estimate:** 1 engineer-day (spent).
 
-### Stage 3. House-rules generator, two outputs, attestation as offence gate
+### Stage 3. House-rules generator, two outputs
 
-Not approved. This is the whole of Stage 3. There is no 3b. It is not a static download.
+Approved to build (early ship). Attestation is not in this ship. Item 17 and "refuse to generate R18 without it" need a signing path and move to Stage 4.
+
+This is the whole of Stage 3. There is no 3b. It is not a static download. It does not wait on Stage 2.
 
 Source: [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md) only.
 
-**DoD:**
+**DoD (early ship):**
 
-- Before signature, the provider attests that he has given the resident a copy of the house rules. Item 17 is Yes only if that attestation is present. The generator refuses to run without it. Gate copy: entering the agreement without giving the rules is an offence under s 275 (10 penalty units). The refusal protects him from that offence. Do not present it as a form requirement.
 - Prescribed rules are locked text from Schedule 7. Golden tests match the source file. Do not paraphrase.
-- Schedule 7 rule 3(5) is an input. The provider describes the common areas. Generation refuses if that insert is blank.
-- Provider extras are a closed list. The landlord picks among the seven s 268(1) subjects (shared facilities, parking, alcohol or illegal drugs, smoking, noise, pets, guests) and writes under a heading. No open "add your own rules" box. No heading that is not in s 268(1). Empty heading means no extra rule on that subject. Prescribed rules still apply (s 266(2)).
-- Two outputs from the same content: a resident copy (s 275, given before the agreement; this one is appended to DocuSeal) and a wall-display copy (s 276, formatted to put up where residents will see it). Both offences are 10 penalty units. Tell the landlord the wall copy is for display, not a nice-to-have.
-- Carve-outs survive into the generated text: Sch 7 r 7(2) (no-animals rule does not apply to a working dog); Sch 7 r 3(2) (provider's obligation to keep common areas clean is subject to any agreement with the resident). Do not generate a rule assigning common-area cleaning to all residents. Form R18 clause 16(2) allows a cleaning agreement only for a common area used by the resident and a minority of other residents. If that agreement exists it belongs on R18, not as a house rule dumped onto everyone.
+- Schedule 7 rule 3(5) is an input. Generation refuses if that insert is blank.
+- Provider extras are a closed list. The landlord writes under the seven s 268(1) subjects only. No open "add your own rules" box. Empty heading means no extra rule on that subject.
+- Two outputs from the same content: a resident copy (s 275) and a wall-display copy (s 276). Tell the landlord the wall copy is for display, not a nice-to-have.
+- Carve-outs survive: Sch 7 r 7(2) working dog; Sch 7 r 3(2) provider cleaning duty subject to agreement. Do not generate a rule assigning common-area cleaning to all residents.
 - Still not a premises object. No versioning, no s 270 to 274 clocks.
+- Persist on a QLD rooming listing when one exists, in `qld_rooming_house_rules`, not `house_rules`.
+- Listing House rules section when Stage 1 says QLD rooming. Download both PDFs. Not on booking review or accept.
+- Public no-account page at `/qld-house-rules`. Same renderer. Preview-or-flag; Production 302 until Rob says go.
 
-Out of this stage: optional PDF upload, free-text extras, change-of-rules product.
+Out of this stage: optional PDF upload, free-text extras, change-of-rules product, Item 17 attestation (Stage 4).
 
 **Unblocks:** Truthful Item 17. s 275 / s 276 copies in the landlord's hand. Stage 4 pack has the resident copy to append.
 

@@ -1354,6 +1354,7 @@ export interface Database {
           shared_areas: Json
           additional_charges: Json
           house_rules: string | null
+          qld_rooming_house_rules: Json | null
           created_at: string
           updated_at: string
           property_group_id: string | null
@@ -1419,6 +1420,7 @@ export interface Database {
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null
+          qld_rooming_house_rules?: Json | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
@@ -1483,6 +1485,7 @@ export interface Database {
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null
+          qld_rooming_house_rules?: Json | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
