@@ -147,7 +147,7 @@ export default async function middleware(request: Request): Promise<Response> {
     })
   }
 
-  // QLD house-rules public generator: Production → temporary redirect (302, never 301).
+  // QLD house-rules public generator: default ON. Override false → 302 (never 301).
   if (isQldHouseRulesPageGatedPath(pathname) && !isQldHouseRulesPageEnabledOnEdge()) {
     const dest = new URL('/services/landlord-partnerships', url.origin)
     return new Response(null, {

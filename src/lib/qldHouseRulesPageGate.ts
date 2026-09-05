@@ -1,7 +1,6 @@
 /**
- * `/qld-house-rules` Preview gate - browser bundle.
- * Defaults: ON in Vercel Preview (+ local `npm run dev`), OFF in Production.
- * Override: `VITE_QLD_HOUSE_RULES_PAGE_ENABLED=true|false`
+ * `/qld-house-rules` public generator - browser bundle.
+ * Defaults: ON in Preview and Production. Override: `VITE_QLD_HOUSE_RULES_PAGE_ENABLED=true|false`
  */
 
 export {

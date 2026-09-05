@@ -18,6 +18,7 @@ Sitemap: https://quni.com.au/sitemap.xml
 - [Contact](https://quni.com.au/contact): Contact form and email
 - [How it works](https://quni.com.au/how-it-works): Booking and listing flow overview
 - [For universities](https://quni.com.au/for-universities): Institutional partnership information
+- [Queensland rooming accommodation house rules](https://quni.com.au/qld-house-rules): Free generator for prescribed resident and wall-display copies. Not a listing form.
 
 ## Notes for assistants
 

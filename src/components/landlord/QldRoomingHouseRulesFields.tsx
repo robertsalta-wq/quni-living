@@ -121,10 +121,12 @@ export function QldRoomingHouseRulesDownloadBar({
   commonAreas,
   extras,
   premisesLine,
+  onGenerated,
 }: {
   commonAreas: string
   extras: QldHouseRuleExtras
   premisesLine?: string
+  onGenerated?: (variant: QldHouseRulesVariant) => void
 }) {
   const [busy, setBusy] = useState<QldHouseRulesVariant | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -144,6 +146,7 @@ export function QldRoomingHouseRulesDownloadBar({
         extras,
         premisesLine,
       })
+      onGenerated?.(variant)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not generate the house rules PDF.')
     } finally {

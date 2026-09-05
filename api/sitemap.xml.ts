@@ -44,6 +44,7 @@ const STATIC_ROUTES = [
   '/services/landlord-partnerships',
   '/services/fully-furnished',
   '/landlords/ai',
+  '/qld-house-rules',
 ] as const
 
 type SitemapEntry = {

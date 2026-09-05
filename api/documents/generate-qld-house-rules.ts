@@ -13,8 +13,16 @@ import {
   buildQldHouseRulesDocument,
   isQldHouseRulesVariant,
 } from '../lib/tenancy/qldHouseRules/document.js'
+import { qldHouseRulesCorsAllowOrigin } from '../lib/tenancy/qldHouseRules/cors.js'
 import { consumeQldHouseRulesRateLimit, qldHouseRulesClientKey } from '../lib/tenancy/qldHouseRules/rateLimit.js'
 import { QldHouseRulesPdf } from './QldHouseRulesPdf.js'
+
+function applyCors(res: VercelResponse, originHeader: string) {
+  const allow = qldHouseRulesCorsAllowOrigin(originHeader)
+  if (!allow) return
+  res.setHeader('Access-Control-Allow-Origin', allow)
+  res.setHeader('Vary', 'Origin')
+}
 
 export const config = {
   runtime: 'nodejs',
@@ -22,8 +30,10 @@ export const config = {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const originHeader = headerString(req.headers, 'origin')
+  applyCors(res, originHeader)
+
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
     return res.status(204).end()
@@ -35,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const ip = qldHouseRulesClientKey(headerString(req.headers, 'x-forwarded-for'))
   if (!consumeQldHouseRulesRateLimit(ip)) {
+    console.warn('[generate-qld-house-rules] rate limited')
     return res.status(429).json({ error: 'Too many requests. Please wait and try again.' })
   }
 
