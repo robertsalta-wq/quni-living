@@ -75,6 +75,17 @@ import {
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
+  parseQldRoomingHouseRulesStored,
+  sanitizeQldHouseRuleExtras,
+  type QldHouseRuleExtras,
+  type QldHouseRuleSubject,
+} from '../../lib/tenancy/qldHouseRules'
+import { persistQldRoomingHouseRulesColumn } from '../../lib/tenancy/persistQldRoomingHouseRules'
+import {
+  QldRoomingHouseRulesDownloadBar,
+  QldRoomingHouseRulesFields,
+} from '../../components/landlord/QldRoomingHouseRulesFields'
+import {
   EMPTY_NSW_T3_SHARED_AREAS,
   emptyNswT3ChargeRow,
   nswT3AdditionalChargesError,
@@ -329,6 +340,8 @@ type LandlordPropertyDraftV1 = {
   serviceTier: LandlordServiceTier
   houseRules: string
   selectedRules: Partial<Record<string, RulePermitted>>
+  qldHouseRulesCommonAreas?: string
+  qldHouseRulesExtras?: QldHouseRuleExtras
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
   adminLandlordId?: string
@@ -518,6 +531,9 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'listing',
       houseRules: typeof d.houseRules === 'string' ? d.houseRules : '',
       selectedRules: parseDraftSelectedRules(d.selectedRules),
+      qldHouseRulesCommonAreas:
+        typeof d.qldHouseRulesCommonAreas === 'string' ? d.qldHouseRulesCommonAreas : '',
+      qldHouseRulesExtras: sanitizeQldHouseRuleExtras(d.qldHouseRulesExtras),
       listerRole: parseListerRole(typeof d.listerRole === 'string' ? d.listerRole : null),
       headTenantLandlordConsent:
         d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
@@ -562,6 +578,8 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.serviceTier !== 'listing' ||
     d.houseRules.trim() !== '' ||
     Object.keys(d.selectedRules).length > 0 ||
+    Boolean(d.qldHouseRulesCommonAreas?.trim()) ||
+    Object.keys(d.qldHouseRulesExtras ?? {}).length > 0 ||
     (d.utilitiesForm != null && isUtilitiesFormMeaningful(d.utilitiesForm)) ||
     (d.ft6600Compliance != null && isFt6600ComplianceMeaningful(d.ft6600Compliance)) ||
     d.roomsRentedToResidents !== '1' ||
@@ -880,6 +898,8 @@ export default function LandlordPropertyFormPage() {
   const [houseRulesRef, setHouseRulesRef] = useState<HouseRulesRefRow[]>([])
   const [selectedRules, setSelectedRules] = useState<Partial<Record<string, RulePermitted>>>({})
   const [houseRules, setHouseRules] = useState('')
+  const [qldHouseRulesCommonAreas, setQldHouseRulesCommonAreas] = useState('')
+  const [qldHouseRulesExtras, setQldHouseRulesExtras] = useState<QldHouseRuleExtras>({})
   const [houseRulesResetAck, setHouseRulesResetAck] = useState(false)
   const [houseRulesResetError, setHouseRulesResetError] = useState<string | null>(null)
 
@@ -1131,6 +1151,16 @@ export default function LandlordPropertyFormPage() {
     if (isQldRoomingFormR18Pending(pkg)) return true
     return pkg.supported && pkg.rules.bond.schemeApplies
   }, [state, propertyListingType, roomsRentedToResidents])
+  const showQldRoomingHouseRules = useMemo(() => {
+    if ((state.trim() || '').toUpperCase() !== 'QLD') return false
+    const pkg = resolveTenancyPackage({
+      state: 'QLD',
+      property_type: propertyListingType,
+      is_registered_rooming_house: false,
+      rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
+    })
+    return isQldRoomingFormR18Pending(pkg)
+  }, [state, propertyListingType, roomsRentedToResidents])
   const showListingPayeeBankDetails = useMemo(
     () => listingTierRequiresPropertyPayoutDetails(serviceTier),
     [serviceTier],
@@ -1276,6 +1306,8 @@ export default function LandlordPropertyFormPage() {
         serviceTier,
         houseRules,
         selectedRules: { ...selectedRules },
+        qldHouseRulesCommonAreas,
+        qldHouseRulesExtras,
         listerRole,
         headTenantLandlordConsent,
         adminLandlordId,
@@ -1325,6 +1357,8 @@ export default function LandlordPropertyFormPage() {
       serviceTier,
       houseRules,
       selectedRules,
+      qldHouseRulesCommonAreas,
+      qldHouseRulesExtras,
       listerRole,
       headTenantLandlordConsent,
       adminLandlordId,
@@ -1700,6 +1734,9 @@ export default function LandlordPropertyFormPage() {
         }
         setSelectedRules(nextRules)
         setHouseRules(typeof prop.house_rules === 'string' ? prop.house_rules : '')
+        const loadedQldRules = parseQldRoomingHouseRulesStored(prop.qld_rooming_house_rules)
+        setQldHouseRulesCommonAreas(loadedQldRules.commonAreas)
+        setQldHouseRulesExtras(loadedQldRules.extras)
         setFt6600Compliance(ft6600ComplianceFormStateFromProperty(prop))
         const { data: payoutRow } = await supabase
           .from('property_payout_details')
@@ -1831,6 +1868,8 @@ export default function LandlordPropertyFormPage() {
       setImages(normalizePropertyImages(parsed.images))
       setHouseRules(parsed.houseRules)
       setSelectedRules({ ...parsed.selectedRules })
+      setQldHouseRulesCommonAreas(parsed.qldHouseRulesCommonAreas ?? '')
+      setQldHouseRulesExtras(parsed.qldHouseRulesExtras ?? {})
       if (parsed.listerRole) setListerRole(parsed.listerRole)
       if (parsed.listerRole === 'head_tenant' && parsed.headTenantLandlordConsent != null) {
         setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
@@ -2447,6 +2486,16 @@ export default function LandlordPropertyFormPage() {
     if (insErr) throw insErr
   }
 
+  async function saveQldRoomingHouseRules(pid: string) {
+    await persistQldRoomingHouseRulesColumn(
+      supabase,
+      pid,
+      showQldRoomingHouseRules
+        ? { commonAreas: qldHouseRulesCommonAreas, extras: qldHouseRulesExtras }
+        : null,
+    )
+  }
+
   async function resetHouseRulesToPlatformDefault() {
     setHouseRulesResetError(null)
     const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
@@ -2925,6 +2974,7 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
+        await saveQldRoomingHouseRules(propertyId)
         if (
           showListingPayeeBankDetails &&
           propertyPayoutDetailsComplete({
@@ -3020,6 +3070,7 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(newId, featureIds)
         await savePropertyHouseRules(newId, selectedRules)
+        await saveQldRoomingHouseRules(newId)
         if (
           showListingPayeeBankDetails &&
           propertyPayoutDetailsComplete({
@@ -3158,6 +3209,7 @@ export default function LandlordPropertyFormPage() {
           const featureIds = [...selectedFeatureIds]
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
+          await saveQldRoomingHouseRules(newId)
           if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
             const recorded = await recordNswT3ComplianceAttestation({
               client: supabase,
@@ -3300,6 +3352,7 @@ export default function LandlordPropertyFormPage() {
     if (upErr) throw upErr
     await savePropertyFeatures(propertyId, [...selectedFeatureIds])
     await savePropertyHouseRules(propertyId, selectedRules)
+    await saveQldRoomingHouseRules(propertyId)
   }, [
     persistLandlordPropertyDraft,
     propertyId,
@@ -4475,6 +4528,31 @@ export default function LandlordPropertyFormPage() {
                   <p className="text-xs text-gray-500">No house rules reference data.</p>
                 )}
               </div>
+              {showQldRoomingHouseRules ? (
+                <div className="space-y-6 border-t border-gray-100 pt-6">
+                  <QldRoomingHouseRulesFields
+                    commonAreas={qldHouseRulesCommonAreas}
+                    extras={qldHouseRulesExtras}
+                    onCommonAreasChange={setQldHouseRulesCommonAreas}
+                    onExtraChange={(subject: QldHouseRuleSubject, value: string) => {
+                      setQldHouseRulesExtras((prev) => {
+                        const next = { ...prev }
+                        if (!value.trim()) delete next[subject]
+                        else next[subject] = value
+                        return next
+                      })
+                    }}
+                  />
+                  <QldRoomingHouseRulesDownloadBar
+                    commonAreas={qldHouseRulesCommonAreas}
+                    extras={qldHouseRulesExtras}
+                    premisesLine={[address, suburb, state, postcode]
+                      .map((part) => part.trim())
+                      .filter(Boolean)
+                      .join(', ')}
+                  />
+                </div>
+              ) : (
               <div className="space-y-3 border-t border-gray-100 pt-6">
                 <p className="text-sm text-gray-600">
                   These are your property's house rules. They will be shown to students and included in the tenancy
@@ -4515,6 +4593,7 @@ export default function LandlordPropertyFormPage() {
                   ) : null}
                 </div>
               </div>
+              )}
             </div>,
             'section-house-rules',
           )}

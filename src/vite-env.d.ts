@@ -33,6 +33,10 @@ interface ImportMetaEnv {
    * `/list-your-room-e` desk invite. When unset: ON in Preview and Production.
    */
   readonly VITE_LIST_YOUR_ROOM_E_ENABLED?: string
+  /**
+   * `/qld-house-rules` public generator. When unset: ON in Preview, OFF in Production.
+   */
+  readonly VITE_QLD_HOUSE_RULES_PAGE_ENABLED?: string
   /** AES key for encrypting vendor credentials in admin (Apps modal) before Supabase update */
   readonly VITE_CREDENTIALS_ENC_KEY?: string
 }
