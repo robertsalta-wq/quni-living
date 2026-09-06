@@ -1020,6 +1020,60 @@ export interface Database {
           },
         ]
       }
+      qld_notice_consent_events: {
+        Row: {
+          id: string
+          property_id: string
+          booking_id: string | null
+          party: 'provider' | 'resident' | 'provider_agent' | 'resident_representative'
+          channel: 'email' | 'sms'
+          action: 'grant' | 'change' | 'withdraw'
+          permitted: boolean
+          address: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          booking_id?: string | null
+          party: 'provider' | 'resident' | 'provider_agent' | 'resident_representative'
+          channel: 'email' | 'sms'
+          action: 'grant' | 'change' | 'withdraw'
+          permitted: boolean
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          booking_id?: string | null
+          party?: 'provider' | 'resident' | 'provider_agent' | 'resident_representative'
+          channel?: 'email' | 'sms'
+          action?: 'grant' | 'change' | 'withdraw'
+          permitted?: boolean
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qld_notice_consent_events_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qld_notice_consent_events_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       booking_events: {
         Row: {
           id: string
@@ -1355,6 +1409,18 @@ export interface Database {
           additional_charges: Json
           house_rules: string | null
           qld_rooming_house_rules: Json | null
+          qld_shares_kitchen_or_bathroom: boolean | null
+          qld_student_accommodation: boolean
+          qld_rooming_service_level: 'level_1' | null
+          qld_persons_at_premises: number | null
+          qld_rent_payment_method_1: string | null
+          qld_rent_payment_method_2: string | null
+          qld_rent_payee_bank_name: string | null
+          qld_rent_payee_account_name: string | null
+          qld_rent_payee_bsb: string | null
+          qld_rent_payee_account_number: string | null
+          qld_rent_payment_reference: string | null
+          qld_rent_last_increased_on: string | null
           created_at: string
           updated_at: string
           property_group_id: string | null
@@ -1421,6 +1487,18 @@ export interface Database {
           additional_charges?: Json
           house_rules?: string | null
           qld_rooming_house_rules?: Json | null
+          qld_shares_kitchen_or_bathroom?: boolean | null
+          qld_student_accommodation?: boolean
+          qld_rooming_service_level?: 'level_1' | null
+          qld_persons_at_premises?: number | null
+          qld_rent_payment_method_1?: string | null
+          qld_rent_payment_method_2?: string | null
+          qld_rent_payee_bank_name?: string | null
+          qld_rent_payee_account_name?: string | null
+          qld_rent_payee_bsb?: string | null
+          qld_rent_payee_account_number?: string | null
+          qld_rent_payment_reference?: string | null
+          qld_rent_last_increased_on?: string | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
@@ -1486,6 +1564,18 @@ export interface Database {
           additional_charges?: Json
           house_rules?: string | null
           qld_rooming_house_rules?: Json | null
+          qld_shares_kitchen_or_bathroom?: boolean | null
+          qld_student_accommodation?: boolean
+          qld_rooming_service_level?: 'level_1' | null
+          qld_persons_at_premises?: number | null
+          qld_rent_payment_method_1?: string | null
+          qld_rent_payment_method_2?: string | null
+          qld_rent_payee_bank_name?: string | null
+          qld_rent_payee_account_name?: string | null
+          qld_rent_payee_bsb?: string | null
+          qld_rent_payee_account_number?: string | null
+          qld_rent_payment_reference?: string | null
+          qld_rent_last_increased_on?: string | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null

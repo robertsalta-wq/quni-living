@@ -173,6 +173,7 @@ export function resolvePropertyTierFromListing(input) {
     const facts = qldFactsFromListing({
       propertyType,
       roomsRentedToResidents: args.roomsRentedToResidents,
+      sharesKitchenOrBathroom: args.sharesKitchenOrBathroom,
     })
     if (!facts) return 't2'
     return qldPropertyTierFromOutcome(classifyQldArrangement(facts))

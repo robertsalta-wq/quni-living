@@ -21,6 +21,7 @@ export function computeServiceTierAtRequestSnapshot({
   propertyType,
   isRegisteredRoomingHouse,
   roomsRentedToResidents,
+  sharesKitchenOrBathroom,
   moduleEnabled,
   managedGloballyEnabled,
   managedOverrides,
@@ -32,6 +33,7 @@ export function computeServiceTierAtRequestSnapshot({
     propertyType,
     isRegisteredRoomingHouse,
     roomsRentedToResidents,
+    sharesKitchenOrBathroom,
   })
   const a = resolveServiceTierAvailability(
     state,
@@ -58,6 +60,7 @@ export function resolveEffectiveConfirmTier({
   propertyType,
   isRegisteredRoomingHouse,
   roomsRentedToResidents,
+  sharesKitchenOrBathroom,
   moduleEnabled,
   managedGloballyEnabled,
   managedOverrides,
@@ -71,6 +74,7 @@ export function resolveEffectiveConfirmTier({
     propertyType,
     isRegisteredRoomingHouse,
     roomsRentedToResidents,
+    sharesKitchenOrBathroom,
     moduleEnabled,
     managedGloballyEnabled,
     managedOverrides,
@@ -93,6 +97,7 @@ export function validateLandlordConfirmTierChoice(
     propertyType,
     isRegisteredRoomingHouse,
     roomsRentedToResidents,
+    sharesKitchenOrBathroom,
     propertyServiceTier,
   },
 ) {
@@ -101,6 +106,7 @@ export function validateLandlordConfirmTierChoice(
     propertyType,
     isRegisteredRoomingHouse,
     roomsRentedToResidents,
+    sharesKitchenOrBathroom,
   })
   const a = resolveServiceTierAvailability(
     state,

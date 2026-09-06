@@ -554,6 +554,7 @@ export default function RenterBookingZones({
                       propertyType={property.property_type ?? ''}
                       isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
                       roomsRentedToResidents={property.rooms_rented_to_residents}
+                      sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
                       embedded
                     />
                     <BookingLeasePanel bookingId={booking.id} embedded />

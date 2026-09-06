@@ -29,7 +29,7 @@ function emptyDraftBase(): Record<string, unknown> {
     description: '',
     bedrooms: '1',
     bathrooms: '1',
-    roomsRentedToResidents: '1',
+    roomsRentedToResidents: '',
     roomType: 'apartment',
     propertyListingType: 'entire_property',
     furnished: false,

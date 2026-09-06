@@ -67,6 +67,10 @@ import {
 import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
 import { landlordResponseExpiresAtIso } from './lib/booking/landlordResponseExpiry.js'
 import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
+import { isQldRoomingFormR18Pending, resolveTenancyPackage } from './lib/resolveTenancyPackage.js'
+import { parseQldResidentNoticeConsentBody } from './lib/tenancy/qldNoticeConsent.js'
+import { qldNoticeConsentFieldError } from './lib/tenancy/qldRoomingListingFields.js'
+import { recordQldNoticeConsentEvents } from './lib/tenancy/recordQldNoticeConsent.js'
 
 export const config = { runtime: 'edge' }
 
@@ -591,9 +595,40 @@ async function handleListingBookingCommit(request, origin, body) {
     listingAcknowledgment,
   })
 
+  const qldRoomingPkg = resolveTenancyPackage({
+    state: property.state ?? '',
+    property_type: property.property_type ?? '',
+    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    rooms_rented_to_residents: property.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
+  })
+  const qldRoomingApply = isQldRoomingFormR18Pending(qldRoomingPkg)
+  const residentNotice = parseQldResidentNoticeConsentBody(body.qldResidentNoticeConsent)
+  if (qldRoomingApply) {
+    const noticeErr = residentNotice
+      ? qldNoticeConsentFieldError(residentNotice, 'you (the resident)')
+      : 'Say whether you may be given notices by email and by text message.'
+    if (noticeErr) {
+      return json({ error: 'qld_notice_consent_required', message: noticeErr }, 400, origin)
+    }
+  }
+
   const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id, student_id').single()
 
   if (!insErr && inserted?.id) {
+    if (qldRoomingApply && residentNotice) {
+      try {
+        await recordQldNoticeConsentEvents(admin, {
+          propertyId,
+          party: 'resident',
+          bookingId: inserted.id,
+          desired: residentNotice,
+          createdBy: user.id,
+        })
+      } catch (noticeErr) {
+        console.error('[listing-apply] qld notice consent', noticeErr)
+      }
+    }
     if (tenantInviteId) {
       await markTenantInviteAccepted(admin, tenantInviteId, student.id, inserted.id)
     }
