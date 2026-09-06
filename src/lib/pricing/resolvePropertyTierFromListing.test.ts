@@ -20,6 +20,16 @@ describe('resolvePropertyTierFromListing', () => {
     ).toBe('t3')
   })
 
+  it('QLD off-site room that does not share a kitchen or bathroom is t2', () => {
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'QLD',
+        propertyType: 'private_room_landlord_off_site',
+        sharesKitchenOrBathroom: false,
+      }),
+    ).toBe('t2')
+  })
+
   it('QLD entire place is t2', () => {
     expect(
       resolvePropertyTierFromListing({

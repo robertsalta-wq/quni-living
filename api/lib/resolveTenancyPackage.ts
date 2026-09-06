@@ -37,6 +37,12 @@ export interface TenancyPackageInput {
    */
   rooms_rented_to_residents?: number | null
   /**
+   * properties.qld_shares_kitchen_or_bathroom.
+   * QLD room and shared-bedroom cards only. Entire place ignores it.
+   * Unanswered keeps the Stage 1 shared-facilities mapping (do not issue 18a).
+   */
+  shares_kitchen_or_bathroom?: boolean | null
+  /**
    * Tenancy start / agreement date for future rule versioning - v1 ignored.
    */
   date?: string | Date
@@ -135,11 +141,13 @@ function unsupportedBase(
 function resolveQldTenancyPackage(
   propertyType: string,
   roomsRentedToResidents: unknown,
+  sharesKitchenOrBathroom: unknown,
   ragState: RagState,
 ): TenancyPackageResult {
   const facts = qldFactsFromListing({
     propertyType,
     roomsRentedToResidents,
+    sharesKitchenOrBathroom,
   })
   if (!facts) {
     return unsupportedBase('T2', 'unknown_property_type', ragState)
@@ -214,7 +222,12 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   }
 
   if (state === 'QLD') {
-    return resolveQldTenancyPackage(propertyType, input.rooms_rented_to_residents, ragState)
+    return resolveQldTenancyPackage(
+      propertyType,
+      input.rooms_rented_to_residents,
+      input.shares_kitchen_or_bathroom,
+      ragState,
+    )
   }
 
   if (isRooming && propertyType !== 'private_room_landlord_off_site') {

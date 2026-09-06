@@ -49,15 +49,25 @@ export function qldPropertyTierFromOutcome(outcome: QldLegalOutcome): 't1' | 't2
   return 't3'
 }
 
+export function parseQldSharesKitchenOrBathroom(raw: unknown): boolean | null {
+  if (raw === true || raw === 'yes' || raw === 'true') return true
+  if (raw === false || raw === 'no' || raw === 'false') return false
+  return null
+}
+
 /**
- * Stage 1 listing adapter.
+ * Listing adapter.
  * Entire place → whole or self-contained.
- * Room and shared-bedroom cards → rooms with shared facilities (no facilities field yet).
+ * Room and shared-bedroom cards: explicit "does not share kitchen or bathroom" → whole or self-contained.
+ * Explicit share, or unanswered, → rooms with shared facilities.
+ * Unanswered keeps the Stage 1 rooming mapping so we do not issue Form 18a for an unanswered QLD room.
+ * The listing form requires an explicit yes/no; it does not pre-tick either answer.
  * Returns null for unknown property_type.
  */
 export function qldFactsFromListing(input: {
   propertyType: string
   roomsRentedToResidents?: unknown
+  sharesKitchenOrBathroom?: unknown
 }): QldClassificationInput | null {
   const propertyType = input.propertyType.trim()
   if (propertyType === 'entire_property') {
@@ -67,16 +77,19 @@ export function qldFactsFromListing(input: {
       roomsOccupiedOrAvailableToResidents: null,
     }
   }
+  const shares = parseQldSharesKitchenOrBathroom(input.sharesKitchenOrBathroom)
+  const whatIsLet: QldWhatIsLet =
+    shares === false ? 'whole_or_self_contained' : 'room_with_shared_facilities'
   if (propertyType === 'private_room_landlord_off_site' || propertyType === 'shared_room') {
     return {
-      whatIsLet: 'room_with_shared_facilities',
+      whatIsLet,
       providerLivesAtPremises: false,
       roomsOccupiedOrAvailableToResidents: null,
     }
   }
   if (propertyType === 'private_room_landlord_on_site') {
     return {
-      whatIsLet: 'room_with_shared_facilities',
+      whatIsLet,
       providerLivesAtPremises: true,
       roomsOccupiedOrAvailableToResidents: parseRoomsOccupiedOrAvailableToResidents(
         input.roomsRentedToResidents,
