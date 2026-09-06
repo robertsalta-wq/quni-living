@@ -137,6 +137,8 @@ import {
   listingTierRequiresPropertyPayoutDetails,
   propertyPayoutDetailsComplete,
   propertyPayoutDetailsFieldErrors,
+  propertyPayoutDetailsQldRoomingSaveError,
+  isMissingPropertyPayoutBankNameColumn,
 } from '../../lib/propertyPayoutDetails'
 import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, T3_MAX_SECURITY_DEPOSIT_WEEKS, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
@@ -363,6 +365,7 @@ type LandlordPropertyDraftV1 = {
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
   adminLandlordId?: string
+  payeeBankName?: string
   payeeAccountName?: string
   payeeBsb?: string
   payeeAccountNumber?: string
@@ -559,6 +562,7 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
           ? d.headTenantLandlordConsent
           : null,
       adminLandlordId: typeof d.adminLandlordId === 'string' ? d.adminLandlordId : '',
+      payeeBankName: typeof d.payeeBankName === 'string' ? d.payeeBankName : '',
       payeeAccountName: typeof d.payeeAccountName === 'string' ? d.payeeAccountName : '',
       payeeBsb: typeof d.payeeBsb === 'string' ? d.payeeBsb : '',
       payeeAccountNumber: typeof d.payeeAccountNumber === 'string' ? d.payeeAccountNumber : '',
@@ -601,7 +605,7 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     Object.keys(d.qldHouseRulesExtras ?? {}).length > 0 ||
     Boolean(d.qldRoomingForm?.sharesKitchenOrBathroom) ||
     Boolean(d.qldRoomingForm?.personsAtPremises?.trim()) ||
-    Boolean(d.qldRoomingForm?.rentPaymentMethod1?.trim()) ||
+    Boolean(d.qldRoomingForm?.rentPaymentMethod2?.trim()) ||
     (d.utilitiesForm != null && isUtilitiesFormMeaningful(d.utilitiesForm)) ||
     (d.ft6600Compliance != null && isFt6600ComplianceMeaningful(d.ft6600Compliance)) ||
     d.roomsRentedToResidents !== '' ||
@@ -611,6 +615,7 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.parkingAvailable ||
     Boolean(d.listerRole && d.listerRole !== 'owner') ||
     Boolean(d.adminLandlordId?.trim()) ||
+    Boolean(d.payeeBankName?.trim()) ||
     Boolean(d.payeeAccountName?.trim()) ||
     Boolean(d.payeeBsb?.trim()) ||
     Boolean(d.payeeAccountNumber?.trim()) ||
@@ -1253,6 +1258,7 @@ export default function LandlordPropertyFormPage() {
   )
 
   const [bondWeeks, setBondWeeks] = useState(String(DEFAULT_BOND_WEEKS))
+  const [payeeBankName, setPayeeBankName] = useState('')
   const [payeeAccountName, setPayeeAccountName] = useState('')
   const [payeeBsb, setPayeeBsb] = useState('')
   const [payeeAccountNumber, setPayeeAccountNumber] = useState('')
@@ -1339,6 +1345,7 @@ export default function LandlordPropertyFormPage() {
         listerRole,
         headTenantLandlordConsent,
         adminLandlordId,
+        payeeBankName,
         payeeAccountName,
         payeeBsb,
         payeeAccountNumber,
@@ -1391,6 +1398,7 @@ export default function LandlordPropertyFormPage() {
       listerRole,
       headTenantLandlordConsent,
       adminLandlordId,
+      payeeBankName,
       payeeAccountName,
       payeeBsb,
       payeeAccountNumber,
@@ -1776,14 +1784,28 @@ export default function LandlordPropertyFormPage() {
         })
         setQldRoomingForm({ ...loadedQldRooming, providerNotice: loadedNotice })
         setFt6600Compliance(ft6600ComplianceFormStateFromProperty(prop))
-        const { data: payoutRow } = await supabase
+        const { data: payoutRow, error: payoutLoadErr } = await supabase
           .from('property_payout_details')
-          .select('account_name, bsb, account_number')
+          .select('bank_name, account_name, bsb, account_number')
           .eq('property_id', propertyId)
           .maybeSingle()
-        setPayeeAccountName(payoutRow?.account_name?.trim() ?? '')
-        setPayeeBsb(payoutRow?.bsb ? formatPropertyPayoutBsbDisplay(payoutRow.bsb) : '')
-        setPayeeAccountNumber(payoutRow?.account_number?.trim() ?? '')
+        let loadedPayout = payoutRow
+        if (payoutLoadErr && isMissingPropertyPayoutBankNameColumn(payoutLoadErr)) {
+          const retry = await supabase
+            .from('property_payout_details')
+            .select('account_name, bsb, account_number')
+            .eq('property_id', propertyId)
+            .maybeSingle()
+          loadedPayout = retry.data
+            ? { ...retry.data, bank_name: null }
+            : null
+        } else if (payoutLoadErr) {
+          throw payoutLoadErr
+        }
+        setPayeeBankName(loadedPayout?.bank_name?.trim() ?? '')
+        setPayeeAccountName(loadedPayout?.account_name?.trim() ?? '')
+        setPayeeBsb(loadedPayout?.bsb ? formatPropertyPayoutBsbDisplay(loadedPayout.bsb) : '')
+        setPayeeAccountNumber(loadedPayout?.account_number?.trim() ?? '')
 
         const regNum =
           typeof prop.rooming_house_registration_number === 'string'
@@ -1914,6 +1936,7 @@ export default function LandlordPropertyFormPage() {
         setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
       }
       if (parsed.adminLandlordId?.trim()) setAdminLandlordId(parsed.adminLandlordId)
+      if (parsed.payeeBankName?.trim()) setPayeeBankName(parsed.payeeBankName)
       if (parsed.payeeAccountName?.trim()) setPayeeAccountName(parsed.payeeAccountName)
       if (parsed.payeeBsb?.trim()) setPayeeBsb(parsed.payeeBsb)
       if (parsed.payeeAccountNumber?.trim()) setPayeeAccountNumber(parsed.payeeAccountNumber)
@@ -2557,6 +2580,37 @@ export default function LandlordPropertyFormPage() {
     }
   }
 
+  async function saveListingPayeeBankDetails(pid: string) {
+    if (!showListingPayeeBankDetails) return
+    const input = {
+      bank_name: payeeBankName,
+      account_name: payeeAccountName,
+      bsb: payeeBsb,
+      account_number: payeeAccountNumber,
+    }
+    if (!propertyPayoutDetailsComplete(input)) return
+    const row = {
+      property_id: pid,
+      bank_name: payeeBankName.trim() || null,
+      account_name: payeeAccountName.trim(),
+      bsb: payeeBsb.replace(/[\s-]/g, ''),
+      account_number: payeeAccountNumber.trim(),
+    }
+    const { error: payoutErr } = await supabase
+      .from('property_payout_details')
+      .upsert(row, { onConflict: 'property_id' })
+    if (!payoutErr) return
+    if (isMissingPropertyPayoutBankNameColumn(payoutErr)) {
+      const { bank_name: _ignored, ...withoutBank } = row
+      const retry = await supabase
+        .from('property_payout_details')
+        .upsert(withoutBank, { onConflict: 'property_id' })
+      if (retry.error) throw retry.error
+      return
+    }
+    throw payoutErr
+  }
+
   async function resetHouseRulesToPlatformDefault() {
     setHouseRulesResetError(null)
     const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
@@ -2666,6 +2720,17 @@ export default function LandlordPropertyFormPage() {
       if (particularsErr) {
         reportSubmitError(particularsErr)
         document.getElementById('section-qld-rooming-particulars')?.scrollIntoView({ behavior: userScrollBehavior() })
+        return
+      }
+      const qldPayeeErr = propertyPayoutDetailsQldRoomingSaveError({
+        bank_name: payeeBankName,
+        account_name: payeeAccountName,
+        bsb: payeeBsb,
+        account_number: payeeAccountNumber,
+      })
+      if (qldPayeeErr) {
+        reportSubmitError(qldPayeeErr)
+        document.getElementById('section-pricing-availability')?.scrollIntoView({ behavior: userScrollBehavior() })
         return
       }
     }
@@ -2785,6 +2850,7 @@ export default function LandlordPropertyFormPage() {
 
     if (showListingPayeeBankDetails) {
       const payeeErrs = propertyPayoutDetailsFieldErrors({
+        bank_name: payeeBankName,
         account_name: payeeAccountName,
         bsb: payeeBsb,
         account_number: payeeAccountNumber,
@@ -3067,25 +3133,7 @@ export default function LandlordPropertyFormPage() {
         await savePropertyHouseRules(propertyId, selectedRules)
         await saveQldRoomingHouseRules(propertyId)
         await saveQldRoomingStage2(propertyId)
-        if (
-          showListingPayeeBankDetails &&
-          propertyPayoutDetailsComplete({
-            account_name: payeeAccountName,
-            bsb: payeeBsb,
-            account_number: payeeAccountNumber,
-          })
-        ) {
-          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
-            {
-              property_id: propertyId,
-              account_name: payeeAccountName.trim(),
-              bsb: payeeBsb.replace(/[\s-]/g, ''),
-              account_number: payeeAccountNumber.trim(),
-            },
-            { onConflict: 'property_id' },
-          )
-          if (payoutErr) throw payoutErr
-        }
+        await saveListingPayeeBankDetails(propertyId)
         if (waterAttestationPatch.water_separately_metered_efficient_attested_at) {
           setWaterSeparatelyMeteredAttestedAt(
             waterAttestationPatch.water_separately_metered_efficient_attested_at,
@@ -3164,25 +3212,7 @@ export default function LandlordPropertyFormPage() {
         await savePropertyHouseRules(newId, selectedRules)
         await saveQldRoomingHouseRules(newId)
         await saveQldRoomingStage2(newId)
-        if (
-          showListingPayeeBankDetails &&
-          propertyPayoutDetailsComplete({
-            account_name: payeeAccountName,
-            bsb: payeeBsb,
-            account_number: payeeAccountNumber,
-          })
-        ) {
-          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
-            {
-              property_id: newId,
-              account_name: payeeAccountName.trim(),
-              bsb: payeeBsb.replace(/[\s-]/g, ''),
-              account_number: payeeAccountNumber.trim(),
-            },
-            { onConflict: 'property_id' },
-          )
-          if (payoutErr) throw payoutErr
-        }
+        await saveListingPayeeBankDetails(newId)
         if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
           const recorded = await recordNswT3ComplianceAttestation({
             client: supabase,
@@ -4183,6 +4213,12 @@ export default function LandlordPropertyFormPage() {
                 <QldRoomingParticularsFields
                   form={qldRoomingForm}
                   onChange={(patch) => setQldRoomingForm((prev) => ({ ...prev, ...patch }))}
+                  payout={{
+                    bank_name: payeeBankName,
+                    account_name: payeeAccountName,
+                    bsb: payeeBsb,
+                    account_number: payeeAccountNumber,
+                  }}
                   labelClass={labelClass}
                   inputClass={inputClass}
                 />
@@ -5273,15 +5309,32 @@ export default function LandlordPropertyFormPage() {
                         ? 'Residents pay the security deposit and occupancy fee directly to this account by fee-free bank transfer, using their name and the property address as the reference.'
                         : 'Renters pay bond and rent directly to this account by fee-free bank transfer, using their name and the property address as the reference.'}
                     </p>
-                    {!propertyPayoutDetailsComplete({
-                      account_name: payeeAccountName,
-                      bsb: payeeBsb,
-                      account_number: payeeAccountNumber,
-                    }) ? (
+                    {showQldRoomingHouseRules ? (
+                      <p className="mt-2 text-xs text-amber-800/90">
+                        Required to save or publish this Queensland rooming listing. Method 1 on the agreement is
+                        direct credit to this account.
+                      </p>
+                    ) : !propertyPayoutDetailsComplete({
+                        account_name: payeeAccountName,
+                        bsb: payeeBsb,
+                        account_number: payeeAccountNumber,
+                      }) ? (
                       <p className="mt-2 text-xs text-amber-800/90">
                         Required to accept Quni Listing bookings on this property.
                       </p>
                     ) : null}
+                  </div>
+                  <div>
+                    <label htmlFor="pf-payee-bank-name" className={labelClass}>
+                      Bank name
+                    </label>
+                    <input
+                      id="pf-payee-bank-name"
+                      value={payeeBankName}
+                      onChange={(e) => setPayeeBankName(e.target.value)}
+                      autoComplete="off"
+                      className={inputClass}
+                    />
                   </div>
                   <div>
                     <label htmlFor="pf-payee-account-name" className={labelClass}>

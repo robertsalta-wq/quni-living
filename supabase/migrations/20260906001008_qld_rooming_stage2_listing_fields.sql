@@ -1,25 +1,20 @@
 -- QLD rooming Form R18 listing particulars (Stage 2). Additive. No backfill.
 -- Item 5 consents are events, not overwrites. Rob applies this to prod before Preview against prod DB.
+--
+-- Account details stay on property_payout_details (one row per property). Do not add payee
+-- columns on properties. Bank name is the only new payout field; payment reference stays the
+-- existing {resident name} - {address} convention and is not stored.
+-- Service level is Level 1 at fill time. No column.
 
 alter table public.properties
   add column if not exists qld_shares_kitchen_or_bathroom boolean null,
   add column if not exists qld_student_accommodation boolean not null default false,
-  add column if not exists qld_rooming_service_level text null,
   add column if not exists qld_persons_at_premises integer null,
   add column if not exists qld_rent_payment_method_1 text null,
   add column if not exists qld_rent_payment_method_2 text null,
-  add column if not exists qld_rent_payee_bank_name text null,
-  add column if not exists qld_rent_payee_account_name text null,
-  add column if not exists qld_rent_payee_bsb text null,
-  add column if not exists qld_rent_payee_account_number text null,
-  add column if not exists qld_rent_payment_reference text null,
+  add column if not exists qld_rent_payment_method_2_costs text null,
+  add column if not exists qld_rent_payment_method_2_financial_benefit text null,
   add column if not exists qld_rent_last_increased_on date null;
-
-alter table public.properties
-  drop constraint if exists properties_qld_rooming_service_level_check;
-alter table public.properties
-  add constraint properties_qld_rooming_service_level_check
-  check (qld_rooming_service_level is null or qld_rooming_service_level = 'level_1');
 
 alter table public.properties
   drop constraint if exists properties_qld_persons_at_premises_check;
@@ -31,26 +26,24 @@ comment on column public.properties.qld_shares_kitchen_or_bathroom is
   'QLD room cards only. True if the renter shares a kitchen or bathroom with anyone else. Classifier input. NULL = unanswered (Stage 1 shared-facilities mapping). Not used for NSW or VIC.';
 comment on column public.properties.qld_student_accommodation is
   'Form R18 particulars tick. Not a routing input.';
-comment on column public.properties.qld_rooming_service_level is
-  'Form R18 service level. Quni Level 1 only. NULL when not a QLD rooming listing.';
 comment on column public.properties.qld_persons_at_premises is
   'Form R18: persons allowed at the premises (whole home). Distinct from max_occupants (this room).';
 comment on column public.properties.qld_rent_payment_method_1 is
-  'Form R18 item 11 method 1. Resident rent to provider, not Quni fees.';
+  'Form R18 item 11 method 1. Locked to Direct credit. Satisfies s 98(2)(b). Account details live on property_payout_details.';
 comment on column public.properties.qld_rent_payment_method_2 is
-  'Form R18 item 11 method 2.';
-comment on column public.properties.qld_rent_payee_bank_name is
-  'Form R18 item 11 direct credit bank.';
-comment on column public.properties.qld_rent_payee_account_name is
-  'Form R18 item 11 direct credit account name.';
-comment on column public.properties.qld_rent_payee_bsb is
-  'Form R18 item 11 direct credit BSB (6 digits).';
-comment on column public.properties.qld_rent_payee_account_number is
-  'Form R18 item 11 direct credit account number.';
-comment on column public.properties.qld_rent_payment_reference is
-  'Form R18 item 11 payment reference.';
+  'Form R18 item 11 method 2. Landlord-chosen second way to pay rent.';
+comment on column public.properties.qld_rent_payment_method_2_costs is
+  's 99B written notice of costs associated with method 2. Direct credit (method 1) has no extra cost beyond usual bank fees.';
+comment on column public.properties.qld_rent_payment_method_2_financial_benefit is
+  'Standard term clause 7(5): any financial benefit the provider receives from method 2. Write None if none.';
 comment on column public.properties.qld_rent_last_increased_on is
   'Form R18 item 13.2. Last rent increase for this room. NULL = not previously increased. Room-level, survives turnover.';
+
+alter table public.property_payout_details
+  add column if not exists bank_name text null;
+
+comment on column public.property_payout_details.bank_name is
+  'Bank name for the nominated account. Required for QLD rooming Form R18 item 11. Optional for other Listing properties.';
 
 create table if not exists public.qld_notice_consent_events (
   id uuid primary key default gen_random_uuid(),

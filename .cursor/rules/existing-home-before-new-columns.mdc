@@ -1,0 +1,12 @@
+---
+description: Check for an existing home before adding columns or form sections.
+alwaysApply: true
+---
+
+# Existing home before new columns or sections
+
+Before adding a database column or a listing/form section, search for an existing home.
+
+Do not add a parallel store or a second UI block for the same fact. Extend the existing table or section. If nothing exists, say so in the change.
+
+Misses this already caused: house rules (`house_rules` / `property_house_rules` vs a second QLD block) and bank details (`property_payout_details` vs payee columns on `properties`).

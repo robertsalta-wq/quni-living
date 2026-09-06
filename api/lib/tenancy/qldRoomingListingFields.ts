@@ -1,13 +1,18 @@
 /**
  * QLD rooming listing particulars for Form R18 (Stage 2).
- * Classification still lives in qldClassification.ts. Service level and the student tick are not routing inputs.
+ * Classification still lives in qldClassification.ts. The student tick is not a routing input.
+ * Service level is Level 1 at fill time. No column.
  */
 
 import { parseQldSharesKitchenOrBathroom } from './qldClassification.js'
 
 export { parseQldSharesKitchenOrBathroom }
 
+/** Hardcoded at Form R18 fill. Not stored. */
 export const QLD_ROOMING_SERVICE_LEVEL_1 = 'level_1' as const
+
+/** Item 11 method 1. Locked so s 98(2)(b) is satisfied by direct credit to property_payout_details. */
+export const QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT = 'Direct credit'
 
 export type QldYesNo = '' | 'yes' | 'no'
 
@@ -22,13 +27,9 @@ export type QldRoomingListingFormState = {
   sharesKitchenOrBathroom: QldYesNo
   studentAccommodation: boolean
   personsAtPremises: string
-  rentPaymentMethod1: string
   rentPaymentMethod2: string
-  rentPayeeBankName: string
-  rentPayeeAccountName: string
-  rentPayeeBsb: string
-  rentPayeeAccountNumber: string
-  rentPaymentReference: string
+  rentPaymentMethod2Costs: string
+  rentPaymentMethod2FinancialBenefit: string
   rentLastIncreasedOn: string
   providerNotice: QldNoticeConsentFormState
 }
@@ -51,13 +52,10 @@ export function parseQldRoomingListingFormDraft(raw: unknown): QldRoomingListing
     sharesKitchenOrBathroom: parseQldYesNo(o.sharesKitchenOrBathroom),
     studentAccommodation: Boolean(o.studentAccommodation),
     personsAtPremises: typeof o.personsAtPremises === 'string' ? o.personsAtPremises : '',
-    rentPaymentMethod1: typeof o.rentPaymentMethod1 === 'string' ? o.rentPaymentMethod1 : '',
     rentPaymentMethod2: typeof o.rentPaymentMethod2 === 'string' ? o.rentPaymentMethod2 : '',
-    rentPayeeBankName: typeof o.rentPayeeBankName === 'string' ? o.rentPayeeBankName : '',
-    rentPayeeAccountName: typeof o.rentPayeeAccountName === 'string' ? o.rentPayeeAccountName : '',
-    rentPayeeBsb: typeof o.rentPayeeBsb === 'string' ? o.rentPayeeBsb : '',
-    rentPayeeAccountNumber: typeof o.rentPayeeAccountNumber === 'string' ? o.rentPayeeAccountNumber : '',
-    rentPaymentReference: typeof o.rentPaymentReference === 'string' ? o.rentPaymentReference : '',
+    rentPaymentMethod2Costs: typeof o.rentPaymentMethod2Costs === 'string' ? o.rentPaymentMethod2Costs : '',
+    rentPaymentMethod2FinancialBenefit:
+      typeof o.rentPaymentMethod2FinancialBenefit === 'string' ? o.rentPaymentMethod2FinancialBenefit : '',
     rentLastIncreasedOn: typeof o.rentLastIncreasedOn === 'string' ? o.rentLastIncreasedOn : '',
     providerNotice: {
       emailPermitted: parseQldYesNo(noticeRaw.emailPermitted),
@@ -73,13 +71,9 @@ export function emptyQldRoomingListingFormState(): QldRoomingListingFormState {
     sharesKitchenOrBathroom: '',
     studentAccommodation: false,
     personsAtPremises: '',
-    rentPaymentMethod1: '',
     rentPaymentMethod2: '',
-    rentPayeeBankName: '',
-    rentPayeeAccountName: '',
-    rentPayeeBsb: '',
-    rentPayeeAccountNumber: '',
-    rentPaymentReference: '',
+    rentPaymentMethod2Costs: '',
+    rentPaymentMethod2FinancialBenefit: '',
     rentLastIncreasedOn: '',
     providerNotice: emptyQldNoticeConsentFormState(),
   }
@@ -163,22 +157,15 @@ export function qldNoticeConsentFieldError(
   return null
 }
 
-function digitsOnly(raw: string): string {
-  return raw.replace(/[\s-]/g, '')
-}
-
 export function qldRentPaymentBlockError(form: QldRoomingListingFormState): string | null {
-  if (!form.rentPaymentMethod1.trim() || !form.rentPaymentMethod2.trim()) {
-    return 'Nominate two ways the resident can pay rent.'
+  if (!form.rentPaymentMethod2.trim()) {
+    return 'Nominate a second way the resident can pay rent.'
   }
-  if (!form.rentPayeeBankName.trim()) return 'Enter the bank for direct credit of rent.'
-  if (!form.rentPayeeAccountName.trim()) return 'Enter the account name for direct credit of rent.'
-  const bsb = digitsOnly(form.rentPayeeBsb)
-  if (!/^\d{6}$/.test(bsb)) return 'Enter a 6-digit BSB for direct credit of rent.'
-  const acct = form.rentPayeeAccountNumber.trim()
-  if (!/^\d{5,10}$/.test(acct)) return 'Enter an account number of 5 to 10 digits for direct credit of rent.'
-  if (!form.rentPaymentReference.trim()) {
-    return 'Enter the payment reference the resident should use for rent.'
+  if (!form.rentPaymentMethod2Costs.trim()) {
+    return 'Say what this second way costs the resident, or write None.'
+  }
+  if (!form.rentPaymentMethod2FinancialBenefit.trim()) {
+    return 'Declare any financial benefit you receive from this second way to pay, or write None.'
   }
   return null
 }
@@ -216,15 +203,11 @@ export function qldRoomingListingSaveError(args: {
 export type QldRoomingListingColumnPatch = {
   qld_shares_kitchen_or_bathroom: boolean | null
   qld_student_accommodation: boolean
-  qld_rooming_service_level: typeof QLD_ROOMING_SERVICE_LEVEL_1 | null
   qld_persons_at_premises: number | null
   qld_rent_payment_method_1: string | null
   qld_rent_payment_method_2: string | null
-  qld_rent_payee_bank_name: string | null
-  qld_rent_payee_account_name: string | null
-  qld_rent_payee_bsb: string | null
-  qld_rent_payee_account_number: string | null
-  qld_rent_payment_reference: string | null
+  qld_rent_payment_method_2_costs: string | null
+  qld_rent_payment_method_2_financial_benefit: string | null
   qld_rent_last_increased_on: string | null
 }
 
@@ -238,15 +221,11 @@ export function qldRoomingListingColumnPatch(args: {
     return {
       qld_shares_kitchen_or_bathroom: null,
       qld_student_accommodation: false,
-      qld_rooming_service_level: null,
       qld_persons_at_premises: null,
       qld_rent_payment_method_1: null,
       qld_rent_payment_method_2: null,
-      qld_rent_payee_bank_name: null,
-      qld_rent_payee_account_name: null,
-      qld_rent_payee_bsb: null,
-      qld_rent_payee_account_number: null,
-      qld_rent_payment_reference: null,
+      qld_rent_payment_method_2_costs: null,
+      qld_rent_payment_method_2_financial_benefit: null,
       qld_rent_last_increased_on: null,
     }
   }
@@ -254,19 +233,17 @@ export function qldRoomingListingColumnPatch(args: {
   return {
     qld_shares_kitchen_or_bathroom: shares,
     qld_student_accommodation: args.isQldRooming ? args.form.studentAccommodation : false,
-    qld_rooming_service_level: args.isQldRooming ? QLD_ROOMING_SERVICE_LEVEL_1 : null,
     qld_persons_at_premises: args.isQldRooming
       ? parseQldPersonsAtPremises(args.form.personsAtPremises)
       : null,
-    qld_rent_payment_method_1: args.isQldRooming ? args.form.rentPaymentMethod1.trim() || null : null,
+    qld_rent_payment_method_1: args.isQldRooming ? QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT : null,
     qld_rent_payment_method_2: args.isQldRooming ? args.form.rentPaymentMethod2.trim() || null : null,
-    qld_rent_payee_bank_name: args.isQldRooming ? args.form.rentPayeeBankName.trim() || null : null,
-    qld_rent_payee_account_name: args.isQldRooming ? args.form.rentPayeeAccountName.trim() || null : null,
-    qld_rent_payee_bsb: args.isQldRooming ? digitsOnly(args.form.rentPayeeBsb) || null : null,
-    qld_rent_payee_account_number: args.isQldRooming
-      ? args.form.rentPayeeAccountNumber.trim() || null
+    qld_rent_payment_method_2_costs: args.isQldRooming
+      ? args.form.rentPaymentMethod2Costs.trim() || null
       : null,
-    qld_rent_payment_reference: args.isQldRooming ? args.form.rentPaymentReference.trim() || null : null,
+    qld_rent_payment_method_2_financial_benefit: args.isQldRooming
+      ? args.form.rentPaymentMethod2FinancialBenefit.trim() || null
+      : null,
     qld_rent_last_increased_on: args.isQldRooming && date ? date : null,
   }
 }
@@ -275,13 +252,9 @@ export function qldRoomingListingFormFromProperty(prop: {
   qld_shares_kitchen_or_bathroom?: boolean | null
   qld_student_accommodation?: boolean | null
   qld_persons_at_premises?: number | null
-  qld_rent_payment_method_1?: string | null
   qld_rent_payment_method_2?: string | null
-  qld_rent_payee_bank_name?: string | null
-  qld_rent_payee_account_name?: string | null
-  qld_rent_payee_bsb?: string | null
-  qld_rent_payee_account_number?: string | null
-  qld_rent_payment_reference?: string | null
+  qld_rent_payment_method_2_costs?: string | null
+  qld_rent_payment_method_2_financial_benefit?: string | null
   qld_rent_last_increased_on?: string | null
 }): QldRoomingListingFormState {
   const date =
@@ -291,16 +264,13 @@ export function qldRoomingListingFormFromProperty(prop: {
     studentAccommodation: Boolean(prop.qld_student_accommodation),
     personsAtPremises:
       prop.qld_persons_at_premises != null ? String(prop.qld_persons_at_premises) : '',
-    rentPaymentMethod1: typeof prop.qld_rent_payment_method_1 === 'string' ? prop.qld_rent_payment_method_1 : '',
     rentPaymentMethod2: typeof prop.qld_rent_payment_method_2 === 'string' ? prop.qld_rent_payment_method_2 : '',
-    rentPayeeBankName: typeof prop.qld_rent_payee_bank_name === 'string' ? prop.qld_rent_payee_bank_name : '',
-    rentPayeeAccountName:
-      typeof prop.qld_rent_payee_account_name === 'string' ? prop.qld_rent_payee_account_name : '',
-    rentPayeeBsb: typeof prop.qld_rent_payee_bsb === 'string' ? prop.qld_rent_payee_bsb : '',
-    rentPayeeAccountNumber:
-      typeof prop.qld_rent_payee_account_number === 'string' ? prop.qld_rent_payee_account_number : '',
-    rentPaymentReference:
-      typeof prop.qld_rent_payment_reference === 'string' ? prop.qld_rent_payment_reference : '',
+    rentPaymentMethod2Costs:
+      typeof prop.qld_rent_payment_method_2_costs === 'string' ? prop.qld_rent_payment_method_2_costs : '',
+    rentPaymentMethod2FinancialBenefit:
+      typeof prop.qld_rent_payment_method_2_financial_benefit === 'string'
+        ? prop.qld_rent_payment_method_2_financial_benefit
+        : '',
     rentLastIncreasedOn: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '',
     providerNotice: emptyQldNoticeConsentFormState(),
   }
@@ -325,7 +295,13 @@ export const QLD_RENT_ACCOMMODATION_ONLY_HELPER =
   'At Level 1, this rent is for accommodation only. Do not include food or personal care.'
 
 export const QLD_ITEM_11_HELPER =
-  'Nominate two ways the resident can pay rent, and the account for direct credit. The Act requires at least two ways. These details are for rent paid to you, not Quni fees.'
+  'Method 1 is direct credit to your payee account. That is the fee-free way the Act requires (s 98(2)(b)). You choose method 2. Account details are in Payee bank details, not here. Payment reference is the resident name and property address.'
+
+export const QLD_ITEM_11_METHOD_2_COSTS_HELPER =
+  'You must give the resident written notice of any costs of this way to pay before they enter the agreement (s 99B, maximum 40 penalty units). Direct credit has no extra cost beyond their usual bank fees. Write None if this method is the same.'
+
+export const QLD_ITEM_11_METHOD_2_BENEFIT_HELPER =
+  'The standard terms require you to declare any financial benefit you get from offering this way to pay (clause 7(5)). Write None if you do not receive one.'
 
 export const QLD_ITEM_13_2_HELPER =
   'Date rent was last increased for this room. Leave blank if rent for this room has not been increased before. This stays with the room when residents change.'
@@ -342,11 +318,8 @@ export function isMissingQldRoomingListingColumn(error: { message?: string } | n
   return (
     msg.includes('qld_shares_kitchen_or_bathroom') ||
     msg.includes('qld_student_accommodation') ||
-    msg.includes('qld_rooming_service_level') ||
     msg.includes('qld_persons_at_premises') ||
     msg.includes('qld_rent_payment_method') ||
-    msg.includes('qld_rent_payee') ||
-    msg.includes('qld_rent_payment_reference') ||
     msg.includes('qld_rent_last_increased_on')
   )
 }

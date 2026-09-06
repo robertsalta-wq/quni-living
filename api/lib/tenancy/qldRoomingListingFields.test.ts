@@ -8,19 +8,16 @@ import {
   qldRoomingListingColumnPatch,
   qldRoomingListingSaveError,
   qldSharesKitchenOrBathroomError,
+  QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT,
 } from './qldRoomingListingFields.js'
 
 function validRoomingForm() {
   const form = emptyQldRoomingListingFormState()
   form.sharesKitchenOrBathroom = 'yes'
   form.personsAtPremises = '4'
-  form.rentPaymentMethod1 = 'Direct credit'
   form.rentPaymentMethod2 = 'BPAY'
-  form.rentPayeeBankName = 'CBA'
-  form.rentPayeeAccountName = 'Quinnvestments Pty Ltd'
-  form.rentPayeeBsb = '062-000'
-  form.rentPayeeAccountNumber = '12345678'
-  form.rentPaymentReference = 'Room 3 rent'
+  form.rentPaymentMethod2Costs = 'None'
+  form.rentPaymentMethod2FinancialBenefit = 'None'
   form.providerNotice.emailPermitted = 'yes'
   form.providerNotice.emailAddress = 'host@example.com'
   form.providerNotice.smsPermitted = 'no'
@@ -45,14 +42,17 @@ describe('qldRoomingListingFields', () => {
     expect(qldPersonsAtPremisesError(4, 2)).toBeNull()
   })
 
-  it('requires two payment methods and the direct credit block', () => {
+  it('locks method 1 to direct credit and requires method 2 costs and financial benefit', () => {
     const form = validRoomingForm()
     expect(qldRentPaymentBlockError(form)).toBeNull()
     form.rentPaymentMethod2 = ''
-    expect(qldRentPaymentBlockError(form)).toMatch(/two ways/)
+    expect(qldRentPaymentBlockError(form)).toMatch(/second way/)
     form.rentPaymentMethod2 = 'BPAY'
-    form.rentPayeeBsb = '62'
-    expect(qldRentPaymentBlockError(form)).toMatch(/6-digit BSB/)
+    form.rentPaymentMethod2Costs = ''
+    expect(qldRentPaymentBlockError(form)).toMatch(/costs the resident/)
+    form.rentPaymentMethod2Costs = 'None'
+    form.rentPaymentMethod2FinancialBenefit = ''
+    expect(qldRentPaymentBlockError(form)).toMatch(/financial benefit/)
   })
 
   it('does not hardcode provider email yes', () => {
@@ -85,14 +85,20 @@ describe('qldRoomingListingFields', () => {
     ).toBeNull()
   })
 
-  it('writes Level 1 only when the listing is rooming, and still stores the facilities answer on QLD room cards', () => {
+  it('writes Direct credit as method 1 only when the listing is rooming, and still stores the facilities answer on QLD room cards', () => {
     const form = validRoomingForm()
     form.sharesKitchenOrBathroom = 'no'
     const roomCard = qldRoomingListingColumnPatch({ isQldRoomCard: true, isQldRooming: false, form })
     expect(roomCard.qld_shares_kitchen_or_bathroom).toBe(false)
-    expect(roomCard.qld_rooming_service_level).toBeNull()
-    const rooming = qldRoomingListingColumnPatch({ isQldRoomCard: true, isQldRooming: true, form: validRoomingForm() })
-    expect(rooming.qld_rooming_service_level).toBe('level_1')
+    expect(roomCard.qld_rent_payment_method_1).toBeNull()
+    const rooming = qldRoomingListingColumnPatch({
+      isQldRoomCard: true,
+      isQldRooming: true,
+      form: validRoomingForm(),
+    })
+    expect(rooming.qld_rent_payment_method_1).toBe(QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT)
     expect(rooming.qld_student_accommodation).toBe(false)
+    expect(rooming).not.toHaveProperty('qld_rooming_service_level')
+    expect(rooming).not.toHaveProperty('qld_rent_payee_bsb')
   })
 })

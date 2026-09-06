@@ -498,6 +498,7 @@ export interface Database {
         Row: {
           id: string
           property_id: string
+          bank_name: string | null
           account_name: string
           bsb: string
           account_number: string
@@ -507,6 +508,7 @@ export interface Database {
         Insert: {
           id?: string
           property_id: string
+          bank_name?: string | null
           account_name: string
           bsb: string
           account_number: string
@@ -516,6 +518,7 @@ export interface Database {
         Update: {
           id?: string
           property_id?: string
+          bank_name?: string | null
           account_name?: string
           bsb?: string
           account_number?: string
@@ -1411,15 +1414,11 @@ export interface Database {
           qld_rooming_house_rules: Json | null
           qld_shares_kitchen_or_bathroom: boolean | null
           qld_student_accommodation: boolean
-          qld_rooming_service_level: 'level_1' | null
           qld_persons_at_premises: number | null
           qld_rent_payment_method_1: string | null
           qld_rent_payment_method_2: string | null
-          qld_rent_payee_bank_name: string | null
-          qld_rent_payee_account_name: string | null
-          qld_rent_payee_bsb: string | null
-          qld_rent_payee_account_number: string | null
-          qld_rent_payment_reference: string | null
+          qld_rent_payment_method_2_costs: string | null
+          qld_rent_payment_method_2_financial_benefit: string | null
           qld_rent_last_increased_on: string | null
           created_at: string
           updated_at: string
@@ -1489,15 +1488,11 @@ export interface Database {
           qld_rooming_house_rules?: Json | null
           qld_shares_kitchen_or_bathroom?: boolean | null
           qld_student_accommodation?: boolean
-          qld_rooming_service_level?: 'level_1' | null
           qld_persons_at_premises?: number | null
           qld_rent_payment_method_1?: string | null
           qld_rent_payment_method_2?: string | null
-          qld_rent_payee_bank_name?: string | null
-          qld_rent_payee_account_name?: string | null
-          qld_rent_payee_bsb?: string | null
-          qld_rent_payee_account_number?: string | null
-          qld_rent_payment_reference?: string | null
+          qld_rent_payment_method_2_costs?: string | null
+          qld_rent_payment_method_2_financial_benefit?: string | null
           qld_rent_last_increased_on?: string | null
           created_at?: string
           updated_at?: string
@@ -1566,15 +1561,11 @@ export interface Database {
           qld_rooming_house_rules?: Json | null
           qld_shares_kitchen_or_bathroom?: boolean | null
           qld_student_accommodation?: boolean
-          qld_rooming_service_level?: 'level_1' | null
           qld_persons_at_premises?: number | null
           qld_rent_payment_method_1?: string | null
           qld_rent_payment_method_2?: string | null
-          qld_rent_payee_bank_name?: string | null
-          qld_rent_payee_account_name?: string | null
-          qld_rent_payee_bsb?: string | null
-          qld_rent_payee_account_number?: string | null
-          qld_rent_payment_reference?: string | null
+          qld_rent_payment_method_2_costs?: string | null
+          qld_rent_payment_method_2_financial_benefit?: string | null
           qld_rent_last_increased_on?: string | null
           created_at?: string
           updated_at?: string

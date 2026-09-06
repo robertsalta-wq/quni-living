@@ -1,10 +1,18 @@
 import { QldNoticeConsentFields } from '../tenancy/QldNoticeConsentFields'
 import {
+  formatPropertyPayoutBsbDisplay,
+  propertyPayoutDetailsQldRoomingComplete,
+  type PropertyPayoutDetailsInput,
+} from '../../lib/propertyPayoutDetails'
+import {
   QLD_ITEM_11_HELPER,
+  QLD_ITEM_11_METHOD_2_BENEFIT_HELPER,
+  QLD_ITEM_11_METHOD_2_COSTS_HELPER,
   QLD_ITEM_13_2_HELPER,
   QLD_ITEM_5_PROVIDER_HELPER,
   QLD_LEVEL_1_LOCKED_COPY,
   QLD_RENT_ACCOMMODATION_ONLY_HELPER,
+  QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT,
   QLD_STUDENT_ACCOMMODATION_HELPER,
   type QldRoomingListingFormState,
   type QldYesNo,
@@ -13,6 +21,7 @@ import {
 type Props = {
   form: QldRoomingListingFormState
   onChange: (patch: Partial<QldRoomingListingFormState>) => void
+  payout: PropertyPayoutDetailsInput
   labelClass: string
   inputClass: string
 }
@@ -20,7 +29,10 @@ type Props = {
 const CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer'
 
-export function QldRoomingParticularsFields({ form, onChange, labelClass, inputClass }: Props) {
+export function QldRoomingParticularsFields({ form, onChange, payout, labelClass, inputClass }: Props) {
+  const payoutComplete = propertyPayoutDetailsQldRoomingComplete(payout)
+  const bsbDisplay = payout.bsb ? formatPropertyPayoutBsbDisplay(payout.bsb) : ''
+
   return (
     <div id="section-qld-rooming-particulars" className="space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
       <p className="text-sm font-medium text-gray-900">Queensland rooming particulars</p>
@@ -62,18 +74,39 @@ export function QldRoomingParticularsFields({ form, onChange, labelClass, inputC
         <legend className="text-sm font-medium text-gray-900">How the resident pays rent</legend>
         <p className="text-xs text-gray-600 leading-relaxed">{QLD_ITEM_11_HELPER}</p>
         <div>
-          <label htmlFor="pf-qld-rent-method-1" className={labelClass}>
-            Method 1
-          </label>
-          <input
-            id="pf-qld-rent-method-1"
-            type="text"
-            value={form.rentPaymentMethod1}
-            onChange={(e) => onChange({ rentPaymentMethod1: e.target.value })}
-            className={inputClass}
-            placeholder="e.g. Direct credit"
-            autoComplete="off"
-          />
+          <p className={labelClass}>Method 1</p>
+          <p className="text-sm text-gray-900">{QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT}</p>
+          <p className="text-xs text-gray-600 mt-0.5">
+            Fee-free except the resident&apos;s usual bank fees. Not editable.
+          </p>
+          {payoutComplete ? (
+            <dl className="mt-2 space-y-1 text-sm text-gray-800">
+              <div>
+                <dt className="inline text-xs text-gray-500">Bank: </dt>
+                <dd className="inline">{payout.bank_name?.trim()}</dd>
+              </div>
+              <div>
+                <dt className="inline text-xs text-gray-500">Account name: </dt>
+                <dd className="inline">{payout.account_name?.trim()}</dd>
+              </div>
+              <div>
+                <dt className="inline text-xs text-gray-500">BSB: </dt>
+                <dd className="inline tabular-nums">{bsbDisplay}</dd>
+              </div>
+              <div>
+                <dt className="inline text-xs text-gray-500">Account number: </dt>
+                <dd className="inline tabular-nums">{payout.account_number?.trim()}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-2 text-xs text-amber-800/90">
+              Enter the account in{' '}
+              <a href="#section-pricing-availability" className="underline">
+                Payee bank details
+              </a>
+              . Required to save or publish this listing.
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="pf-qld-rent-method-2" className={labelClass}>
@@ -90,69 +123,32 @@ export function QldRoomingParticularsFields({ form, onChange, labelClass, inputC
           />
         </div>
         <div>
-          <label htmlFor="pf-qld-rent-bank" className={labelClass}>
-            Bank
+          <label htmlFor="pf-qld-rent-method-2-costs" className={labelClass}>
+            Costs of method 2 for the resident
           </label>
+          <p className="text-xs text-gray-600 mt-0.5 mb-1 leading-relaxed">{QLD_ITEM_11_METHOD_2_COSTS_HELPER}</p>
           <input
-            id="pf-qld-rent-bank"
+            id="pf-qld-rent-method-2-costs"
             type="text"
-            value={form.rentPayeeBankName}
-            onChange={(e) => onChange({ rentPayeeBankName: e.target.value })}
+            value={form.rentPaymentMethod2Costs}
+            onChange={(e) => onChange({ rentPaymentMethod2Costs: e.target.value })}
             className={inputClass}
+            placeholder="None"
             autoComplete="off"
           />
         </div>
         <div>
-          <label htmlFor="pf-qld-rent-account-name" className={labelClass}>
-            Account name
+          <label htmlFor="pf-qld-rent-method-2-benefit" className={labelClass}>
+            Financial benefit you receive from method 2
           </label>
+          <p className="text-xs text-gray-600 mt-0.5 mb-1 leading-relaxed">{QLD_ITEM_11_METHOD_2_BENEFIT_HELPER}</p>
           <input
-            id="pf-qld-rent-account-name"
+            id="pf-qld-rent-method-2-benefit"
             type="text"
-            value={form.rentPayeeAccountName}
-            onChange={(e) => onChange({ rentPayeeAccountName: e.target.value })}
+            value={form.rentPaymentMethod2FinancialBenefit}
+            onChange={(e) => onChange({ rentPaymentMethod2FinancialBenefit: e.target.value })}
             className={inputClass}
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label htmlFor="pf-qld-rent-bsb" className={labelClass}>
-            BSB
-          </label>
-          <input
-            id="pf-qld-rent-bsb"
-            type="text"
-            inputMode="numeric"
-            value={form.rentPayeeBsb}
-            onChange={(e) => onChange({ rentPayeeBsb: e.target.value })}
-            className={inputClass}
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label htmlFor="pf-qld-rent-account-number" className={labelClass}>
-            Account number
-          </label>
-          <input
-            id="pf-qld-rent-account-number"
-            type="text"
-            inputMode="numeric"
-            value={form.rentPayeeAccountNumber}
-            onChange={(e) => onChange({ rentPayeeAccountNumber: e.target.value })}
-            className={inputClass}
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label htmlFor="pf-qld-rent-reference" className={labelClass}>
-            Payment reference
-          </label>
-          <input
-            id="pf-qld-rent-reference"
-            type="text"
-            value={form.rentPaymentReference}
-            onChange={(e) => onChange({ rentPaymentReference: e.target.value })}
-            className={inputClass}
+            placeholder="None"
             autoComplete="off"
           />
         </div>
