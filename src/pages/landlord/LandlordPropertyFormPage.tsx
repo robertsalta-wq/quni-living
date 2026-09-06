@@ -2575,7 +2575,6 @@ export default function LandlordPropertyFormPage() {
         propertyId: pid,
         party: 'provider',
         desired: qldRoomingForm.providerNotice,
-        createdBy: user?.id ?? null,
       })
     }
   }

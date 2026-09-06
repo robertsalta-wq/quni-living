@@ -1034,7 +1034,7 @@ export interface Database {
           permitted: boolean
           address: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
         }
         Insert: {
           id?: string
@@ -1046,7 +1046,7 @@ export interface Database {
           permitted: boolean
           address?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
         }
         Update: {
           id?: string
@@ -1058,7 +1058,7 @@ export interface Database {
           permitted?: boolean
           address?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
         }
         Relationships: [
           {

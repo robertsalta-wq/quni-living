@@ -20,7 +20,7 @@ export async function recordQldNoticeConsentEvents(
     party: QldNoticeParty
     bookingId?: string | null
     desired: QldNoticeConsentFormState
-    createdBy?: string | null
+    createdBy: string
   },
 ): Promise<void> {
   const bookingId = args.bookingId ?? null
@@ -42,6 +42,10 @@ export async function recordQldNoticeConsentEvents(
     desired: args.desired,
   })
   if (events.length === 0) return
+  const createdBy = args.createdBy.trim()
+  if (!createdBy) {
+    throw new Error('created_by is required for QLD notice consent events.')
+  }
   const { error: insErr } = await admin.from('qld_notice_consent_events').insert(
     events.map((row) => ({
       property_id: args.propertyId,
@@ -51,7 +55,7 @@ export async function recordQldNoticeConsentEvents(
       action: row.action,
       permitted: row.permitted,
       address: row.address,
-      created_by: args.createdBy ?? null,
+      created_by: createdBy,
     })),
   )
   if (insErr && !isMissingQldNoticeConsentTable(insErr)) throw insErr

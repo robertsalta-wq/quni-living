@@ -47,7 +47,6 @@ export async function persistQldNoticeConsentEvents(
     party: QldNoticeParty
     bookingId?: string | null
     desired: QldNoticeConsentFormState
-    createdBy?: string | null
   },
 ): Promise<void> {
   const bookingId = args.bookingId ?? null
@@ -79,7 +78,6 @@ export async function persistQldNoticeConsentEvents(
       action: row.action,
       permitted: row.permitted,
       address: row.address,
-      created_by: args.createdBy ?? null,
     })),
   )
   if (!insErr) return

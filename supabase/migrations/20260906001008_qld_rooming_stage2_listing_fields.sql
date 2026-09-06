@@ -58,11 +58,32 @@ create table if not exists public.qld_notice_consent_events (
   permitted boolean not null,
   address text null,
   created_at timestamptz not null default now(),
-  created_by uuid null
+  created_by uuid not null default auth.uid() references auth.users (id)
 );
+
+-- If an earlier draft of this never-applied file created the table with nullable created_by, close it now.
+alter table public.qld_notice_consent_events
+  alter column created_by set default auth.uid();
+alter table public.qld_notice_consent_events
+  alter column created_by set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'qld_notice_consent_events_created_by_fkey'
+  ) then
+    alter table public.qld_notice_consent_events
+      add constraint qld_notice_consent_events_created_by_fkey
+      foreign key (created_by) references auth.users (id);
+  end if;
+end $$;
 
 comment on table public.qld_notice_consent_events is
   'Form R18 item 5 notice consents. Append-only events. Current consent is the latest row per property, booking, party, channel. Fax is not collected. Agent and representative parties exist for schema completeness and stay empty while Item 3 / Item 4 are blank.';
+comment on column public.qld_notice_consent_events.created_by is
+  'Auth user who recorded this event. Default auth.uid(). Authenticated inserts omit the column and must match auth.uid() (RLS). Service-role apply must supply the acting user id because the service key has no auth.uid().';
 
 create index if not exists qld_notice_consent_events_property_idx
   on public.qld_notice_consent_events (property_id, party, channel, created_at);
@@ -99,7 +120,8 @@ create policy qld_notice_consent_events_landlord_insert
   on public.qld_notice_consent_events for insert
   to authenticated
   with check (
-    party = 'provider'
+    created_by = auth.uid()
+    and party = 'provider'
     and booking_id is null
     and exists (
       select 1
@@ -130,7 +152,8 @@ create policy qld_notice_consent_events_student_insert
   on public.qld_notice_consent_events for insert
   to authenticated
   with check (
-    party = 'resident'
+    created_by = auth.uid()
+    and party = 'resident'
     and booking_id is not null
     and exists (
       select 1
