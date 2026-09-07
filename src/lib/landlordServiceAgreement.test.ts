@@ -4,6 +4,7 @@ import {
   LANDLORD_SERVICE_AGREEMENT_VERSION,
   landlordServiceAgreementAcceptancePatch,
   landlordServiceAgreementAccepted,
+  updateLandlordProfileAcceptanceFields,
 } from './landlordServiceAgreement'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -62,11 +63,11 @@ describe('landlordServiceAgreementAccepted', () => {
   })
 })
 
-describe('landlordServiceAgreementAcceptancePatch', () => {
-  it('records Listing 1.0 and the given timestamp', () => {
-    expect(landlordServiceAgreementAcceptancePatch('2026-09-03T12:00:00.000Z')).toEqual({
+describe('updateLandlordProfileAcceptanceFields', () => {
+  it('does not call the database when user id is blank', async () => {
+    const result = await updateLandlordProfileAcceptanceFields('  ', {
       landlord_terms_accepted_at: '2026-09-03T12:00:00.000Z',
-      landlord_service_agreement_version: 'listing-1.0',
     })
+    expect(result.error?.message).toBe('Could not save your acceptance. Try again.')
   })
 })

@@ -33,20 +33,40 @@ export function landlordServiceAgreementAcceptancePatch(acceptedAt?: string): {
   }
 }
 
+const ACCEPTANCE_SAVE_FAILED = 'Could not save your acceptance. Try again.'
+
+async function updateLandlordProfileReturningUserId(
+  userId: string,
+  patch: Record<string, string>,
+): Promise<{ error: { message: string } | null; data: { user_id: string } | null }> {
+  return supabase
+    .from('landlord_profiles')
+    .update(patch)
+    .eq('user_id', userId)
+    .select('user_id')
+    .maybeSingle()
+}
+
 /** Update landlord_profiles, retrying without the version column if the migration is not applied yet. */
 export async function updateLandlordProfileAcceptanceFields(
   userId: string,
   patch: Record<string, string>,
 ): Promise<{ error: Error | null }> {
-  const first = await supabase.from('landlord_profiles').update(patch).eq('user_id', userId)
-  if (!first.error) return { error: null }
+  const trimmed = userId.trim()
+  if (!trimmed) return { error: new Error(ACCEPTANCE_SAVE_FAILED) }
+
+  const first = await updateLandlordProfileReturningUserId(trimmed, patch)
+  if (!first.error && first.data?.user_id) return { error: null }
+  if (!first.error) return { error: new Error(ACCEPTANCE_SAVE_FAILED) }
   if (!looksLikeMissingDbColumn(first.error) || !('landlord_service_agreement_version' in patch)) {
     return { error: new Error(first.error.message) }
   }
   const rest = { ...patch }
   delete rest.landlord_service_agreement_version
-  const second = await supabase.from('landlord_profiles').update(rest).eq('user_id', userId)
-  return { error: second.error ? new Error(second.error.message) : null }
+  const second = await updateLandlordProfileReturningUserId(trimmed, rest)
+  if (second.error) return { error: new Error(second.error.message) }
+  if (!second.data?.user_id) return { error: new Error(ACCEPTANCE_SAVE_FAILED) }
+  return { error: null }
 }
 
 /** Persist Listing LSA acceptance. Retries without the version column if the migration is not applied yet. */

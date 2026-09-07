@@ -518,7 +518,7 @@ function LandlordBookingPaymentErrorBanner({ onDismiss }: { onDismiss: () => voi
 }
 
 export default function LandlordDashboard() {
-  const { user, profile: authProfile, role } = useAuthContext()
+  const { user, profile: authProfile, role, refreshProfile } = useAuthContext()
   const { managedTierEnabled } = usePlatformFeatures()
   const authLandlord =
     role === 'landlord' && authProfile && 'id' in authProfile ? (authProfile as LandlordRow) : null
@@ -787,16 +787,16 @@ export default function LandlordDashboard() {
     }
 
     try {
-      let prof: LandlordRow | null = authLandlordRef.current
-      if (!prof) {
-        const { data: profRaw, error: pErr } = await supabase
-          .from('landlord_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle()
-        if (pErr) throw pErr
-        prof = profRaw as LandlordRow | null
-      }
+      // Always read landlord_profiles from the database. Auth context can be stale after
+      // in-dashboard writes (for example LSA re-acceptance), and treating it as source of
+      // truth leaves the accept modal open after a successful save.
+      const { data: profRaw, error: pErr } = await supabase
+        .from('landlord_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (pErr) throw pErr
+      let prof = (profRaw as LandlordRow | null) ?? authLandlordRef.current
       if (!prof) {
         // Transient during JWT refresh - keep existing dashboard data; retry once after token settles.
         if (isCurrent() && profileLoadRetryGenRef.current !== gen) {
@@ -1340,7 +1340,16 @@ export default function LandlordDashboard() {
     <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
       {welcomeToast ? <DashboardWelcomeToast message={welcomeToast} /> : null}
       {!landlordServiceAgreementAccepted(profile) ? (
-        <LandlordServiceAgreementReacceptModal userId={user?.id ?? profile.user_id} onAccepted={load} />
+        <LandlordServiceAgreementReacceptModal
+          userId={user?.id ?? profile.user_id}
+          onAccepted={async () => {
+            try {
+              await refreshProfile()
+            } finally {
+              await load()
+            }
+          }}
+        />
       ) : null}
 
       <div className={profileOwnsPadding ? dashboardProfilePageInsetClass : landlordDashboardPageInsetClass}>
