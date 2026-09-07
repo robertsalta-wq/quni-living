@@ -144,6 +144,7 @@ Landlords match **through listings**, not as a direct tenant↔landlord pairing.
 | **Parking** | **✅ Use** | Parking fit signal |
 | WiFi | **🔲 Not wired** | Amenity preference (no tenant field) |
 | Air conditioning | **🔲 Not wired** | Amenity |
+| Ceiling fan | **🔲 Not wired** | Amenity |
 | Heating | **🔲 Not wired** | Amenity |
 | Washing machine | **🔲 Not wired** | Amenity |
 | Dryer | **🔲 Not wired** | Amenity |

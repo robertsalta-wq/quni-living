@@ -36,6 +36,17 @@ describe('buildListingHighlightLabels', () => {
     })
     expect(labels).toEqual(['Furnished', 'Weekly cleaning', 'Bills included', 'WiFi'])
   })
+
+  it('includes Ceiling fan with Air conditioning and Heating', () => {
+    const labels = buildListingHighlightLabels({
+      property_features: [
+        { features: { name: 'Heating' } },
+        { features: { name: 'Ceiling fan' } },
+        { features: { name: 'Air conditioning' } },
+      ],
+    })
+    expect(labels).toEqual(['Air conditioning', 'Ceiling fan', 'Heating'])
+  })
 })
 
 describe('buildListingPhotoBadges', () => {
