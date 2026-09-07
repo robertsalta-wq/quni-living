@@ -24,14 +24,18 @@ export function LandlordServiceAgreementReacceptModal({ userId, onAccepted }: Pr
     }
     setBusy(true)
     setError(null)
-    const { error: persistError } = await persistLandlordServiceAgreementAcceptance(userId)
-    if (persistError) {
-      setError(persistError.message || 'Could not save your acceptance. Try again.')
+    try {
+      const { error: persistError } = await persistLandlordServiceAgreementAcceptance(userId)
+      if (persistError) {
+        setError(persistError.message || 'Could not save your acceptance. Try again.')
+        return
+      }
+      await onAccepted()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save your acceptance. Try again.')
+    } finally {
       setBusy(false)
-      return
     }
-    await onAccepted()
-    setBusy(false)
   }
 
   return (
