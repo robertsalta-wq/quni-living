@@ -663,7 +663,7 @@ function vicTenancyRules(tier) {
 
 // api/lib/tenancy/qldClassification.ts
 var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
-var QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON = "This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18. Quni does not generate Form R18 yet.";
+var QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON = "This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18. You cannot accept an applicant on Quni yet.";
 function parseRoomsOccupiedOrAvailableToResidents(raw) {
   const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseInt(raw, 10) : NaN;
   if (!Number.isFinite(n) || n < 1) return null;

@@ -26,21 +26,23 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.body).toContain('Rooming Accommodation Act 2008')
   })
 
-  it('returns null for QLD off-site room (Form R18 not generated)', () => {
-    expect(
-      tenancyAgreementExplainerCopy({
-        state: 'QLD',
-        property_type: 'private_room_landlord_off_site',
-        is_registered_rooming_house: false,
-      }),
-    ).toBeNull()
+  it('returns accept-gated Form R18 copy for QLD off-site room', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'QLD',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: false,
+    })
+    expect(copy?.headline).toContain('Form R18')
+    expect(copy?.body).toMatch(/Quni produces Form R18/)
+    expect(copy?.body).toMatch(/cannot accept/)
+    expect(copy?.body).not.toMatch(/does not generate/)
     expect(
       tenancyAgreementExplainerCopy({
         state: 'QLD',
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: true,
-      }),
-    ).toBeNull()
+      })?.headline,
+    ).toContain('Form R18')
   })
 
   it('returns NSW T3 boarding-house copy', () => {
@@ -63,15 +65,16 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.headline).toContain('occupancy agreement')
   })
 
-  it('returns null for QLD on-site 4+ (Form R18 not generated)', () => {
-    expect(
-      tenancyAgreementExplainerCopy({
-        state: 'QLD',
-        property_type: 'private_room_landlord_on_site',
-        is_registered_rooming_house: false,
-        rooms_rented_to_residents: 4,
-      }),
-    ).toBeNull()
+  it('returns accept-gated Form R18 copy for QLD on-site 4+', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'QLD',
+      property_type: 'private_room_landlord_on_site',
+      is_registered_rooming_house: false,
+      rooms_rented_to_residents: 4,
+    })
+    expect(copy?.headline).toContain('Form R18')
+    expect(copy?.body).toMatch(/cannot accept/)
+    expect(copy?.body).not.toMatch(/does not generate/)
   })
 
   it('returns null for unsupported state', () => {

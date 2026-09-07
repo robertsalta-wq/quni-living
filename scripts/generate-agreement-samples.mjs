@@ -24,6 +24,8 @@ const { NswResidentialTenancyAgreement } = await import('../src/lib/documents/Ns
 const { QuniPlatformAddendum } = await import('../src/lib/documents/QuniPlatformAddendum.tsx')
 const { QldLicenceToOccupyOnSite } = await import('../src/lib/documents/qld/occupancyGenerator.tsx')
 const { fillOfficialQldForm18aPdf } = await import('../api/lib/documents/officialQldForm18aFill.ts')
+const { fillOfficialQldFormR18Pdf } = await import('../api/lib/documents/officialQldFormR18Fill.ts')
+const { qldFormR18SampleFillProps } = await import('../api/lib/documents/qldFormR18SampleProps.ts')
 const { QuniPlatformAddendumQld } = await import('../src/lib/documents/QuniPlatformAddendumQld.tsx')
 const { VicLicenceToOccupyOnSite } = await import('../src/lib/documents/vic/occupancyGenerator.tsx')
 const { VicResidentialRentalAgreementForm1 } = await import('../src/lib/documents/vic/form1Generator.tsx')
@@ -113,6 +115,13 @@ const samples = [
     props: qldAddendumSampleProps(),
   },
   {
+    state: 'QLD',
+    tier: 'T3',
+    document: 'Rooming accommodation agreement (Form R18)',
+    officialQldFormR18: true,
+    props: null,
+  },
+  {
     state: 'VIC',
     tier: 'T1',
     document: 'Licence to occupy',
@@ -159,7 +168,9 @@ for (const sample of selected) {
   const outputPath = join(SAMPLE_ROOT, fileName)
   const rawBuffer = sample.officialQldForm18a
     ? Buffer.from((await fillOfficialQldForm18aPdf(sample.props)).pdfBytes)
-    : await renderToBuffer(element(sample.component, sample.props))
+    : sample.officialQldFormR18
+      ? Buffer.from((await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())).pdfBytes)
+      : await renderToBuffer(element(sample.component, sample.props))
   const watermarked = await applyWatermark(rawBuffer)
   writeFileSync(outputPath, watermarked)
   written.push({
