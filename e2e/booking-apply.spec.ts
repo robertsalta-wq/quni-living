@@ -113,11 +113,11 @@ test.describe('booking apply', () => {
     await page.locator('#bk-msg').fill('E2E booking apply test message')
     await page.getByRole('button', { name: 'Continue' }).click()
 
-    // Bond ack + listing review ack (both required to enable submit)
-    const checkboxes = page.locator('input[type="checkbox"]')
-    await expect(checkboxes).toHaveCount(2)
-    await checkboxes.nth(0).check()
-    await checkboxes.nth(1).check()
+    await expect(page.getByRole('heading', { name: 'About your bond' })).toBeVisible({ timeout: 30_000 })
+    // Bond ack + listing review ack (both required to enable submit).
+    // Target by label so occupancy or Item 5 fields on other steps cannot match.
+    await page.getByRole('checkbox', { name: /I understand/ }).check()
+    await page.getByRole('checkbox', { name: /I confirm I have had the opportunity/ }).check()
     await page.getByRole('button', { name: 'Submit booking request' }).click()
 
     await expect(page.getByText('Request submitted', { exact: true }).first()).toBeVisible({

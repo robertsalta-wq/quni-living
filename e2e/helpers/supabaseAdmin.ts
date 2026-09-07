@@ -320,10 +320,23 @@ export async function insertReviewSmokeBooking(
   return data.id
 }
 
+function isQldRoomingListingProperty(p: {
+  state?: string | null
+  property_type?: string | null
+  rooms_rented_to_residents?: number | null
+}): boolean {
+  const state = (p.state ?? '').trim().toUpperCase()
+  if (state !== 'QLD') return false
+  const type = (p.property_type ?? '').trim()
+  if (type === 'private_room_landlord_off_site' || type === 'shared_room') return true
+  const rooms = p.rooms_rented_to_residents
+  return type === 'private_room_landlord_on_site' && typeof rooms === 'number' && rooms > 3
+}
+
 export async function findActiveListingPropertyId(admin: SupabaseClient): Promise<string> {
   const { data: properties, error: propErr } = await admin
     .from('properties')
-    .select('id')
+    .select('id, state, property_type, rooms_rented_to_residents')
     .eq('status', 'active')
     .eq('service_tier', 'listing')
   if (propErr) throw propErr
@@ -331,7 +344,10 @@ export async function findActiveListingPropertyId(admin: SupabaseClient): Promis
     throw new Error('No active listing-tier property found for e2e booking apply')
   }
 
-  const candidateIds = properties.map((p) => p.id).filter((id): id is string => Boolean(id))
+  const candidateIds = properties
+    .filter((p) => p.id && !isQldRoomingListingProperty(p))
+    .map((p) => p.id)
+    .filter((id): id is string => Boolean(id))
   const { data: reservedRows, error: reservedErr } = await admin
     .from('bookings')
     .select('property_id')
@@ -345,11 +361,17 @@ export async function findActiveListingPropertyId(admin: SupabaseClient): Promis
       .filter((id): id is string => typeof id === 'string' && id.length > 0),
   )
 
-  const available = properties.find((p) => p.id && !reservedIds.has(p.id))
-  if (!available?.id) {
+  if (candidateIds.length === 0) {
+    throw new Error(
+      'No active listing-tier property found for e2e booking apply after excluding QLD rooming listings (Item 5 radios)',
+    )
+  }
+
+  const availableId = candidateIds.find((id) => !reservedIds.has(id))
+  if (!availableId) {
     throw new Error(
       'No unreserved active listing-tier property found for e2e booking apply (all candidates have a confirmed, active, or bond_pending booking)',
     )
   }
-  return available.id
+  return availableId
 }
