@@ -564,7 +564,7 @@ function OccupancyMatchScheduleTable({
 }
 
 // src/lib/platformIdentity.ts
-var DEFAULT_PLATFORM_LEGAL_NAME = "Quni Living Pty Ltd";
+var DEFAULT_PLATFORM_LEGAL_NAME = "Quinnvestments Pty Ltd";
 function formatAustralianAbn(raw) {
   const digits = raw.replace(/\D/g, "");
   if (digits.length !== 11) return raw.trim();
