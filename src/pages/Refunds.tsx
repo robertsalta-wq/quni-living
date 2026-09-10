@@ -38,7 +38,8 @@ export default function Refunds() {
               </h2>
               <p>
                 Applies to <strong>landlords</strong> on Quni Listing only. Renters pay <strong>no</strong> booking,
-                platform, service, or surcharge fees to Quni.
+                platform, service, or surcharge fees to Quni. The <strong>$99 acceptance fee</strong> is charged to the
+                landlord&apos;s saved card when they accept an applicant.
               </p>
               <div className={TABLE_WRAP}>
                 <table className="min-w-full border-collapse">
@@ -52,8 +53,8 @@ export default function Refunds() {
                     <tr>
                       <td className={TD}>Landlord declines the booking before acceptance</td>
                       <td className={TD}>
-                        <strong>Full refund</strong> of any acceptance fee charged to the landlord in line with the
-                        decline flow.
+                        <strong>No fee is charged.</strong> Declining is free. The $99 fee is only charged if you
+                        accept.
                       </td>
                     </tr>
                     <tr>
@@ -81,14 +82,6 @@ export default function Refunds() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs italic text-gray-600">
-                Note: Listing acceptance fees are not yet charged automatically at landlord confirm in all flows; until
-                billing is fully wired, alignment with this table is handled case-by-case via{' '}
-                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
-                  {ORGANIZATION_EMAIL}
-                </a>
-                .
-              </p>
             </section>
 
             <section className="space-y-4">

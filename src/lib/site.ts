@@ -23,7 +23,7 @@ export const MARKETPLACE_TAGLINE =
 
 /** Default share / meta description (homepage, fallbacks). */
 export const DEFAULT_DESCRIPTION =
-  'Browse verified rooms near campus and work. Free for renters. Stripe-verified hosts, RTA-compliant agreements, direct payouts.'
+  'Browse verified rooms near campus and work. Free for renters. Quni-verified hosts, RTA-compliant agreements, rent paid directly to landlords on Listing.'
 
 /** Default document title and Open Graph / Twitter title when not route-specific. */
 export const DEFAULT_OG_TITLE = 'Quni Living - verified accommodation near campus & work'
