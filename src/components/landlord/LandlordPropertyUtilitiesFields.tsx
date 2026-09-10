@@ -177,6 +177,8 @@ type Props = {
   inputClass: string
   waterAttestationPersisted: boolean
   billsIncluded: boolean
+  /** When set, replaces the default Form 18a instrument mention. */
+  utilitiesAgreementHint?: string | null
 }
 
 export function LandlordPropertyUtilitiesFields({
@@ -187,6 +189,7 @@ export function LandlordPropertyUtilitiesFields({
   inputClass,
   waterAttestationPersisted,
   billsIncluded,
+  utilitiesAgreementHint,
 }: Props) {
   const showWaterAttestation = form.waterUsageChargedSeparately === 'yes'
   const showPerServiceCapture = !billsIncluded
@@ -196,8 +199,8 @@ export function LandlordPropertyUtilitiesFields({
       {showPerServiceCapture ? (
         <div className="space-y-4">
           <p className="text-sm text-gray-700">
-            Bills are not included in the rent. Specify who pays for electricity and gas so the tenancy agreement
-            and listing can state this lawfully (QLD Form 18a Items 13–15).
+            {utilitiesAgreementHint ??
+              'Bills are not included in the rent. Specify who pays for electricity and gas so the tenancy agreement and listing can state this lawfully (QLD Form 18a Items 13 to 15).'}
           </p>
           {CAPTURABLE_UTILITY_SERVICE_IDS.map((serviceId) => (
             <PerServiceUtilitiesFields

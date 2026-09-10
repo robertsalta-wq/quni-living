@@ -199,6 +199,30 @@ describe('resolveTenancyPackage', () => {
       expect(r.tier).toBe('T2')
     })
 
+    it('off-site room that does not share a kitchen or bathroom → Form 18a', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+        shares_kitchen_or_bathroom: false,
+      })
+      expect(r.supported).toBe(true)
+      expect(r.tier).toBe('T2')
+      expect(r.generator).toBe('qld-form18a')
+    })
+
+    it('off-site room that shares a kitchen or bathroom → rooming, Form R18 not generated', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+        shares_kitchen_or_bathroom: true,
+      })
+      expect(r.supported).toBe(false)
+      expect(r.tier).toBe('T3')
+      expect(r.unsupportedReason).toMatch(/Form R18/)
+    })
+
     it('off-site room, unregistered → rooming, Form R18 not generated', () => {
       const r = pkg({
         state: 'qld',

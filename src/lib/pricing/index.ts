@@ -114,6 +114,7 @@ export type ResolvePropertyTierFromListingInput = {
   propertyType: string | null | undefined
   isRegisteredRoomingHouse?: boolean | null
   roomsRentedToResidents?: unknown
+  sharesKitchenOrBathroom?: unknown
 }
 
 export function resolvePropertyTierFromListing(
@@ -125,6 +126,7 @@ export function resolvePropertyTierFromListing(
     const facts = qldFactsFromListing({
       propertyType,
       roomsRentedToResidents: input.roomsRentedToResidents,
+      sharesKitchenOrBathroom: input.sharesKitchenOrBathroom,
     })
     if (!facts) return 't2'
     return qldPropertyTierFromOutcome(classifyQldArrangement(facts))

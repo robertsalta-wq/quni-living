@@ -56,6 +56,12 @@ import {
 } from '../lib/tenancy/bondCopy'
 import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { qldRoomingApplyHoldingCopy } from '../lib/tenancy/qldRoomingCopy'
+import {
+  emptyQldNoticeConsentFormState,
+  qldNoticeConsentFieldError,
+  QLD_ITEM_5_RESIDENT_HELPER,
+} from '../lib/tenancy/qldRoomingListingFields'
+import { QldNoticeConsentFields } from '../components/tenancy/QldNoticeConsentFields'
 import { statutoryRentBankTransferCopy, normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
 import {
   earliestSelectableMoveInIso,
@@ -665,6 +671,7 @@ export default function Booking() {
     dateOfBirth: '',
   })
   const [occupancyError, setOccupancyError] = useState<string | null>(null)
+  const [qldResidentNotice, setQldResidentNotice] = useState(emptyQldNoticeConsentFormState)
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [depositCents, setDepositCents] = useState<number | null>(null)
@@ -960,6 +967,7 @@ export default function Booking() {
           propertyType: property.property_type,
           isRegisteredRoomingHouse: property.is_registered_rooming_house,
           roomsRentedToResidents: property.rooms_rented_to_residents,
+          sharesKitchenOrBathroom: property.qld_shares_kitchen_or_bathroom,
         }) as 't1' | 't2' | 't3'
         const cell = await fetchPricingForPropertyTier(propertyTier, 'managed')
         if (!cancelled) setManagedPricingCell(cell)
@@ -1509,6 +1517,7 @@ export default function Booking() {
           propertyType: propertyTypeSnapshot,
           occupantCount,
           parkingSelected,
+          qldResidentNoticeConsent: qldResidentNotice,
           ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
           ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           ...(tenantInviteToken ? { tenantInviteToken } : {}),
@@ -1600,6 +1609,7 @@ export default function Booking() {
     occupantCount,
     parkingSelected,
     listingCheck,
+    qldResidentNotice,
     buildCoTenantPayload,
   ])
 
@@ -1727,9 +1737,10 @@ export default function Booking() {
         property_type: property?.property_type ?? '',
         is_registered_rooming_house: Boolean(property?.is_registered_rooming_house),
         rooms_rented_to_residents: property?.rooms_rented_to_residents,
+        shares_kitchen_or_bathroom: property?.qld_shares_kitchen_or_bathroom,
         date: moveIn || undefined,
       }),
-    [property?.state, property?.property_type, property?.is_registered_rooming_house, property?.rooms_rented_to_residents, moveIn],
+    [property?.state, property?.property_type, property?.is_registered_rooming_house, property?.rooms_rented_to_residents, property?.qld_shares_kitchen_or_bathroom, moveIn],
   )
 
   const qldRoomingApplyHold = tenancyPackage ? isQldRoomingFormR18Pending(tenancyPackage) : false
@@ -2154,6 +2165,18 @@ export default function Booking() {
             />
           </div>
 
+          {qldRoomingApplyHold ? (
+            <QldNoticeConsentFields
+              legend="Notices to you (the resident)"
+              helperText={QLD_ITEM_5_RESIDENT_HELPER}
+              partyLabel="qld-resident"
+              value={qldResidentNotice}
+              onChange={setQldResidentNotice}
+              labelClass={labelClass}
+              inputClass={inputClass}
+            />
+          ) : null}
+
           {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -2174,6 +2197,15 @@ export default function Booking() {
                   setOccupancyError(occErr)
                   setDetailsDateError(null)
                   return
+                }
+                if (qldRoomingApplyHold) {
+                  const noticeErr = qldNoticeConsentFieldError(qldResidentNotice, 'you (the resident)')
+                  if (noticeErr) {
+                    setSubmitError(noticeErr)
+                    setOccupancyError(null)
+                    setDetailsDateError(null)
+                    return
+                  }
                 }
                 setOccupancyError(null)
                 setDetailsDateError(null)

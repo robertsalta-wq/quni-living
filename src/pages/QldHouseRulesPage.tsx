@@ -104,6 +104,9 @@ export default function QldHouseRulesPage() {
               <label htmlFor="qld-hr-rooms-let" className="mb-1.5 block text-sm font-medium text-gray-800">
                 How many rooms are occupied by, or available to, residents?
               </label>
+              <p className="mb-1.5 text-xs text-gray-600">
+                Count rooms occupied by or available to residents. Do not count the room you sleep in.
+              </p>
               <input
                 id="qld-hr-rooms-let"
                 type="number"

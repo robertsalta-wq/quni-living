@@ -9,6 +9,7 @@ type Props = {
   propertyType: string
   isRegisteredRoomingHouse?: boolean
   roomsRentedToResidents?: unknown
+  sharesKitchenOrBathroom?: unknown
   className?: string
   /** Strip bordered card chrome when nested inside Section / another panel. */
   embedded?: boolean
@@ -20,6 +21,7 @@ export default function TenancyAgreementExplainer({
   propertyType,
   isRegisteredRoomingHouse = false,
   roomsRentedToResidents,
+  sharesKitchenOrBathroom,
   className = '',
   embedded = false,
 }: Props) {
@@ -28,6 +30,7 @@ export default function TenancyAgreementExplainer({
     property_type: propertyType,
     is_registered_rooming_house: isRegisteredRoomingHouse,
     rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
+    shares_kitchen_or_bathroom: sharesKitchenOrBathroom === true || sharesKitchenOrBathroom === false ? sharesKitchenOrBathroom : null,
   })
 
   if (!copy) return null

@@ -661,6 +661,56 @@ function vicTenancyRules(tier) {
   };
 }
 
+// api/lib/tenancy/qldClassification.ts
+var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
+var QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON = "This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18. Quni does not generate Form R18 yet.";
+function parseRoomsOccupiedOrAvailableToResidents(raw) {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseInt(raw, 10) : NaN;
+  if (!Number.isFinite(n) || n < 1) return null;
+  return Math.min(99, Math.floor(n));
+}
+function classifyQldArrangement(input) {
+  if (input.whatIsLet === "whole_or_self_contained") return "general_tenancy";
+  if (!input.providerLivesAtPremises) return "rooming";
+  const n = input.roomsOccupiedOrAvailableToResidents;
+  if (n != null && n > QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS) return "rooming";
+  return "outside_act";
+}
+function parseQldSharesKitchenOrBathroom(raw) {
+  if (raw === true || raw === "yes" || raw === "true") return true;
+  if (raw === false || raw === "no" || raw === "false") return false;
+  return null;
+}
+function qldFactsFromListing(input) {
+  const propertyType = input.propertyType.trim();
+  if (propertyType === "entire_property") {
+    return {
+      whatIsLet: "whole_or_self_contained",
+      providerLivesAtPremises: false,
+      roomsOccupiedOrAvailableToResidents: null
+    };
+  }
+  const shares = parseQldSharesKitchenOrBathroom(input.sharesKitchenOrBathroom);
+  const whatIsLet = shares === false ? "whole_or_self_contained" : "room_with_shared_facilities";
+  if (propertyType === "private_room_landlord_off_site" || propertyType === "shared_room") {
+    return {
+      whatIsLet,
+      providerLivesAtPremises: false,
+      roomsOccupiedOrAvailableToResidents: null
+    };
+  }
+  if (propertyType === "private_room_landlord_on_site") {
+    return {
+      whatIsLet,
+      providerLivesAtPremises: true,
+      roomsOccupiedOrAvailableToResidents: parseRoomsOccupiedOrAvailableToResidents(
+        input.roomsRentedToResidents
+      )
+    };
+  }
+  return null;
+}
+
 // api/lib/resolveTenancyPackage.ts
 var T3_DEFERRED_REASON = "Rooming/boarding house (T3) tenancy agreements are not available on the platform yet.";
 function nswFt6600Paths() {
@@ -706,6 +756,46 @@ function unsupportedBase(tier, reason, ragState) {
     unsupportedReason: reason
   };
 }
+function resolveQldTenancyPackage(propertyType, roomsRentedToResidents, sharesKitchenOrBathroom, ragState) {
+  const facts = qldFactsFromListing({
+    propertyType,
+    roomsRentedToResidents,
+    sharesKitchenOrBathroom
+  });
+  if (!facts) {
+    return unsupportedBase("T2", "unknown_property_type", ragState);
+  }
+  const outcome = classifyQldArrangement(facts);
+  if (outcome === "general_tenancy") {
+    const rules = qldTenancyRules("T2");
+    return {
+      tier: "T2",
+      supported: true,
+      generator: "qld-form18a",
+      pdfKind: "residential_tenancy_agreement",
+      rules,
+      signingPackageName: "QLD Form 18a - General Tenancy Agreement",
+      storagePaths: qldForm18aPaths(),
+      ragState,
+      unsupportedReason: null
+    };
+  }
+  if (outcome === "outside_act") {
+    const rules = qldTenancyRules("T1");
+    return {
+      tier: "T1",
+      supported: true,
+      generator: "qld-occupancy",
+      pdfKind: "occupancy_agreement",
+      rules,
+      signingPackageName: "QLD occupancy agreement",
+      storagePaths: qldOccupancyPaths(),
+      ragState,
+      unsupportedReason: null
+    };
+  }
+  return unsupportedBase("T3", QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON, ragState);
+}
 function resolveTenancyPackage(input) {
   void input.date;
   const stateRaw = typeof input.state === "string" ? input.state.trim().toUpperCase() : "";
@@ -727,6 +817,14 @@ function resolveTenancyPackage(input) {
   ]);
   if (!knownTypes.has(propertyType)) {
     return unsupportedBase("T2", "unknown_property_type", ragState);
+  }
+  if (state === "QLD") {
+    return resolveQldTenancyPackage(
+      propertyType,
+      input.rooms_rented_to_residents,
+      input.shares_kitchen_or_bathroom,
+      ragState
+    );
   }
   if (isRooming && propertyType !== "private_room_landlord_off_site") {
     return unsupportedBase(
@@ -770,20 +868,6 @@ function resolveTenancyPackage(input) {
         unsupportedReason: null
       };
     }
-    if (state === "QLD") {
-      const rules2 = qldTenancyRules("T1");
-      return {
-        tier: "T1",
-        supported: true,
-        generator: "qld-occupancy",
-        pdfKind: "occupancy_agreement",
-        rules: rules2,
-        signingPackageName: "QLD occupancy agreement",
-        storagePaths: qldOccupancyPaths(),
-        ragState,
-        unsupportedReason: null
-      };
-    }
     const rules = vicTenancyRules("T1");
     return {
       tier: "T1",
@@ -808,20 +892,6 @@ function resolveTenancyPackage(input) {
         rules: rules2,
         signingPackageName: "NSW Residential Tenancy Agreement (FT6600)",
         storagePaths: nswFt6600Paths(),
-        ragState,
-        unsupportedReason: null
-      };
-    }
-    if (state === "QLD") {
-      const rules2 = qldTenancyRules("T2");
-      return {
-        tier: "T2",
-        supported: true,
-        generator: "qld-form18a",
-        pdfKind: "residential_tenancy_agreement",
-        rules: rules2,
-        signingPackageName: "QLD Form 18a - General Tenancy Agreement",
-        storagePaths: qldForm18aPaths(),
         ragState,
         unsupportedReason: null
       };
@@ -1402,7 +1472,6 @@ var LICENCE_OCCUPY_WATERMARK = LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF;
 // src/lib/tenancy/qldBoarderLodger.ts
 var QLD_RTRA_ACT_SHORT = "Residential Tenancies and Rooming Accommodation Act 2008 (Qld)";
 var QLD_RTA_BOARDERS_LODGERS_URL = "https://www.rta.qld.gov.au/renting/boarders-and-lodgers";
-var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
 
 // src/lib/documents/qld/occupancyContent.ts
 var QLD_LICENCE_OCCUPY_CONTENT = {

@@ -81,6 +81,23 @@ import {
   type QldHouseRuleSubject,
 } from '../../lib/tenancy/qldHouseRules'
 import { persistQldRoomingHouseRulesColumn } from '../../lib/tenancy/persistQldRoomingHouseRules'
+import { persistQldRoomingListingColumns } from '../../lib/tenancy/persistQldRoomingListingFields'
+import { loadQldNoticeConsentForm, persistQldNoticeConsentEvents } from '../../lib/tenancy/persistQldNoticeConsentEvents'
+import {
+  emptyQldRoomingListingFormState,
+  isQldRoomCardListing,
+  parseQldRoomingListingFormDraft,
+  qldRoomDescriptionError,
+  qldRoomingListingColumnPatch,
+  qldRoomingListingFormFromProperty,
+  qldRoomingListingSaveError,
+  qldSharesKitchenOrBathroomError,
+  parseQldSharesKitchenOrBathroom,
+  QLD_RENT_ACCOMMODATION_ONLY_HELPER,
+  QLD_ROOMS_LET_HELPER,
+  type QldRoomingListingFormState,
+} from '../../lib/tenancy/qldRoomingListingFields'
+import { QldRoomingParticularsFields, QldSharesKitchenOrBathroomField } from '../../components/landlord/QldRoomingListingFields'
 import {
   QldRoomingHouseRulesDownloadBar,
   QldRoomingHouseRulesFields,
@@ -120,6 +137,8 @@ import {
   listingTierRequiresPropertyPayoutDetails,
   propertyPayoutDetailsComplete,
   propertyPayoutDetailsFieldErrors,
+  propertyPayoutDetailsQldRoomingSaveError,
+  isMissingPropertyPayoutBankNameColumn,
 } from '../../lib/propertyPayoutDetails'
 import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, T3_MAX_SECURITY_DEPOSIT_WEEKS, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
@@ -342,9 +361,11 @@ type LandlordPropertyDraftV1 = {
   selectedRules: Partial<Record<string, RulePermitted>>
   qldHouseRulesCommonAreas?: string
   qldHouseRulesExtras?: QldHouseRuleExtras
+  qldRoomingForm?: QldRoomingListingFormState
   listerRole?: ListerRole
   headTenantLandlordConsent?: HeadTenantLandlordConsent
   adminLandlordId?: string
+  payeeBankName?: string
   payeeAccountName?: string
   payeeBsb?: string
   payeeAccountNumber?: string
@@ -490,7 +511,7 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       bedrooms: typeof d.bedrooms === 'string' ? d.bedrooms : '1',
       bathrooms: typeof d.bathrooms === 'string' ? d.bathrooms : '1',
       roomsRentedToResidents:
-        typeof d.roomsRentedToResidents === 'string' ? d.roomsRentedToResidents : '1',
+        typeof d.roomsRentedToResidents === 'string' ? d.roomsRentedToResidents : '',
       roomType: parseDraftRoomType(d.roomType),
       propertyListingType,
       furnished: Boolean(d.furnished),
@@ -534,12 +555,14 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       qldHouseRulesCommonAreas:
         typeof d.qldHouseRulesCommonAreas === 'string' ? d.qldHouseRulesCommonAreas : '',
       qldHouseRulesExtras: sanitizeQldHouseRuleExtras(d.qldHouseRulesExtras),
+      qldRoomingForm: parseQldRoomingListingFormDraft(d.qldRoomingForm),
       listerRole: parseListerRole(typeof d.listerRole === 'string' ? d.listerRole : null),
       headTenantLandlordConsent:
         d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
           ? d.headTenantLandlordConsent
           : null,
       adminLandlordId: typeof d.adminLandlordId === 'string' ? d.adminLandlordId : '',
+      payeeBankName: typeof d.payeeBankName === 'string' ? d.payeeBankName : '',
       payeeAccountName: typeof d.payeeAccountName === 'string' ? d.payeeAccountName : '',
       payeeBsb: typeof d.payeeBsb === 'string' ? d.payeeBsb : '',
       payeeAccountNumber: typeof d.payeeAccountNumber === 'string' ? d.payeeAccountNumber : '',
@@ -580,15 +603,19 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     Object.keys(d.selectedRules).length > 0 ||
     Boolean(d.qldHouseRulesCommonAreas?.trim()) ||
     Object.keys(d.qldHouseRulesExtras ?? {}).length > 0 ||
+    Boolean(d.qldRoomingForm?.sharesKitchenOrBathroom) ||
+    Boolean(d.qldRoomingForm?.personsAtPremises?.trim()) ||
+    Boolean(d.qldRoomingForm?.rentPaymentMethod2?.trim()) ||
     (d.utilitiesForm != null && isUtilitiesFormMeaningful(d.utilitiesForm)) ||
     (d.ft6600Compliance != null && isFt6600ComplianceMeaningful(d.ft6600Compliance)) ||
-    d.roomsRentedToResidents !== '1' ||
+    d.roomsRentedToResidents !== '' ||
     d.maxOccupants !== '1' ||
     d.coupleSurchargePerWeek.trim() !== '' ||
     d.parkingSurchargePerWeek.trim() !== '' ||
     d.parkingAvailable ||
     Boolean(d.listerRole && d.listerRole !== 'owner') ||
     Boolean(d.adminLandlordId?.trim()) ||
+    Boolean(d.payeeBankName?.trim()) ||
     Boolean(d.payeeAccountName?.trim()) ||
     Boolean(d.payeeBsb?.trim()) ||
     Boolean(d.payeeAccountNumber?.trim()) ||
@@ -845,7 +872,7 @@ export default function LandlordPropertyFormPage() {
 
   const [bedrooms, setBedrooms] = useState('1')
   const [bathrooms, setBathrooms] = useState('1')
-  const [roomsRentedToResidents, setRoomsRentedToResidents] = useState('1')
+  const [roomsRentedToResidents, setRoomsRentedToResidents] = useState('')
   const [roomType, setRoomType] = useState<RoomType | ''>('apartment')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
@@ -900,6 +927,7 @@ export default function LandlordPropertyFormPage() {
   const [houseRules, setHouseRules] = useState('')
   const [qldHouseRulesCommonAreas, setQldHouseRulesCommonAreas] = useState('')
   const [qldHouseRulesExtras, setQldHouseRulesExtras] = useState<QldHouseRuleExtras>({})
+  const [qldRoomingForm, setQldRoomingForm] = useState<QldRoomingListingFormState>(emptyQldRoomingListingFormState)
   const [houseRulesResetAck, setHouseRulesResetAck] = useState(false)
   const [houseRulesResetError, setHouseRulesResetError] = useState<string | null>(null)
 
@@ -1101,8 +1129,9 @@ export default function LandlordPropertyFormPage() {
         propertyType: propertyListingType,
         isRegisteredRoomingHouse,
         roomsRentedToResidents: parseRoomsRentedToResidents(roomsRentedToResidents),
+        sharesKitchenOrBathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
       }),
-    [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents],
+    [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom],
   )
   const isNswT3Listing = useMemo(
     () =>
@@ -1147,10 +1176,11 @@ export default function LandlordPropertyFormPage() {
       property_type: propertyListingType,
       is_registered_rooming_house: false,
       rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
+      shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
     })
     if (isQldRoomingFormR18Pending(pkg)) return true
     return pkg.supported && pkg.rules.bond.schemeApplies
-  }, [state, propertyListingType, roomsRentedToResidents])
+  }, [state, propertyListingType, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom])
   const showQldRoomingHouseRules = useMemo(() => {
     if ((state.trim() || '').toUpperCase() !== 'QLD') return false
     const pkg = resolveTenancyPackage({
@@ -1158,9 +1188,11 @@ export default function LandlordPropertyFormPage() {
       property_type: propertyListingType,
       is_registered_rooming_house: false,
       rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
+      shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
     })
     return isQldRoomingFormR18Pending(pkg)
-  }, [state, propertyListingType, roomsRentedToResidents])
+  }, [state, propertyListingType, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom])
+  const qldRoomCard = isQldRoomCardListing(state, propertyListingType)
   const showListingPayeeBankDetails = useMemo(
     () => listingTierRequiresPropertyPayoutDetails(serviceTier),
     [serviceTier],
@@ -1226,6 +1258,7 @@ export default function LandlordPropertyFormPage() {
   )
 
   const [bondWeeks, setBondWeeks] = useState(String(DEFAULT_BOND_WEEKS))
+  const [payeeBankName, setPayeeBankName] = useState('')
   const [payeeAccountName, setPayeeAccountName] = useState('')
   const [payeeBsb, setPayeeBsb] = useState('')
   const [payeeAccountNumber, setPayeeAccountNumber] = useState('')
@@ -1308,9 +1341,11 @@ export default function LandlordPropertyFormPage() {
         selectedRules: { ...selectedRules },
         qldHouseRulesCommonAreas,
         qldHouseRulesExtras,
+        qldRoomingForm,
         listerRole,
         headTenantLandlordConsent,
         adminLandlordId,
+        payeeBankName,
         payeeAccountName,
         payeeBsb,
         payeeAccountNumber,
@@ -1359,9 +1394,11 @@ export default function LandlordPropertyFormPage() {
       selectedRules,
       qldHouseRulesCommonAreas,
       qldHouseRulesExtras,
+      qldRoomingForm,
       listerRole,
       headTenantLandlordConsent,
       adminLandlordId,
+      payeeBankName,
       payeeAccountName,
       payeeBsb,
       payeeAccountNumber,
@@ -1459,7 +1496,7 @@ export default function LandlordPropertyFormPage() {
     setShowRoomingHouseValidation(false)
     setBedrooms('1')
     setBathrooms('1')
-    setRoomsRentedToResidents('1')
+    setRoomsRentedToResidents('')
     setRoomType('apartment')
     setPropertyListingType('entire_property')
     setServiceTier('listing')
@@ -1476,6 +1513,9 @@ export default function LandlordPropertyFormPage() {
     setSelectedFeatureIds(new Set())
     setSelectedRules({})
     setHouseRules('')
+    setQldHouseRulesCommonAreas('')
+    setQldHouseRulesExtras({})
+    setQldRoomingForm(emptyQldRoomingListingFormState())
     setHouseRulesResetError(null)
     setHouseRulesResetAck(false)
     setAddress('')
@@ -1654,7 +1694,7 @@ export default function LandlordPropertyFormPage() {
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
         setBathrooms(prop.bathrooms != null ? String(prop.bathrooms) : '1')
         setRoomsRentedToResidents(
-          prop.rooms_rented_to_residents != null ? String(prop.rooms_rented_to_residents) : '1',
+          prop.rooms_rented_to_residents != null ? String(prop.rooms_rented_to_residents) : '',
         )
         setRoomType(prop.room_type ?? 'single')
         setPropertyListingType(
@@ -1737,15 +1777,35 @@ export default function LandlordPropertyFormPage() {
         const loadedQldRules = parseQldRoomingHouseRulesStored(prop.qld_rooming_house_rules)
         setQldHouseRulesCommonAreas(loadedQldRules.commonAreas)
         setQldHouseRulesExtras(loadedQldRules.extras)
+        const loadedQldRooming = qldRoomingListingFormFromProperty(prop)
+        const loadedNotice = await loadQldNoticeConsentForm(supabase, {
+          propertyId,
+          party: 'provider',
+        })
+        setQldRoomingForm({ ...loadedQldRooming, providerNotice: loadedNotice })
         setFt6600Compliance(ft6600ComplianceFormStateFromProperty(prop))
-        const { data: payoutRow } = await supabase
+        const { data: payoutRow, error: payoutLoadErr } = await supabase
           .from('property_payout_details')
-          .select('account_name, bsb, account_number')
+          .select('bank_name, account_name, bsb, account_number')
           .eq('property_id', propertyId)
           .maybeSingle()
-        setPayeeAccountName(payoutRow?.account_name?.trim() ?? '')
-        setPayeeBsb(payoutRow?.bsb ? formatPropertyPayoutBsbDisplay(payoutRow.bsb) : '')
-        setPayeeAccountNumber(payoutRow?.account_number?.trim() ?? '')
+        let loadedPayout = payoutRow
+        if (payoutLoadErr && isMissingPropertyPayoutBankNameColumn(payoutLoadErr)) {
+          const retry = await supabase
+            .from('property_payout_details')
+            .select('account_name, bsb, account_number')
+            .eq('property_id', propertyId)
+            .maybeSingle()
+          loadedPayout = retry.data
+            ? { ...retry.data, bank_name: null }
+            : null
+        } else if (payoutLoadErr) {
+          throw payoutLoadErr
+        }
+        setPayeeBankName(loadedPayout?.bank_name?.trim() ?? '')
+        setPayeeAccountName(loadedPayout?.account_name?.trim() ?? '')
+        setPayeeBsb(loadedPayout?.bsb ? formatPropertyPayoutBsbDisplay(loadedPayout.bsb) : '')
+        setPayeeAccountNumber(loadedPayout?.account_number?.trim() ?? '')
 
         const regNum =
           typeof prop.rooming_house_registration_number === 'string'
@@ -1870,11 +1930,13 @@ export default function LandlordPropertyFormPage() {
       setSelectedRules({ ...parsed.selectedRules })
       setQldHouseRulesCommonAreas(parsed.qldHouseRulesCommonAreas ?? '')
       setQldHouseRulesExtras(parsed.qldHouseRulesExtras ?? {})
+      if (parsed.qldRoomingForm) setQldRoomingForm(parsed.qldRoomingForm)
       if (parsed.listerRole) setListerRole(parsed.listerRole)
       if (parsed.listerRole === 'head_tenant' && parsed.headTenantLandlordConsent != null) {
         setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
       }
       if (parsed.adminLandlordId?.trim()) setAdminLandlordId(parsed.adminLandlordId)
+      if (parsed.payeeBankName?.trim()) setPayeeBankName(parsed.payeeBankName)
       if (parsed.payeeAccountName?.trim()) setPayeeAccountName(parsed.payeeAccountName)
       if (parsed.payeeBsb?.trim()) setPayeeBsb(parsed.payeeBsb)
       if (parsed.payeeAccountNumber?.trim()) setPayeeAccountNumber(parsed.payeeAccountNumber)
@@ -2496,6 +2558,58 @@ export default function LandlordPropertyFormPage() {
     )
   }
 
+  async function saveQldRoomingStage2(pid: string) {
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const isQldRoomCard = isQldRoomCardListing(state, accommodation.propertyListingType)
+    await persistQldRoomingListingColumns(
+      supabase,
+      pid,
+      qldRoomingListingColumnPatch({
+        isQldRoomCard,
+        isQldRooming: showQldRoomingHouseRules,
+        form: qldRoomingForm,
+      }),
+    )
+    if (showQldRoomingHouseRules) {
+      await persistQldNoticeConsentEvents(supabase, {
+        propertyId: pid,
+        party: 'provider',
+        desired: qldRoomingForm.providerNotice,
+      })
+    }
+  }
+
+  async function saveListingPayeeBankDetails(pid: string) {
+    if (!showListingPayeeBankDetails) return
+    const input = {
+      bank_name: payeeBankName,
+      account_name: payeeAccountName,
+      bsb: payeeBsb,
+      account_number: payeeAccountNumber,
+    }
+    if (!propertyPayoutDetailsComplete(input)) return
+    const row = {
+      property_id: pid,
+      bank_name: payeeBankName.trim() || null,
+      account_name: payeeAccountName.trim(),
+      bsb: payeeBsb.replace(/[\s-]/g, ''),
+      account_number: payeeAccountNumber.trim(),
+    }
+    const { error: payoutErr } = await supabase
+      .from('property_payout_details')
+      .upsert(row, { onConflict: 'property_id' })
+    if (!payoutErr) return
+    if (isMissingPropertyPayoutBankNameColumn(payoutErr)) {
+      const { bank_name: _ignored, ...withoutBank } = row
+      const retry = await supabase
+        .from('property_payout_details')
+        .upsert(withoutBank, { onConflict: 'property_id' })
+      if (retry.error) throw retry.error
+      return
+    }
+    throw payoutErr
+  }
+
   async function resetHouseRulesToPlatformDefault() {
     setHouseRulesResetError(null)
     const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
@@ -2577,6 +2691,47 @@ export default function LandlordPropertyFormPage() {
     if (qldRoomsRentedError) {
       reportSubmitError(qldRoomsRentedError)
       return
+    }
+
+    if (qldRoomCard) {
+      const sharesErr = qldSharesKitchenOrBathroomError(qldRoomingForm.sharesKitchenOrBathroom)
+      if (sharesErr) {
+        reportSubmitError(sharesErr)
+        document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
+        return
+      }
+      const roomErr = qldRoomDescriptionError(roomDescription)
+      if (roomErr) {
+        reportSubmitError(roomErr)
+        document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
+        return
+      }
+    }
+
+    if (showQldRoomingHouseRules) {
+      const particularsErr = qldRoomingListingSaveError({
+        sharesKitchenOrBathroom: qldRoomingForm.sharesKitchenOrBathroom,
+        roomDescription,
+        personsAtPremises: qldRoomingForm.personsAtPremises,
+        personsInRoom: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        form: qldRoomingForm,
+      })
+      if (particularsErr) {
+        reportSubmitError(particularsErr)
+        document.getElementById('section-qld-rooming-particulars')?.scrollIntoView({ behavior: userScrollBehavior() })
+        return
+      }
+      const qldPayeeErr = propertyPayoutDetailsQldRoomingSaveError({
+        bank_name: payeeBankName,
+        account_name: payeeAccountName,
+        bsb: payeeBsb,
+        account_number: payeeAccountNumber,
+      })
+      if (qldPayeeErr) {
+        reportSubmitError(qldPayeeErr)
+        document.getElementById('section-pricing-availability')?.scrollIntoView({ behavior: userScrollBehavior() })
+        return
+      }
     }
 
     if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
@@ -2694,6 +2849,7 @@ export default function LandlordPropertyFormPage() {
 
     if (showListingPayeeBankDetails) {
       const payeeErrs = propertyPayoutDetailsFieldErrors({
+        bank_name: payeeBankName,
         account_name: payeeAccountName,
         bsb: payeeBsb,
         account_number: payeeAccountNumber,
@@ -2865,7 +3021,7 @@ export default function LandlordPropertyFormPage() {
         isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
           ? roomingHouseRegistrationNumber.trim()
           : null,
-      room_description: isNswT3Listing ? roomDescription.trim() : null,
+      room_description: isNswT3Listing || qldRoomCard ? roomDescription.trim() || null : null,
       shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
       additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
       rent_per_week: rent,
@@ -2975,25 +3131,8 @@ export default function LandlordPropertyFormPage() {
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
         await saveQldRoomingHouseRules(propertyId)
-        if (
-          showListingPayeeBankDetails &&
-          propertyPayoutDetailsComplete({
-            account_name: payeeAccountName,
-            bsb: payeeBsb,
-            account_number: payeeAccountNumber,
-          })
-        ) {
-          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
-            {
-              property_id: propertyId,
-              account_name: payeeAccountName.trim(),
-              bsb: payeeBsb.replace(/[\s-]/g, ''),
-              account_number: payeeAccountNumber.trim(),
-            },
-            { onConflict: 'property_id' },
-          )
-          if (payoutErr) throw payoutErr
-        }
+        await saveQldRoomingStage2(propertyId)
+        await saveListingPayeeBankDetails(propertyId)
         if (waterAttestationPatch.water_separately_metered_efficient_attested_at) {
           setWaterSeparatelyMeteredAttestedAt(
             waterAttestationPatch.water_separately_metered_efficient_attested_at,
@@ -3071,25 +3210,8 @@ export default function LandlordPropertyFormPage() {
         await savePropertyFeatures(newId, featureIds)
         await savePropertyHouseRules(newId, selectedRules)
         await saveQldRoomingHouseRules(newId)
-        if (
-          showListingPayeeBankDetails &&
-          propertyPayoutDetailsComplete({
-            account_name: payeeAccountName,
-            bsb: payeeBsb,
-            account_number: payeeAccountNumber,
-          })
-        ) {
-          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
-            {
-              property_id: newId,
-              account_name: payeeAccountName.trim(),
-              bsb: payeeBsb.replace(/[\s-]/g, ''),
-              account_number: payeeAccountNumber.trim(),
-            },
-            { onConflict: 'property_id' },
-          )
-          if (payoutErr) throw payoutErr
-        }
+        await saveQldRoomingStage2(newId)
+        await saveListingPayeeBankDetails(newId)
         if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
           const recorded = await recordNswT3ComplianceAttestation({
             client: supabase,
@@ -3186,7 +3308,7 @@ export default function LandlordPropertyFormPage() {
                 isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
                   ? roomingHouseRegistrationNumber.trim()
                   : null,
-              room_description: isNswT3Listing ? roomDescription.trim() : null,
+              room_description: isNswT3Listing || qldRoomCard ? roomDescription.trim() || null : null,
               shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
               additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
               rent_per_week: rent,
@@ -3210,6 +3332,7 @@ export default function LandlordPropertyFormPage() {
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
           await saveQldRoomingHouseRules(newId)
+          await saveQldRoomingStage2(newId)
           if (isNswT3Listing && !skipAttestations && user?.id && !nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)) {
             const recorded = await recordNswT3ComplianceAttestation({
               client: supabase,
@@ -3353,6 +3476,7 @@ export default function LandlordPropertyFormPage() {
     await savePropertyFeatures(propertyId, [...selectedFeatureIds])
     await savePropertyHouseRules(propertyId, selectedRules)
     await saveQldRoomingHouseRules(propertyId)
+    await saveQldRoomingStage2(propertyId)
   }, [
     persistLandlordPropertyDraft,
     propertyId,
@@ -3838,6 +3962,15 @@ export default function LandlordPropertyFormPage() {
               </div>
               {showRoomForRentSelect(accommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
+              {qldRoomCard ? (
+                <QldSharesKitchenOrBathroomField
+                  value={qldRoomingForm.sharesKitchenOrBathroom}
+                  onChange={(sharesKitchenOrBathroom) =>
+                    setQldRoomingForm((prev) => ({ ...prev, sharesKitchenOrBathroom }))
+                  }
+                  labelClass={labelClass}
+                />
+              ) : null}
               {qldOnSiteBoarderLodger ? (
                 <div className="space-y-3">
                   <p className="text-sm text-sky-950 leading-relaxed">{qldOnSiteListingCallout()}</p>
@@ -3845,9 +3978,7 @@ export default function LandlordPropertyFormPage() {
                     <label htmlFor="pf-qld-rooms-rented" className={labelClass}>
                       Rooms you rent to residents in this home
                     </label>
-                    <p className="text-xs text-gray-600 mt-0.5 mb-1">
-                      Include this listing and any other rooms you rent to residents while you live on site. Do not count the room you sleep in. Three or fewer is the usual s 43 boarder/lodger path. Four or more is rooming accommodation.
-                    </p>
+                    <p className="text-xs text-gray-600 mt-0.5 mb-1">{QLD_ROOMS_LET_HELPER}</p>
                     <input
                       id="pf-qld-rooms-rented"
                       type="number"
@@ -4060,6 +4191,36 @@ export default function LandlordPropertyFormPage() {
                     </button>
                   </div>
                 </div>
+              ) : null}
+              {qldRoomCard && !isNswT3Listing ? (
+                <div>
+                  <label htmlFor="pf-qld-room-description" className={labelClass}>
+                    Room description
+                  </label>
+                  <input
+                    id="pf-qld-room-description"
+                    type="text"
+                    value={roomDescription}
+                    onChange={(e) => setRoomDescription(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Room 3, first floor rear"
+                    autoComplete="off"
+                  />
+                </div>
+              ) : null}
+              {showQldRoomingHouseRules ? (
+                <QldRoomingParticularsFields
+                  form={qldRoomingForm}
+                  onChange={(patch) => setQldRoomingForm((prev) => ({ ...prev, ...patch }))}
+                  payout={{
+                    bank_name: payeeBankName,
+                    account_name: payeeAccountName,
+                    bsb: payeeBsb,
+                    account_number: payeeAccountNumber,
+                  }}
+                  labelClass={labelClass}
+                  inputClass={inputClass}
+                />
               ) : null}
                 </div>
               ) : null}
@@ -4431,6 +4592,11 @@ export default function LandlordPropertyFormPage() {
                   labelClass={labelClass}
                   inputClass={inputClass}
                   billsIncluded={billsIncludedSelected}
+                  utilitiesAgreementHint={
+                    showQldRoomingHouseRules
+                      ? 'Bills are not included in the rent. Specify who pays for electricity and gas so the rooming agreement and listing can state this lawfully.'
+                      : undefined
+                  }
                   waterAttestationPersisted={propertyHasWaterSeparatelyMeteredAttestation({
                     water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
                   })}
@@ -4910,6 +5076,9 @@ export default function LandlordPropertyFormPage() {
                   required
                   className={inputClass}
                 />
+                {showQldRoomingHouseRules ? (
+                  <p className="mt-1 text-xs text-gray-600">{QLD_RENT_ACCOMMODATION_ONLY_HELPER}</p>
+                ) : null}
                 {tierPricingError ? (
                   <p className="mt-2 text-xs text-amber-800/90" role="status">
                     {tierPricingError} Tier estimates are unavailable until pricing loads.
@@ -5139,15 +5308,32 @@ export default function LandlordPropertyFormPage() {
                         ? 'Residents pay the security deposit and occupancy fee directly to this account by fee-free bank transfer, using their name and the property address as the reference.'
                         : 'Renters pay bond and rent directly to this account by fee-free bank transfer, using their name and the property address as the reference.'}
                     </p>
-                    {!propertyPayoutDetailsComplete({
-                      account_name: payeeAccountName,
-                      bsb: payeeBsb,
-                      account_number: payeeAccountNumber,
-                    }) ? (
+                    {showQldRoomingHouseRules ? (
+                      <p className="mt-2 text-xs text-amber-800/90">
+                        Required to save or publish this Queensland rooming listing. Method 1 on the agreement is
+                        direct credit to this account.
+                      </p>
+                    ) : !propertyPayoutDetailsComplete({
+                        account_name: payeeAccountName,
+                        bsb: payeeBsb,
+                        account_number: payeeAccountNumber,
+                      }) ? (
                       <p className="mt-2 text-xs text-amber-800/90">
                         Required to accept Quni Listing bookings on this property.
                       </p>
                     ) : null}
+                  </div>
+                  <div>
+                    <label htmlFor="pf-payee-bank-name" className={labelClass}>
+                      Bank name
+                    </label>
+                    <input
+                      id="pf-payee-bank-name"
+                      value={payeeBankName}
+                      onChange={(e) => setPayeeBankName(e.target.value)}
+                      autoComplete="off"
+                      className={inputClass}
+                    />
                   </div>
                   <div>
                     <label htmlFor="pf-payee-account-name" className={labelClass}>

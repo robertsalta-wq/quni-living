@@ -1268,6 +1268,7 @@ export default function PropertyDetail({
       property_type: property.property_type ?? '',
       is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
       rooms_rented_to_residents: property.rooms_rented_to_residents,
+      shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
     }),
   )
   const hasWrittenHouseRules = Boolean(property.house_rules?.trim()) && !qldRoomingListing

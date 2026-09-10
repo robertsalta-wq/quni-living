@@ -88,11 +88,35 @@ describe('qldFactsFromListing', () => {
     })
   })
 
-  it('maps off-site room and shared room to shared facilities, provider off site', () => {
+  it('maps off-site room and shared room to shared facilities when unanswered', () => {
     expect(qldFactsFromListing({ propertyType: 'private_room_landlord_off_site' })?.providerLivesAtPremises).toBe(
       false,
     )
     expect(qldFactsFromListing({ propertyType: 'shared_room' })?.whatIsLet).toBe('room_with_shared_facilities')
+  })
+
+  it('maps a QLD room that does not share a kitchen or bathroom to self-contained', () => {
+    expect(
+      qldFactsFromListing({
+        propertyType: 'private_room_landlord_off_site',
+        sharesKitchenOrBathroom: false,
+      })?.whatIsLet,
+    ).toBe('whole_or_self_contained')
+    expect(
+      qldFactsFromListing({
+        propertyType: 'shared_room',
+        sharesKitchenOrBathroom: false,
+      })?.whatIsLet,
+    ).toBe('whole_or_self_contained')
+  })
+
+  it('maps explicit share to shared facilities', () => {
+    expect(
+      qldFactsFromListing({
+        propertyType: 'private_room_landlord_off_site',
+        sharesKitchenOrBathroom: true,
+      })?.whatIsLet,
+    ).toBe('room_with_shared_facilities')
   })
 
   it('maps on-site room and reads the rooms-let count', () => {
@@ -104,6 +128,20 @@ describe('qldFactsFromListing', () => {
       whatIsLet: 'room_with_shared_facilities',
       providerLivesAtPremises: true,
       roomsOccupiedOrAvailableToResidents: 4,
+    })
+  })
+
+  it('on-site self-contained is whole or self-contained regardless of room count', () => {
+    expect(
+      qldFactsFromListing({
+        propertyType: 'private_room_landlord_on_site',
+        roomsRentedToResidents: 8,
+        sharesKitchenOrBathroom: false,
+      }),
+    ).toEqual({
+      whatIsLet: 'whole_or_self_contained',
+      providerLivesAtPremises: true,
+      roomsOccupiedOrAvailableToResidents: 8,
     })
   })
 })

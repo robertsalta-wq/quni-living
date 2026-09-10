@@ -14,7 +14,8 @@ describe('qldBoarderLodger', () => {
   })
 
   it('validates rooms rented for s 43 threshold', () => {
-    expect(qldRoomsRentedFieldError(null)).toMatch(/Enter how many rooms/)
+    expect(qldRoomsRentedFieldError(null)).toMatch(/occupied by or available to residents/)
+    expect(qldRoomsRentedFieldError(null)).toMatch(/not including the room you sleep in/)
     expect(qldRoomsRentedFieldError(2)).toBeNull()
     expect(qldRoomsRentedFieldError(3)).toBeNull()
     expect(qldRoomsRentedFieldError(4)).toBeNull()

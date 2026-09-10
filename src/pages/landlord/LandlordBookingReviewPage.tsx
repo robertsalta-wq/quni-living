@@ -296,6 +296,7 @@ export default function LandlordBookingReviewPage() {
       propertyType: data.property.property_type,
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
       roomsRentedToResidents: data.property.rooms_rented_to_residents,
+      sharesKitchenOrBathroom: data.property.qld_shares_kitchen_or_bathroom,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
       managedGloballyEnabled: serviceTierResolverOptions.managedGloballyEnabled,
       managedOverrides: serviceTierResolverOptions.managedOverrides,
@@ -308,6 +309,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
     data?.property?.rooms_rented_to_residents,
+    data?.property?.qld_shares_kitchen_or_bathroom,
     data?.property?.service_tier,
     data?.booking?.stripe_payment_intent_id,
     data?.booking?.service_tier_at_request,
@@ -353,6 +355,7 @@ export default function LandlordBookingReviewPage() {
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+      shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
     })
     if (!pkg.supported) return null
@@ -369,6 +372,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
     data?.property?.rooms_rented_to_residents,
+    data?.property?.qld_shares_kitchen_or_bathroom,
     data?.property?.qld_bond_remittance_preference,
   ])
 
@@ -383,6 +387,7 @@ export default function LandlordBookingReviewPage() {
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+      shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
     })
     return isQldRoomingFormR18Pending(pkg)
@@ -393,6 +398,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
     data?.property?.rooms_rented_to_residents,
+    data?.property?.qld_shares_kitchen_or_bathroom,
   ])
 
   const canConfirm =
@@ -1747,6 +1753,7 @@ export default function LandlordBookingReviewPage() {
                         propertyType={property.property_type ?? ''}
                         isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
                         roomsRentedToResidents={property.rooms_rented_to_residents}
+                        sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
                         embedded
                       />
                       <BookingLeasePanel
