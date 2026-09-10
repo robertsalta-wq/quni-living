@@ -199,6 +199,7 @@ describe('aiMatchingCriteria classification drift', () => {
       'listing_acknowledged_at',
       'listing_snapshot',
       'listing_snapshot_hash',
+      'qld_house_rules_attested_at',
       'rta_bond_number',
       'rta_acknowledgement_reference',
       'rta_bond_lodged_at',

@@ -208,6 +208,7 @@ export const BOOKING_FIELD_STATUS = {
   listing_acknowledged_at: 'NOT_MATCHING',
   listing_snapshot: 'NOT_MATCHING',
   listing_snapshot_hash: 'NOT_MATCHING',
+  qld_house_rules_attested_at: 'NOT_MATCHING',
   rent_payment_method: 'NOT_MATCHING',
   stripe_subscription_id: 'NOT_MATCHING',
   stripe_subscription_status: 'NOT_MATCHING',

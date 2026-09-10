@@ -211,7 +211,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.generator).toBe('qld-form18a')
     })
 
-    it('off-site room that shares a kitchen or bathroom → rooming, Form R18 not generated', () => {
+    it('off-site room that shares a kitchen or bathroom → rooming, accept not open', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_off_site',
@@ -223,7 +223,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.unsupportedReason).toMatch(/Form R18/)
     })
 
-    it('off-site room, unregistered → rooming, Form R18 not generated', () => {
+    it('off-site room, unregistered → rooming, accept not open', () => {
       const r = pkg({
         state: 'qld',
         property_type: 'private_room_landlord_off_site',
@@ -234,6 +234,8 @@ describe('resolveTenancyPackage', () => {
       expect(r.generator).toBeNull()
       expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(r.unsupportedReason).toMatch(/cannot accept/)
+      expect(r.unsupportedReason).not.toMatch(/does not generate/)
       expect(r.ragState).toBe('QLD')
     })
 
@@ -249,7 +251,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.unsupportedReason).toMatch(/Form R18/)
     })
 
-    it('shared_room → rooming, Form R18 not generated', () => {
+    it('shared_room → rooming, accept not open', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'shared_room',
@@ -260,7 +262,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.unsupportedReason).toMatch(/Form R18/)
     })
 
-    it('on-site 4 rooms → rooming, Form R18 not generated', () => {
+    it('on-site 4 rooms → rooming, accept not open', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_on_site',

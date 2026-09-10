@@ -1833,6 +1833,7 @@ export interface Database {
           listing_acknowledged_at: string | null
           listing_snapshot: Json | null
           listing_snapshot_hash: string | null
+          qld_house_rules_attested_at: string | null
           property_type: string | null
           rent_payment_method: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id: string | null
@@ -1927,6 +1928,7 @@ export interface Database {
           listing_acknowledged_at?: string | null
           listing_snapshot?: Json | null
           listing_snapshot_hash?: string | null
+          qld_house_rules_attested_at?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
@@ -2020,6 +2022,7 @@ export interface Database {
           listing_acknowledged_at?: string | null
           listing_snapshot?: Json | null
           listing_snapshot_hash?: string | null
+          qld_house_rules_attested_at?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null

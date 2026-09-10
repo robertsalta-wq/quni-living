@@ -29,6 +29,10 @@ import {
   preflightNswBoardingHouseListingTenancy,
   runNswBoardingHouseListingTenancy,
 } from './nswBoardingHouse.js'
+import {
+  preflightQldFormR18ListingTenancy,
+  runQldFormR18ListingTenancy,
+} from './qldFormR18.js'
 
 export type ListingTenancyGeneratorModule = {
   preflight: (
@@ -70,6 +74,10 @@ const REGISTRY: Record<string, ListingTenancyGeneratorModule> = {
   'nsw-boarding-house': {
     preflight: preflightNswBoardingHouseListingTenancy,
     run: runNswBoardingHouseListingTenancy,
+  },
+  'qld-form-r18': {
+    preflight: preflightQldFormR18ListingTenancy,
+    run: runQldFormR18ListingTenancy,
   },
 }
 

@@ -1,0 +1,11 @@
+{
+  "form": "QLD RTA Form R18 - Rooming accommodation agreement",
+  "sourceUrl": "https://www.rta.qld.gov.au/forms-resources/forms/forms-for-rooming-accommodation/rooming-accommodation-agreement-form-r18",
+  "rtaVersionString": "v15 Sep25",
+  "downloadDate": "2026-09-08",
+  "sha256": "ccefc68df8c65804daa40c6bff8dcd9f30e4759e19a9cfe3cff8b3cff87be808",
+  "fileSizeBytes": 438241,
+  "pageCount": 11,
+  "storedAs": "docs/qld/form-r18-v15.pdf",
+  "notes": "Official RTA Form R18 v15 Sep25. AcroForm /T names live in qldFormR18Fields.ts."
+}

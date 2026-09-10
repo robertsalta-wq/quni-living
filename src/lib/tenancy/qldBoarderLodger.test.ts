@@ -26,5 +26,6 @@ describe('qldBoarderLodger', () => {
     expect(qldRoomsRentedRoomingNotice(3)).toBeNull()
     expect(qldRoomsRentedRoomingNotice(4)).toMatch(/Form R18/)
     expect(qldRoomsRentedRoomingNotice(4)).toMatch(/Do not use a registered rooming house listing/)
+    expect(qldRoomsRentedRoomingNotice(4)).not.toMatch(/does not generate/)
   })
 })

@@ -1,6 +1,7 @@
 /**
  * QLD tenancy rules by tier - mirrors nsw.ts export shape.
- * Tier 3 (rooming accommodation) is deferred in resolveTenancyPackage, not defined here (same pattern as vic.ts omitting T3).
+ * Tier 3 (rooming accommodation) stays unsupported in resolveTenancyPackage until Stage 6 accept.
+ * Form R18 is registered on the listing generator pipeline without flipping supported.
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'
 
