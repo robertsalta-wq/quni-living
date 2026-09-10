@@ -6,6 +6,10 @@ import {
   QldFormR18Part3OverflowError,
 } from './qldFormR18Part3.js'
 import {
+  QLD_FORM_R18_PAYMENT_REFERENCE_OVERFLOW_MESSAGE,
+  QldFormR18PaymentReferenceOverflowError,
+} from './qldFormR18PaymentReference.js'
+import {
   applyOfficialQldFormR18Fill,
   fillOfficialQldFormR18Pdf,
   loadOfficialQldFormR18Template,
@@ -32,7 +36,9 @@ describe('officialQldFormR18Fill', () => {
     expect(doc.getForm().getTextField(F.Special_terms).getMaxLength()).toBeUndefined()
   })
 
-  it('fills Item 3 blank, Item 17 Yes only with attestation, and locked Part 3 text', async () => {
+  it(
+    'fills Item 3 blank, Item 17 Yes only with attestation, and locked Part 3 text',
+    async () => {
     const doc = await loadOfficialQldFormR18Template()
     const { filledFieldNames } = await applyOfficialQldFormR18Fill(doc, qldFormR18SampleFillProps())
     const form = doc.getForm()
@@ -47,6 +53,9 @@ describe('officialQldFormR18Fill', () => {
     expect(form.getCheckBox(C.notice_resident_fax_no).isChecked()).toBe(true)
     expect(form.getTextField(F.Special_terms).getText()).toBe(QLD_FORM_R18_PART3_SPECIAL_TERMS)
     expect(form.getTextField(F.Room_number).getText()).toBe('1')
+    expect(form.getTextField(F.Payment_reference).getText()).toBe('Resident room 1')
+    expect(form.getCheckBox(C.rent_can_increase_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(C.rent_can_increase_yes).isChecked()).toBe(false)
 
     const noAttest = await loadOfficialQldFormR18Template()
     await applyOfficialQldFormR18Fill(noAttest, { ...qldFormR18SampleFillProps(), houseRulesProvided: false })
@@ -64,6 +73,31 @@ describe('officialQldFormR18Fill', () => {
     expect(compact).toContain('one-off platform fee')
     expect(compact).toMatch(/Direct credit/)
     expect(compact).toMatch(/Robert Resident/)
+    expect(compact).toContain('Resident room 1')
+  },
+    20_000,
+  )
+
+  it('throws on Item 11 payment reference overflow instead of clipping', async () => {
+    await expect(
+      fillOfficialQldFormR18Pdf({
+        ...qldFormR18SampleFillProps(),
+        paymentReference: 'W'.repeat(80),
+      }),
+    ).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(QldFormR18PaymentReferenceOverflowError)
+      expect((err as Error).message).toBe(QLD_FORM_R18_PAYMENT_REFERENCE_OVERFLOW_MESSAGE)
+      return true
+    })
+  })
+
+  it('keeps a hyphenated surname in the payment reference', async () => {
+    const { pdfBytes } = await fillOfficialQldFormR18Pdf({
+      ...qldFormR18SampleFillProps(),
+      paymentReference: 'Smith-Jones room 1',
+    })
+    const compact = (await allPageText(pdfBytes)).replace(/\s+/g, ' ')
+    expect(compact).toContain('Smith-Jones room 1')
   })
 
   it('throws on Part 3 overflow instead of clipping', async () => {

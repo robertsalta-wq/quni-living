@@ -27,8 +27,9 @@ Action buttons `Reset form` and `Print form` are dropped before flatten.
 | 7 Student accommodation | `properties.qld_student_accommodation` | `Student accommodation` |
 | 8 Term | Booking dates | `Fixed term agreement` / `Periodic agreement`, start/end |
 | 9 Rent | Accommodation only, weekly | `Rent amount`, `Accommodation`, `Weekly` |
-| 11 Methods | Method 1 Direct credit. Method 2 plus s 99B costs and clause 7(5) benefit from listing columns. Bank block from `property_payout_details` including `bank_name`. | `Method 1`, `Method 2`, `Bank/building society/credit union`, account name, BSB, account number, payment reference |
-| 13.2 Last increase | `qld_rent_last_increased_on`. Blank means never increased. Do not invent can-increase. | `The day the rent was last increased for the room (dd/mm/yyyy)`. `Yes12`/`No12` left unchecked |
+| 11 Methods | Method 1 Direct credit. Method 2 plus s 99B costs and clause 7(5) benefit from listing columns. Bank block from `property_payout_details` including `bank_name`. Payment reference is `{surname} room {room}` (surname from last name). Fail-closed 10 pt width check. Do not shrink or clip. Do not strip hyphens in a surname. | `Method 1`, `Method 2`, `Bank/building society/credit union`, account name, BSB, account number, `Payment reference` |
+| 13.1 Can the rent be increased? | No. There is no increase mechanism on the listing. Item 13.2 is a past fact, not a future mechanism. | `No12` checked, `Yes12` unchecked |
+| 13.2 Last increase | `qld_rent_last_increased_on`. Blank means never increased. | `The day the rent was last increased for the room (dd/mm/yyyy)` |
 | 14 Bond | Listing bond amount | `Rental bond amount` |
 | 15 Service | Level 1 hardcoded. No food. | `Level 1a` |
 | 16 Persons | Occupant count and `qld_persons_at_premises` | person-count fields |

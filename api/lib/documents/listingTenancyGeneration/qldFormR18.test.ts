@@ -46,6 +46,7 @@ describe('qld-form-r18 listing generator', () => {
     expect(r18Text).not.toMatch(/Form 1a/)
     expect(r18Text).not.toMatch(/Form 14a/)
     expect(r18Text).toMatch(/Direct credit/)
+    expect(r18Text.replace(/\s+/g, ' ')).toContain('Resident room 1')
     expect(rulesText).toMatch(/Give this copy to the proposed resident/)
     expect(rulesText).toMatch(/s 275/)
     expect(rulesText).toMatch(/Kitchen, bathrooms, and shared living room/)

@@ -9,6 +9,7 @@ import {
   parseQldRoomingHouseRulesStored,
 } from '../../tenancy/qldHouseRules/index.js'
 import { fillOfficialQldFormR18Pdf, type QldFormR18FillProps } from '../officialQldFormR18Fill.js'
+import { formatQldFormR18PaymentReference } from '../qldFormR18PaymentReference.js'
 import { qldFormR18SampleFillProps } from '../qldFormR18SampleProps.js'
 import { QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT } from '../../tenancy/qldRoomingListingFields.js'
 import {
@@ -291,7 +292,11 @@ async function loadQldFormR18ListingContext(
     accountName: payout!.account_name!.trim(),
     bsb: payout!.bsb!.trim(),
     accountNumber: payout!.account_number!.trim(),
-    paymentReference: `${residentName} - ${[premises.street, premises.suburbLine, premises.postcode].filter(Boolean).join(', ')}`,
+    paymentReference: formatQldFormR18PaymentReference({
+      fullName: residentName,
+      lastName: typeof sp.last_name === 'string' ? sp.last_name : '',
+      roomNumber,
+    }),
     lastRentIncreaseIso: lastInc,
     utilitiesLine: '',
     personsInRoom,

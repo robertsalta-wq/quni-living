@@ -1,4 +1,5 @@
 import type { QldFormR18FillProps } from './officialQldFormR18Fill.js'
+import { formatQldFormR18PaymentReference } from './qldFormR18PaymentReference.js'
 
 export function qldFormR18SampleFillProps(): QldFormR18FillProps {
   return {
@@ -34,7 +35,11 @@ export function qldFormR18SampleFillProps(): QldFormR18FillProps {
     accountName: 'Quang Dinh',
     bsb: '123456',
     accountNumber: '98765432',
-    paymentReference: 'Robert Resident - 22 Rental Street, Jamboree Heights QLD 4074',
+    paymentReference: formatQldFormR18PaymentReference({
+      fullName: 'Robert Resident',
+      lastName: 'Resident',
+      roomNumber: '1',
+    }),
     lastRentIncreaseIso: null,
     utilitiesLine: '',
     personsInRoom: 1,

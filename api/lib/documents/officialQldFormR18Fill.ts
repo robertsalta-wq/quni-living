@@ -1,6 +1,6 @@
 /**
  * Fill official RTA Form R18 v15 Sep25 (docs/qld/form-r18-v15.pdf).
- * Part 3 is fail-closed: overflow throws QldFormR18Part3OverflowError.
+ * Part 3 and Item 11 payment reference are fail-closed: overflow throws.
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -10,6 +10,11 @@ import {
   assertQldFormR18Part3Fits,
   QLD_FORM_R18_PART3_SPECIAL_TERMS,
 } from './qldFormR18Part3.js'
+import {
+  assertQldFormR18PaymentReferenceFits,
+  QLD_FORM_R18_PAYMENT_REFERENCE_FONT_SIZE,
+  sanitizeQldFormR18PaymentReference,
+} from './qldFormR18PaymentReference.js'
 import { flattenAndCleanForm, saveNormalizedPdf } from './officialNswFt6600PdfNormalize.js'
 import { removeAcroFormFieldsBeforeFlatten } from './officialQldForm18aFill.js'
 
@@ -161,6 +166,25 @@ function pushText(form: PDFForm, name: string, value: string | null | undefined,
   }
 }
 
+function pushPaymentReference(
+  form: PDFForm,
+  name: string,
+  value: string | null | undefined,
+  into: string[],
+  font: PDFFont,
+) {
+  const v = sanitizeQldFormR18PaymentReference(value)
+  const field = form.getTextField(name)
+  const rect = field.acroField.getWidgets()[0]?.getRectangle()
+  if (!rect) {
+    throw new Error('Form R18 Item 11 Payment reference widget is missing.')
+  }
+  assertQldFormR18PaymentReferenceFits(v, font, rect)
+  field.setFontSize(QLD_FORM_R18_PAYMENT_REFERENCE_FONT_SIZE)
+  field.setText(v)
+  into.push(name)
+}
+
 export async function loadOfficialQldFormR18Template(): Promise<PDFDocument> {
   return PDFDocument.load(readFileSync(join(process.cwd(), OFFICIAL_QLD_FORM_R18_TEMPLATE_REL)), {
     ignoreEncryption: true,
@@ -238,8 +262,10 @@ export async function applyOfficialQldFormR18Fill(
   pushText(form, F.Account_name, props.accountName, filled)
   pushText(form, F.Bsb, formatBsb(props.bsb), filled)
   pushText(form, F.Account_number, props.accountNumber.replace(/\D/g, ''), filled)
-  pushText(form, F.Payment_reference, props.paymentReference, filled)
+  pushPaymentReference(form, F.Payment_reference, props.paymentReference, filled, font)
 
+  setCheck(form, C.rent_can_increase_yes, false)
+  setCheck(form, C.rent_can_increase_no, true)
   if (props.lastRentIncreaseIso) {
     pushText(form, F.Last_rent_increase, formatAuDate(props.lastRentIncreaseIso), filled)
   }
