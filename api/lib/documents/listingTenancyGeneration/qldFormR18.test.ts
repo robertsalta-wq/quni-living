@@ -20,15 +20,15 @@ async function pdfText(pdfBytes: Uint8Array): Promise<string> {
 }
 
 describe('qld-form-r18 listing generator', () => {
-  it('is on the listing registry without flipping QLD T3 supported', () => {
+  it('is on the listing registry and QLD T3 is supported', () => {
     expect(getListingTenancyGenerator(QLD_FORM_R18_GENERATOR_ID)).not.toBeNull()
     const pkg = resolveTenancyPackage({
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
       is_registered_rooming_house: false,
     })
-    expect(pkg.supported).toBe(false)
-    expect(pkg.generator).toBeNull()
+    expect(pkg.supported).toBe(true)
+    expect(pkg.generator).toBe(QLD_FORM_R18_GENERATOR_ID)
     expect(pkg.tier).toBe('T3')
   })
 

@@ -53,7 +53,7 @@ function mockAdmin(opts: {
   updateRows?: unknown[] | null
   eventError?: Error | null
   feeExempt?: boolean
-  payoutRow?: { account_name: string; bsb: string; account_number: string } | null
+  payoutRow?: { account_name: string; bsb: string; account_number: string; bank_name?: string } | null
 }) {
   const booking = opts.booking ?? baseBooking
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
@@ -80,16 +80,17 @@ function mockAdmin(opts: {
             maybeSingle: async () => ({ data: booking, error: null }),
           }),
         }),
-        update: () => ({
-          eq: () => ({
-            in: () => ({
-              select: async () => ({
-                data: updateRows,
-                error: null,
-              }),
-            }),
-          }),
-        }),
+        update: () => {
+          const result = { data: updateRows, error: null }
+          const chain = {
+            eq: () => chain,
+            in: () => chain,
+            select: async () => result,
+            then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+              Promise.resolve(result).then(resolve, reject),
+          }
+          return chain
+        },
       }
     }
     if (table === 'booking_events') {
@@ -494,5 +495,70 @@ describe('runListingConfirmBooking', () => {
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.idempotent).toBe(true)
+  })
+
+  const qldRoomingBooking = {
+    ...baseBooking,
+    move_in_date: '2026-07-01',
+    qld_house_rules_attested_at: null as string | null,
+    properties: {
+      state: 'QLD',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: false,
+    },
+  }
+
+  it('QLD rooming accept requires Item 17 attestation before preflight', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({
+      booking: qldRoomingBooking,
+      payoutRow: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432', bank_name: 'CBA' },
+    })
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: qldRoomingBooking.id,
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.body.error).toBe('qld_house_rules_attestation_required')
+    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
+  })
+
+  it('QLD rooming accept stamps attestation then preflights', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({
+      booking: qldRoomingBooking,
+      payoutRow: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432', bank_name: 'CBA' },
+    })
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: qldRoomingBooking.id,
+      qldHouseRulesAttested: true,
+    })
+    expect(result.ok).toBe(true)
+    expect(preflightListingTenancyDocument).toHaveBeenCalled()
+  })
+
+  it('QLD rooming accept needs bank name on payout details', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({
+      booking: qldRoomingBooking,
+      payoutRow: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432' },
+    })
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: qldRoomingBooking.id,
+      qldHouseRulesAttested: true,
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.body.error).toBe('listing_payout_details_missing')
+    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
   })
 })

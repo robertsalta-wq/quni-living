@@ -39,8 +39,7 @@ Ungated means nothing wrong is produced, not that everything is built. Anything 
 - House-rules generator from [`docs/legal/qld-prescribed-house-rules-sch7.md`](legal/qld-prescribed-house-rules-sch7.md). Do not re-derive Schedule 7 or ss 266 to 276 from RTA fact sheets
 - Two house-rules outputs: resident copy (s 275) and wall-display copy (s 276)
 - R18 generator
-- DocuSeal package: R18 + rooming Quni addendum + generated resident house-rules copy
-- Rooming variant of the Quni addendum
+- DocuSeal package: R18 + generated resident house-rules copy. No rooming addendum. Platform terms are Form R18 Part 3.
 - 2-week rent-in-advance cap
 - Existing Form 2 / RTA lodgement copy
 - Landlord Service Agreement v1.1, in this release or not at all
@@ -96,7 +95,7 @@ flowchart TD
   residentCopy["Resident copy (s 275)"]
   wallCopy["Wall-display copy (s 276)"]
   preflight["preflight: attestation, common areas, Level 1, room id, item 5"]
-  package["DocuSeal: R18 + addendum + resident house-rules copy"]
+  package["DocuSeal: R18 + resident house-rules copy"]
   listingFacts --> classifier
   classifier --> tierFn
   classifier --> router
@@ -115,11 +114,11 @@ During Stages 1 to 5 the router classifies QLD rooming correctly and returns `su
 
 ---
 
-## Item 17 and the addendum, settled on the instrument
+## Item 17 and Part 3, settled on the instrument
 
 **Item 17.** Form R18 standard terms clause 18(2) places the obligation to give the house rules on the **provider**, before entering into the agreement. s 275 makes entering the agreement without having given a copy an **offence** (10 penalty units). Item 17 is the provider's statement that he discharged that obligation. Quni is not a party and does not sign. Item 17 is truthfully Yes when the landlord attests before signature that he has given the resident the generated house rules. The generator refuses to run without that attestation. Gate copy says that in those terms: we are stopping him committing an offence, not ticking a form box.
 
-**Addendum.** Form R18 standard terms clauses 2(4) to 2(6): the parties may agree special terms; a duty or entitlement under the Act overrides any term inconsistent with it; a standard term overrides an inconsistent special term. The Quni rooming addendum is subordinate special terms. That is stated on the instrument. The addendum must not tell the parties to use Form 9, Form 1a, or Form 14a. On this path those are R9 and R1, which the landlord downloads from the RTA when he needs them.
+**Part 3, not a rooming addendum.** Stage 4 did not ship a Quni rooming addendum. Do not rebuild one. Form R18 standard terms clauses 2(4) to 2(6) already allow special terms, and those terms lose to the Act and to the standard terms. Locked Part 3 special terms on the official form are that instrument (`QLD_FORM_R18_PART3_SPECIAL_TERMS`). They must not tell the parties to use Form 9, Form 1a, or Form 14a. On this path those are R9 and R1, which the landlord downloads from the RTA when he needs them.
 
 **House rules in the pack.** Clause 2(3) makes house rules terms of the agreement. The generated resident copy is appended so the resident signs a pack that contains those terms. The wall-display copy is for s 276. Quni generates from the Schedule 7 source file plus the landlord's common-areas insert and any extras under the s 268(1) headings. Quni does not author extra subjects, does not version a premises object, and does not run the s 270 to 274 change process.
 
@@ -266,9 +265,9 @@ Out of this stage: optional PDF upload, free-text extras, change-of-rules produc
 
 The jump from 5 is the generator (locked text + one insert + constrained extras + two PDFs). Dropping optional upload saves the old 2 days and removes a path that would let him write a s 268(4) offence.
 
-### Stage 4. Form R18, rooming addendum, signing flow
+### Stage 4. Form R18, Part 3, signing flow
 
-Not approved.
+Shipped on Preview (generator). Accept stays closed until Stage 6.
 
 **DoD:** Generator id `qld-form-r18` on the existing listing pipeline (same shape as [`qldForm18a.ts`](../api/lib/documents/listingTenancyGeneration/qldForm18a.ts) / NSW T3 registry, not NSW T3's legal model). Official AcroForm fill of Form R18, same family as [`officialQldForm18aFill.ts`](../api/lib/documents/officialQldForm18aFill.ts).
 
@@ -279,16 +278,15 @@ Fill:
 - Item 11 method 1, method 2, **and** the direct-credit block
 - Item 13.2 from the optional date, else blank
 - Item 17 Yes only with attestation
+- Part 3 locked special terms. No separate rooming addendum. Do not reuse [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx).
 
-New rooming addendum; **do not** reuse [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Clauses 2(4) to 2(6) are why special terms are allowed and why they lose to the Act and to standard terms.
-
-DocuSeal package: R18 + addendum + generated resident house-rules copy. Wall-display copy is a landlord download, not a DocuSeal signer document. Emails and explainer say rooming accommodation / Form R18, not general tenancy. Sample PDF. Golden tests: Item 3 blank, Item 5 matches stored consents, Item 11 has two methods and the bank block, Item 13.2 blank unless dated, Item 17 Yes only with attestation, house-rules resident copy present, no "Form 18a", no Form 9 / 1a / 14a on this path.
+DocuSeal package: R18 + generated resident house-rules copy. Wall-display copy is a landlord download, not a DocuSeal signer document. Emails and explainer say rooming accommodation / Form R18, not general tenancy. Sample PDF. Golden tests: Item 3 blank, Item 5 matches stored consents, Item 11 has two methods and the bank block, Item 13.2 blank unless dated, Item 17 Yes only with attestation, house-rules resident copy present, no "Form 18a", no Form 9 / 1a / 14a on this path.
 
 The generator exists in this stage. The service matrix still withholds accept until Stage 6, or Stage 6 lands in the same release. Do not publish LSA v1.1 in this stage alone.
 
 **Unblocks:** A signing package that is the right form.
 
-**Estimate:** 12 engineer-days. Item 5 fill (many yes/no + address fields on the official PDF) plus wiring the resident house-rules PDF on the new send path. Always-on third document is simpler than the old optional-upload branch. The field-map / rename pass remains the bulk.
+**Estimate:** 12 engineer-days. Item 5 fill (many yes/no + address fields on the official PDF) plus wiring the resident house-rules PDF on the rooming send path. Two documents (R18 + resident house rules), not a third addendum PDF. The field-map / rename pass remains the bulk.
 
 ### Stage 5. Form R1. Out of v1
 
@@ -304,9 +302,9 @@ Not approved.
 
 **DoD:** [`LANDLORD_SERVICE_AGREEMENT_VERSION`](../src/lib/landlordServiceAgreement.ts) bumps to `listing-1.1` in the **same release** as accept becoming possible for QLD rooming. Reaccept modal. Package `supported: true`, generator `qld-form-r18`. Managed stays unsupported. Quang path: list → apply → accept → preflight → sign. Admin probe supported.
 
-LSA v1.1 prose is already drafted with a change log. Rob will hand it over at Stage 6. Clause 2.2 previously had to stop promising a house-rules document Quni prepares, because Stage 3 was a static download the landlord adapted. That is no longer the model. Stage 3 generates from Schedule 7 plus his common-areas insert and optional s 268(1) extras. Rob rewords 2.2 to match generation, not "bring your own document."
+LSA v1.1 prose is drafted with a change log. Clause 2.2 must **not** say the platform tells the landlord which document applies to the listing before he accepts anyone. That sentence is removed. It was a platform-wide promise kept only for QLD rooming. Do not build a general pre-accept surface for NSW and VIC, and do not reinstate the sentence. QLD rooming still names Form R18 on the listing note (product quality, not a 2.2 obligation). After `supported: true` the accept-gate banner disappears on its own.
 
-Engineering for Stage 6 is unchanged: version bump, reaccept modal, accept flip.
+Engineering for Stage 6: version bump when Rob pastes v1.1 verbatim, reaccept modal, accept flip, copy sweep, Item 17 stamp before generate, rooming DocuSeal send path.
 
 **Unblocks:** Done.
 
@@ -324,7 +322,7 @@ One engineer, no branches. Stage 3 prerequisite is done. Stage 3 generator does 
 | 2 Listing + apply fields (incl. Item 5 events) | 10 |
 | 3 prerequisite (Schedule 7) | 1 (done) |
 | 3 House-rules generator, two outputs, offence-gate attestation | 10 |
-| 4 R18 + rooming addendum + Item 5 fill | 12 |
+| 4 R18 + Part 3 + Item 5 fill | 12 |
 | 6 LSA v1.1 + ungate | 4 |
 | **Total** | **42 engineer-days** |
 
@@ -336,7 +334,7 @@ Was 37. Plus 5 on Stage 3 (generator and two PDFs, minus optional upload). Prere
 
 ## Single thing most likely to blow the estimate
 
-**The Form R18 AcroForm fill**, including Item 5's consent matrix on the official PDF. Official PDF, field rename, golden tests, plus a new rooming addendum that must not inherit Form 9 / 1a / 14a from [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Form 18a already proved that path is a multi-week document job hiding inside "just fill the form."
+**The Form R18 AcroForm fill**, including Item 5's consent matrix on the official PDF. Official PDF, field rename, golden tests, plus locked Part 3 special terms. There is no rooming addendum to build. Do not inherit Form 9 / 1a / 14a from [`QuniPlatformAddendumQld.tsx`](../src/lib/documents/QuniPlatformAddendumQld.tsx). Form 18a already proved that path is a multi-week document job hiding inside "just fill the form."
 
 Second risk is Stage 3: two layouts plus a constrained editor. It stays at 10 only if we do not grow a premises object or a change-of-rules product. ss 269 to 274 stay out.
 

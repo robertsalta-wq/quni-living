@@ -273,6 +273,7 @@ export default async function handler(req, res) {
         bookingId,
         origin,
         deviceCtx: requestContextFromNodeRequest(req),
+        qldHouseRulesAttested: body.qldHouseRulesAttested === true,
       })
 
       if (!listingResult.ok) {

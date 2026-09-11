@@ -26,16 +26,16 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.body).toContain('Rooming Accommodation Act 2008')
   })
 
-  it('returns accept-gated Form R18 copy for QLD off-site room', () => {
+  it('returns Form R18 copy for QLD off-site room', () => {
     const copy = tenancyAgreementExplainerCopy({
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
       is_registered_rooming_house: false,
     })
     expect(copy?.headline).toContain('Form R18')
-    expect(copy?.body).toMatch(/Quni produces Form R18/)
-    expect(copy?.body).toMatch(/cannot accept/)
-    expect(copy?.body).not.toMatch(/does not generate/)
+    expect(copy?.body).toMatch(/Rooming Accommodation Act 2008/)
+    expect(copy?.body).toMatch(/DocuSeal/)
+    expect(copy?.body).not.toMatch(/cannot accept/)
     expect(
       tenancyAgreementExplainerCopy({
         state: 'QLD',
@@ -65,7 +65,7 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.headline).toContain('occupancy agreement')
   })
 
-  it('returns accept-gated Form R18 copy for QLD on-site 4+', () => {
+  it('returns Form R18 copy for QLD on-site 4+', () => {
     const copy = tenancyAgreementExplainerCopy({
       state: 'QLD',
       property_type: 'private_room_landlord_on_site',
@@ -73,8 +73,8 @@ describe('tenancyAgreementExplainerCopy', () => {
       rooms_rented_to_residents: 4,
     })
     expect(copy?.headline).toContain('Form R18')
-    expect(copy?.body).toMatch(/cannot accept/)
-    expect(copy?.body).not.toMatch(/does not generate/)
+    expect(copy?.body).toMatch(/DocuSeal/)
+    expect(copy?.body).not.toMatch(/cannot accept/)
   })
 
   it('returns null for unsupported state', () => {
