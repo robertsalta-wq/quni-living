@@ -1305,45 +1305,31 @@ export default function LandlordBookingReviewPage() {
                             </p>
                           ))}
                         </div>
-                      ) : (
-                        <>
-                          {property ? (
-                            <TenancyAgreementExplainer
-                              state={property.state ?? ''}
-                              propertyType={property.property_type ?? ''}
-                              isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
-                              roomsRentedToResidents={property.rooms_rented_to_residents}
-                              sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
-                              embedded
-                            />
-                          ) : null}
-                          {qldRoomingArrangement ? (
-                            <div className="rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm text-admin-ink-2">
-                              <p className="font-semibold">{qldRoomingAcceptDocumentHeadline()}</p>
-                              {qldRoomingAcceptDocumentParagraphs().map((para) => (
-                                <p key={para} className="mt-2 leading-relaxed">
-                                  {para}
-                                </p>
-                              ))}
-                              {qldHouseRulesAlreadyAttested ? (
-                                <p className="mt-2 leading-relaxed">House rules already attested for this applicant.</p>
-                              ) : (
-                                <label className="mt-3 flex items-start gap-2.5">
-                                  <input
-                                    type="checkbox"
-                                    className="mt-1 h-4 w-4 shrink-0"
-                                    checked={qldHouseRulesAttested}
-                                    onChange={(e) => setQldHouseRulesAttested(e.target.checked)}
-                                  />
-                                  <span>{qldRoomingItem17CheckboxLabel()}</span>
-                                </label>
-                              )}
-                              <p className="mt-2 leading-relaxed">{qldRoomingItem17OffenceCopy()}</p>
-                              <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
-                            </div>
-                          ) : null}
-                        </>
-                      )}
+                      ) : qldRoomingArrangement ? (
+                        <div className="rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm text-admin-ink-2">
+                          <p className="font-semibold">{qldRoomingAcceptDocumentHeadline()}</p>
+                          {qldRoomingAcceptDocumentParagraphs().map((para) => (
+                            <p key={para} className="mt-2 leading-relaxed">
+                              {para}
+                            </p>
+                          ))}
+                          {qldHouseRulesAlreadyAttested ? (
+                            <p className="mt-2 leading-relaxed">House rules already attested for this applicant.</p>
+                          ) : (
+                            <label className="mt-3 flex items-start gap-2.5">
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 shrink-0"
+                                checked={qldHouseRulesAttested}
+                                onChange={(e) => setQldHouseRulesAttested(e.target.checked)}
+                              />
+                              <span>{qldRoomingItem17CheckboxLabel()}</span>
+                            </label>
+                          )}
+                          <p className="mt-2 leading-relaxed">{qldRoomingItem17OffenceCopy()}</p>
+                          <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
+                        </div>
+                      ) : null}
                       <button
                         type="button"
                         disabled={!canConfirm || actionBusy}
