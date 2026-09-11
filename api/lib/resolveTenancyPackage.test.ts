@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isQldRoomingArrangement,
   isQldRoomingFormR18Pending,
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
+  tenancyPackageInputFromPropertyRow,
   type TenancyPackageInput,
 } from './resolveTenancyPackage.js'
 
@@ -211,32 +213,37 @@ describe('resolveTenancyPackage', () => {
       expect(r.generator).toBe('qld-form18a')
     })
 
-    it('off-site room that shares a kitchen or bathroom → rooming, accept not open', () => {
+    it('off-site room that shares a kitchen or bathroom → Form R18', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: false,
         shares_kitchen_or_bathroom: true,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(r.generator).toBe('qld-form-r18')
+      expect(r.pdfKind).toBe('rooming_accommodation_agreement')
+      expect(r.rules?.bond.schemeApplies).toBe(true)
+      expect(r.unsupportedReason).toBeNull()
+      expect(isQldRoomingArrangement(r)).toBe(true)
+      expect(isQldRoomingFormR18Pending(r)).toBe(false)
     })
 
-    it('off-site room, unregistered → rooming, accept not open', () => {
+    it('off-site room, unregistered (shares unanswered) → Form R18', () => {
       const r = pkg({
         state: 'qld',
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: false,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.generator).toBeNull()
-      expect(r.rules).toBeNull()
-      expect(r.unsupportedReason).toMatch(/Form R18/)
-      expect(r.unsupportedReason).toMatch(/cannot accept/)
-      expect(r.unsupportedReason).not.toMatch(/does not generate/)
+      expect(r.generator).toBe('qld-form-r18')
+      expect(r.rules?.bond.lodgementDays).toBe(10)
+      expect(r.unsupportedReason).toBeNull()
       expect(r.ragState).toBe('QLD')
+      expect(isQldRoomingArrangement(r)).toBe(true)
+      expect(isQldRoomingFormR18Pending(r)).toBe(false)
     })
 
     it('off-site room, registered flag true → same rooming outcome (registration is not an input)', () => {
@@ -245,34 +252,49 @@ describe('resolveTenancyPackage', () => {
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: true,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.generator).toBeNull()
-      expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(r.generator).toBe('qld-form-r18')
     })
 
-    it('shared_room → rooming, accept not open', () => {
+    it('shared_room → Form R18', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'shared_room',
         is_registered_rooming_house: false,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.unsupportedReason).toMatch(/Form R18/)
+      expect(r.generator).toBe('qld-form-r18')
     })
 
-    it('on-site 4 rooms → rooming, accept not open', () => {
+    it('on-site 4 rooms → Form R18', () => {
       const r = pkg({
         state: 'QLD',
         property_type: 'private_room_landlord_on_site',
         is_registered_rooming_house: false,
         rooms_rented_to_residents: 4,
       })
-      expect(r.supported).toBe(false)
+      expect(r.supported).toBe(true)
       expect(r.tier).toBe('T3')
-      expect(r.unsupportedReason).toMatch(/Form R18/)
-      expect(isQldRoomingFormR18Pending(r)).toBe(true)
+      expect(r.generator).toBe('qld-form-r18')
+      expect(isQldRoomingArrangement(r)).toBe(true)
+      expect(isQldRoomingFormR18Pending(r)).toBe(false)
+    })
+
+    it('property row qld_shares_kitchen_or_bathroom false → Form 18a, not rooming', () => {
+      const r = resolveTenancyPackage(
+        tenancyPackageInputFromPropertyRow({
+          state: 'QLD',
+          property_type: 'private_room_landlord_off_site',
+          is_registered_rooming_house: false,
+          qld_shares_kitchen_or_bathroom: false,
+        }),
+      )
+      expect(r.supported).toBe(true)
+      expect(r.tier).toBe('T2')
+      expect(r.generator).toBe('qld-form18a')
+      expect(isQldRoomingArrangement(r)).toBe(false)
     })
 
     it('isQldRoomingFormR18Pending is false for occupancy and 18a', () => {
@@ -361,6 +383,7 @@ describe('tenancyGeneratorToApiPath', () => {
     expect(tenancyGeneratorToApiPath('vic-occupancy')).toBe('/api/documents/generate-vic-occupancy')
     expect(tenancyGeneratorToApiPath('qld-occupancy')).toBe('/api/documents/generate-qld-occupancy')
     expect(tenancyGeneratorToApiPath('qld-form18a')).toBe('/api/documents/generate-qld-residential-tenancy')
+    expect(tenancyGeneratorToApiPath('qld-form-r18')).toBe('/api/documents/generate-qld-form-r18')
     expect(tenancyGeneratorToApiPath(null)).toBeNull()
   })
 })

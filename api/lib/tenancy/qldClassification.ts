@@ -19,11 +19,11 @@ export type QldClassificationInput = {
 export const QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3
 
 /**
- * Product status while Form R18 is produced but accept is not open (Stage 6).
- * Not a statement of the legal test.
+ * Kept for isQldRoomingFormR18Pending. Stage 6 sets QLD T3 supported, so this
+ * string is not returned as unsupportedReason on the live path.
  */
 export const QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON =
-  'This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18. You cannot accept an applicant on Quni yet.'
+  'This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18.'
 
 export function parseRoomsOccupiedOrAvailableToResidents(raw: unknown): number | null {
   const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw, 10) : NaN

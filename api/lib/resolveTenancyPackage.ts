@@ -9,8 +9,8 @@ import { vicTenancyRules } from './tenancy/rules/vic.js'
 import {
   classifyQldArrangement,
   qldFactsFromListing,
-  QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
   parseRoomsOccupiedOrAvailableToResidents,
+  parseQldSharesKitchenOrBathroom,
 } from './tenancy/qldClassification.js'
 
 export {
@@ -120,6 +120,13 @@ function qldOccupancyPaths(): TenancyPackageStoragePaths {
   }
 }
 
+function qldFormR18Paths(): TenancyPackageStoragePaths {
+  return {
+    draft: 'qld_form_r18_draft.pdf',
+    signed: 'qld_form_r18_signed.pdf',
+  }
+}
+
 function unsupportedBase(
   tier: TenancyTier,
   reason: string,
@@ -181,7 +188,22 @@ function resolveQldTenancyPackage(
       unsupportedReason: null,
     }
   }
-  return unsupportedBase('T3', QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON, ragState)
+  return {
+    tier: 'T3',
+    supported: true,
+    generator: 'qld-form-r18',
+    pdfKind: 'rooming_accommodation_agreement',
+    rules: qldTenancyRules('T3'),
+    signingPackageName: 'QLD Form R18 - Rooming accommodation agreement',
+    storagePaths: qldFormR18Paths(),
+    ragState,
+    unsupportedReason: null,
+  }
+}
+
+/** QLD rooming accommodation (Form R18), whether or not accept is open. */
+export function isQldRoomingArrangement(pkg: TenancyPackageResult): boolean {
+  return pkg.ragState === 'QLD' && pkg.tier === 'T3'
 }
 
 export function isQldRoomingFormR18Pending(pkg: TenancyPackageResult): boolean {
@@ -336,6 +358,7 @@ export function tenancyPackageInputFromPropertyRow(
     property_type: typeof p.property_type === 'string' ? p.property_type : '',
     is_registered_rooming_house: Boolean(p.is_registered_rooming_house),
     rooms_rented_to_residents: parseRoomsOccupiedOrAvailableToResidents(p.rooms_rented_to_residents),
+    shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(p.qld_shares_kitchen_or_bathroom),
     date: opts?.date,
   }
 }
@@ -402,6 +425,7 @@ export function tenancyGeneratorToApiPath(generator: string | null): string | nu
   if (generator === 'nsw-boarding-house') return '/api/documents/generate-nsw-boarding-house'
   if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
   if (generator === 'qld-form18a') return '/api/documents/generate-qld-residential-tenancy'
+  if (generator === 'qld-form-r18') return '/api/documents/generate-qld-form-r18'
   if (generator === 'vic-form1') return '/api/documents/generate-vic-residential-rental'
   if (generator === 'vic-occupancy') return '/api/documents/generate-vic-occupancy'
   return null

@@ -129,4 +129,42 @@ describe('confirmLandlordBookingWithOptionalThreeDS', () => {
     }
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+
+  it('includes qldHouseRulesAttested on both confirm POSTs', async () => {
+    const confirmCardPayment = vi.fn().mockResolvedValue({
+      error: null,
+      paymentIntent: { status: 'succeeded', id: 'pi_x' },
+    })
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 402,
+        text: async () => JSON.stringify({ client_secret: 'cs_test_secret' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '{}',
+      })
+
+    await confirmLandlordBookingWithOptionalThreeDS(
+      'booking-1',
+      'tok',
+      {
+        fetch: fetch as unknown as typeof globalThis.fetch,
+        loadStripeFn: vi.fn().mockResolvedValue({ confirmCardPayment }) as never,
+        getPublishableKey: () => 'pk_test_x',
+      },
+      { serviceTier: 'listing', qldHouseRulesAttested: true },
+    )
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    for (const call of fetch.mock.calls) {
+      const init = call[1] as RequestInit
+      const parsed = JSON.parse(String(init.body)) as Record<string, unknown>
+      expect(parsed.qldHouseRulesAttested).toBe(true)
+      expect(parsed.serviceTier).toBe('listing')
+    }
+  })
 })

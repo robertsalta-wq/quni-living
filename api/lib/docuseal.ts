@@ -761,6 +761,180 @@ export async function sendResidentialTenancyPackageForSigning(
   ])
 }
 
+/** QLD Form R18 + resident house-rules PDF. Do not use the Form 18a addendum send path. */
+export async function sendQldFormR18PackageForSigning(
+  documentId: string,
+  docusealOpts?: { submitterSignReason?: boolean },
+): Promise<void> {
+  const admin = adminClient()
+
+  const { data: row, error: rowErr } = await admin
+    .from('tenancy_documents')
+    .select('id, tenancy_id, status, file_path, metadata')
+    .eq('id', documentId)
+    .maybeSingle()
+
+  if (rowErr) throw rowErr
+  if (!row?.file_path || !row.tenancy_id) {
+    throw new Error('Tenancy document not found or missing file_path')
+  }
+
+  const meta =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : {}
+  const houseRulesPath = typeof meta.house_rules_file_path === 'string' ? meta.house_rules_file_path.trim() : ''
+  if (!houseRulesPath) {
+    throw new Error('QLD Form R18 package missing metadata.house_rules_file_path')
+  }
+  if (meta.signing_package !== 'rooming_accommodation_qld') {
+    throw new Error('Tenancy document is not a QLD Form R18 rooming signing package')
+  }
+
+  const { data: tenancy, error: tErr } = await admin
+    .from('tenancies')
+    .select('landlord_profile_id, student_profile_id')
+    .eq('id', row.tenancy_id)
+    .maybeSingle()
+
+  if (tErr) throw tErr
+  if (!tenancy?.landlord_profile_id || !tenancy.student_profile_id) {
+    throw new Error('Tenancy missing profile ids')
+  }
+
+  const { data: lpRow, error: lpErr } = await admin
+    .from('landlord_profiles')
+    .select('full_name, first_name, last_name, email, company_name')
+    .eq('id', tenancy.landlord_profile_id)
+    .maybeSingle()
+
+  const { data: spRow, error: spErr } = await admin
+    .from('student_profiles')
+    .select('full_name, first_name, last_name, email, verification_type, legal_name_locked_at')
+    .eq('id', tenancy.student_profile_id)
+    .maybeSingle()
+
+  if (lpErr) throw lpErr
+  if (spErr) throw spErr
+  if (!lpRow || !spRow) throw new Error('Could not load landlord or student profile')
+
+  await assertStudentLegalNameForSigning(admin, spRow)
+
+  const landlordName =
+    [lpRow.first_name, lpRow.last_name].filter(Boolean).join(' ').trim() ||
+    (typeof lpRow.full_name === 'string' ? lpRow.full_name.trim() : '') ||
+    'Provider'
+  const residentSalutationName = legacyStudentNameFromProfile(spRow, 'Resident')
+  const residentSubmitterName = tenantLegalNameForDocuments(spRow, 'Resident')
+  const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
+  const residentEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
+
+  if (!landlordEmail || !residentEmail) {
+    throw new Error('Provider or resident email missing for DocuSeal')
+  }
+
+  const { data: r18Blob, error: r18DlErr } = await admin.storage.from('tenancy-documents').download(row.file_path)
+  const { data: rulesBlob, error: rulesDlErr } = await admin.storage
+    .from('tenancy-documents')
+    .download(houseRulesPath)
+
+  if (r18DlErr || !r18Blob) {
+    throw new Error(r18DlErr?.message || 'Could not download Form R18 draft PDF from storage')
+  }
+  if (rulesDlErr || !rulesBlob) {
+    throw new Error(rulesDlErr?.message || 'Could not download resident house-rules draft PDF from storage')
+  }
+
+  const r18Base64 = Buffer.from(await r18Blob.arrayBuffer()).toString('base64')
+  const houseRulesBase64 = Buffer.from(await rulesBlob.arrayBuffer()).toString('base64')
+
+  const submissionRaw = await createDocusealSubmissionFromPdf({
+    name: `QLD Form R18 - ${landlordName} / ${residentSalutationName}`,
+    documents: [
+      { name: 'QLD Form R18 Rooming Accommodation Agreement.pdf', file: r18Base64 },
+      { name: 'Resident House Rules.pdf', file: houseRulesBase64 },
+    ],
+    landlord: { name: landlordName, email: landlordEmail },
+    tenant: { name: residentSubmitterName, email: residentEmail },
+    ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
+  })
+  const submission = wrapSubmissionSubmitters(submissionRaw, false)
+
+  const submissionId = submission.id != null ? String(submission.id) : null
+  if (!submissionId) {
+    throw new Error('DocuSeal response missing submission id')
+  }
+
+  const { error: upErr } = await admin
+    .from('tenancy_documents')
+    .update({
+      docuseal_submission_id: submissionId,
+      status: 'sent_for_signing',
+      metadata: {
+        ...meta,
+        signing_package: 'rooming_accommodation_qld',
+        house_rules_file_path: houseRulesPath,
+        docuseal_response: submission as unknown as Json,
+      } as Json,
+    })
+    .eq('id', documentId)
+
+  if (upErr) throw upErr
+
+  try {
+    const { emitDocumentSentForSigning, loadBookingIdsForTenancy } = await import(
+      './booking/events/emitDocusealDocumentEvents.js'
+    )
+    const bookingIds = await loadBookingIdsForTenancy(admin, row.tenancy_id)
+    if (bookingIds) {
+      await emitDocumentSentForSigning(admin, {
+        ...bookingIds,
+        documentId,
+        submissionId,
+        actorType: 'system',
+        source: 'send',
+      })
+    }
+  } catch (evErr) {
+    console.error('[docuseal] document.sent_for_signing (qld-form-r18)', documentId, evErr)
+  }
+
+  const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
+  const landlordLink =
+    submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
+    submitters[0]?.embed_src ||
+    ''
+  const residentLink =
+    submitters.find((s) => (s.role || '').toLowerCase().includes('tenant'))?.embed_src ||
+    submitters[1]?.embed_src ||
+    ''
+
+  const signHtml = (who: string, link: string) => `
+    <p>Hi ${escapeHtml(who)},</p>
+    <p>Your Queensland Form R18 rooming accommodation agreement is ready to sign (Form R18 plus the resident house-rules copy). There is no Form 18a addendum for this listing.</p>
+    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
+    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
+    <p>- Quni Living (quni.com.au)</p>
+  `
+
+  await Promise.all([
+    landlordLink
+      ? sendEmail({
+          to: landlordEmail,
+          subject: 'Your QLD Form R18 rooming agreement is ready to sign',
+          html: signHtml(landlordName, landlordLink),
+        })
+      : Promise.resolve(),
+    residentLink
+      ? sendEmail({
+          to: residentEmail,
+          subject: 'Your QLD Form R18 rooming agreement is ready to sign',
+          html: signHtml(residentSalutationName, residentLink),
+        })
+      : Promise.resolve(),
+  ])
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, '&amp;')

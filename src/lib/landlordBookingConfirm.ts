@@ -26,6 +26,7 @@ export type ConfirmBookingProgress =
 
 export type ConfirmBookingOptions = {
   serviceTier?: 'listing' | 'managed'
+  qldHouseRulesAttested?: boolean
   onProgress?: (p: ConfirmBookingProgress) => void
 }
 
@@ -54,6 +55,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
       body: JSON.stringify({
         bookingId,
         ...(opts?.serviceTier ? { serviceTier: opts.serviceTier } : {}),
+        ...(opts?.qldHouseRulesAttested === true ? { qldHouseRulesAttested: true } : {}),
       }),
     })
   }

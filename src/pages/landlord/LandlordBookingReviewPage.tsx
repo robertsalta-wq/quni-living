@@ -36,10 +36,13 @@ import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
-import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingArrangement, isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
-  qldRoomingAcceptGateHeadline,
-  qldRoomingAcceptGateParagraphs,
+  qldRoomingAcceptDocumentHeadline,
+  qldRoomingAcceptDocumentParagraphs,
+  qldRoomingItem17CheckboxLabel,
+  qldRoomingItem17OffenceCopy,
+  qldRoomingS276AcceptCopy,
 } from '../../lib/tenancy/qldRoomingCopy'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
@@ -221,6 +224,7 @@ export default function LandlordBookingReviewPage() {
   )
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
+  const [qldHouseRulesAttested, setQldHouseRulesAttested] = useState(false)
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
@@ -401,10 +405,40 @@ export default function LandlordBookingReviewPage() {
     data?.property?.qld_shares_kitchen_or_bathroom,
   ])
 
+  const qldRoomingArrangement = useMemo(() => {
+    if (!data?.property) return false
+    const moveIn =
+      (typeof data.booking.move_in_date === 'string' && data.booking.move_in_date.trim()) ||
+      (typeof data.booking.start_date === 'string' && data.booking.start_date.trim()) ||
+      undefined
+    const pkg = resolveTenancyPackage({
+      state: data.property.state ?? '',
+      property_type: data.property.property_type ?? '',
+      is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+      shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
+      date: moveIn,
+    })
+    return isQldRoomingArrangement(pkg)
+  }, [
+    data?.booking?.move_in_date,
+    data?.booking?.start_date,
+    data?.property?.state,
+    data?.property?.property_type,
+    data?.property?.is_registered_rooming_house,
+    data?.property?.rooms_rented_to_residents,
+    data?.property?.qld_shares_kitchen_or_bathroom,
+  ])
+
+  const qldHouseRulesAlreadyAttested = Boolean(
+    typeof data?.booking?.qld_house_rules_attested_at === 'string' && data.booking.qld_house_rules_attested_at.trim(),
+  )
+
   const canConfirm =
     !!data &&
     !!tierModel &&
     !qldRoomingAcceptBlocked &&
+    (!qldRoomingArrangement || qldHouseRulesAlreadyAttested || qldHouseRulesAttested) &&
     (tierModel.showListing || tierModel.showManaged) &&
     landlordBookingConfirmAllowed({
       bookingStatus: data.booking.status,
@@ -488,6 +522,8 @@ export default function LandlordBookingReviewPage() {
         {},
         {
           serviceTier: selectedConfirmTier,
+          qldHouseRulesAttested:
+            qldRoomingArrangement && (qldHouseRulesAlreadyAttested || qldHouseRulesAttested) ? true : undefined,
           onProgress: (p) => {
             if (p.stage === 'payment_auth') setConfirmPhase('payment')
             if (p.stage === 'retry') setConfirmPhase('finalizing')
@@ -510,7 +546,16 @@ export default function LandlordBookingReviewPage() {
       setConfirmPhase('idle')
       setActionBusy(false)
     }
-  }, [bookingId, navigate, qldRoomingAcceptBlocked, reload, selectedConfirmTier])
+  }, [
+    bookingId,
+    navigate,
+    qldHouseRulesAlreadyAttested,
+    qldHouseRulesAttested,
+    qldRoomingAcceptBlocked,
+    qldRoomingArrangement,
+    reload,
+    selectedConfirmTier,
+  ])
 
   const onDecline = useCallback(async () => {
     if (!bookingId) return
@@ -1253,14 +1298,52 @@ export default function LandlordBookingReviewPage() {
                     <div className="flex flex-col gap-2.5">
                       {qldRoomingAcceptBlocked ? (
                         <div className="rounded-admin-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                          <p className="font-semibold">{qldRoomingAcceptGateHeadline()}</p>
-                          {qldRoomingAcceptGateParagraphs().map((para) => (
+                          <p className="font-semibold">{qldRoomingAcceptDocumentHeadline()}</p>
+                          {qldRoomingAcceptDocumentParagraphs().map((para) => (
                             <p key={para} className="mt-2 leading-relaxed">
                               {para}
                             </p>
                           ))}
                         </div>
-                      ) : null}
+                      ) : (
+                        <>
+                          {property ? (
+                            <TenancyAgreementExplainer
+                              state={property.state ?? ''}
+                              propertyType={property.property_type ?? ''}
+                              isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                              roomsRentedToResidents={property.rooms_rented_to_residents}
+                              sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
+                              embedded
+                            />
+                          ) : null}
+                          {qldRoomingArrangement ? (
+                            <div className="rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm text-admin-ink-2">
+                              <p className="font-semibold">{qldRoomingAcceptDocumentHeadline()}</p>
+                              {qldRoomingAcceptDocumentParagraphs().map((para) => (
+                                <p key={para} className="mt-2 leading-relaxed">
+                                  {para}
+                                </p>
+                              ))}
+                              {qldHouseRulesAlreadyAttested ? (
+                                <p className="mt-2 leading-relaxed">House rules already attested for this applicant.</p>
+                              ) : (
+                                <label className="mt-3 flex items-start gap-2.5">
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1 h-4 w-4 shrink-0"
+                                    checked={qldHouseRulesAttested}
+                                    onChange={(e) => setQldHouseRulesAttested(e.target.checked)}
+                                  />
+                                  <span>{qldRoomingItem17CheckboxLabel()}</span>
+                                </label>
+                              )}
+                              <p className="mt-2 leading-relaxed">{qldRoomingItem17OffenceCopy()}</p>
+                              <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
+                            </div>
+                          ) : null}
+                        </>
+                      )}
                       <button
                         type="button"
                         disabled={!canConfirm || actionBusy}

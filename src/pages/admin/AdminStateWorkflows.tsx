@@ -167,7 +167,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'QLD',
     section: 'supported',
-    intent: 'Rooming accommodation (off-site room) - Form R18 produced; accept not open yet',
+    intent: 'Rooming accommodation (off-site room) - Form R18, Listing accept open',
     input: {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',

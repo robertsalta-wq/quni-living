@@ -44,6 +44,10 @@ const AGREEMENT_BY_STATE: Record<
       headline: 'Legally binding Queensland-compliant tenancy agreement',
       legislation: 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)',
     },
+    T3: {
+      headline: 'Queensland rooming accommodation agreement (Form R18)',
+      legislation: 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)',
+    },
   },
   VIC: {
     T1: {

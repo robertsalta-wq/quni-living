@@ -1,7 +1,7 @@
 import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../../../../src/lib/database.types.js'
+import type { Database, Json } from '../../../../src/lib/database.types.js'
 import { QldHouseRulesPdf } from '../../../documents/QldHouseRulesPdf.js'
 import {
   buildQldHouseRulesDocument,
@@ -18,6 +18,7 @@ import {
   type QldNoticeConsentProjection,
 } from '../../tenancy/qldNoticeConsent.js'
 import { propertyPayoutDetailsQldRoomingComplete } from '../../../../src/lib/propertyPayoutDetails.js'
+import { sendQldFormR18PackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 
 export const QLD_FORM_R18_GENERATOR_ID = 'qld-form-r18'
@@ -93,35 +94,156 @@ export async function runQldFormR18ListingTenancy(
 ): Promise<ListingDocGenResult> {
   const loaded = await loadQldFormR18ListingContext(admin, bookingId)
   if (!loaded.ok) return loaded
+
+  const { booking, lp, moveIn, weeklyRent, bondAmount } = loaded
+  const bookingIdStr = booking.id
+
+  const { data: existingTenancy } = await admin.from('tenancies').select('id').eq('booking_id', bookingIdStr).maybeSingle()
+
+  let tenancyId = existingTenancy?.id
+  if (!tenancyId) {
+    const { data: insT, error: tInsErr } = await admin
+      .from('tenancies')
+      .insert({
+        booking_id: bookingIdStr,
+        property_id: booking.property_id!,
+        landlord_profile_id: booking.landlord_id!,
+        student_profile_id: booking.student_id!,
+        start_date: moveIn,
+        end_date: typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null,
+        weekly_rent: weeklyRent,
+        bond_amount: bondAmount,
+        status: 'active',
+      })
+      .select('id')
+      .single()
+
+    if (tInsErr || !insT) {
+      console.error('[qld-form-r18] tenancy insert', tInsErr)
+      return { ok: false, status: 500, error: 'Could not create tenancy' }
+    }
+    tenancyId = insT.id
+  }
+
+  const { data: existingDoc } = await admin
+    .from('tenancy_documents')
+    .select('id, status')
+    .eq('tenancy_id', tenancyId)
+    .eq('document_type', 'residential_tenancy')
+    .maybeSingle()
+
+  if (existingDoc?.status === 'signed') {
+    return { ok: true, tenancyId, documentId: existingDoc.id }
+  }
+
+  const refreshDraftPdfsOnly = existingDoc?.status === 'sent_for_signing'
+  const landlordUserId = typeof lp.user_id === 'string' ? lp.user_id : null
+
+  let documentId: string
+  if (existingDoc?.id) {
+    documentId = existingDoc.id
+  } else {
+    const { data: insD, error: dErr } = await admin
+      .from('tenancy_documents')
+      .insert({
+        tenancy_id: tenancyId,
+        document_type: 'residential_tenancy',
+        status: 'draft',
+        generated_by: landlordUserId,
+        metadata: { signing_package: 'rooming_accommodation_qld' } as Json,
+      })
+      .select('id')
+      .single()
+
+    if (dErr || !insD) {
+      console.error('[qld-form-r18] tenancy_documents insert', dErr)
+      return { ok: false, status: 500, error: 'Could not create tenancy document' }
+    }
+    documentId = insD.id
+  }
+
+  let r18Buffer: Buffer
+  let houseRulesBuffer: Buffer
   try {
-    const { r18Buffer, houseRulesBuffer } = await buildQldFormR18Pdfs({
+    const built = await buildQldFormR18Pdfs({
       r18: loaded.fillProps,
       houseRules: loaded.houseRules,
       generatedAt: new Date(),
     })
-    const tenancyId = `qld-r18-${bookingId}`
-    const r18Path = `${tenancyId}/rooming/qld_form_r18_draft.pdf`
-    const rulesPath = `${tenancyId}/rooming/qld_house_rules_resident_draft.pdf`
-    const { error: up1 } = await admin.storage
-      .from('tenancy-documents')
-      .upload(r18Path, r18Buffer, { contentType: 'application/pdf', upsert: true })
-    if (up1) return { ok: false, status: 500, error: 'Could not upload Form R18 PDF' }
-    const { error: up2 } = await admin.storage
-      .from('tenancy-documents')
-      .upload(rulesPath, houseRulesBuffer, { contentType: 'application/pdf', upsert: true })
-    if (up2) return { ok: false, status: 500, error: 'Could not upload house rules PDF' }
-    if (!opts.deferSigning) {
-      return {
-        ok: false,
-        status: 409,
-        error: 'QLD rooming accept is not open yet. Form R18 can be produced; signing waits for Stage 6.',
-      }
-    }
-    return { ok: true, tenancyId, documentId: bookingId }
+    r18Buffer = built.r18Buffer
+    houseRulesBuffer = built.houseRulesBuffer
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, status: 500, error: msg }
   }
+
+  const r18Path = `${tenancyId}/rooming/qld_form_r18_draft.pdf`
+  const rulesPath = `${tenancyId}/rooming/qld_house_rules_resident_draft.pdf`
+  const { error: up1 } = await admin.storage
+    .from('tenancy-documents')
+    .upload(r18Path, r18Buffer, { contentType: 'application/pdf', upsert: true })
+  if (up1) {
+    console.error('[qld-form-r18] upload Form R18', up1)
+    return { ok: false, status: 500, error: 'Could not upload Form R18 PDF' }
+  }
+  const { error: up2 } = await admin.storage
+    .from('tenancy-documents')
+    .upload(rulesPath, houseRulesBuffer, { contentType: 'application/pdf', upsert: true })
+  if (up2) {
+    console.error('[qld-form-r18] upload house rules', up2)
+    return { ok: false, status: 500, error: 'Could not upload house rules PDF' }
+  }
+
+  if (refreshDraftPdfsOnly) {
+    return { ok: true, tenancyId, documentId }
+  }
+
+  const { error: pathErr } = await admin
+    .from('tenancy_documents')
+    .update({
+      file_path: r18Path,
+      status: 'draft',
+      metadata: {
+        signing_package: 'rooming_accommodation_qld',
+        house_rules_file_path: rulesPath,
+      } as Json,
+    })
+    .eq('id', documentId)
+
+  if (pathErr) {
+    console.error('[qld-form-r18] tenancy_documents update path', pathErr)
+    return { ok: false, status: 500, error: 'Could not save file path' }
+  }
+
+  const hasDocuseal =
+    (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
+
+  let docusealSubmissionId: string | null = null
+  if (hasDocuseal && !opts.deferSigning) {
+    try {
+      await sendQldFormR18PackageForSigning(documentId, { submitterSignReason: false })
+      const { data: docRow } = await admin
+        .from('tenancy_documents')
+        .select('docuseal_submission_id, status')
+        .eq('id', documentId)
+        .maybeSingle()
+      docusealSubmissionId =
+        typeof docRow?.docuseal_submission_id === 'string' ? docRow.docuseal_submission_id : null
+      if (!docusealSubmissionId && docRow?.status !== 'sent_for_signing') {
+        return {
+          ok: false,
+          status: 500,
+          error: 'DocuSeal submission was not created',
+        }
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error('[qld-form-r18] sendQldFormR18PackageForSigning', e)
+      return { ok: false, status: 500, error: 'Could not send agreement for signing', detail: msg }
+    }
+  }
+
+  return { ok: true, tenancyId, documentId, docusealSubmissionId }
 }
 
 async function loadQldFormR18ListingContext(
@@ -132,6 +254,11 @@ async function loadQldFormR18ListingContext(
       ok: true
       fillProps: QldFormR18FillProps
       houseRules: { commonAreas: string; extras?: Record<string, unknown>; premisesLine: string }
+      booking: { id: string; property_id: string | null; landlord_id: string | null; student_id: string | null; end_date: string | null }
+      lp: { user_id?: string | null }
+      moveIn: string
+      weeklyRent: number
+      bondAmount: number | null
     }
   | { ok: false; status: number; error: string; detail?: string }
 > {
@@ -179,7 +306,7 @@ async function loadQldFormR18ListingContext(
 
   const { data: lp, error: lpErr } = await admin
     .from('landlord_profiles')
-    .select('full_name, first_name, last_name, email, phone, address, suburb, state, postcode, company_name')
+    .select('user_id, full_name, first_name, last_name, email, phone, address, suburb, state, postcode, company_name')
     .eq('id', booking.landlord_id)
     .maybeSingle()
   const { data: sp, error: spErr } = await admin
@@ -316,6 +443,17 @@ async function loadQldFormR18ListingContext(
       extras: storedRules.extras,
       premisesLine: [premises.street, premises.suburbLine, premises.postcode].filter(Boolean).join(', '),
     },
+    booking: {
+      id: booking.id,
+      property_id: booking.property_id,
+      landlord_id: booking.landlord_id,
+      student_id: booking.student_id,
+      end_date: typeof booking.end_date === 'string' ? booking.end_date : null,
+    },
+    lp,
+    moveIn: String(moveIn).slice(0, 10),
+    weeklyRent,
+    bondAmount: typeof prop.bond === 'number' ? prop.bond : null,
   }
 }
 
