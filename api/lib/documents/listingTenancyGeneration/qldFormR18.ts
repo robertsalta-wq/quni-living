@@ -20,6 +20,7 @@ import {
 import { propertyPayoutDetailsQldRoomingComplete } from '../../../../src/lib/propertyPayoutDetails.js'
 import { sendQldFormR18PackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 
 export const QLD_FORM_R18_GENERATOR_ID = 'qld-form-r18'
 
@@ -271,6 +272,7 @@ async function loadQldFormR18ListingContext(
       properties (
         title, address, suburb, state, postcode, rent_per_week, max_occupants, property_type, furnished,
         linen_supplied, weekly_cleaning_service, room_description, qld_student_accommodation, qld_persons_at_premises,
+        rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, is_registered_rooming_house,
         qld_rent_payment_method_2, qld_rent_payment_method_2_costs, qld_rent_payment_method_2_financial_benefit,
         qld_rent_last_increased_on, qld_rooming_house_rules, bond
       )
@@ -281,6 +283,21 @@ async function loadQldFormR18ListingContext(
   if (bErr || !booking) return { ok: false, status: 404, error: 'Booking not found' }
   const prop = (booking.properties ?? null) as Record<string, unknown> | null
   if (!prop) return { ok: false, status: 404, error: 'Property not found' }
+
+  const moveInForPackage = (
+    (typeof booking.move_in_date === 'string' && booking.move_in_date) ||
+    (typeof booking.start_date === 'string' && booking.start_date) ||
+    ''
+  ).slice(0, 10)
+  const tenancyPackage = resolveTenancyPackage(
+    tenancyPackageInputFromPropertyRow(prop, { date: moveInForPackage || undefined }),
+  )
+  if (!tenancyPackage.supported) {
+    return { ok: false, status: 400, error: tenancyPackage.unsupportedReason }
+  }
+  if (tenancyPackage.generator !== QLD_FORM_R18_GENERATOR_ID) {
+    return { ok: false, status: 400, error: 'This listing does not use Form R18.' }
+  }
 
   const attestedAt =
     typeof (booking as { qld_house_rules_attested_at?: string | null }).qld_house_rules_attested_at === 'string'

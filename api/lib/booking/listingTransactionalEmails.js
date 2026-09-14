@@ -5,7 +5,7 @@
  */
 import { sendEmail } from '../sendEmail.js'
 import { sendBookingEmail } from './sendBookingEmail.js'
-import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import { tenantLegalNameForDocuments } from './tenantLegalNameForDocuments.js'
@@ -76,7 +76,7 @@ async function loadListingEmailContext(admin, bookingId) {
       start_date,
       lease_length,
       bond_window_expires_at,
-      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference, bond, bond_weeks ),
+      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, qld_bond_remittance_preference, bond, bond_weeks ),
       student_profiles ( email, full_name, first_name, last_name, verification_type, legal_name_locked_at ),
       landlord_profiles ( email, full_name, phone )
     `,
@@ -120,14 +120,9 @@ async function loadListingEmailContext(admin, bookingId) {
     typeof booking.lease_length === 'string' && booking.lease_length.trim() ? booking.lease_length.trim() : '-'
 
   const propState = typeof prop.state === 'string' && prop.state.trim() ? prop.state.trim() : 'NSW'
-  const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
-  const isRooming = Boolean(prop.is_registered_rooming_house)
-  const tenancyPackage = resolveTenancyPackage({
-    state: propState,
-    property_type: propertyType,
-    is_registered_rooming_house: isRooming,
-    date: moveInRaw || undefined,
-  })
+  const tenancyPackage = resolveTenancyPackage(
+    tenancyPackageInputFromPropertyRow(prop, { date: moveInRaw || undefined }),
+  )
   const bondRules = tenancyPackage.supported ? tenancyPackage.rules.bond : null
   const qldBondRemittancePreference =
     typeof prop.qld_bond_remittance_preference === 'string' ? prop.qld_bond_remittance_preference : null

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../resolveTenancyPackage.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import { sendListingPaymentInstructionsRenter } from './listingTransactionalEmails.js'
 
@@ -57,6 +57,8 @@ export async function runResendPaymentInstructionsLandlord(args: {
         state,
         property_type,
         is_registered_rooming_house,
+        rooms_rented_to_residents,
+        qld_shares_kitchen_or_bathroom,
         qld_bond_remittance_preference
       )
     `,
@@ -95,26 +97,18 @@ export async function runResendPaymentInstructionsLandlord(args: {
     }
   }
 
-  const prop = (booking.properties && typeof booking.properties === 'object' ? booking.properties : {}) as {
-    state?: string | null
-    property_type?: string | null
-    is_registered_rooming_house?: boolean | null
-    qld_bond_remittance_preference?: string | null
-  }
-  const propState = typeof prop.state === 'string' && prop.state.trim() ? prop.state.trim() : 'NSW'
-  const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
-  const isRooming = Boolean(prop.is_registered_rooming_house)
+  const prop = (booking.properties && typeof booking.properties === 'object' ? booking.properties : {}) as Record<
+    string,
+    unknown
+  >
   const moveInRaw =
     (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
     (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
     ''
 
-  const tenancyPackage = resolveTenancyPackage({
-    state: propState,
-    property_type: propertyType,
-    is_registered_rooming_house: isRooming,
-    date: moveInRaw || undefined,
-  })
+  const tenancyPackage = resolveTenancyPackage(
+    tenancyPackageInputFromPropertyRow(prop, { date: moveInRaw || undefined }),
+  )
 
   if (!tenancyPackage.supported) {
     return {

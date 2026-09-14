@@ -26,6 +26,7 @@ describe('qld-form-r18 listing generator', () => {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
       is_registered_rooming_house: false,
+      shares_kitchen_or_bathroom: true,
     })
     expect(pkg.supported).toBe(true)
     expect(pkg.generator).toBe(QLD_FORM_R18_GENERATOR_ID)

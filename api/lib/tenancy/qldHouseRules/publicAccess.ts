@@ -20,5 +20,6 @@ export function qldPublicHouseRulesAccess(input: {
       ? input.roomsLetToResidents
       : null,
   })
+  if (outcome === 'needs_room_count') return 'ask'
   return outcome === 'rooming' ? 'generate' : 'stop'
 }

@@ -45,8 +45,7 @@ export async function resolveListingTenancyGenerator(
     return {
       ok: false,
       status: 400,
-      error: 'Tenancy agreement not supported for this property',
-      detail: tenancyPackage.unsupportedReason ?? undefined,
+      error: tenancyPackage.unsupportedReason || 'Tenancy agreement not supported for this property',
     }
   }
 

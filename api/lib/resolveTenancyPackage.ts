@@ -11,10 +11,13 @@ import {
   qldFactsFromListing,
   parseRoomsOccupiedOrAvailableToResidents,
   parseQldSharesKitchenOrBathroom,
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
 } from './tenancy/qldClassification.js'
 
 export {
   QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
+  QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
   classifyQldArrangement,
 } from './tenancy/qldClassification.js'
 
@@ -39,7 +42,7 @@ export interface TenancyPackageInput {
   /**
    * properties.qld_shares_kitchen_or_bathroom.
    * QLD room and shared-bedroom cards only. Entire place ignores it.
-   * Unanswered keeps the Stage 1 shared-facilities mapping (do not issue 18a).
+   * Unanswered is unsupported. Do not default.
    */
   shares_kitchen_or_bathroom?: boolean | null
   /**
@@ -156,10 +159,16 @@ function resolveQldTenancyPackage(
     roomsRentedToResidents,
     sharesKitchenOrBathroom,
   })
-  if (!facts) {
+  if (facts.status === 'unknown_property_type') {
     return unsupportedBase('T2', 'unknown_property_type', ragState)
   }
-  const outcome = classifyQldArrangement(facts)
+  if (facts.status === 'unanswered') {
+    return unsupportedBase('T2', facts.unsupportedReason, ragState)
+  }
+  const outcome = classifyQldArrangement(facts.facts)
+  if (outcome === 'needs_room_count') {
+    return unsupportedBase('T2', QLD_ROOMS_RENTED_UNANSWERED_REASON, ragState)
+  }
   if (outcome === 'general_tenancy') {
     const rules = qldTenancyRules('T2')
     return {

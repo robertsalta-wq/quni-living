@@ -4,6 +4,8 @@ import {
   classifyQldArrangement,
   qldFactsFromListing,
   qldPropertyTierFromOutcome,
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
+  QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
 } from './qldClassification.js'
 
 describe('classifyQldArrangement', () => {
@@ -68,31 +70,42 @@ describe('classifyQldArrangement', () => {
     ).toBe('rooming')
   })
 
-  it('live-in with unknown count → outside the Act', () => {
+  it('live-in with unknown count does not guess outside the Act', () => {
     expect(
       classifyQldArrangement({
         whatIsLet: 'room_with_shared_facilities',
         providerLivesAtPremises: true,
         roomsOccupiedOrAvailableToResidents: null,
       }),
-    ).toBe('outside_act')
+    ).toBe('needs_room_count')
   })
 })
 
 describe('qldFactsFromListing', () => {
   it('maps entire_property to whole or self-contained', () => {
     expect(qldFactsFromListing({ propertyType: 'entire_property' })).toEqual({
-      whatIsLet: 'whole_or_self_contained',
-      providerLivesAtPremises: false,
-      roomsOccupiedOrAvailableToResidents: null,
+      status: 'classified',
+      facts: {
+        whatIsLet: 'whole_or_self_contained',
+        providerLivesAtPremises: false,
+        roomsOccupiedOrAvailableToResidents: null,
+      },
     })
   })
 
-  it('maps off-site room and shared room to shared facilities when unanswered', () => {
-    expect(qldFactsFromListing({ propertyType: 'private_room_landlord_off_site' })?.providerLivesAtPremises).toBe(
-      false,
-    )
-    expect(qldFactsFromListing({ propertyType: 'shared_room' })?.whatIsLet).toBe('room_with_shared_facilities')
+  it('does not guess kitchen or bathroom share when unanswered', () => {
+    expect(qldFactsFromListing({ propertyType: 'private_room_landlord_off_site' })).toEqual({
+      status: 'unanswered',
+      unsupportedReason: QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+    })
+    expect(qldFactsFromListing({ propertyType: 'shared_room' })).toEqual({
+      status: 'unanswered',
+      unsupportedReason: QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+    })
+    expect(qldFactsFromListing({ propertyType: 'private_room_landlord_on_site' })).toEqual({
+      status: 'unanswered',
+      unsupportedReason: QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+    })
   })
 
   it('maps a QLD room that does not share a kitchen or bathroom to self-contained', () => {
@@ -100,14 +113,20 @@ describe('qldFactsFromListing', () => {
       qldFactsFromListing({
         propertyType: 'private_room_landlord_off_site',
         sharesKitchenOrBathroom: false,
-      })?.whatIsLet,
-    ).toBe('whole_or_self_contained')
+      }),
+    ).toMatchObject({
+      status: 'classified',
+      facts: { whatIsLet: 'whole_or_self_contained' },
+    })
     expect(
       qldFactsFromListing({
         propertyType: 'shared_room',
         sharesKitchenOrBathroom: false,
-      })?.whatIsLet,
-    ).toBe('whole_or_self_contained')
+      }),
+    ).toMatchObject({
+      status: 'classified',
+      facts: { whatIsLet: 'whole_or_self_contained' },
+    })
   })
 
   it('maps explicit share to shared facilities', () => {
@@ -115,19 +134,38 @@ describe('qldFactsFromListing', () => {
       qldFactsFromListing({
         propertyType: 'private_room_landlord_off_site',
         sharesKitchenOrBathroom: true,
-      })?.whatIsLet,
-    ).toBe('room_with_shared_facilities')
+      }),
+    ).toMatchObject({
+      status: 'classified',
+      facts: { whatIsLet: 'room_with_shared_facilities', providerLivesAtPremises: false },
+    })
   })
 
   it('maps on-site room and reads the rooms-let count', () => {
     const facts = qldFactsFromListing({
       propertyType: 'private_room_landlord_on_site',
       roomsRentedToResidents: 4,
+      sharesKitchenOrBathroom: true,
     })
     expect(facts).toEqual({
-      whatIsLet: 'room_with_shared_facilities',
-      providerLivesAtPremises: true,
-      roomsOccupiedOrAvailableToResidents: 4,
+      status: 'classified',
+      facts: {
+        whatIsLet: 'room_with_shared_facilities',
+        providerLivesAtPremises: true,
+        roomsOccupiedOrAvailableToResidents: 4,
+      },
+    })
+  })
+
+  it('live-in shared facilities with unknown count is unanswered, not occupancy', () => {
+    expect(
+      qldFactsFromListing({
+        propertyType: 'private_room_landlord_on_site',
+        sharesKitchenOrBathroom: true,
+      }),
+    ).toEqual({
+      status: 'unanswered',
+      unsupportedReason: QLD_ROOMS_RENTED_UNANSWERED_REASON,
     })
   })
 
@@ -139,9 +177,12 @@ describe('qldFactsFromListing', () => {
         sharesKitchenOrBathroom: false,
       }),
     ).toEqual({
-      whatIsLet: 'whole_or_self_contained',
-      providerLivesAtPremises: true,
-      roomsOccupiedOrAvailableToResidents: 8,
+      status: 'classified',
+      facts: {
+        whatIsLet: 'whole_or_self_contained',
+        providerLivesAtPremises: true,
+        roomsOccupiedOrAvailableToResidents: 8,
+      },
     })
   })
 })

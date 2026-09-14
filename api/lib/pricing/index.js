@@ -175,8 +175,10 @@ export function resolvePropertyTierFromListing(input) {
       roomsRentedToResidents: args.roomsRentedToResidents,
       sharesKitchenOrBathroom: args.sharesKitchenOrBathroom,
     })
-    if (!facts) return 't2'
-    return qldPropertyTierFromOutcome(classifyQldArrangement(facts))
+    if (facts.status !== 'classified') return 't2'
+    const outcome = classifyQldArrangement(facts.facts)
+    if (outcome === 'needs_room_count') return 't2'
+    return qldPropertyTierFromOutcome(outcome)
   }
   if (propertyType === 'private_room_landlord_on_site') return 't1'
   if (propertyType === 'private_room_landlord_off_site' && Boolean(args.isRegisteredRoomingHouse)) return 't3'

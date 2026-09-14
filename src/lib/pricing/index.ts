@@ -128,8 +128,10 @@ export function resolvePropertyTierFromListing(
       roomsRentedToResidents: input.roomsRentedToResidents,
       sharesKitchenOrBathroom: input.sharesKitchenOrBathroom,
     })
-    if (!facts) return 't2'
-    return qldPropertyTierFromOutcome(classifyQldArrangement(facts))
+    if (facts.status !== 'classified') return 't2'
+    const outcome = classifyQldArrangement(facts.facts)
+    if (outcome === 'needs_room_count') return 't2'
+    return qldPropertyTierFromOutcome(outcome)
   }
   if (propertyType === 'private_room_landlord_on_site') return 't1'
   if (propertyType === 'private_room_landlord_off_site' && Boolean(input.isRegisteredRoomingHouse)) return 't3'

@@ -2,7 +2,7 @@
  * Bond resolution: listing weeks config, invite/acceptance overrides, booking snapshot.
  */
 
-import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../resolveTenancyPackage.js'
 
 /** Statutory cap in weeks for live states (NSW, QLD). VIC multipliers parked. */
 export const MAX_BOND_WEEKS = 4
@@ -94,12 +94,7 @@ export function assertT3SecurityDepositCap(amount, occupancyFeeAmount, period = 
  */
 export function maxBondWeeksForProperty(property) {
   if (!property) return MAX_BOND_WEEKS
-  const r = resolveTenancyPackage({
-    state: typeof property.state === 'string' ? property.state : '',
-    property_type: typeof property.property_type === 'string' ? property.property_type : '',
-    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-    rooms_rented_to_residents: property.rooms_rented_to_residents,
-  })
+  const r = resolveTenancyPackage(tenancyPackageInputFromPropertyRow(property))
   if (r.supported && r.tier === 'T3') return T3_MAX_SECURITY_DEPOSIT_WEEKS
   return MAX_BOND_WEEKS
 }

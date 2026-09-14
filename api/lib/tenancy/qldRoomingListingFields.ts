@@ -4,7 +4,10 @@
  * Service level is Level 1 at fill time. No column.
  */
 
-import { parseQldSharesKitchenOrBathroom } from './qldClassification.js'
+import {
+  parseQldSharesKitchenOrBathroom,
+  QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+} from './qldClassification.js'
 
 export { parseQldSharesKitchenOrBathroom }
 
@@ -102,9 +105,7 @@ export function parseQldYesNo(raw: unknown): QldYesNo {
 }
 
 export function qldSharesKitchenOrBathroomError(value: QldYesNo): string | null {
-  if (value === '') {
-    return 'Say whether the renter shares a kitchen or bathroom with anyone else.'
-  }
+  if (value === '') return QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON
   return null
 }
 
