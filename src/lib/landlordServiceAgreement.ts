@@ -10,17 +10,11 @@ export const LANDLORD_SERVICE_AGREEMENT_VERSION = 'listing-1.1'
 
 export const LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE = '3 September 2026'
 
-/** Inclusive start of v1.0. Used only when the version column is not yet present. */
-export const LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_AT = '2026-09-03T00:00:00.000Z'
-
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
 export function landlordServiceAgreementAccepted(p: LandlordProfileRow | null | undefined): boolean {
   if (!p?.landlord_terms_accepted_at) return false
-  if (p.landlord_service_agreement_version === LANDLORD_SERVICE_AGREEMENT_VERSION) return true
-  const stored = p.landlord_service_agreement_version?.trim() ?? ''
-  if (stored) return false
-  return Date.parse(p.landlord_terms_accepted_at) >= Date.parse(LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_AT)
+  return p.landlord_service_agreement_version === LANDLORD_SERVICE_AGREEMENT_VERSION
 }
 
 export function landlordServiceAgreementAcceptancePatch(acceptedAt?: string): {
