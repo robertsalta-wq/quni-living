@@ -47,16 +47,16 @@ export function LandlordServiceAgreementContent() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-stone-800">
           <li>Quni is software, not your agent. You stay in control.</li>
           <li>
-            Free to list. $99 once, when you accept a tenant. No commission on rent, ever, on Listing.
+            Free to list. $99 once, when you accept a resident. No commission on rent, ever, on Listing.
           </li>
           <li>Rent is paid straight to you. It never passes through us.</li>
           <li>You lodge your own bond where the law requires lodgement. We never hold bond money.</li>
           <li>
-            We generate the tenancy agreement and both parties sign it electronically. You&apos;re the
-            lessor, not us.
+            We generate the agreement and both parties sign it electronically. You&apos;re the landlord
+            party, not us.
           </li>
           <li>
-            If a tenant stops paying or damages the place, that&apos;s yours to deal with. We give you the
+            If a resident stops paying or damages the place, that&apos;s yours to deal with. We give you the
             paperwork and the verification, not a guarantee.
           </li>
         </ul>
@@ -68,6 +68,13 @@ export function LandlordServiceAgreementContent() {
       </p>
 
       <LegalH2 id="about">1. About this agreement</LegalH2>
+      <LegalP>
+        In this agreement, landlord party means you, the person who grants the right to occupy the
+        premises under the agreement Quni generates. Resident means the person who takes that right.
+        The law of your state may call you and the resident something more specific, and the agreement
+        Quni generates will use whatever words that law requires. We use these general words here because
+        this agreement covers every arrangement Quni supports.
+      </LegalP>
       <LegalP>
         This Landlord Service Agreement (&quot;Agreement&quot;) is between {LEGAL_ENTITY_NAME} (ACN{' '}
         {LEGAL_ENTITY_ACN}, ABN {ABN}) trading as Quni Living (&quot;Quni Living&quot;, &quot;we&quot;,
@@ -107,15 +114,20 @@ export function LandlordServiceAgreementContent() {
       </LegalP>
       <LegalP>
         You are the landlord and the principal. You set the rent, you decide who to accept, you are the
-        named lessor on the tenancy agreement, and you remain responsible for complying with the
+        named landlord party on the tenancy agreement, and you remain responsible for complying with the
         residential tenancy laws that apply where your property is located.
+      </LegalP>
+      <LegalP>
+        We do not act for you in dealing with a resident, we do not hold your money, and we are not named
+        as an agent on any agreement we generate. Where a prescribed form has a space for an agent, we
+        leave it blank.
       </LegalP>
       <LegalH3 id="role-provide">2.2 What we provide</LegalH3>
       <LegalUl
         items={[
           'A marketplace where you can advertise a room or property to verified student and renter accounts.',
           'Identity verification of applicants before you accept them.',
-          'Generation of a tenancy or occupancy agreement appropriate to your state, and electronic signing.',
+          'Generation of the agreement your state\'s law requires for the arrangement you have described.',
           'Messaging between you and applicants, with your email and phone number masked until you accept.',
           'Tools to help you draft and present your listing.',
         ]}
@@ -132,7 +144,23 @@ export function LandlordServiceAgreementContent() {
           'We do not guarantee that your listing will receive enquiries, applications or bookings, or that any tenant will pay rent or perform their obligations.',
         ]}
       />
-      <LegalH3 id="role-guidance">2.4 Rent guidance is not an appraisal</LegalH3>
+      <LegalH3 id="role-which-agreement">2.4 How we decide which agreement you get</LegalH3>
+      <LegalP>
+        When you confirm a listing, Quni works out which agreement applies from what you have told us
+        about the property and the state it is in, and generates the agreement the law of that state
+        requires for the arrangement you have described. If your arrangement is not one Quni can
+        generate an agreement for, we tell you and you cannot complete the listing.
+      </LegalP>
+      <LegalP>
+        We do not choose your arrangement for you. We classify what you describe, and you are
+        responsible for describing it accurately. If you change the details of your listing, the
+        classification may change and a different agreement may apply.
+      </LegalP>
+      <LegalP>
+        Classification is not legal advice. If you are unsure which arrangement you have, get your own
+        advice before you list.
+      </LegalP>
+      <LegalH3 id="role-guidance">2.5 Rent guidance is not an appraisal</LegalH3>
       <LegalP>
         Where the platform displays comparable rents or suggests a weekly rate, that is general
         information to help you make your own decision. It is not a rental appraisal, a valuation, or a
@@ -157,9 +185,11 @@ export function LandlordServiceAgreementContent() {
       <LegalH3 id="account-card">3.3 Payment method for platform fees</LegalH3>
       <LegalP>
         You must keep a valid payment card on file to pay the acceptance fee described in clause 7.
-        Before you accept an applicant you must also give us the bank account details your tenant will
-        use to pay you. Those details are shown to the tenant so they can pay you directly. They are not
-        a connection that lets us receive rent on your behalf.{' '}
+        Before you accept an applicant you must also give us the bank account details your resident will
+        use to pay you. Those details are shown to the resident so they can pay you directly. They are not
+        a connection that lets us receive rent on your behalf. Some prescribed forms require your account
+        details to appear on the face of the agreement itself, in which case the resident holds a copy of
+        them. If you do not want those details given to a resident, do not list that room.{' '}
         <strong>
           You do not need Stripe Connect or any other payout account with us in order to receive rent,
           because rent is not paid through us.
@@ -217,7 +247,7 @@ export function LandlordServiceAgreementContent() {
         that package includes our platform addendum, it is generated together with the agreement.
       </LegalP>
       <LegalP>
-        <strong>You are the lessor and a party to that agreement. We are not.</strong> The document is
+        <strong>You are the landlord party and a party to that agreement. We are not.</strong> The document is
         provided as a tool for you to use. You are responsible for reading it, for satisfying yourself
         that it is appropriate to your circumstances, and for complying with it. It is not legal advice.
         If you are unsure whether the document suits your arrangement, obtain your own advice before
@@ -240,6 +270,23 @@ export function LandlordServiceAgreementContent() {
       </LegalP>
       <LegalP>
         <strong>We never hold, receive or lodge bond money in any case.</strong>
+      </LegalP>
+      <LegalH3 id="tenancy-obligations">6.4 Your obligations under the law that applies</LegalH3>
+      <LegalP>
+        Different arrangements carry different obligations, and they are yours, not ours. Where the
+        law that applies to your arrangement requires any of the following, you must do it:
+      </LegalP>
+      <LegalUl
+        items={[
+          'complete a condition report on the prescribed form and give it to the resident within the time allowed',
+          'give the resident a copy of the house rules before the agreement is entered into, and display them at the premises',
+          'give any notice on the prescribed form, and with the notice period, that the law requires during or at the end of the arrangement',
+        ]}
+      />
+      <LegalP>
+        Quni does not generate condition reports or notices. Where we provide a tool to help you
+        prepare a document, using it is your choice and the obligation stays yours. In some states,
+        failing to meet some of these obligations is an offence.
       </LegalP>
 
       <LegalH2 id="fees">7. Fees</LegalH2>
@@ -281,10 +328,10 @@ export function LandlordServiceAgreementContent() {
 
       <LegalH2 id="obligations">8. Your obligations</LegalH2>
       <LegalP>
-        You must comply with the residential tenancy laws, health and safety requirements, and any other
+        You must comply with the tenancy and occupancy laws, health and safety requirements, and any other
         law that applies to letting your property. You must provide and maintain the property in the
-        condition those laws require, attend to repairs and maintenance, and treat your tenants lawfully
-        and fairly. You must keep your own tenancy records. If you list a property that you rent, you
+        condition those laws require, attend to repairs and maintenance, and treat your residents lawfully
+        and fairly. You must keep your own records of the arrangement. If you list a property that you rent, you
         must hold whatever consent your lease requires.
       </LegalP>
 
@@ -324,22 +371,23 @@ export function LandlordServiceAgreementContent() {
       </LegalP>
       <LegalP>
         To the extent permitted by law, we are not liable for loss of rent, loss of profits, property
-        damage, the conduct of any tenant or applicant, the accuracy of information provided by an
-        applicant beyond the verification we state that we perform, or your compliance with tenancy law.
+        damage, the conduct of any resident or applicant, the accuracy of information provided by an
+        applicant beyond the verification we state that we perform, or your compliance with the law that
+        applies to your arrangement.
       </LegalP>
 
       <LegalH2 id="indemnity">12. Indemnity</LegalH2>
       <LegalP>
-        You indemnify us against loss, damage, cost or claim arising from your listings, your tenancy
-        arrangements, your breach of this Agreement, or your breach of any law that applies to letting
+        You indemnify us against loss, damage, cost or claim arising from your listings, your arrangements
+        with residents, your breach of this Agreement, or your breach of any law that applies to letting
         your property, except to the extent the loss was caused by our own negligence or breach.
       </LegalP>
 
       <LegalH2 id="privacy">13. Privacy</LegalH2>
       <LegalP>
         We handle personal information in accordance with our Privacy Policy and the Privacy Act 1988
-        (Cth). You must handle applicants&apos; and tenants&apos; personal information lawfully, and use
-        it only for purposes connected with the tenancy.
+        (Cth). You must handle applicants&apos; and residents&apos; personal information lawfully, and use
+        it only for purposes connected with the arrangement.
       </LegalP>
 
       <LegalH2 id="changes">14. Changes to this agreement</LegalH2>
@@ -353,7 +401,7 @@ export function LandlordServiceAgreementContent() {
       <LegalP>
         This Agreement is governed by the laws of New South Wales, and you and we submit to the
         non-exclusive jurisdiction of the courts of that state. This clause does not affect the
-        residential tenancy laws that apply to your property, which are determined by the state or
+        tenancy and occupancy laws that apply to your property, which are determined by the state or
         territory in which the property is located and cannot be varied by this Agreement.
       </LegalP>
 

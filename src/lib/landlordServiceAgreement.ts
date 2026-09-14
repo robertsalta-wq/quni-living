@@ -6,7 +6,7 @@ export { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from './landlordServiceAgreem
 export const LANDLORD_SERVICE_AGREEMENT_PATH = '/landlord-service-agreement' as const
 
 /** Listing LSA version. Prefix encodes the product this acceptance is for. Bump when text changes materially. */
-export const LANDLORD_SERVICE_AGREEMENT_VERSION = 'listing-1.0'
+export const LANDLORD_SERVICE_AGREEMENT_VERSION = 'listing-1.1'
 
 export const LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE = '3 September 2026'
 

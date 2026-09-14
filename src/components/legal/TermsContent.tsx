@@ -148,9 +148,10 @@ export function TermsContent() {
       />
       <LegalH3 id="landlord-tenancy">4.3 Tenancy Agreements</LegalH3>
       <LegalP>
-        When you accept a booking on Quni Listing, the Platform generates a tenancy or occupancy agreement appropriate
-        to the property&apos;s state, together with a platform addendum, for electronic signature. You are the lessor
-        and a party to that agreement. Quni Living is not. Watermarked sample agreements are available after you create
+        When you accept a booking on Quni Listing, the Platform generates the agreement your state&apos;s
+        law requires for the arrangement you have described, for electronic signature. Where that package
+        includes a platform addendum, it is generated together with the agreement. You are the landlord
+        party and a party to that agreement. Quni Living is not. Watermarked sample agreements are available after you create
         an account, from Sample agreements in your dashboard. Those samples are for layout and wording review only. They
         are not for signing. Quni Living is not responsible for the terms of any tenancy agreement between a landlord
         and renter, and the documents are not legal advice.

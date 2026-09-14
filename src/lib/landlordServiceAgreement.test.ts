@@ -32,7 +32,7 @@ describe('landlordServiceAgreementAccepted', () => {
     ).toBe(false)
   })
 
-  it('is true when the stored version matches Listing 1.0', () => {
+  it('is true when the stored version matches Listing 1.1', () => {
     expect(
       landlordServiceAgreementAccepted(
         profile({
