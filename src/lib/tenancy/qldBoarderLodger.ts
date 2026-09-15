@@ -2,11 +2,12 @@
  * Queensland on-site boarder/lodger (T1) - RTRA Act 2008 framing for listings and licence PDFs.
  */
 import {
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
   QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS,
   parseRoomsOccupiedOrAvailableToResidents,
 } from '../../../api/lib/tenancy/qldClassification.js'
 
-export { QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS }
+export { QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS, QLD_ROOMS_RENTED_UNANSWERED_REASON }
 
 export const QLD_RTRA_ACT_SHORT = 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)'
 
@@ -26,9 +27,7 @@ export function parseRoomsRentedToResidents(raw: unknown): number | null {
 }
 
 export function qldRoomsRentedFieldError(rooms: number | null): string | null {
-  if (rooms == null) {
-    return 'Enter how many rooms are occupied by or available to residents in this home, not including the room you sleep in.'
-  }
+  if (rooms == null) return QLD_ROOMS_RENTED_UNANSWERED_REASON
   return null
 }
 
@@ -37,7 +36,7 @@ export function qldRoomsRentedRoomingNotice(rooms: number | null): string | null
   return (
     `With more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms occupied by or available to residents while you live on site, ` +
     `this is rooming accommodation under the ${QLD_RTRA_ACT_SHORT}. The prescribed form is Form R18. ` +
-    `Quni produces Form R18. You can save this listing. You cannot accept an applicant on Quni yet. ` +
+    `Quni produces Form R18. You can save this listing. ` +
     `Do not use a registered rooming house listing for this.`
   )
 }
@@ -48,7 +47,7 @@ export function qldOnSiteListingCallout(): string {
     `does not apply to boarders and lodgers, but if you take a bond it must be lodged with RTA Queensland within 10 days - see RTA boarders and lodgers guidance. ` +
     `Bond is not compulsory; rent in advance is a lawful alternative. ` +
     `If you live on site and ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} or fewer rooms are occupied by or available to residents, the rooming accommodation provisions (including Form R18) ` +
-    `usually do not apply (s 43). Count rooms occupied by or available to residents. Do not count the room you sleep in. Four or more is rooming accommodation. You cannot accept an applicant on Quni yet.`
+    `usually do not apply (s 43). Count rooms occupied by or available to residents. Do not count the room you sleep in. Four or more is rooming accommodation. Quni produces Form R18 for those listings.`
   )
 }
 

@@ -28,6 +28,8 @@ import {
   parseRoomsRentedToResidents,
   qldSection43PdfAcknowledgement,
 } from '../../../../src/lib/tenancy/qldBoarderLodger.js'
+import { QLD_ROOMS_RENTED_UNANSWERED_REASON } from '../../tenancy/qldClassification.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
@@ -164,6 +166,7 @@ async function loadQldOccupancyContext(
         weekly_cleaning_service,
         house_rules,
         rooms_rented_to_residents,
+        qld_shares_kitchen_or_bathroom,
         qld_bond_remittance_preference
       )
     `,
@@ -246,10 +249,22 @@ async function loadQldOccupancyContext(
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
+  const tenancyPackage = resolveTenancyPackage(
+    tenancyPackageInputFromPropertyRow(prop, { date: moveIn || undefined }),
+  )
+  if (!tenancyPackage.supported) {
+    return { ok: false, status: 400, error: tenancyPackage.unsupportedReason }
+  }
+  if (tenancyPackage.generator !== 'qld-occupancy') {
+    return { ok: false, status: 400, error: 'This listing does not use the QLD occupancy agreement.' }
+  }
+
   const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
   const qldOnSite = isQldOnSiteBoarderLodgerListing(stateRaw, propertyType)
-  const roomsForResidents =
-    parseRoomsRentedToResidents(prop.rooms_rented_to_residents) ?? (qldOnSite ? 1 : null)
+  const roomsForResidents = parseRoomsRentedToResidents(prop.rooms_rented_to_residents)
+  if (qldOnSite && roomsForResidents == null) {
+    return { ok: false, status: 400, error: QLD_ROOMS_RENTED_UNANSWERED_REASON }
+  }
 
   const payeeFields = await loadOccupancyListingPayeeFields(admin, {
     serviceTier,

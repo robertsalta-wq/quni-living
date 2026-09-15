@@ -7,6 +7,7 @@ describe('landlordAcceptTierUiModel', () => {
       state: 'QLD',
       propertyType: 'private_room_landlord_off_site',
       isRegisteredRoomingHouse: false,
+      sharesKitchenOrBathroom: true,
       moduleEnabled: true,
       propertyServiceTier: 'listing',
     })

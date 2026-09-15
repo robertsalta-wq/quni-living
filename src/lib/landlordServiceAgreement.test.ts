@@ -32,7 +32,7 @@ describe('landlordServiceAgreementAccepted', () => {
     ).toBe(false)
   })
 
-  it('is true when the stored version matches Listing 1.0', () => {
+  it('is true when the stored version matches Listing 1.1', () => {
     expect(
       landlordServiceAgreementAccepted(
         profile({
@@ -43,12 +43,12 @@ describe('landlordServiceAgreementAccepted', () => {
     ).toBe(true)
   })
 
-  it('treats a timestamp on or after 3 September 2026 as v1.0 when the version column is absent', () => {
+  it('is false when the version is empty, even if the timestamp is on or after 3 September 2026', () => {
     expect(
       landlordServiceAgreementAccepted(
         profile({ landlord_terms_accepted_at: '2026-09-03T00:00:00.000Z' }) as LandlordRow,
       ),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('is false when a different version is stored', () => {

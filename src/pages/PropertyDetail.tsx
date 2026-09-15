@@ -34,7 +34,7 @@ import {
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus, isListingAvailableNow } from '../lib/propertyListingDateWindow'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
-import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingArrangement, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
@@ -1262,7 +1262,7 @@ export default function PropertyDetail({
 
   const houseRuleRows = property.property_house_rules ?? []
   const hasHouseRuleBadges = houseRuleRows.length > 0
-  const qldRoomingListing = isQldRoomingFormR18Pending(
+  const qldRoomingListing = isQldRoomingArrangement(
     resolveTenancyPackage({
       state: property.state ?? '',
       property_type: property.property_type ?? '',

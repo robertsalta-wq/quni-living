@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { resolvePropertyTierFromListing } from './index'
 
 describe('resolvePropertyTierFromListing', () => {
-  it('QLD off-site room is t3 whether or not the registered flag is set', () => {
+  it('QLD off-site room with shared facilities is t3 whether or not the registered flag is set', () => {
     expect(
       resolvePropertyTierFromListing({
         state: 'QLD',
         propertyType: 'private_room_landlord_off_site',
         isRegisteredRoomingHouse: false,
+        sharesKitchenOrBathroom: true,
       }),
     ).toBe('t3')
     expect(
@@ -16,8 +17,19 @@ describe('resolvePropertyTierFromListing', () => {
         state: 'QLD',
         propertyType: 'private_room_landlord_off_site',
         isRegisteredRoomingHouse: true,
+        sharesKitchenOrBathroom: true,
       }),
     ).toBe('t3')
+  })
+
+  it('QLD off-site room with kitchen/bath unanswered does not guess t3', () => {
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'QLD',
+        propertyType: 'private_room_landlord_off_site',
+        isRegisteredRoomingHouse: false,
+      }),
+    ).toBe('t2')
   })
 
   it('QLD off-site room that does not share a kitchen or bathroom is t2', () => {
@@ -40,12 +52,13 @@ describe('resolvePropertyTierFromListing', () => {
     ).toBe('t2')
   })
 
-  it('QLD on-site uses the rooms-let count', () => {
+  it('QLD on-site uses the rooms-let count when kitchen/bath share is answered', () => {
     expect(
       resolvePropertyTierFromListing({
         state: 'QLD',
         propertyType: 'private_room_landlord_on_site',
         roomsRentedToResidents: 3,
+        sharesKitchenOrBathroom: true,
       }),
     ).toBe('t1')
     expect(
@@ -53,6 +66,7 @@ describe('resolvePropertyTierFromListing', () => {
         state: 'QLD',
         propertyType: 'private_room_landlord_on_site',
         roomsRentedToResidents: 4,
+        sharesKitchenOrBathroom: true,
       }),
     ).toBe('t3')
   })

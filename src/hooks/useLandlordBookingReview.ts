@@ -6,8 +6,13 @@ import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
-import { bookingUsesOccupancyAgreement } from '../../api/lib/resolveTenancyPackage'
-import { propertyPayoutDetailsComplete } from '../lib/propertyPayoutDetails'
+import {
+  bookingUsesOccupancyAgreement,
+  isQldRoomingArrangement,
+  resolveTenancyPackage,
+  tenancyPackageInputFromBooking,
+} from '../../api/lib/resolveTenancyPackage'
+import { propertyPayoutDetailsComplete, propertyPayoutDetailsQldRoomingComplete } from '../lib/propertyPayoutDetails'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -158,10 +163,15 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
       if (prop?.id) {
         const { data: payoutRow } = await supabase
           .from('property_payout_details')
-          .select('account_name, bsb, account_number')
+          .select('account_name, bsb, account_number, bank_name')
           .eq('property_id', prop.id)
           .maybeSingle()
-        propertyPayoutComplete = propertyPayoutDetailsComplete(payoutRow)
+        const pkg = resolveTenancyPackage(
+          tenancyPackageInputFromBooking(booking as Record<string, unknown>, prop as Record<string, unknown>),
+        )
+        propertyPayoutComplete = isQldRoomingArrangement(pkg)
+          ? propertyPayoutDetailsQldRoomingComplete(payoutRow)
+          : propertyPayoutDetailsComplete(payoutRow)
       }
 
       const st =

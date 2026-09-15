@@ -53,8 +53,9 @@ export function LandlordServiceAgreementReacceptModal({ userId, onAccepted }: Pr
           </h2>
           <p className="mt-1 text-sm text-stone-600">
             Quni Listing · Version {LANDLORD_SERVICE_AGREEMENT_VERSION.replace('listing-', '')} · Effective{' '}
-            {LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE}. This replaces the March 2026 agreement. You need to accept
-            this version to keep using your landlord account.
+            {LANDLORD_SERVICE_AGREEMENT_EFFECTIVE_DATE}. The agreement has been updated: Quni now supports more
+            than one kind of tenancy or occupancy agreement, and the wording has been updated to cover them all.
+            You need to accept this version to keep using your landlord account.
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">

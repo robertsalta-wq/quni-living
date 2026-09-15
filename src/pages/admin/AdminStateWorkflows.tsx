@@ -148,6 +148,8 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
       state: 'QLD',
       property_type: 'private_room_landlord_on_site',
       is_registered_rooming_house: false,
+      rooms_rented_to_residents: 3,
+      shares_kitchen_or_bathroom: true,
     },
   },
   {
@@ -167,11 +169,12 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'QLD',
     section: 'supported',
-    intent: 'Rooming accommodation (off-site room) - Form R18 produced; accept not open yet',
+    intent: 'Rooming accommodation (off-site room) - Form R18, Listing accept open',
     input: {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
       is_registered_rooming_house: false,
+      shares_kitchen_or_bathroom: true,
     },
   },
   {

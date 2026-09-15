@@ -81,6 +81,10 @@
     "api/documents/generate-qld-occupancy.ts": {
       "maxDuration": 60
     },
+    "api/documents/generate-qld-form-r18.ts": {
+      "maxDuration": 60,
+      "includeFiles": "docs/qld/form-r18-v15.pdf"
+    },
     "api/documents/generate-qld-house-rules.ts": {
       "maxDuration": 30,
       "includeFiles": "api/documents/QldHouseRulesPdf.tsx"

@@ -28,6 +28,8 @@ The count is rooms let or available to residents. It is not bedrooms in the hous
 
 "4 or more bedrooms" is not the test.
 
+**Unanswered inputs are not a legal outcome.** If kitchen/bath share is unanswered on a room listing, or the live-in room count is unknown when that count is needed, do not classify. Quni treats those as unsupported until the landlord answers. Do not default toward occupancy or toward Form R18.
+
 ---
 
 ## The test

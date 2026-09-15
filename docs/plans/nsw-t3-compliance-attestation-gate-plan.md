@@ -43,6 +43,10 @@ The gate **reuses** `lister_role` for A3 (head-lessor consent only when `head_te
 | A4 | Lapse / withdraw | Block **new** T3 publish and **new** agreement generation. Already-executed agreements stand. | ✓ |
 | A5 | Scope | **NSW T3 only.** QLD/VIC later. | ✓ |
 
+### Known gap (A2)
+
+Confirmed 15 Sep 2026: a complete attestation stays current even after `afss_expiry_date`. Publish, reactivate, and agreement generation do not re-check expiry. A listing can stay live on a stale Annual Fire Safety Statement. Zero NSW T3 listings on that date, so this is not urgent. Do not treat this note as a change to A2.
+
 ---
 
 ## 4. What to collect

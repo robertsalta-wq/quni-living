@@ -73,7 +73,7 @@ import {
   type QldBondRemittancePreference,
 } from '../../lib/tenancy/qldBondRemittance'
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
-import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingArrangement, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
   parseQldRoomingHouseRulesStored,
   sanitizeQldHouseRuleExtras,
@@ -1178,7 +1178,7 @@ export default function LandlordPropertyFormPage() {
       rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
       shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
     })
-    if (isQldRoomingFormR18Pending(pkg)) return true
+    if (isQldRoomingArrangement(pkg)) return true
     return pkg.supported && pkg.rules.bond.schemeApplies
   }, [state, propertyListingType, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom])
   const showQldRoomingHouseRules = useMemo(() => {
@@ -1190,7 +1190,7 @@ export default function LandlordPropertyFormPage() {
       rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
       shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
     })
-    return isQldRoomingFormR18Pending(pkg)
+    return isQldRoomingArrangement(pkg)
   }, [state, propertyListingType, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom])
   const qldRoomCard = isQldRoomCardListing(state, propertyListingType)
   const showListingPayeeBankDetails = useMemo(

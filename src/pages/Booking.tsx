@@ -54,7 +54,7 @@ import {
   fallbackBondAuthorityPublicLine,
   fallbackSchemeLodgementDeadlineBold,
 } from '../lib/tenancy/bondCopy'
-import { isQldRoomingFormR18Pending, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
+import { isQldRoomingArrangement, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { qldRoomingApplyHoldingCopy } from '../lib/tenancy/qldRoomingCopy'
 import {
   emptyQldNoticeConsentFormState,
@@ -1743,7 +1743,7 @@ export default function Booking() {
     [property?.state, property?.property_type, property?.is_registered_rooming_house, property?.rooms_rented_to_residents, property?.qld_shares_kitchen_or_bathroom, moveIn],
   )
 
-  const qldRoomingApplyHold = tenancyPackage ? isQldRoomingFormR18Pending(tenancyPackage) : false
+  const qldRoomingApplyHold = tenancyPackage ? isQldRoomingArrangement(tenancyPackage) : false
 
   const bondRegulatoryCopy = useMemo(() => {
     if (!tenancyPackage.supported) {

@@ -7,6 +7,6 @@ export function qldServiceTierAvailability(propertyTier: PropertyTier): ServiceT
   return {
     listing: 'available',
     managed: 'unsupported',
-    notes: 'Quni produces Form R18. Listing is available. You cannot accept an applicant on Quni yet.',
+    notes: 'Quni produces Form R18 for rooming accommodation. Listing is available. Managed is not available.',
   }
 }

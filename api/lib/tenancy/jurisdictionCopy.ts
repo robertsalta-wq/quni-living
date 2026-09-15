@@ -3,7 +3,6 @@
  * Lives under api/lib for Vercel bundles; re-exported from src/lib/tenancy/jurisdictionCopy.ts.
  */
 import {
-  isQldRoomingFormR18Pending,
   resolveTenancyPackage,
   type TenancyPackageInput,
 } from '../resolveTenancyPackage.js'
@@ -44,6 +43,10 @@ const AGREEMENT_BY_STATE: Record<
       headline: 'Legally binding Queensland-compliant tenancy agreement',
       legislation: 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)',
     },
+    T3: {
+      headline: 'Queensland rooming accommodation agreement (Form R18)',
+      legislation: 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)',
+    },
   },
   VIC: {
     T1: {
@@ -60,12 +63,6 @@ const AGREEMENT_BY_STATE: Record<
 /** Trust callout above DocuSeal signing - null when the listing has no supported package. */
 export function tenancyAgreementExplainerCopy(input: TenancyPackageInput): TenancyAgreementExplainerCopy | null {
   const pkg = resolveTenancyPackage(input)
-  if (isQldRoomingFormR18Pending(pkg)) {
-    return {
-      headline: 'Queensland rooming accommodation agreement (Form R18)',
-      body: 'Quni produces Form R18 for this listing. You cannot accept an applicant on Quni yet.',
-    }
-  }
   if (!pkg.supported) return null
 
   const state = normalizeAuStateCode(input.state)

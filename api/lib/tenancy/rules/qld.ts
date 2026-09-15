@@ -1,7 +1,6 @@
 /**
  * QLD tenancy rules by tier - mirrors nsw.ts export shape.
- * Tier 3 (rooming accommodation) stays unsupported in resolveTenancyPackage until Stage 6 accept.
- * Form R18 is registered on the listing generator pipeline without flipping supported.
+ * Tier 3 is Form R18 rooming accommodation. Bond is lodged with the RTA.
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'
 
@@ -33,8 +32,22 @@ const QLD_T2_BOND: TenancyBondRules = {
   landlordAckAuthorityName: null,
 }
 
-export function qldTenancyRules(tier: 'T1' | 'T2'): TenancyRules {
-  return {
-    bond: tier === 'T1' ? QLD_T1_BOND : QLD_T2_BOND,
-  }
+/** Rooming accommodation (Form R18): bond with RTA, same 4-week cap as general tenancy. */
+const QLD_T3_BOND: TenancyBondRules = {
+  schemeApplies: true,
+  maxBondCopy: 'Under Queensland law, bond cannot exceed 4 weeks rent.',
+  authority: 'Residential Tenancies Authority (RTA Queensland)',
+  authorityUrl: 'https://www.rta.qld.gov.au/',
+  maxBondMonths: 1,
+  lodgementDays: 10,
+  lodgementDaysUnit: 'calendar',
+  receiptDays: 15,
+  authorityPublicLabel: 'Residential Tenancies Authority (RTA)',
+  landlordAckAuthorityName: null,
+}
+
+export function qldTenancyRules(tier: 'T1' | 'T2' | 'T3'): TenancyRules {
+  if (tier === 'T1') return { bond: QLD_T1_BOND }
+  if (tier === 'T3') return { bond: QLD_T3_BOND }
+  return { bond: QLD_T2_BOND }
 }

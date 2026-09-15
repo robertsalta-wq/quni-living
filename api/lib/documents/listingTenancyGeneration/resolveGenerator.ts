@@ -20,7 +20,7 @@ export async function resolveListingTenancyGenerator(
       id,
       property_id,
       move_in_date,
-      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents )
+      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom )
     `,
     )
     .eq('id', bookingId)
@@ -45,8 +45,7 @@ export async function resolveListingTenancyGenerator(
     return {
       ok: false,
       status: 400,
-      error: 'Tenancy agreement not supported for this property',
-      detail: tenancyPackage.unsupportedReason ?? undefined,
+      error: tenancyPackage.unsupportedReason || 'Tenancy agreement not supported for this property',
     }
   }
 

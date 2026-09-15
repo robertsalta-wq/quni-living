@@ -15,7 +15,12 @@ import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
-import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
+import { propertyPayoutDetailsComplete, propertyPayoutDetailsQldRoomingComplete } from '../../../src/lib/propertyPayoutDetails.js'
+import {
+  isQldRoomingArrangement,
+  resolveTenancyPackage,
+  tenancyPackageInputFromBooking,
+} from '../resolveTenancyPackage.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID =
@@ -72,12 +77,13 @@ export type RunListingConfirmBookingParams = {
   bookingId: string
   origin?: string
   deviceCtx?: { user_agent: string; is_mobile: boolean } | null
+  qldHouseRulesAttested?: boolean
 }
 
 export async function runListingConfirmBooking(
   params: RunListingConfirmBookingParams,
 ): Promise<ConfirmFail | ConfirmOk> {
-  const { stripe, admin, landlord, bookingId, deviceCtx = null } = params
+  const { stripe, admin, landlord, bookingId, deviceCtx = null, qldHouseRulesAttested } = params
   const landlordUserId =
     typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
 
@@ -94,7 +100,8 @@ export async function runListingConfirmBooking(
       service_tier_at_request,
       move_in_date,
       start_date,
-      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents )
+      qld_house_rules_attested_at,
+      properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom )
     `,
     )
     .eq('id', bookingId)
@@ -125,6 +132,13 @@ export async function runListingConfirmBooking(
     })
   }
 
+  const propEmbed =
+    booking.properties && typeof booking.properties === 'object' && !Array.isArray(booking.properties)
+      ? (booking.properties as Record<string, unknown>)
+      : {}
+  const tenancyPackage = resolveTenancyPackage(tenancyPackageInputFromBooking(booking, propEmbed))
+  const qldRooming = isQldRoomingArrangement(tenancyPackage)
+
   {
     const propertyId =
       typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
@@ -136,7 +150,7 @@ export async function runListingConfirmBooking(
     }
     const { data: payoutRow, error: payoutErr } = await admin
       .from('property_payout_details')
-      .select('account_name, bsb, account_number')
+      .select('account_name, bsb, account_number, bank_name')
       .eq('property_id', propertyId)
       .maybeSingle()
     if (payoutErr) {
@@ -146,10 +160,40 @@ export async function runListingConfirmBooking(
         message: 'Could not verify payout bank details. Try again shortly.',
       })
     }
-    if (!propertyPayoutDetailsComplete(payoutRow)) {
+    const payoutOk = qldRooming
+      ? propertyPayoutDetailsQldRoomingComplete(payoutRow)
+      : propertyPayoutDetailsComplete(payoutRow)
+    if (!payoutOk) {
       return jsonFail(400, {
         error: 'listing_payout_details_missing',
-        message: 'Add payout bank details for this property before accepting.',
+        message: qldRooming
+          ? 'Add payout bank details including bank name for this property before accepting.'
+          : 'Add payout bank details for this property before accepting.',
+      })
+    }
+  }
+
+  const alreadyAttested =
+    typeof (booking as { qld_house_rules_attested_at?: string | null }).qld_house_rules_attested_at === 'string' &&
+    Boolean((booking as { qld_house_rules_attested_at?: string | null }).qld_house_rules_attested_at?.trim())
+  if (qldRooming && !alreadyAttested) {
+    if (qldHouseRulesAttested !== true) {
+      return jsonFail(400, {
+        error: 'qld_house_rules_attestation_required',
+        message:
+          'Form R18 cannot be produced until the provider attests that the house rules have been given to the resident. Signing without that is an offence under s 275 (10 penalty units).',
+      })
+    }
+    const attestedAt = new Date().toISOString()
+    const { error: attestErr } = await admin
+      .from('bookings')
+      .update({ qld_house_rules_attested_at: attestedAt })
+      .eq('id', booking.id)
+    if (attestErr) {
+      console.error('[confirm-listing] qld house rules attestation', attestErr)
+      return jsonFail(500, {
+        error: 'qld_house_rules_attestation_failed',
+        message: 'Could not record house-rules attestation. Try again shortly.',
       })
     }
   }

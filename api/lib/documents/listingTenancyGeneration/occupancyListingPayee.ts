@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import type { OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
-import { resolveTenancyPackage } from '../../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 import { effectiveQldBondRemittancePreference, parseQldBondRemittancePreference } from '../../tenancy/qldBondRemittance.js'
 import { propertyPayoutDetailsComplete } from '../../../../src/lib/propertyPayoutDetails.js'
 
@@ -38,15 +38,10 @@ export async function loadOccupancyListingPayeeFields(
     propertyAddressLine: string
   },
 ): Promise<OccupancyListingPayeeFields> {
-  const propertyType = typeof args.prop.property_type === 'string' ? args.prop.property_type.trim() : ''
   const propState = typeof args.prop.state === 'string' && args.prop.state.trim() ? args.prop.state.trim() : 'NSW'
-  const isRooming = Boolean(args.prop.is_registered_rooming_house)
-  const tenancyPackage = resolveTenancyPackage({
-    state: propState,
-    property_type: propertyType,
-    is_registered_rooming_house: isRooming,
-    date: args.moveIn || undefined,
-  })
+  const tenancyPackage = resolveTenancyPackage(
+    tenancyPackageInputFromPropertyRow(args.prop, { date: args.moveIn || undefined }),
+  )
   const schemeApplies = tenancyPackage.supported && tenancyPackage.rules.bond.schemeApplies === true
 
   const studentName = studentDisplayName(args.sp)

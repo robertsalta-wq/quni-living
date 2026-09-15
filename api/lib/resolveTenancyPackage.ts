@@ -9,12 +9,15 @@ import { vicTenancyRules } from './tenancy/rules/vic.js'
 import {
   classifyQldArrangement,
   qldFactsFromListing,
-  QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
   parseRoomsOccupiedOrAvailableToResidents,
+  parseQldSharesKitchenOrBathroom,
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
 } from './tenancy/qldClassification.js'
 
 export {
   QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON,
+  QLD_SHARES_KITCHEN_OR_BATHROOM_UNANSWERED_REASON,
+  QLD_ROOMS_RENTED_UNANSWERED_REASON,
   classifyQldArrangement,
 } from './tenancy/qldClassification.js'
 
@@ -39,7 +42,7 @@ export interface TenancyPackageInput {
   /**
    * properties.qld_shares_kitchen_or_bathroom.
    * QLD room and shared-bedroom cards only. Entire place ignores it.
-   * Unanswered keeps the Stage 1 shared-facilities mapping (do not issue 18a).
+   * Unanswered is unsupported. Do not default.
    */
   shares_kitchen_or_bathroom?: boolean | null
   /**
@@ -120,6 +123,13 @@ function qldOccupancyPaths(): TenancyPackageStoragePaths {
   }
 }
 
+function qldFormR18Paths(): TenancyPackageStoragePaths {
+  return {
+    draft: 'qld_form_r18_draft.pdf',
+    signed: 'qld_form_r18_signed.pdf',
+  }
+}
+
 function unsupportedBase(
   tier: TenancyTier,
   reason: string,
@@ -149,10 +159,16 @@ function resolveQldTenancyPackage(
     roomsRentedToResidents,
     sharesKitchenOrBathroom,
   })
-  if (!facts) {
+  if (facts.status === 'unknown_property_type') {
     return unsupportedBase('T2', 'unknown_property_type', ragState)
   }
-  const outcome = classifyQldArrangement(facts)
+  if (facts.status === 'unanswered') {
+    return unsupportedBase('T2', facts.unsupportedReason, ragState)
+  }
+  const outcome = classifyQldArrangement(facts.facts)
+  if (outcome === 'needs_room_count') {
+    return unsupportedBase('T2', QLD_ROOMS_RENTED_UNANSWERED_REASON, ragState)
+  }
   if (outcome === 'general_tenancy') {
     const rules = qldTenancyRules('T2')
     return {
@@ -181,7 +197,22 @@ function resolveQldTenancyPackage(
       unsupportedReason: null,
     }
   }
-  return unsupportedBase('T3', QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON, ragState)
+  return {
+    tier: 'T3',
+    supported: true,
+    generator: 'qld-form-r18',
+    pdfKind: 'rooming_accommodation_agreement',
+    rules: qldTenancyRules('T3'),
+    signingPackageName: 'QLD Form R18 - Rooming accommodation agreement',
+    storagePaths: qldFormR18Paths(),
+    ragState,
+    unsupportedReason: null,
+  }
+}
+
+/** QLD rooming accommodation (Form R18), whether or not accept is open. */
+export function isQldRoomingArrangement(pkg: TenancyPackageResult): boolean {
+  return pkg.ragState === 'QLD' && pkg.tier === 'T3'
 }
 
 export function isQldRoomingFormR18Pending(pkg: TenancyPackageResult): boolean {
@@ -336,6 +367,7 @@ export function tenancyPackageInputFromPropertyRow(
     property_type: typeof p.property_type === 'string' ? p.property_type : '',
     is_registered_rooming_house: Boolean(p.is_registered_rooming_house),
     rooms_rented_to_residents: parseRoomsOccupiedOrAvailableToResidents(p.rooms_rented_to_residents),
+    shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(p.qld_shares_kitchen_or_bathroom),
     date: opts?.date,
   }
 }
@@ -402,6 +434,7 @@ export function tenancyGeneratorToApiPath(generator: string | null): string | nu
   if (generator === 'nsw-boarding-house') return '/api/documents/generate-nsw-boarding-house'
   if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
   if (generator === 'qld-form18a') return '/api/documents/generate-qld-residential-tenancy'
+  if (generator === 'qld-form-r18') return '/api/documents/generate-qld-form-r18'
   if (generator === 'vic-form1') return '/api/documents/generate-vic-residential-rental'
   if (generator === 'vic-occupancy') return '/api/documents/generate-vic-occupancy'
   return null

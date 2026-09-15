@@ -556,49 +556,6 @@ function buildLicencePlatformEntityDisplay(fields) {
   return display;
 }
 
-// api/lib/tenancy/rules/nsw.ts
-var NSW_T1_BOND = {
-  schemeApplies: false,
-  maxBondCopy: null,
-  authority: null,
-  authorityUrl: null,
-  maxBondMonths: null,
-  lodgementDays: null,
-  lodgementDaysUnit: null,
-  receiptDays: null,
-  authorityPublicLabel: null,
-  landlordAckAuthorityName: "NSW Fair Trading"
-};
-var NSW_T2_BOND = {
-  schemeApplies: true,
-  maxBondCopy: "Under NSW law, bond cannot exceed 4 weeks rent.",
-  authority: "NSW Fair Trading",
-  authorityUrl: "https://www.nsw.gov.au/housing-and-construction/renting",
-  maxBondMonths: 1,
-  lodgementDays: 10,
-  lodgementDaysUnit: "business",
-  receiptDays: 15,
-  authorityPublicLabel: "NSW Fair Trading (Rental Bonds Online)",
-  landlordAckAuthorityName: null
-};
-var NSW_T3_BOND = {
-  schemeApplies: false,
-  maxBondCopy: null,
-  authority: null,
-  authorityUrl: null,
-  maxBondMonths: null,
-  lodgementDays: null,
-  lodgementDaysUnit: null,
-  receiptDays: null,
-  authorityPublicLabel: null,
-  landlordAckAuthorityName: "NSW Fair Trading"
-};
-function nswTenancyRules(tier) {
-  if (tier === "T1") return { bond: NSW_T1_BOND };
-  if (tier === "T3") return { bond: NSW_T3_BOND };
-  return { bond: NSW_T2_BOND };
-}
-
 // api/lib/tenancy/rules/qld.ts
 var QLD_T1_BOND = {
   schemeApplies: true,
@@ -624,293 +581,26 @@ var QLD_T2_BOND = {
   authorityPublicLabel: "Residential Tenancies Authority (RTA)",
   landlordAckAuthorityName: null
 };
-function qldTenancyRules(tier) {
-  return {
-    bond: tier === "T1" ? QLD_T1_BOND : QLD_T2_BOND
-  };
-}
-
-// api/lib/tenancy/rules/vic.ts
-var VIC_T1_BOND = {
-  schemeApplies: false,
-  maxBondCopy: null,
-  authority: null,
-  authorityUrl: null,
-  maxBondMonths: null,
-  lodgementDays: null,
-  lodgementDaysUnit: null,
-  receiptDays: null,
-  authorityPublicLabel: null,
-  landlordAckAuthorityName: "Residential Tenancies Bond Authority (RTBA)"
-};
-var VIC_T2_BOND = {
+var QLD_T3_BOND = {
   schemeApplies: true,
-  maxBondCopy: null,
-  authority: "RTBA",
-  authorityUrl: "https://www.rtba.vic.gov.au/",
+  maxBondCopy: "Under Queensland law, bond cannot exceed 4 weeks rent.",
+  authority: "Residential Tenancies Authority (RTA Queensland)",
+  authorityUrl: "https://www.rta.qld.gov.au/",
   maxBondMonths: 1,
   lodgementDays: 10,
-  lodgementDaysUnit: "business",
+  lodgementDaysUnit: "calendar",
   receiptDays: 15,
-  authorityPublicLabel: "Residential Tenancies Bond Authority (RTBA)",
+  authorityPublicLabel: "Residential Tenancies Authority (RTA)",
   landlordAckAuthorityName: null
 };
-function vicTenancyRules(tier) {
-  return {
-    bond: tier === "T1" ? VIC_T1_BOND : VIC_T2_BOND
-  };
+function qldTenancyRules(tier) {
+  if (tier === "T1") return { bond: QLD_T1_BOND };
+  if (tier === "T3") return { bond: QLD_T3_BOND };
+  return { bond: QLD_T2_BOND };
 }
 
 // api/lib/tenancy/qldClassification.ts
 var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
-var QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON = "This arrangement is rooming accommodation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The prescribed form is Form R18. You cannot accept an applicant on Quni yet.";
-function parseRoomsOccupiedOrAvailableToResidents(raw) {
-  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseInt(raw, 10) : NaN;
-  if (!Number.isFinite(n) || n < 1) return null;
-  return Math.min(99, Math.floor(n));
-}
-function classifyQldArrangement(input) {
-  if (input.whatIsLet === "whole_or_self_contained") return "general_tenancy";
-  if (!input.providerLivesAtPremises) return "rooming";
-  const n = input.roomsOccupiedOrAvailableToResidents;
-  if (n != null && n > QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS) return "rooming";
-  return "outside_act";
-}
-function parseQldSharesKitchenOrBathroom(raw) {
-  if (raw === true || raw === "yes" || raw === "true") return true;
-  if (raw === false || raw === "no" || raw === "false") return false;
-  return null;
-}
-function qldFactsFromListing(input) {
-  const propertyType = input.propertyType.trim();
-  if (propertyType === "entire_property") {
-    return {
-      whatIsLet: "whole_or_self_contained",
-      providerLivesAtPremises: false,
-      roomsOccupiedOrAvailableToResidents: null
-    };
-  }
-  const shares = parseQldSharesKitchenOrBathroom(input.sharesKitchenOrBathroom);
-  const whatIsLet = shares === false ? "whole_or_self_contained" : "room_with_shared_facilities";
-  if (propertyType === "private_room_landlord_off_site" || propertyType === "shared_room") {
-    return {
-      whatIsLet,
-      providerLivesAtPremises: false,
-      roomsOccupiedOrAvailableToResidents: null
-    };
-  }
-  if (propertyType === "private_room_landlord_on_site") {
-    return {
-      whatIsLet,
-      providerLivesAtPremises: true,
-      roomsOccupiedOrAvailableToResidents: parseRoomsOccupiedOrAvailableToResidents(
-        input.roomsRentedToResidents
-      )
-    };
-  }
-  return null;
-}
-
-// api/lib/resolveTenancyPackage.ts
-var T3_DEFERRED_REASON = "Rooming/boarding house (T3) tenancy agreements are not available on the platform yet.";
-function nswFt6600Paths() {
-  return {
-    draft: "nsw_residential_tenancy_agreement_draft.pdf",
-    signed: "nsw_residential_tenancy_agreement_signed.pdf"
-  };
-}
-function qldForm18aPaths() {
-  return {
-    draft: "qld_form18a_general_tenancy_agreement_draft.pdf",
-    signed: "qld_form18a_general_tenancy_agreement_signed.pdf"
-  };
-}
-function vicForm1Paths() {
-  return {
-    draft: "vic_residential_rental_agreement_draft.pdf",
-    signed: "vic_residential_rental_agreement_signed.pdf"
-  };
-}
-function vicOccupancyPaths() {
-  return {
-    draft: "vic_occupancy_agreement_draft.pdf",
-    signed: "vic_occupancy_agreement_signed.pdf"
-  };
-}
-function qldOccupancyPaths() {
-  return {
-    draft: "qld_occupancy_agreement_draft.pdf",
-    signed: "qld_occupancy_agreement_signed.pdf"
-  };
-}
-function unsupportedBase(tier, reason, ragState) {
-  return {
-    tier,
-    supported: false,
-    generator: null,
-    pdfKind: null,
-    rules: null,
-    signingPackageName: null,
-    storagePaths: null,
-    ragState,
-    unsupportedReason: reason
-  };
-}
-function resolveQldTenancyPackage(propertyType, roomsRentedToResidents, sharesKitchenOrBathroom, ragState) {
-  const facts = qldFactsFromListing({
-    propertyType,
-    roomsRentedToResidents,
-    sharesKitchenOrBathroom
-  });
-  if (!facts) {
-    return unsupportedBase("T2", "unknown_property_type", ragState);
-  }
-  const outcome = classifyQldArrangement(facts);
-  if (outcome === "general_tenancy") {
-    const rules = qldTenancyRules("T2");
-    return {
-      tier: "T2",
-      supported: true,
-      generator: "qld-form18a",
-      pdfKind: "residential_tenancy_agreement",
-      rules,
-      signingPackageName: "QLD Form 18a - General Tenancy Agreement",
-      storagePaths: qldForm18aPaths(),
-      ragState,
-      unsupportedReason: null
-    };
-  }
-  if (outcome === "outside_act") {
-    const rules = qldTenancyRules("T1");
-    return {
-      tier: "T1",
-      supported: true,
-      generator: "qld-occupancy",
-      pdfKind: "occupancy_agreement",
-      rules,
-      signingPackageName: "QLD occupancy agreement",
-      storagePaths: qldOccupancyPaths(),
-      ragState,
-      unsupportedReason: null
-    };
-  }
-  return unsupportedBase("T3", QLD_ROOMING_FORM_R18_NOT_GENERATED_REASON, ragState);
-}
-function resolveTenancyPackage(input) {
-  void input.date;
-  const stateRaw = typeof input.state === "string" ? input.state.trim().toUpperCase() : "";
-  const propertyType = typeof input.property_type === "string" ? input.property_type.trim() : "";
-  const isRooming = Boolean(input.is_registered_rooming_house);
-  if (stateRaw !== "NSW" && stateRaw !== "VIC" && stateRaw !== "QLD") {
-    return unsupportedBase("T2", "unsupported_state", null);
-  }
-  const state = stateRaw;
-  const ragState = state;
-  if (!propertyType) {
-    return unsupportedBase("T2", "unknown_property_type", ragState);
-  }
-  const knownTypes = /* @__PURE__ */ new Set([
-    "private_room_landlord_on_site",
-    "private_room_landlord_off_site",
-    "entire_property",
-    "shared_room"
-  ]);
-  if (!knownTypes.has(propertyType)) {
-    return unsupportedBase("T2", "unknown_property_type", ragState);
-  }
-  if (state === "QLD") {
-    return resolveQldTenancyPackage(
-      propertyType,
-      input.rooms_rented_to_residents,
-      input.shares_kitchen_or_bathroom,
-      ragState
-    );
-  }
-  if (isRooming && propertyType !== "private_room_landlord_off_site") {
-    return unsupportedBase(
-      "T2",
-      "Registered rooming house is only valid for private room (landlord off-site) listings.",
-      ragState
-    );
-  }
-  if (propertyType === "private_room_landlord_off_site" && isRooming) {
-    if (state === "NSW") {
-      const rules = nswTenancyRules("T3");
-      return {
-        tier: "T3",
-        supported: true,
-        generator: "nsw-boarding-house",
-        pdfKind: "occupancy_agreement",
-        rules,
-        signingPackageName: "NSW Standard Occupancy Agreement (boarding house)",
-        storagePaths: {
-          draft: "nsw_boarding_house_occupancy_draft.pdf",
-          signed: "nsw_boarding_house_occupancy_signed.pdf"
-        },
-        ragState,
-        unsupportedReason: null
-      };
-    }
-    return unsupportedBase("T3", T3_DEFERRED_REASON, ragState);
-  }
-  if (propertyType === "private_room_landlord_on_site" && !isRooming) {
-    if (state === "NSW") {
-      const rules2 = nswTenancyRules("T1");
-      return {
-        tier: "T1",
-        supported: true,
-        generator: "nsw-occupancy",
-        pdfKind: "occupancy_agreement",
-        rules: rules2,
-        signingPackageName: "NSW Residential Occupancy Agreement",
-        storagePaths: null,
-        ragState,
-        unsupportedReason: null
-      };
-    }
-    const rules = vicTenancyRules("T1");
-    return {
-      tier: "T1",
-      supported: true,
-      generator: "vic-occupancy",
-      pdfKind: "occupancy_agreement",
-      rules,
-      signingPackageName: "VIC Licence to Occupy",
-      storagePaths: vicOccupancyPaths(),
-      ragState,
-      unsupportedReason: null
-    };
-  }
-  if ((propertyType === "private_room_landlord_off_site" || propertyType === "entire_property" || propertyType === "shared_room") && !isRooming) {
-    if (state === "NSW") {
-      const rules2 = nswTenancyRules("T2");
-      return {
-        tier: "T2",
-        supported: true,
-        generator: "nsw-ft6600",
-        pdfKind: "residential_tenancy_agreement",
-        rules: rules2,
-        signingPackageName: "NSW Residential Tenancy Agreement (FT6600)",
-        storagePaths: nswFt6600Paths(),
-        ragState,
-        unsupportedReason: null
-      };
-    }
-    const rules = vicTenancyRules("T2");
-    return {
-      tier: "T2",
-      supported: true,
-      generator: "vic-form1",
-      pdfKind: "residential_rental_agreement",
-      rules,
-      signingPackageName: "VIC Form 1 - Residential rental agreement",
-      storagePaths: vicForm1Paths(),
-      ragState,
-      unsupportedReason: null
-    };
-  }
-  return unsupportedBase("T2", "unknown_property_type", ragState);
-}
 
 // api/lib/tenancy/jurisdictionCopy.ts
 function normalizeAuStateCode(state) {
@@ -1081,15 +771,8 @@ function occupancyQldBondPaymentSupplement(props) {
   if (props.bond.amount == null || !Number.isFinite(props.bond.amount) || props.bond.amount <= 0) {
     return null;
   }
-  const propertyType = props.premises.propertyType ?? "";
-  const pkg = resolveTenancyPackage({
-    state: "QLD",
-    property_type: propertyType,
-    is_registered_rooming_house: false,
-    date: props.term.startDate || void 0
-  });
-  if (!pkg.supported) return null;
-  return listingBondPaymentOccupancyProse(pkg.rules.bond, "QLD", {
+  const rules = qldTenancyRules("T1");
+  return listingBondPaymentOccupancyProse(rules.bond, "QLD", {
     qldBondRemittancePreference: props.qldBondRemittancePreference ?? void 0,
     payee: props.payout ?? void 0,
     paymentReference: props.paymentReference

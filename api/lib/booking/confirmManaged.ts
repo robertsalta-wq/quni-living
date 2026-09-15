@@ -15,6 +15,7 @@ import { captureSentryMessageEdge } from '../../lib/sentryEdgeCapture.js'
 import { bondAuthorityForState } from '../../lib/bondAuthority.js'
 import {
   resolveTenancyPackage,
+  tenancyPackageInputFromPropertyRow,
   tenancyGeneratorToApiPath,
 } from '../../lib/resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
@@ -90,7 +91,7 @@ export async function runManagedConfirmBooking(params) {
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier, bond, bond_weeks ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, service_tier, bond, bond_weeks ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -144,16 +145,9 @@ export async function runManagedConfirmBooking(params) {
       typeof propForTenancy.property_type === 'string' ? propForTenancy.property_type.trim() : ''
     const tenancyRooming = Boolean(propForTenancy.is_registered_rooming_house)
 
-    const tenancyPackage = resolveTenancyPackage({
-      state: tenancyState,
-      property_type: tenancyPt,
-      is_registered_rooming_house: tenancyRooming,
-      rooms_rented_to_residents:
-        typeof propForTenancy.rooms_rented_to_residents === 'number'
-          ? propForTenancy.rooms_rented_to_residents
-          : null,
-      date: moveIn || undefined,
-    })
+    const tenancyPackage = resolveTenancyPackage(
+      tenancyPackageInputFromPropertyRow(propForTenancy, { date: moveIn || undefined }),
+    )
     if (!tenancyPackage.supported) {
       console.error('[confirm-managed] unsupported tenancy package', {
         unsupportedReason: tenancyPackage.unsupportedReason,

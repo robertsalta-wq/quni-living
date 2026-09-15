@@ -4,7 +4,7 @@ import {
   listingLandlordHeldPayeeOccupancyLines,
   type ListingBondPaymentOccupancyProse,
 } from '../../../../api/lib/tenancy/listingBondPaymentCopy.js'
-import { resolveTenancyPackage } from '../../../../api/lib/resolveTenancyPackage.js'
+import { qldTenancyRules } from '../../../../api/lib/tenancy/rules/qld.js'
 import type { LicenceOccupyContent } from './contentTypes.js'
 
 /** Notice period text aligned to payment method wording (weekly default). */
@@ -84,16 +84,9 @@ export function occupancyQldBondPaymentSupplement(props: OccupancyAgreementProps
     return null
   }
 
-  const propertyType = props.premises.propertyType ?? ''
-  const pkg = resolveTenancyPackage({
-    state: 'QLD',
-    property_type: propertyType,
-    is_registered_rooming_house: false,
-    date: props.term.startDate || undefined,
-  })
-  if (!pkg.supported) return null
+  const rules = qldTenancyRules('T1')
 
-  return listingBondPaymentOccupancyProse(pkg.rules.bond, 'QLD', {
+  return listingBondPaymentOccupancyProse(rules.bond, 'QLD', {
     qldBondRemittancePreference: props.qldBondRemittancePreference ?? undefined,
     payee: props.payout ?? undefined,
     paymentReference: props.paymentReference,
