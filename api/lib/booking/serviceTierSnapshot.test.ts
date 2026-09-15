@@ -81,6 +81,7 @@ describe('serviceTierSnapshot', () => {
         state: 'QLD',
         propertyType: 'private_room_landlord_off_site',
         isRegisteredRoomingHouse: false,
+        sharesKitchenOrBathroom: true,
         moduleEnabled: true,
       }),
     ).toBe('listing')

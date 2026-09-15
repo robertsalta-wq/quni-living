@@ -46,7 +46,12 @@ const baseBooking = {
 
 function mockAdmin(opts: {
   booking?: typeof baseBooking & {
-    properties?: { state: string; property_type: string; is_registered_rooming_house: boolean }
+    properties?: {
+      state: string
+      property_type: string
+      is_registered_rooming_house: boolean
+      qld_shares_kitchen_or_bathroom?: boolean | null
+    }
     move_in_date?: string | null
     start_date?: string | null
   }
@@ -505,6 +510,7 @@ describe('runListingConfirmBooking', () => {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
       is_registered_rooming_house: false,
+      qld_shares_kitchen_or_bathroom: true,
     },
   }
 
