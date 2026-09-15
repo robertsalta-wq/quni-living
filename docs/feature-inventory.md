@@ -214,7 +214,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Reply when status is `awaiting_info`
 - Bond receipt download where supported (state / rooming-house rules)
 - **Booking reinstatement** request / confirm / decline where eligible (`/api/booking/reinstatement/*`)
-- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); **T3 rooming agreements** not available yet
+- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); NSW T3 Standard Occupancy Agreement (registered boarding house); QLD Form R18 rooming on Listing (Managed unsupported); VIC T3 not available
 
 ### Payments - Live
 
@@ -276,7 +276,7 @@ Per listing:
 
 - Same section content as Listing Health (desktop can still use full form)
 - Types: **Rent**, **Homestay**, **Student House**
-- Accommodation tiles; beds/baths; room for rent; rooming house registration; FT6600 / Form 18a / Form 1 compliance fields by state
+- Accommodation tiles; beds/baths; room for rent; rooming house registration; FT6600 / Form 18a / Form 1 / Form R18 compliance fields by state
 - Inclusions; **Open to non-students**
 - House rules (Yes/No/Approval) + custom; **Reset to platform default**
 - Location + geocode; suggested campuses; extra universities
@@ -377,6 +377,7 @@ Per listing:
 
 | Date | Change |
 |------|--------|
+| 2026-09-15 | QLD Form R18 Listing on Preview (Stage 6): tenancy packages and listing form name Form R18; NSW T3 already live; VIC T3 still not available |
 | 2026-07-25 | Full codebase rescan: profile-first onboarding redirects; renter situation hub + readiness chrome; landlord Overview/Profile tabs + Listing Health; invite tenant; shared app chrome / incomplete nudge; deprecate profile Bookings tab; Managed flag; reinstatement; T3 rooming gap; AI proofread |
 | 2026-06-02 | Trust/Stripe/payments section for AI; sample agreements; knowledge sync script |
 | 2026-05-29 | **Verified host** (Stripe-driven): accept gated on identity; Listing deposits without host Connect; FAQ/How it works/AI guardrails aligned |

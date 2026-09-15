@@ -1,11 +1,11 @@
 # QLD rooming ungate plan
 
-**Status:** Stage 1 is on Production. Stage 3 early ship (generate and download, no Item 17 attestation) is approved to build. Preview PR only until Rob says go. Stage 2 is not approved and follows Stage 3. Stages 4 and 6 are not approved.
+**Status:** Stage 1 is on Production. Stages 2, 3, 4, and 6 are on Preview ([PR #339](https://github.com/robertsalta-wq/quni-living/pull/339)) until Rob says go. Stage 5 (Form R1) stays out of v1. Production only after Rob says go.
 **Canonical rule:** [`docs/legal/qld-classification-rule.md`](legal/qld-classification-rule.md). Do not restate the test here.
 **What the router does today:** [`docs/qld-rooming-accommodation-audit.md`](qld-rooming-accommodation-audit.md).
 **Contradiction inventory:** [`docs/qld-rule-reconciliation.md`](qld-rule-reconciliation.md).
 
-No product code in this document except Stage 1 (shipped) and Stage 3 (Preview). Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
+No product code in this document except the stages that have shipped. Preview-or-flag still applies to every user-visible cut. Production only after Rob says go.
 
 ---
 
@@ -298,7 +298,7 @@ v1 still enforces the 2-week rent-in-advance cap at listing/accept, and still gi
 
 ### Stage 6. LSA v1.1 and ungate
 
-Not approved.
+On Preview ([PR #339](https://github.com/robertsalta-wq/quni-living/pull/339)). Production when Rob says go.
 
 **DoD:** [`LANDLORD_SERVICE_AGREEMENT_VERSION`](../src/lib/landlordServiceAgreement.ts) bumps to `listing-1.1` in the **same release** as accept becoming possible for QLD rooming. Reaccept modal. Package `supported: true`, generator `qld-form-r18`. Managed stays unsupported. Quang path: list → apply → accept → preflight → sign. Admin probe supported.
 
