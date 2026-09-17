@@ -5,7 +5,8 @@
       "maxDuration": 60
     },
     "api/confirm-booking.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/documents/QldHouseRulesPdf.ts"
     },
     "api/booking-mark-bond-received.ts": {
       "maxDuration": 30,
@@ -15,10 +16,12 @@
       "maxDuration": 30
     },
     "api/booking-prepare-listing-agreement.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/documents/QldHouseRulesPdf.ts"
     },
     "api/booking-regenerate-listing-agreement.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/documents/QldHouseRulesPdf.ts"
     },
     "api/booking-listing-cancel.ts": {
       "maxDuration": 30
@@ -83,11 +86,11 @@
     },
     "api/documents/generate-qld-form-r18.ts": {
       "maxDuration": 60,
-      "includeFiles": "docs/qld/form-r18-v15.pdf"
+      "includeFiles": "{docs/qld/form-r18-v15.pdf,api/documents/QldHouseRulesPdf.ts}"
     },
     "api/documents/generate-qld-house-rules.ts": {
       "maxDuration": 30,
-      "includeFiles": "api/documents/QldHouseRulesPdf.tsx"
+      "includeFiles": "api/documents/QldHouseRulesPdf.ts"
     },
     "api/documents/generate-residential-tenancy.ts": {
       "maxDuration": 60,
