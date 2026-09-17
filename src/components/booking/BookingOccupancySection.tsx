@@ -27,6 +27,20 @@ type Props = {
   onFieldFocus?: (el: HTMLElement) => void
 }
 
+/** Prefill 2 only when the listing allows it. Couple profiles on 1-occupant listings stay at 1. */
+export function bookingOccupantCountForProfile(
+  occupancyType: string | null | undefined,
+  maxOccupants: number,
+): 1 | 2 {
+  if (occupancyType === 'couple' && maxOccupants >= 2) return 2
+  return 1
+}
+
+export function clampBookingOccupantCount(count: number, maxOccupants: number): 1 | 2 {
+  if (count === 2 && maxOccupants >= 2) return 2
+  return 1
+}
+
 export function validateBookingOccupancy(opts: {
   maxOccupants: number
   occupantCount: 1 | 2
@@ -117,6 +131,11 @@ export function BookingOccupancySection({
           />
           <span className="text-sm font-medium text-admin-ink">Two of us (2 people)</span>
         </label>
+        {!coupleAllowed ? (
+          <p className="text-xs text-admin-ink-4 leading-relaxed">
+            This listing is for one occupant. You can still apply for yourself.
+          </p>
+        ) : null}
       </fieldset>
 
       {occupantCount === 2 ? (
