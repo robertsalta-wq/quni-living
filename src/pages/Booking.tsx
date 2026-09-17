@@ -77,6 +77,8 @@ import TenantBookingRequestSubmittedSummary from '../components/student/TenantBo
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import {
   BookingOccupancySection,
+  bookingOccupantCountForProfile,
+  clampBookingOccupantCount,
   validateBookingOccupancy,
   type CoTenantFormState,
 } from '../components/booking/BookingOccupancySection'
@@ -706,11 +708,16 @@ export default function Booking() {
 
   const studentProfile = isRenterRole(role) && profile ? (profile as StudentRow) : null
 
+  const maxOccupants = Math.min(10, Math.max(1, Math.floor(Number(property?.max_occupants ?? 1))))
+
   useEffect(() => {
-    if (studentProfile?.occupancy_type === 'couple') {
-      setOccupantCount(2)
-    }
-  }, [studentProfile?.occupancy_type])
+    if (studentProfile?.occupancy_type !== 'couple') return
+    setOccupantCount(bookingOccupantCountForProfile(studentProfile.occupancy_type, maxOccupants))
+  }, [studentProfile?.occupancy_type, maxOccupants])
+
+  useEffect(() => {
+    setOccupantCount((current) => clampBookingOccupantCount(current, maxOccupants))
+  }, [maxOccupants, occupantCount])
 
   useEffect(() => {
     if (!tenantInviteToken || loadingProperty || !property) return
@@ -718,8 +725,6 @@ export default function Booking() {
     tenantInviteBookingStartedRef.current = true
     recordTenantInviteFunnelEvent(tenantInviteToken, 'booking_started')
   }, [tenantInviteToken, loadingProperty, property])
-
-  const maxOccupants = Math.min(10, Math.max(1, Math.floor(Number(property?.max_occupants ?? 1))))
 
   const occupancyPricingInput = useMemo(() => {
     if (!property) return null
@@ -2083,7 +2088,10 @@ export default function Booking() {
             studentEmail={studentProfile?.email ?? null}
             breakdownAud={breakdownAud}
             weeklyRent={weeklyRent}
-            occupancyError={occupancyError}
+            occupancyError={
+              occupancyError ??
+              (rentResolution != null && 'error' in rentResolution ? rentResolution.error : null)
+            }
             inputClass={inputClass}
             labelClass={labelClass}
             onFieldFocus={scrollEditableIntoView}
