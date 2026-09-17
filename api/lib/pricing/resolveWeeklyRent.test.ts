@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   ResolveWeeklyRentError,
+  maxOccupantsWithCouplePrice,
   maxWeeklyRentForProperty,
   propertyHasVariableOccupancyPricing,
   resolveWeeklyRent,
@@ -155,6 +156,15 @@ describe('propertyHasVariableOccupancyPricing', () => {
   })
 })
 
+describe('maxOccupantsWithCouplePrice', () => {
+  it('raises a 1-person listing to 2 when a second-person extra is set', () => {
+    expect(maxOccupantsWithCouplePrice(1, 100)).toBe(2)
+    expect(maxOccupantsWithCouplePrice(1, 0)).toBe(1)
+    expect(maxOccupantsWithCouplePrice(1, null)).toBe(1)
+    expect(maxOccupantsWithCouplePrice(2, 50)).toBe(2)
+  })
+})
+
 describe('maxWeeklyRentForProperty', () => {
   it('returns highest tier for bond helper', () => {
     expect(maxWeeklyRentForProperty(casaRoom)).toBe(550)
@@ -165,5 +175,16 @@ describe('maxWeeklyRentForProperty', () => {
         parking_available: false,
       }),
     ).toBe(400)
+  })
+
+  it('treats a second-person extra as two occupants for the max rent', () => {
+    expect(
+      maxWeeklyRentForProperty({
+        rent_per_week: 400,
+        max_occupants: 1,
+        couple_surcharge_per_week: 100,
+        parking_available: false,
+      }),
+    ).toBe(500)
   })
 })

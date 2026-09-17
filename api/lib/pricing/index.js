@@ -187,6 +187,7 @@ export function resolvePropertyTierFromListing(input) {
 
 export {
   ResolveWeeklyRentError,
+  maxOccupantsWithCouplePrice,
   maxWeeklyRentForProperty,
   propertyHasVariableOccupancyPricing,
   resolveWeeklyRent,

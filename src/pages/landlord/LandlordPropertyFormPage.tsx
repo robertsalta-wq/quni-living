@@ -153,7 +153,7 @@ import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUp
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
-import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
+import { maxOccupantsWithCouplePrice, maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
 import { findParkingFeatureId } from '../../lib/pricing/parkingFeature'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
@@ -1747,7 +1747,7 @@ export default function LandlordPropertyFormPage() {
           editCampusLookupQueuedRef.current = false
         }
         setRentPerWeek(String(prop.rent_per_week ?? ''))
-        setMaxOccupants(String(prop.max_occupants ?? 1))
+        setMaxOccupants(String(maxOccupantsWithCouplePrice(prop.max_occupants ?? 1, prop.couple_surcharge_per_week)))
         setCoupleSurchargePerWeek(
           prop.couple_surcharge_per_week != null ? String(prop.couple_surcharge_per_week) : '',
         )
@@ -1917,7 +1917,7 @@ export default function LandlordPropertyFormPage() {
       skipNearbyAutoFillOverwriteRef.current = hasUni
       setShowAddAnotherUniversity(parsed.showAddAnotherUniversity)
       setRentPerWeek(parsed.rentPerWeek)
-      setMaxOccupants(parsed.maxOccupants)
+      setMaxOccupants(String(maxOccupantsWithCouplePrice(parsed.maxOccupants, parsed.coupleSurchargePerWeek)))
       setCoupleSurchargePerWeek(parsed.coupleSurchargePerWeek)
       setParkingSurchargePerWeek(parsed.parkingSurchargePerWeek)
       setParkingAvailable(parsed.parkingAvailable)
@@ -2663,13 +2663,14 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    const maxOcc = Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1))
+    const parsedMaxOcc = Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1))
     const coupleRaw = coupleSurchargePerWeek.trim()
     const coupleAmt = coupleRaw ? Number(coupleRaw) : null
     if (coupleAmt != null && (!Number.isFinite(coupleAmt) || coupleAmt < 0)) {
       setSubmitError('Couple surcharge must be zero or a positive amount.')
       return
     }
+    const maxOcc = maxOccupantsWithCouplePrice(parsedMaxOcc, coupleAmt)
     const parkingRaw = parkingSurchargePerWeek.trim()
     const parkingAmt = parkingAvailable && parkingRaw ? Number(parkingRaw) : null
     if (parkingAmt != null && (!Number.isFinite(parkingAmt) || parkingAmt < 0)) {
@@ -5147,8 +5148,8 @@ export default function LandlordPropertyFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Occupancy &amp; optional extras</p>
                   <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-                    Base rent above is for one person. Add surcharges if rent is higher for a couple or optional
-                    carpark at booking.
+                    Base rent above is for one person. Set max people to 2 if a couple can apply, even at the same
+                    rent. Typing an extra amount for a second person does this automatically.
                   </p>
                 </div>
                 <div>
@@ -5168,26 +5169,30 @@ export default function LandlordPropertyFormPage() {
                     <option value="2">2 people (e.g. couple)</option>
                   </select>
                 </div>
-                {maxOccupants !== '1' ? (
-                  <div>
-                    <label htmlFor="pf-couple-surcharge" className={labelClass}>
-                      Extra per week for 2 people ($)
-                    </label>
-                    <input
-                      id="pf-couple-surcharge"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={coupleSurchargePerWeek}
-                      onChange={(e) => setCoupleSurchargePerWeek(e.target.value)}
-                      placeholder="e.g. 100"
-                      className={inputClass}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Added to base rent when a student books for two occupants.
-                    </p>
-                  </div>
-                ) : null}
+                <div>
+                  <label htmlFor="pf-couple-surcharge" className={labelClass}>
+                    Extra per week for 2 people ($)
+                  </label>
+                  <input
+                    id="pf-couple-surcharge"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={coupleSurchargePerWeek}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      setCoupleSurchargePerWeek(next)
+                      const n = Number(next)
+                      if (next.trim() && Number.isFinite(n) && n > 0) setMaxOccupants('2')
+                    }}
+                    placeholder="e.g. 100 (leave blank if the same rent)"
+                    className={inputClass}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Added to base rent when someone books for two people. Leave blank if a couple pays the same as one
+                    person. Entering an amount sets this room to 2 people.
+                  </p>
+                </div>
                 <div className="flex items-start gap-2">
                   <input
                     id="pf-parking-available"

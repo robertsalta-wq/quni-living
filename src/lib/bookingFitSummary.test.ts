@@ -38,6 +38,24 @@ describe('buildBookingFitSummary occupancy', () => {
     expect(occ?.studentSide).toContain('2 occupants')
   })
 
+  it('mismatches a couple profile on a 1-occupant private room', () => {
+    const rows = buildBookingFitSummary({
+      booking: { ...baseBooking, occupant_count: 1 },
+      student: baseStudent,
+      property: {
+        room_type: 'single',
+        property_type: 'private_room_landlord_on_site',
+        listing_type: 'rent',
+        max_occupants: 1,
+        available_from: '2026-05-01',
+        lease_length: '6 months',
+        furnished: true,
+        parking_available: false,
+      } as never,
+    })
+    expect(rows.find((r) => r.label === 'Occupancy')?.status).toBe('mismatch')
+  })
+
   it('mismatches 2 occupants when max_occupants is 1', () => {
     const rows = buildBookingFitSummary({
       booking: baseBooking,

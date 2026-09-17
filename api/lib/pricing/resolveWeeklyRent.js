@@ -153,12 +153,31 @@ export function propertyHasVariableOccupancyPricing(property) {
 }
 
 /**
+ * A second-person extra means the listing must allow two occupants.
+ * @param {number|string|null|undefined} maxOccupants
+ * @param {number|string|null|undefined} coupleSurchargePerWeek
+ */
+export function maxOccupantsWithCouplePrice(maxOccupants, coupleSurchargePerWeek) {
+  const max = parseMaxOccupants(maxOccupants, 1)
+  const couple = parseAudAmount(coupleSurchargePerWeek)
+  if (couple != null && couple > 0) return Math.max(2, max)
+  return max
+}
+
+/**
  * Max possible weekly rent for bond helper copy (base + couple + parking if all offered).
  * @param {OccupancyPricingProperty} property
  */
 export function maxWeeklyRentForProperty(property) {
-  return resolveWeeklyRent(property, {
-    occupantCount: parseMaxOccupants(property?.max_occupants, 1),
-    parkingSelected: Boolean(property?.parking_available),
-  }).weeklyRent
+  const maxOccupants = maxOccupantsWithCouplePrice(
+    property?.max_occupants,
+    property?.couple_surcharge_per_week,
+  )
+  return resolveWeeklyRent(
+    { ...property, max_occupants: maxOccupants },
+    {
+      occupantCount: maxOccupants,
+      parkingSelected: Boolean(property?.parking_available),
+    },
+  ).weeklyRent
 }

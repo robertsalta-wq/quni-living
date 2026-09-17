@@ -156,7 +156,7 @@ flowchart TB
 **Logic:**
 
 - `occupant_count === 2` → requires `max_occupants >= 2`
-- `occupancy_type === 'couple'` → `max_occupants >= 2`, or `shared` room type, or `private_room_landlord_on_site`
+- `occupancy_type === 'couple'` → `max_occupants >= 2`
 - `occupancy_type === 'sole'` → mismatch if `room_type === 'shared'`
 - `occupancy_type === 'open'` → always match
 

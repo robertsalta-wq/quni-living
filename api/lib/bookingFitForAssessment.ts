@@ -92,7 +92,7 @@ function bookingOccupantCount(booking: Pick<BookingRow, 'occupant_count'>): numb
 function occupancyMatch(
   occ: string | null | undefined,
   roomType: string | null | undefined,
-  propertyType: string | null | undefined,
+  _propertyType: string | null | undefined,
   maxOccupants: number,
   bookOcc: number | null,
 ): FitRowStatus {
@@ -106,12 +106,8 @@ function occupancyMatch(
   }
 
   const rt = (roomType ?? '').toLowerCase()
-  const pt = (propertyType ?? '').toLowerCase()
   if (occ === 'couple') {
-    if (maxOccupants >= 2) return 'match'
-    if (rt === 'shared' || pt === 'private_room_landlord_on_site') return 'match'
-    if (rt === 'single' || rt === 'studio') return 'mismatch'
-    return 'unknown'
+    return maxOccupants >= 2 ? 'match' : 'mismatch'
   }
   if (occ === 'sole') {
     if (rt === 'shared') return 'mismatch'
