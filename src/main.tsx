@@ -1,4 +1,4 @@
-import { clearChunkReloadSessionFlag, registerStaleChunkLoadRecovery } from './lib/chunkLoadRecovery'
+import { registerStaleChunkLoadRecovery, stripChunkReloadQueryParam } from './lib/chunkLoadRecovery'
 import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -16,7 +16,6 @@ if ('scrollRestoration' in history) {
 
 applyNativeStatusBarInsetFallback()
 prefetchRouteChunks(window.location.pathname)
-clearChunkReloadSessionFlag()
 registerStaleChunkLoadRecovery()
 // Capacitor-only; keep supabase client off the marketing web critical path.
 void import('./lib/nativeOAuthDeepLink').then((m) => m.registerNativeOAuthDeepLinkHandler())
@@ -57,6 +56,9 @@ async function mount(): Promise<void> {
   } else {
     createRoot(rootEl).render(app)
   }
+  // Strip private-mode `?_qcr=` after a healthy warm+mount. Keep sessionStorage
+  // cooldown so a sticky post-mount lazy failure cannot reload-loop.
+  stripChunkReloadQueryParam()
   scheduleSentryInit()
 }
 
