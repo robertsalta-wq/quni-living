@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import React from 'react'
 import { PDFParse } from 'pdf-parse'
 import { renderToBuffer } from '@react-pdf/renderer'
@@ -8,7 +11,7 @@ import {
   type QldHouseRulesVariant,
 } from '../lib/tenancy/qldHouseRules/document'
 import { SCHEDULE_7_RULE_3_2, SCHEDULE_7_RULE_7_2 } from '../lib/tenancy/qldHouseRules/schedule7'
-import { QldHouseRulesPdf, QLD_HOUSE_RULES_PDF_MARKERS } from './QldHouseRulesPdf.tsx'
+import { QldHouseRulesPdf, QLD_HOUSE_RULES_PDF_MARKERS } from './QldHouseRulesPdf.js'
 
 const GENERATED_AT = '5 September 2026, 8:00:00 pm'
 
@@ -33,6 +36,11 @@ async function pdfText(variant: QldHouseRulesVariant, extras?: Record<string, st
 }
 
 describe('QldHouseRulesPdf', () => {
+  it('ships as .ts so confirm-booking NFT can resolve QldHouseRulesPdf.js', () => {
+    const dir = dirname(fileURLToPath(import.meta.url))
+    expect(existsSync(join(dir, 'QldHouseRulesPdf.ts'))).toBe(true)
+    expect(existsSync(join(dir, 'QldHouseRulesPdf.tsx'))).toBe(false)
+  })
   it('prints Schedule 7 carve-outs and the common-areas insert on both variants', async () => {
     for (const variant of ['resident', 'wall'] as const) {
       const text = await pdfText(variant)

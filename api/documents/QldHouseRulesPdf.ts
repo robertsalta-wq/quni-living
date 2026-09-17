@@ -1,3 +1,5 @@
+// @ts-nocheck - Vercel API TS graph; .ts (not .tsx) so NFT resolves import '.../QldHouseRulesPdf.js'
+import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { QldHouseRulesDocument, QldHouseRulesVariant } from '../lib/tenancy/qldHouseRules/document.js'
 import { SCHEDULE_7_INSTRUMENT_CITATION } from '../lib/tenancy/qldHouseRules/schedule7.js'
@@ -165,47 +167,60 @@ export function QldHouseRulesPdf({ variant, document, generatedAtLabel }: QldHou
   const title = variant === 'wall' ? 'HOUSE RULES' : 'House rules for rooming accommodation'
   const banner = variant === 'wall' ? WALL_BANNER : RESIDENT_BANNER
 
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.banner}>
-          <Text>{banner}</Text>
-        </View>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.meta}>
-          Source: {SCHEDULE_7_INSTRUMENT_CITATION}.{'\n'}
-          Generated: {generatedAtLabel} (Australia/Brisbane).
-        </Text>
-        {document.premisesLine ? <Text style={styles.premises}>{document.premisesLine}</Text> : null}
-        <Text style={styles.sectionHeading}>Prescribed house rules</Text>
-        {document.prescribedRules.map((rule) => (
-          <View key={rule.number}>
-            <Text style={styles.ruleTitle}>
-              {rule.number} {rule.title}
-            </Text>
-            {rule.clauses.map((clause) =>
-              clause.text.split('\n').map((line, lineIdx) => (
-                <Text key={`${clause.id}-${lineIdx}`} style={styles.clause}>
-                  {lineIdx === 0 ? `${clauseDisplayPrefix(clause.id)}${line}` : line}
-                </Text>
-              )),
-            )}
-          </View>
-        ))}
-        {document.extraRules.length > 0 ? (
-          <View>
-            <Text style={styles.sectionHeading}>Additional house rules made by the provider</Text>
-            {document.extraRules.map((extra) => (
-              <View key={extra.subject}>
-                <Text style={styles.ruleTitle}>{extra.heading}</Text>
-                <Text style={styles.extraText}>{extra.text}</Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
-        <Text style={styles.footer}>{FOOTER}</Text>
-      </Page>
-    </Document>
+  return React.createElement(
+    Document,
+    null,
+    React.createElement(
+      Page,
+      { size: 'A4', style: styles.page },
+      React.createElement(View, { style: styles.banner }, React.createElement(Text, null, banner)),
+      React.createElement(Text, { style: styles.title }, title),
+      React.createElement(
+        Text,
+        { style: styles.meta },
+        `Source: ${SCHEDULE_7_INSTRUMENT_CITATION}.\nGenerated: ${generatedAtLabel} (Australia/Brisbane).`,
+      ),
+      document.premisesLine
+        ? React.createElement(Text, { style: styles.premises }, document.premisesLine)
+        : null,
+      React.createElement(Text, { style: styles.sectionHeading }, 'Prescribed house rules'),
+      ...document.prescribedRules.map((rule) =>
+        React.createElement(
+          View,
+          { key: rule.number },
+          React.createElement(Text, { style: styles.ruleTitle }, `${rule.number} ${rule.title}`),
+          ...rule.clauses.flatMap((clause) =>
+            clause.text.split('\n').map((line, lineIdx) =>
+              React.createElement(
+                Text,
+                { key: `${clause.id}-${lineIdx}`, style: styles.clause },
+                lineIdx === 0 ? `${clauseDisplayPrefix(clause.id)}${line}` : line,
+              ),
+            ),
+          ),
+        ),
+      ),
+      document.extraRules.length > 0
+        ? React.createElement(
+            View,
+            null,
+            React.createElement(
+              Text,
+              { style: styles.sectionHeading },
+              'Additional house rules made by the provider',
+            ),
+            ...document.extraRules.map((extra) =>
+              React.createElement(
+                View,
+                { key: extra.subject },
+                React.createElement(Text, { style: styles.ruleTitle }, extra.heading),
+                React.createElement(Text, { style: styles.extraText }, extra.text),
+              ),
+            ),
+          )
+        : null,
+      React.createElement(Text, { style: styles.footer }, FOOTER),
+    ),
   )
 }
 
