@@ -33,4 +33,17 @@ describe('listingRentDisplay', () => {
     expect(d.showFromPrefix).toBe(false)
     expect(d.breakdownLine).toBeNull()
   })
+
+  it('treats a second-person extra as two occupants even if max_occupants is still 1', () => {
+    const inconsistent = {
+      rent_per_week: 400,
+      max_occupants: 1,
+      couple_surcharge_per_week: 100,
+      parking_available: false,
+    }
+    const d = getListingRentDisplay(inconsistent)
+    expect(d.showFromPrefix).toBe(true)
+    expect(d.maxWeeklyRent).toBe(500)
+    expect(formatOccupancyPricingBreakdown(inconsistent)).toContain('second person')
+  })
 })

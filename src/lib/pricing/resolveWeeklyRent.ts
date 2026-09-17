@@ -143,10 +143,31 @@ export function propertyHasVariableOccupancyPricing(property: OccupancyPricingPr
   )
 }
 
+/**
+ * A second-person extra means the listing must allow two occupants.
+ * Hosts can still charge $0 extra by setting max occupants to 2 with no surcharge.
+ */
+export function maxOccupantsWithCouplePrice(
+  maxOccupants: number | string | null | undefined,
+  coupleSurchargePerWeek: number | string | null | undefined,
+): number {
+  const max = parseMaxOccupants(maxOccupants, 1)
+  const couple = parseAudAmount(coupleSurchargePerWeek)
+  if (couple != null && couple > 0) return Math.max(2, max)
+  return max
+}
+
 /** Max possible weekly rent for bond helper copy (base + surcharges if all offered). */
 export function maxWeeklyRentForProperty(property: OccupancyPricingProperty): number {
-  return resolveWeeklyRent(property, {
-    occupantCount: parseMaxOccupants(property.max_occupants, 1),
-    parkingSelected: Boolean(property.parking_available),
-  }).weeklyRent
+  const maxOccupants = maxOccupantsWithCouplePrice(
+    property.max_occupants,
+    property.couple_surcharge_per_week,
+  )
+  return resolveWeeklyRent(
+    { ...property, max_occupants: maxOccupants },
+    {
+      occupantCount: maxOccupants,
+      parkingSelected: Boolean(property.parking_available),
+    },
+  ).weeklyRent
 }

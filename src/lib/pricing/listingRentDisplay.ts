@@ -1,4 +1,5 @@
 import {
+  maxOccupantsWithCouplePrice,
   maxWeeklyRentForProperty,
   propertyHasVariableOccupancyPricing,
   type OccupancyPricingProperty,
@@ -20,7 +21,7 @@ export function formatOccupancyPricingBreakdown(property: OccupancyPricingProper
   const base = parseAud(property.rent_per_week)
   const parts: string[] = [`$${formatAud(base)} (1 person)`]
 
-  const maxOcc = Math.min(10, Math.max(1, Math.floor(Number(property.max_occupants) || 1)))
+  const maxOcc = maxOccupantsWithCouplePrice(property.max_occupants, property.couple_surcharge_per_week)
   const couple = parseAud(property.couple_surcharge_per_week)
   if (maxOcc >= 2 && couple > 0) {
     parts.push(`+$${formatAud(couple)} second person`)
