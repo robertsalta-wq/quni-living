@@ -72,6 +72,8 @@ export type OccupancyAgreementProps = {
   serviceTier?: 'listing' | 'managed'
   landlord: RtaLandlordPdf
   tenant: RtaTenantPdf
+  /** Second resident on a couple occupancy licence. Null when there is one occupant. */
+  coResidentName?: string | null
   premises: RtaPremisesPdf
   term: RtaTermPdf
   rent: RtaRentPdf

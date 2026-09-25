@@ -13,4 +13,8 @@ export function occupancyLeaseFieldsFromBooking(
   property?: Record<string, unknown> | null,
 ): OccupancyLeaseFields
 
+export function occupancyCoResidentNameFromBooking(
+  booking: { co_tenant?: unknown } | null | undefined,
+): string | null
+
 export function maxOccupantsPermittedForLease(booking: Record<string, unknown>): number

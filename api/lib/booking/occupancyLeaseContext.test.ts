@@ -4,6 +4,7 @@ import {
   coTenantSpecialConditionsLines,
   maxOccupantsPermittedForLease,
   MissingBookingOccupantCountError,
+  occupancyCoResidentNameFromBooking,
   parseCoTenantFromBooking,
 } from './occupancyLeaseContext.js'
 
@@ -41,6 +42,15 @@ describe('occupancyLeaseContext', () => {
         co_tenant: { full_name: 'Sam Lee', email: 'sam@example.com', phone: '0411111111', date_of_birth: '1999-05-01' },
       }),
     ).toEqual(['Sam Lee'])
+  })
+
+  it('returns co-resident display name from booking', () => {
+    expect(
+      occupancyCoResidentNameFromBooking({
+        co_tenant: { full_name: 'Maelie Vachey Saba', email: 'maelie@example.com', phone: '0411111111', date_of_birth: '2007-01-16' },
+      }),
+    ).toBe('Maelie Vachey Saba')
+    expect(occupancyCoResidentNameFromBooking({ co_tenant: null })).toBeNull()
   })
 
   it('emits special condition lines for co-tenant', () => {

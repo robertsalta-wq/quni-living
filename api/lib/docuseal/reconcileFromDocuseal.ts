@@ -164,11 +164,9 @@ export function targetBookingStatusAfterReinstate(
 export async function isCoTenantRequiredForTenancy(
   admin: SupabaseClient,
   tenancyId: string,
-  isResidentialTenancyPackage: boolean,
+  _isResidentialTenancyPackage?: boolean,
 ): Promise<boolean> {
-  return (
-    isResidentialTenancyPackage && Boolean(await fetchCoTenantSignerForTenancy(admin, tenancyId))
-  )
+  return Boolean(await fetchCoTenantSignerForTenancy(admin, tenancyId))
 }
 
 /**

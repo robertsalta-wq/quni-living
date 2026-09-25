@@ -38,6 +38,16 @@ export function additionalTenantNamesFromBooking(booking) {
 }
 
 /**
+ * Display name for the second occupancy resident (couple), or null.
+ * @param {{ co_tenant?: unknown } | null | undefined} booking
+ * @returns {string | null}
+ */
+export function occupancyCoResidentNameFromBooking(booking) {
+  const ct = parseCoTenantFromBooking(booking?.co_tenant)
+  return ct?.full_name ?? null
+}
+
+/**
  * Lease agreement max-occupants cap - booking.occupant_count only (never property.max_occupants).
  *
  * @param {{ occupant_count?: unknown } | null | undefined} booking

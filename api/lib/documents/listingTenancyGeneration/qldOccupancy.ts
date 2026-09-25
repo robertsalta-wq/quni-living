@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import { QuniOccupancyAgreementQld } from '../../../documents/QldOccupancyAgreement.js'
 import type { OccupancyAgreementProps, OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
-import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
+import { occupancyCoResidentNameFromBooking, occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import {
@@ -361,6 +361,7 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
       ...(ctx.roomsForResidents != null ? [qldSection43PdfAcknowledgement(ctx.roomsForResidents)] : []),
       ...ctx.coTenantSpecialConditions,
     ],
+    coResidentName: occupancyCoResidentNameFromBooking(booking),
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
     payout: ctx.payout,

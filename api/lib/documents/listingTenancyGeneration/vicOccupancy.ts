@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import { VicLicenceToOccupyOnSite } from '../../../documents/VicOccupancyAgreement.js'
 import type { OccupancyAgreementProps, OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
-import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
+import { occupancyCoResidentNameFromBooking, occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import {
@@ -319,6 +319,7 @@ function buildVicOccupancyPdfProps(ctx: LoadedVicOccupancyContext, documentId: s
         : ["Licence fee payments are processed through Quni Living's secure payment system powered by Stripe."]),
       ...ctx.coTenantSpecialConditions,
     ],
+    coResidentName: occupancyCoResidentNameFromBooking(booking),
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
     payout: ctx.payout,

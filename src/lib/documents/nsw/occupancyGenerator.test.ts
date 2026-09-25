@@ -104,6 +104,20 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).not.toContain('will be provided by the Principal')
   })
 
+  it('adds co-resident schedule row and Co-tenant DocuSeal tags', async () => {
+    const props = { ...minimalProps(), coResidentName: 'Maelie Vachey Saba' }
+    const buf = await renderToBuffer(
+      React.createElement(NswLicenceToOccupyOnSite, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('Maelie Vachey Saba')
+    expect(text).toContain('Co-resident')
+    expect(text).toContain('role=Co-tenant')
+  })
+
   it('renders no-bond schedule and body copy when bond amount is null', async () => {
     const props = { ...minimalProps(), bond: { amount: null } }
     const buf = await renderToBuffer(
