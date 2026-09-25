@@ -24,6 +24,7 @@ const EXACT = new Set([
   '/landlord-service-agreement',
   '/about',
   '/how-it-works',
+  '/check',
   '/refunds',
   '/pricing',
   '/contact',
