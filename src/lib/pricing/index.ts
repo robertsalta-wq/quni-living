@@ -25,6 +25,7 @@ export type PropertyFeeSnapshotRow = Database['public']['Tables']['property_fee_
 
 export {
   ResolveWeeklyRentError,
+  maxOccupantsWithCouplePrice,
   maxWeeklyRentForProperty,
   propertyHasVariableOccupancyPricing,
   resolveWeeklyRent,
