@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import { OccupancyAgreement } from '../../../documents/NswOccupancyAgreement.js'
 import type { OccupancyAgreementProps, OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
-import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
+import { occupancyCoResidentNameFromBooking, occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import {
@@ -25,7 +25,6 @@ import {
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 import { leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
-
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
 function propertyAddressLine(p: Record<string, unknown>): string {
@@ -315,6 +314,7 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
       'The weekly licence fee is paid directly to the Principal by fee-free direct credit and is not collected through the platform.',
       ...ctx.coTenantSpecialConditions,
     ],
+    coResidentName: occupancyCoResidentNameFromBooking(booking),
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
     payout: ctx.payout,
@@ -474,7 +474,6 @@ export async function runNswOccupancyListingTenancy(
       await sendForSigning(documentId, {
         documentPdfName: 'Quni Licence to Occupy.pdf',
         removeTags: true,
-        skipCoTenantSigner: true,
       })
       const { data: docRow } = await admin
         .from('tenancy_documents')

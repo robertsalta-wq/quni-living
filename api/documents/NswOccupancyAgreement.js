@@ -919,6 +919,7 @@ function ScheduleSummary({
     { label: "Resident:", value: tenant.fullName },
     { label: "Resident email:", value: tenant.email },
     { label: "Resident phone:", value: tenant.phone },
+    ...typeof props.coResidentName === "string" && props.coResidentName.trim() ? [{ label: "Co-resident:", value: props.coResidentName.trim() }] : [],
     { label: "Licence starts:", value: formatAuDate(term.startDate) },
     { label: "Licence ends:", value: endDateText },
     { label: "Licence period:", value: term.leaseLengthDescription },
@@ -995,6 +996,20 @@ function LicenceOccupyDocument({
   const residentDateTag = licenceOccupyDocusealTag(
     "Resident Sign Date",
     "Second Party",
+    "date",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
+  );
+  const coResidentName = typeof props.coResidentName === "string" ? props.coResidentName.trim() : "";
+  const hasCoResident = coResidentName.length >= 2;
+  const coResidentSignatureTag = licenceOccupyDocusealTag(
+    "Co-resident Signature",
+    "Co-tenant",
+    "signature",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : void 0
+  );
+  const coResidentDateTag = licenceOccupyDocusealTag(
+    "Co-resident Sign Date",
+    "Co-tenant",
     "date",
     docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
   );
@@ -1140,7 +1155,31 @@ function LicenceOccupyDocument({
             )
           ] })
         ] })
-      ] })
+      ] }),
+      hasCoResident ? /* @__PURE__ */ jsxs2(View2, { style: [occupancyMatchPdf.sigTable, { marginTop: 12 }], children: [
+        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderRow, children: /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCellLast, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Co-resident" }) }) }),
+        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBodyRow, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: coResidentName }),
+          /* @__PURE__ */ jsx2(
+            DocusealField,
+            {
+              label: "Signature",
+              tag: coResidentSignatureTag,
+              boxStyle: occupancyMatchPdf.docusealSignatureFieldBox,
+              sized: docusealSized
+            }
+          ),
+          /* @__PURE__ */ jsx2(
+            DocusealField,
+            {
+              label: "Date",
+              tag: coResidentDateTag,
+              boxStyle: occupancyMatchPdf.docusealDateFieldBox,
+              sized: docusealSized
+            }
+          )
+        ] }) })
+      ] }) : null
     ] })
   ] });
 }

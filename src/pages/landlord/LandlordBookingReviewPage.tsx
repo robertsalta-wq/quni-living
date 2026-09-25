@@ -1834,7 +1834,8 @@ export default function LandlordBookingReviewPage() {
                           booking.listing_agreement_status === 'failed'
                         }
                         allowRegenerateAgreement={
-                          booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
+                          booking.service_tier_final === 'listing' &&
+                          (booking.status === 'bond_pending' || booking.status === 'confirmed')
                         }
                         embedded
                       />

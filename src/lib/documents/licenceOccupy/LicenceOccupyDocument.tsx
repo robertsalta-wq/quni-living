@@ -202,6 +202,9 @@ function ScheduleSummary({
     { label: 'Resident:', value: tenant.fullName },
     { label: 'Resident email:', value: tenant.email },
     { label: 'Resident phone:', value: tenant.phone },
+    ...(typeof props.coResidentName === 'string' && props.coResidentName.trim()
+      ? [{ label: 'Co-resident:', value: props.coResidentName.trim() }]
+      : []),
     { label: 'Licence starts:', value: formatAuDate(term.startDate) },
     { label: 'Licence ends:', value: endDateText },
     { label: 'Licence period:', value: term.leaseLengthDescription },
@@ -305,6 +308,21 @@ export function LicenceOccupyDocument({
   const residentDateTag = licenceOccupyDocusealTag(
     'Resident Sign Date',
     'Second Party',
+    'date',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : undefined,
+  )
+  const coResidentName =
+    typeof props.coResidentName === 'string' ? props.coResidentName.trim() : ''
+  const hasCoResident = coResidentName.length >= 2
+  const coResidentSignatureTag = licenceOccupyDocusealTag(
+    'Co-resident Signature',
+    'Co-tenant',
+    'signature',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : undefined,
+  )
+  const coResidentDateTag = licenceOccupyDocusealTag(
+    'Co-resident Sign Date',
+    'Co-tenant',
     'date',
     docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : undefined,
   )
@@ -499,6 +517,32 @@ export function LicenceOccupyDocument({
             </View>
           </View>
         </View>
+        {hasCoResident ? (
+          <View style={[occupancyMatchPdf.sigTable, { marginTop: 12 }]}>
+            <View style={occupancyMatchPdf.sigHeaderRow}>
+              <View style={occupancyMatchPdf.sigHeaderCellLast}>
+                <Text style={occupancyMatchPdf.thText}>Co-resident</Text>
+              </View>
+            </View>
+            <View style={occupancyMatchPdf.sigBodyRow}>
+              <View style={occupancyMatchPdf.sigColLast}>
+                <Text style={occupancyMatchPdf.sigNameBold}>{coResidentName}</Text>
+                <DocusealField
+                  label="Signature"
+                  tag={coResidentSignatureTag}
+                  boxStyle={occupancyMatchPdf.docusealSignatureFieldBox}
+                  sized={docusealSized}
+                />
+                <DocusealField
+                  label="Date"
+                  tag={coResidentDateTag}
+                  boxStyle={occupancyMatchPdf.docusealDateFieldBox}
+                  sized={docusealSized}
+                />
+              </View>
+            </View>
+          </View>
+        ) : null}
       </PageShell>
     </Document>
   )

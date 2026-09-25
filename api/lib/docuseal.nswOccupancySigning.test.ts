@@ -16,7 +16,7 @@ vi.mock('./sendEmail.js', () => ({
 vi.mock('./booking/coTenantSigning.js', () => ({
   fetchCoTenantSignerForTenancy: mocks.fetchCoTenantSignerForTenancy,
   fetchCoTenantSignerForBooking: mocks.fetchCoTenantSignerForBooking,
-  coTenantEmailDistinctFromPrimary: vi.fn(),
+  coTenantEmailDistinctFromPrimary: vi.fn(() => true),
 }))
 
 vi.mock('./docuseal.shared.js', () => ({
@@ -265,7 +265,7 @@ function buildWebhookAdmin(options?: { trackDocUpdate?: boolean }) {
   return admin
 }
 
-describe('nsw-occupancy signing (licence: landlord + resident only)', () => {
+describe('nsw-occupancy signing (licence: landlord + residents)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.SUPABASE_URL = 'https://test.supabase.co'
@@ -314,7 +314,40 @@ describe('nsw-occupancy signing (licence: landlord + resident only)', () => {
     expect(emailTos).not.toContain('sam@example.com')
   })
 
-  it('handleSigningWebhook marks lease fully_signed after landlord + resident when booking has co-occupant', async () => {
+  it('sendForSigning includes co-resident submitter and email when skipCoTenantSigner is off', async () => {
+    mocks.createClient.mockReturnValue(buildSendForSigningAdmin())
+    mocks.fetchCoTenantSignerForTenancy.mockResolvedValue({
+      name: 'Sam Co',
+      email: 'sam@example.com',
+    })
+    mocks.createDocusealSubmissionFromPdf.mockResolvedValue({
+      id: 42,
+      submitters: [
+        { id: 1, role: 'Landlord', email: 'pat@example.com', embed_src: 'https://quni.com.au/api/sign/a' },
+        { id: 2, role: 'Tenant', email: 'alex@example.com', embed_src: 'https://quni.com.au/api/sign/b' },
+        { id: 3, role: 'Co-tenant', email: 'sam@example.com', embed_src: 'https://quni.com.au/api/sign/c' },
+      ],
+    })
+
+    await sendForSigning(documentId, {
+      documentPdfName: 'Quni Licence to Occupy.pdf',
+      removeTags: true,
+    })
+
+    expect(mocks.fetchCoTenantSignerForTenancy).toHaveBeenCalled()
+    expect(mocks.createDocusealSubmissionFromPdf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coTenant: { name: 'Sam Co', email: 'sam@example.com' },
+        landlord: { name: 'Pat Host', email: 'pat@example.com' },
+        tenant: { name: 'Alex Renter', email: 'alex@example.com' },
+      }),
+    )
+    expect(mocks.sendEmail).toHaveBeenCalledTimes(3)
+    const emailTos = mocks.sendEmail.mock.calls.map((c) => c[0].to)
+    expect(emailTos).toContain('sam@example.com')
+  })
+
+  it('handleSigningWebhook waits for co-resident after landlord + resident have signed', async () => {
     const admin = buildWebhookAdmin()
     mocks.createClient.mockReturnValue(admin)
     mocks.fetchCoTenantSignerForTenancy.mockResolvedValue({
@@ -361,10 +394,67 @@ describe('nsw-occupancy signing (licence: landlord + resident only)', () => {
 
     expect(result.ok).toBe(true)
     expect(admin._docUpdatePayload()).toMatchObject({
-      status: 'signed',
+      status: 'sent_for_signing',
       landlord_signed_at: '2026-07-10T10:00:00Z',
       student_signed_at: '2026-07-10T11:00:00Z',
       co_tenant_signed_at: null,
+    })
+
+    vi.unstubAllGlobals()
+  })
+
+  it('handleSigningWebhook marks occupancy lease fully_signed after landlord + both residents', async () => {
+    const admin = buildWebhookAdmin()
+    mocks.createClient.mockReturnValue(admin)
+    mocks.fetchCoTenantSignerForTenancy.mockResolvedValue({
+      name: 'Sam Co',
+      email: 'sam@example.com',
+    })
+    mocks.fetchCoTenantSignerForBooking.mockResolvedValue({
+      name: 'Sam Co',
+      email: 'sam@example.com',
+    })
+
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46])
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const u = String(url)
+        if (u.includes('/api/submissions/') && u.includes('/documents')) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: [{ name: 'Lease.pdf', url: 'https://docuseal.example/files/lease.pdf' }],
+            }),
+          }
+        }
+        if (u.includes('/api/submissions/')) {
+          return { ok: true, json: async () => ({ id: submissionId }) }
+        }
+        if (u.includes('lease.pdf')) {
+          return { ok: true, arrayBuffer: async () => pdfBytes.buffer }
+        }
+        return { ok: false, status: 404, text: async () => 'not found' }
+      }),
+    )
+
+    const payload = {
+      id: submissionId,
+      submitters: [
+        { role: 'Landlord', completed_at: '2026-07-10T10:00:00Z' },
+        { role: 'Tenant', completed_at: '2026-07-10T11:00:00Z' },
+        { role: 'Co-tenant', completed_at: '2026-07-10T12:00:00Z' },
+      ],
+    }
+
+    const result = await handleSigningWebhook(payload)
+
+    expect(result.ok).toBe(true)
+    expect(admin._docUpdatePayload()).toMatchObject({
+      status: 'signed',
+      landlord_signed_at: '2026-07-10T10:00:00Z',
+      student_signed_at: '2026-07-10T11:00:00Z',
+      co_tenant_signed_at: '2026-07-10T12:00:00Z',
     })
 
     vi.unstubAllGlobals()

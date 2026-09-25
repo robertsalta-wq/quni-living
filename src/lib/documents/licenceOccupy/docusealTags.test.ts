@@ -15,6 +15,14 @@ describe('licenceOccupyDocusealTag', () => {
     expect(
       licenceOccupyDocusealTag('Resident Sign Date', 'Second Party', 'date', LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE),
     ).toContain(';width=120;height=28')
+    expect(
+      licenceOccupyDocusealTag(
+        'Co-resident Signature',
+        'Co-tenant',
+        'signature',
+        LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE,
+      ),
+    ).toContain('role=Co-tenant')
   })
 
   it('omits dimensions for legacy QLD/VIC tags', () => {
