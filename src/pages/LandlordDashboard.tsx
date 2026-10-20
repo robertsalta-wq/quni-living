@@ -2090,13 +2090,14 @@ export default function LandlordDashboard() {
           open={authorityToLetPending != null}
           intent={authorityToLetPending?.intent ?? 'publish'}
           listingTitle={authorityToLetPending?.property.title ?? ''}
+          requireHeadTenantConsent={authorityToLetPending?.property.lister_role === 'head_tenant'}
           busy={
             authorityToLetPending != null &&
             (attestingListingId === authorityToLetPending.property.id ||
               publishingListingId === authorityToLetPending.property.id ||
               updatingListingId === authorityToLetPending.property.id)
           }
-          onConfirm={() => void confirmAuthorityToLetAttestation()}
+          onConfirm={(consent) => void confirmAuthorityToLetAttestation(consent)}
           onCancel={() => {
             if (attestingListingId === authorityToLetPending?.property.id) return
             setAuthorityToLetPending(null)

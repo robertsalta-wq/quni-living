@@ -238,6 +238,7 @@ import {
   canHeadTenantAttestAuthorityToLet,
   HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
   HEAD_TENANT_LANDLORD_CONSENT_QUESTION,
+  headTenantAuthorityConsentBlock,
   headTenantLandlordConsentFromAttestation,
   parseListerRole,
   type HeadTenantLandlordConsent,
@@ -2828,6 +2829,22 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('section-authority-to-let')?.scrollIntoView({ behavior: 'smooth' })
       return
     }
+    // Switching an already-attested listing to head tenant is a new legal posture.
+    // A live listing cannot change role until they answer yes. A draft or paused
+    // listing drops the old stamp so publish and unpause ask again.
+    const revokeHeadTenantAuthority =
+      isEdit &&
+      listerRole === 'head_tenant' &&
+      !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent) &&
+      propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt })
+    if (revokeHeadTenantAuthority && existingListingStatus === 'active') {
+      reportSubmitError(
+        headTenantAuthorityConsentBlock(listerRole, headTenantLandlordConsent) ??
+          HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
+      )
+      document.getElementById('section-lister-role')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
 
     if (!skipAttestations && isNswT3Listing && (isPublishingListing || existingListingStatus === 'active')) {
       const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
@@ -2978,12 +2995,14 @@ export default function LandlordPropertyFormPage() {
             billsIncluded: billsIncludedSelected,
           })
         : null
-    const attestationPatch = skipAttestations
-      ? {}
-      : authorityToLetAttestationPatch({
-          agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
-          existingAttestedAt: authorityToLetAttestedAt,
-        })
+    const attestationPatch = revokeHeadTenantAuthority
+      ? { authority_to_let_attested_at: null }
+      : skipAttestations
+        ? {}
+        : authorityToLetAttestationPatch({
+            agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
+            existingAttestedAt: authorityToLetAttestedAt,
+          })
     const waterAttestationPatch = skipAttestations
       ? {}
       : waterSeparatelyMeteredAttestationPatch({
@@ -3152,6 +3171,9 @@ export default function LandlordPropertyFormPage() {
         if (attestationPatch.authority_to_let_attested_at) {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
+        } else if (revokeHeadTenantAuthority) {
+          setAuthorityToLetAttestedAt(null)
+          setAuthorityToLetAgreed(false)
         }
         if (accuracyAttestationPatch.accuracy_attested_at) {
           setAccuracyAttestedAt(accuracyAttestationPatch.accuracy_attested_at)

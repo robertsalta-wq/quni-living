@@ -7,6 +7,11 @@ import {
   AUTHORITY_TO_LET_BLOCKED_MESSAGE,
   type AuthorityToLetListingIntent,
 } from '../../lib/authorityToLetAttestation'
+import {
+  HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
+  HEAD_TENANT_LANDLORD_CONSENT_QUESTION,
+  type HeadTenantLandlordConsent,
+} from '../../lib/sublettingResources'
 
 const CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
@@ -15,8 +20,10 @@ type Props = {
   open: boolean
   intent: AuthorityToLetListingIntent
   listingTitle: string
+  /** Head-tenant listings must answer yes before the authority checkbox unlocks. */
+  requireHeadTenantConsent?: boolean
   busy: boolean
-  onConfirm: () => void
+  onConfirm: (headTenantConsent: boolean | null) => void
   onCancel: () => void
 }
 
@@ -24,16 +31,21 @@ export default function LandlordAuthorityToLetModal({
   open,
   intent,
   listingTitle,
+  requireHeadTenantConsent = false,
   busy,
   onConfirm,
   onCancel,
 }: Props) {
   const [agreed, setAgreed] = useState(false)
+  const [consent, setConsent] = useState<HeadTenantLandlordConsent>(null)
   const certId = useId()
   const titleId = useId()
 
   useEffect(() => {
-    if (open) setAgreed(false)
+    if (open) {
+      setAgreed(false)
+      setConsent(null)
+    }
   }, [open])
 
   useEffect(() => {
@@ -48,6 +60,8 @@ export default function LandlordAuthorityToLetModal({
   if (!open) return null
 
   const confirmLabel = intent === 'reactivate' ? 'Confirm and unpause' : 'Confirm and publish'
+  const authorityLocked = requireHeadTenantConsent && consent !== true
+  const canConfirm = agreed && !busy && !authorityLocked
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -71,12 +85,49 @@ export default function LandlordAuthorityToLetModal({
           <p className="mt-1 truncate text-sm text-gray-500">{listingTitle.trim()}</p>
         ) : null}
         <p className="mt-2 text-sm text-gray-600">{AUTHORITY_TO_LET_BLOCKED_MESSAGE}</p>
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-relaxed text-gray-800">
+        <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto">
+          {requireHeadTenantConsent ? (
+            <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+              <p className="text-sm font-medium text-gray-900">{HEAD_TENANT_LANDLORD_CONSENT_QUESTION}</p>
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-800">
+                <input
+                  type="radio"
+                  name="head-tenant-landlord-consent"
+                  checked={consent === true}
+                  disabled={busy}
+                  onChange={() => setConsent(true)}
+                  className={`${CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                />
+                <span>Yes</span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-800">
+                <input
+                  type="radio"
+                  name="head-tenant-landlord-consent"
+                  checked={consent === false}
+                  disabled={busy}
+                  onChange={() => {
+                    setConsent(false)
+                    setAgreed(false)
+                  }}
+                  className={`${CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                />
+                <span>No</span>
+              </label>
+              {consent === false ? (
+                <p className="text-sm text-amber-900">{HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE}</p>
+              ) : null}
+            </div>
+          ) : null}
+          <label
+            className={`flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-relaxed text-gray-800 ${
+              authorityLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+            }`}
+          >
             <input
               type="checkbox"
               checked={agreed}
-              disabled={busy}
+              disabled={busy || authorityLocked}
               onChange={(e) => setAgreed(e.target.checked)}
               className={`${CHECKBOX_CLASS} mt-0.5`}
               aria-describedby={certId}
@@ -97,10 +148,10 @@ export default function LandlordAuthorityToLetModal({
           <button
             type="button"
             onClick={() => {
-              if (!agreed || busy) return
-              onConfirm()
+              if (!canConfirm) return
+              onConfirm(requireHeadTenantConsent ? true : null)
             }}
-            disabled={!agreed || busy}
+            disabled={!canConfirm}
             className="rounded-xl bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"
           >
             {busy ? 'Saving…' : confirmLabel}

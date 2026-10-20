@@ -362,6 +362,7 @@ async function run() {
       campus_id: draft.campusId,
       available_from: addDaysIso(availableDayOffsets[index]),
       status: 'active',
+      authority_to_let_attested_at: new Date().toISOString(),
       linen_supplied: linenTrueIndexes.has(index),
       weekly_cleaning_service: weeklyCleaningTrueIndexes.has(index),
       property_type: toListingPropertyType(draft.listingMode),

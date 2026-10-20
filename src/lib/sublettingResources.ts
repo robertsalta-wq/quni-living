@@ -13,6 +13,17 @@ export function canHeadTenantAttestAuthorityToLet(consent: HeadTenantLandlordCon
   return consent === true
 }
 
+/** Block writing authority-to-let for a head tenant until they answer yes. Owners are not asked. */
+export function headTenantAuthorityConsentBlock(
+  listerRole: string | null | undefined,
+  consent: HeadTenantLandlordConsent,
+): string | null {
+  if (listerRole !== 'head_tenant') return null
+  if (consent === true) return null
+  if (consent === false) return HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE
+  return "Please confirm whether you have your landlord's written consent to sub-let or transfer."
+}
+
 export function headTenantLandlordConsentFromAttestation(
   attestedAt: string | null | undefined,
 ): HeadTenantLandlordConsent {
