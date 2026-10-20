@@ -830,6 +830,14 @@ export default function LandlordPropertyFormPage() {
   const [pageError, setPageError] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const publishGapAppliedRef = useRef(false)
+  useEffect(() => {
+    if (publishGapAppliedRef.current) return
+    const gap = (location.state as { listingPublishGap?: unknown } | null)?.listingPublishGap
+    if (typeof gap !== 'string' || !gap.trim()) return
+    publishGapAppliedRef.current = true
+    setSubmitError(gap)
+  }, [location.state])
   const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null)
   const [submitMode, setSubmitMode] = useState<'save' | 'publish'>('save')
   const [submitting, setSubmitting] = useState(false)
@@ -2794,7 +2802,8 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    const isPublishingListing = !isEdit || publishDraft
+    // First insert stays a draft. Authority to let is collected when the listing goes live.
+    const isPublishingListing = publishDraft
     if (
       !skipAttestations &&
       isPublishingListing &&

@@ -7,6 +7,7 @@ import LandlordAuthorityToLetModal from '../../components/landlord/LandlordAutho
 import LandlordListingPublishButton from '../../components/landlord/listings/LandlordListingPublishButton'
 import Seo from '../../components/Seo'
 import { listingPreviewActionBarItemSpecs } from '../../lib/appChromeBarItems'
+import { draftTilePublishGap } from '../../lib/draftTilePublish'
 import {
   listingActionsFromPageSnapshot,
   listingPageShowsPublishButton,
@@ -109,6 +110,29 @@ export default function LandlordListingPreviewPage() {
   const editHref = listingHubPath({ propertyId: propertyId ?? null })
   const publishing = Boolean(propertyId && publishingListingId === propertyId)
 
+  const handlePublish = useCallback(() => {
+    if (!property || !listingForPublish) return
+    const gap = draftTilePublishGap({
+      id: property.id,
+      title: property.title,
+      rent_per_week: property.rent_per_week,
+      address: property.address,
+      suburb: property.suburb,
+      state: property.state,
+      postcode: property.postcode,
+      images: property.images,
+      property_type: property.property_type,
+      room_type: property.room_type,
+      is_registered_rooming_house: property.is_registered_rooming_house,
+    })
+    if (gap) {
+      navigate(gap.href, { state: { listingPublishGap: gap.message } })
+      return
+    }
+    setPublishMessage(null)
+    void publishDraftListing(listingForPublish)
+  }, [property, listingForPublish, navigate, publishDraftListing])
+
   const chromeItems: AppActionBarItem[] = useMemo(
     () =>
       listingPreviewActionBarItemSpecs({ canPublish, publishing }).map((spec) => ({
@@ -117,14 +141,11 @@ export default function LandlordListingPreviewPage() {
         ...(spec.id === 'edit' ? { to: editHref } : {}),
         ...(spec.id === 'publish' && listingForPublish
           ? {
-              onClick: () => {
-                setPublishMessage(null)
-                void publishDraftListing(listingForPublish)
-              },
+              onClick: handlePublish,
             }
           : {}),
       })),
-    [canPublish, publishing, editHref, listingForPublish, publishDraftListing],
+    [canPublish, publishing, editHref, listingForPublish, handlePublish],
   )
   useSetAppChromeActions(chromeItems)
 
@@ -178,10 +199,7 @@ export default function LandlordListingPreviewPage() {
             {canPublish && listingForPublish ? (
               <LandlordListingPublishButton
                 busy={publishing}
-                onClick={() => {
-                  setPublishMessage(null)
-                  void publishDraftListing(listingForPublish)
-                }}
+                onClick={handlePublish}
                 className="inline-flex h-10 min-w-[7.5rem] items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
               />
             ) : null}
