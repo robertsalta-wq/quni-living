@@ -62,16 +62,18 @@ test.describe('landlord head-tenant consent', () => {
     await assertNoAppErrorBoundary(page)
 
     await openListingAction(page, head.title, 'Preview')
-    await expect(page.getByTestId('head-tenant-consent-no')).toBeVisible()
-    await page.getByTestId('head-tenant-consent-no').check()
-    await expect(page.getByRole('button', { name: 'Confirm and publish' })).toBeDisabled()
-    await page.getByRole('button', { name: 'Cancel' }).click()
+    const declined = page.getByRole('dialog')
+    await expect(declined.getByTestId('head-tenant-consent-no')).toBeVisible()
+    await declined.getByTestId('head-tenant-consent-no').check()
+    await expect(declined.getByRole('button', { name: 'Confirm and publish' })).toBeDisabled()
+    await declined.getByRole('button', { name: 'Cancel' }).click()
     await expectRow(admin, head.id, { status: 'draft', authority: false, consent: false })
 
     await openListingAction(page, head.title, 'Preview')
-    await page.getByTestId('head-tenant-consent-yes').check()
-    await page.getByRole('checkbox').check()
-    await page.getByRole('button', { name: 'Confirm and publish' }).click()
+    const publishing = page.getByRole('dialog')
+    await publishing.getByTestId('head-tenant-consent-yes').check()
+    await publishing.getByRole('checkbox').check()
+    await publishing.getByRole('button', { name: 'Confirm and publish' }).click()
     await expect(page.getByText('Listing published and now live.')).toBeVisible({ timeout: 30_000 })
     await expectRow(admin, head.id, { status: 'active', authority: true, consent: true })
 
@@ -89,10 +91,11 @@ test.describe('landlord head-tenant consent', () => {
 
     await page.goto('/landlord/dashboard?tab=listings')
     await openListingAction(page, head.title, 'Unpause')
-    await expect(page.getByTestId('head-tenant-consent-yes')).toBeVisible()
-    await expect(page.getByRole('checkbox')).toHaveCount(0)
-    await page.getByTestId('head-tenant-consent-yes').check()
-    await page.getByRole('button', { name: 'Confirm and unpause' }).click()
+    const unpausing = page.getByRole('dialog')
+    await expect(unpausing.getByTestId('head-tenant-consent-yes')).toBeVisible()
+    await expect(unpausing.getByRole('checkbox')).toHaveCount(0)
+    await unpausing.getByTestId('head-tenant-consent-yes').check()
+    await unpausing.getByRole('button', { name: 'Confirm and unpause' }).click()
     await expectRow(admin, head.id, { status: 'active', authority: true, consent: true })
 
     const { error: grandfatherErr } = await admin
