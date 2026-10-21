@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BY_THE_ROOM_PATH } from '../../lib/byTheRoom'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
 import ServicePageLayout from '../../components/ServicePageLayout'
 import Seo from '../../components/Seo'
@@ -203,6 +204,11 @@ export default function LandlordPartnerships() {
                   <h3 className="font-display text-lg font-semibold text-gray-900">By the room</h3>
                   <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                     Flexible leasing so total weekly income can align with your goals and the property layout.
+                  </p>
+                  <p className="mt-3 text-sm">
+                    <Link to={BY_THE_ROOM_PATH} className="font-semibold text-gray-600 hover:text-gray-900">
+                      Compare room by room
+                    </Link>
                   </p>
                 </div>
               </div>

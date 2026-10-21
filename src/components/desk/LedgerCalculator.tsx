@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { formatAud } from '../../lib/formatAud'
 import './desk.css'
 
 const RENT_MIN = 150
@@ -7,14 +8,6 @@ const RENT_STEP = 10
 const RENT_DEFAULT = 350
 const ROOMS_MIN = 1
 const ROOMS_MAX = 5
-
-function formatAud(amount: number): string {
-  return new Intl.NumberFormat('en-AU', {
-    style: 'currency',
-    currency: 'AUD',
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
 
 type LedgerCalculatorProps = {
   /** Called when weekly rent changes (letterhead binds to this). */

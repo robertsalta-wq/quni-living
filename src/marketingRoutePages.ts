@@ -71,6 +71,10 @@ export const QldHouseRulesPage: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.qldHouseRulesPage)
   : clientPage(routeImports.qldHouseRulesPage)
 
+export const ByTheRoom: PageExport = import.meta.env.SSR
+  ? await ssrPage(routeImports.byTheRoom)
+  : clientPage(routeImports.byTheRoom)
+
 export const ForLandlords: PageExport = import.meta.env.SSR
   ? await ssrPage(() => import('./pages/ForLandlords'))
   : clientPage(() => import('./pages/ForLandlords'))

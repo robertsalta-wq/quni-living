@@ -13,6 +13,7 @@ import {
   PapersBlock,
 } from '../components/desk'
 import '../components/desk/desk.css'
+import { BY_THE_ROOM_PATH } from '../lib/byTheRoom'
 import {
   FEE_ROWS_DRAWER,
   FEE_ROWS_VISIBLE,
@@ -305,6 +306,12 @@ export default function ForLandlords() {
             inTray={
               <DeskInTray className="mt-1 max-w-md">
                 <LedgerCalculator compact />
+                <Link
+                  to={BY_THE_ROOM_PATH}
+                  className="mt-2 inline-flex text-xs font-semibold text-admin-ink-4 hover:text-admin-coral-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+                >
+                  Compare room by room
+                </Link>
               </DeskInTray>
             }
           />

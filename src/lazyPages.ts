@@ -54,6 +54,7 @@ export const routeImports = {
   listYourRoomC: () => import('./pages/ListYourRoomC'),
   listYourRoomE: () => import('./pages/ListYourRoomE'),
   qldHouseRulesPage: () => import('./pages/QldHouseRulesPage'),
+  byTheRoom: () => import('./pages/ByTheRoom'),
   studentAccommodationIndex: () => import('./pages/seo/StudentAccommodationIndex'),
   universityAccommodation: () => import('./pages/seo/UniversityAccommodation'),
   campusAccommodation: () => import('./pages/seo/CampusAccommodation'),
