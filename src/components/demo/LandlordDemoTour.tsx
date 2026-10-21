@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/pricing/listingTierAcceptanceFeeDisplay'
 import DemoPhone from './DemoPhone'
@@ -62,6 +62,31 @@ function stepCaptions(step: number, feeWaived: boolean): readonly string[] {
   return [TOUR_BOND_CAPTION, feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY]
 }
 
+/** Put the step line just under the real header. No-op when it is already fully on screen. */
+function scrollStepUnderHeader(anchor: HTMLElement): void {
+  const header = document.querySelector('[data-chrome-header="marketing"]')
+  const headerBottom = header instanceof HTMLElement ? header.getBoundingClientRect().bottom : 0
+  const rect = anchor.getBoundingClientRect()
+  const alreadyVisible = rect.top >= headerBottom - 1 && rect.bottom <= window.innerHeight + 1
+  if (alreadyVisible) return
+
+  const top = Math.max(0, window.scrollY + rect.top - headerBottom)
+  const root = document.scrollingElement ?? document.documentElement
+  const html = document.documentElement
+  const prevHtml = html.style.scrollBehavior
+  const prevBody = document.body.style.scrollBehavior
+  html.style.scrollBehavior = 'auto'
+  document.body.style.scrollBehavior = 'auto'
+  try {
+    root.scrollTop = top
+    if (document.body !== root) document.body.scrollTop = top
+    window.scrollTo({ top, left: 0, behavior: 'instant' })
+  } finally {
+    html.style.scrollBehavior = prevHtml
+    document.body.style.scrollBehavior = prevBody
+  }
+}
+
 function TourScreen({ step, onAccept }: { step: number; onAccept: () => void }) {
   if (step === 1) return <ListingScreen />
   if (step === 2) return <ApplicantScreen />
@@ -77,10 +102,38 @@ export default function LandlordDemoTour() {
   const [step, setStep] = useState(1)
   const feeWaived = landlordTourFixture.feeWaived
   const captions = stepCaptions(step, feeWaived)
+  const stepAnchorRef = useRef<HTMLParagraphElement>(null)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const seenStepRef = useRef(step)
 
   useEffect(() => {
     trackVercelEvent('demo_tour_step', { step, source })
   }, [step, source])
+
+  useEffect(() => {
+    if (seenStepRef.current === step) return
+    seenStepRef.current = step
+    const anchor = stepAnchorRef.current
+    const heading = headingRef.current
+    if (!anchor) return
+
+    const align = (moveFocus: boolean) => {
+      scrollStepUnderHeader(anchor)
+      if (moveFocus && heading && document.activeElement !== heading) {
+        heading.focus({ preventScroll: true })
+      }
+    }
+
+    align(true)
+    const frame = requestAnimationFrame(() => align(false))
+    const soon = window.setTimeout(() => align(false), 120)
+    const later = window.setTimeout(() => align(true), 320)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(soon)
+      window.clearTimeout(later)
+    }
+  }, [step])
 
   function goNext() {
     setStep((current) => Math.min(DEMO_TOUR_STEP_COUNT, current + 1))
@@ -97,10 +150,14 @@ export default function LandlordDemoTour() {
       </p>
 
       <div className="mx-auto grid w-full min-w-0 max-w-site flex-1 grid-cols-1 content-start gap-4 px-4 py-5 md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] md:items-center md:gap-x-12 md:px-6 md:py-8">
-        <p className="m-0 text-sm font-semibold text-[var(--quni-ink-4)] md:col-start-2">
+        <p ref={stepAnchorRef} className="m-0 text-sm font-semibold text-[var(--quni-ink-4)] md:col-start-2">
           Step {step} of {DEMO_TOUR_STEP_COUNT}
         </p>
-        <h1 className="m-0 font-inter text-[length:var(--text-h1-size)] font-semibold leading-tight text-[var(--quni-ink)] md:col-start-2">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="m-0 font-inter text-[length:var(--text-h1-size)] font-semibold leading-tight text-[var(--quni-ink)] outline-none md:col-start-2"
+        >
           {stepHeading(step)}
         </h1>
 
