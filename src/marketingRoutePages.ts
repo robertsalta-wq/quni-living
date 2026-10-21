@@ -47,6 +47,10 @@ export const HowItWorks: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.howItWorks)
   : clientPage(routeImports.howItWorks)
 
+export const CheckCoverage: PageExport = import.meta.env.SSR
+  ? await ssrPage(routeImports.checkCoverage)
+  : clientPage(routeImports.checkCoverage)
+
 export const Verification: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.verification)
   : clientPage(routeImports.verification)
