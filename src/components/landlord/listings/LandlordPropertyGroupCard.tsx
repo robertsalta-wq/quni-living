@@ -6,7 +6,7 @@ import {
   type LandlordPropertyGroup,
 } from '../../../lib/landlordListingsGrouped'
 import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
-import LandlordListingReviewButton from './LandlordListingReviewButton'
+import LandlordListingPublishButton from './LandlordListingPublishButton'
 import LandlordListingRoomRow from './LandlordListingRoomRow'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
@@ -20,6 +20,7 @@ type Actions = {
   onDuplicate: (listing: LandlordListingForGroup) => void
   onTogglePause: (listing: LandlordListingForGroup) => void
   onPublish: (listing: LandlordListingForGroup) => void
+  onPreview: (listing: LandlordListingForGroup) => void
   onDeleteDraft?: (listing: LandlordListingForGroup) => void
   onInviteTenant?: (listing: LandlordListingForGroup) => void
   onView: (listing: LandlordListingForGroup) => void
@@ -51,7 +52,7 @@ function listingRowActions(
   listing: LandlordListingForGroup,
   actions: Pick<
     Actions,
-    'onEdit' | 'onDuplicate' | 'onTogglePause' | 'onPublish' | 'onDeleteDraft' | 'onInviteTenant' | 'onView'
+    'onEdit' | 'onDuplicate' | 'onTogglePause' | 'onPreview' | 'onDeleteDraft' | 'onInviteTenant' | 'onView'
   >,
 ) {
   return {
@@ -61,7 +62,7 @@ function listingRowActions(
       listing.status === 'active' || listing.status === 'inactive'
         ? () => actions.onTogglePause(listing)
         : undefined,
-    onPublish: listing.status === 'draft' ? () => actions.onPublish(listing) : undefined,
+    onPreview: listing.status === 'draft' ? () => actions.onPreview(listing) : undefined,
     onDeleteDraft:
       listing.status === 'draft' && actions.onDeleteDraft
         ? () => actions.onDeleteDraft?.(listing)
@@ -79,6 +80,7 @@ export function LandlordWholePlaceListingCard({
   onDuplicate,
   onTogglePause,
   onPublish,
+  onPreview,
   onDeleteDraft,
   onInviteTenant,
   onView,
@@ -91,6 +93,7 @@ export function LandlordWholePlaceListingCard({
   | 'onDuplicate'
   | 'onTogglePause'
   | 'onPublish'
+  | 'onPreview'
   | 'onDeleteDraft'
   | 'onInviteTenant'
   | 'onView'
@@ -104,7 +107,7 @@ export function LandlordWholePlaceListingCard({
     onEdit,
     onDuplicate,
     onTogglePause,
-    onPublish,
+    onPreview,
     onDeleteDraft,
     onInviteTenant,
     onView,
@@ -130,7 +133,11 @@ export function LandlordWholePlaceListingCard({
           <LandlordListingStatusPill status={uiStatus} />
         </div>
         {listing.status === 'draft' ? (
-          <LandlordListingReviewButton onClick={() => onEdit(listing)} />
+          <LandlordListingPublishButton
+            busy={busyListingId === listing.id}
+            onClick={() => onPublish(listing)}
+            className="relative z-[2] inline-flex h-11 shrink-0 items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-3.5 text-[13px] font-semibold text-white hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:opacity-50"
+          />
         ) : null}
         <LandlordListingOverflowMenu
           listing={listing}
@@ -152,6 +159,7 @@ export default function LandlordPropertyGroupCard({
   onDuplicate,
   onTogglePause,
   onPublish,
+  onPreview,
   onDeleteDraft,
   onInviteTenant,
   onView,
@@ -168,6 +176,7 @@ export default function LandlordPropertyGroupCard({
         onDuplicate={onDuplicate}
         onTogglePause={onTogglePause}
         onPublish={onPublish}
+        onPreview={onPreview}
         onDeleteDraft={onDeleteDraft}
         onInviteTenant={onInviteTenant}
         onView={onView}
@@ -212,7 +221,7 @@ export default function LandlordPropertyGroupCard({
                 onEdit,
                 onDuplicate,
                 onTogglePause,
-                onPublish,
+                onPreview,
                 onDeleteDraft,
                 onInviteTenant,
                 onView,
@@ -226,6 +235,7 @@ export default function LandlordPropertyGroupCard({
                   weeklyRentLabel={formatWeeklyRent(listing.rent_per_week)}
                   busy={busyListingId === listing.id}
                   onOpenDetail={() => onEdit(listing)}
+                  onPublish={listing.status === 'draft' ? () => onPublish(listing) : undefined}
                   {...rowActions}
                 />
               )

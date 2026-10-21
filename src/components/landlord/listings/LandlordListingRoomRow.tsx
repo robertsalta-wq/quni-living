@@ -1,7 +1,7 @@
 import { firstPropertyImageUrl } from '../../../lib/propertyImages'
 import type { LandlordListingForGroup, LandlordListingUiStatus } from '../../../lib/landlordListingsGrouped'
 import LandlordListingOverflowMenu from './LandlordListingOverflowMenu'
-import LandlordListingReviewButton from './LandlordListingReviewButton'
+import LandlordListingPublishButton from './LandlordListingPublishButton'
 import LandlordListingStatusPill from './LandlordListingStatusPill'
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
   onTogglePause?: () => void
   onDeleteDraft?: () => void
   onPublish?: () => void
+  onPreview?: () => void
   onInviteTenant?: () => void
   onView?: () => void
 }
@@ -49,6 +50,7 @@ export default function LandlordListingRoomRow({
   onTogglePause,
   onDeleteDraft,
   onPublish,
+  onPreview,
   onInviteTenant,
   onView,
 }: Props) {
@@ -84,8 +86,12 @@ export default function LandlordListingRoomRow({
             <LandlordListingStatusPill status={uiStatus} />
           </div>
         </div>
-        {listing.status === 'draft' ? (
-          <LandlordListingReviewButton onClick={onOpenDetail} />
+        {listing.status === 'draft' && onPublish ? (
+          <LandlordListingPublishButton
+            busy={busy}
+            onClick={onPublish}
+            className="relative z-[2] inline-flex h-11 shrink-0 items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-3.5 text-[13px] font-semibold text-white hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:opacity-50"
+          />
         ) : null}
         <LandlordListingOverflowMenu
           listing={listing}
@@ -95,7 +101,7 @@ export default function LandlordListingRoomRow({
           onDuplicate={onDuplicate}
           onTogglePause={onTogglePause}
           onDeleteDraft={onDeleteDraft}
-          onPublish={onPublish}
+          onPreview={onPreview}
           onInviteTenant={onInviteTenant}
           onView={onView}
         />

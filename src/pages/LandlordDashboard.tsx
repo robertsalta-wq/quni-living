@@ -35,7 +35,9 @@ import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supab
 import { apiUrl } from '../lib/apiUrl'
 import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
+import HeadTenantConsentPrompt from '../components/landlord/HeadTenantConsentPrompt'
 import LandlordAuthorityToLetModal from '../components/landlord/LandlordAuthorityToLetModal'
+import { headTenantConsentMissing } from '../lib/sublettingResources'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import { LandlordServiceAgreementReacceptModal } from '../components/legal/LandlordServiceAgreementReacceptModal'
@@ -53,6 +55,7 @@ import { dashboardProfilePageInsetClass } from '../lib/dashboardPageInset'
 import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
 import LandlordDraftPublishPrompt from '../components/landlord/LandlordDraftPublishPrompt'
 import { listingPreviewPath } from '../lib/listingHubWizard'
+import { draftTilePublishGap } from '../lib/draftTilePublish'
 import {
   countDraftListingsWaiting,
   landlordActiveListingsCardSubline,
@@ -102,6 +105,7 @@ type PropertySummary = Pick<
   | 'created_at'
   | 'service_tier'
   | 'authority_to_let_attested_at'
+  | 'head_tenant_landlord_consent_at'
   | 'open_to_non_students'
   | 'max_occupants'
   | 'couple_surcharge_per_week'
@@ -111,6 +115,7 @@ type PropertySummary = Pick<
   | 'property_group_id'
   | 'bedrooms'
   | 'state'
+  | 'postcode'
   | 'is_registered_rooming_house'
   | 'lister_role'
 >
@@ -814,7 +819,7 @@ export default function LandlordDashboard() {
       const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, address, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available, property_type, property_group_id, bedrooms, state, is_registered_rooming_house, lister_role')
+          .select('id, title, slug, rent_per_week, room_type, suburb, address, postcode, images, status, featured, created_at, service_tier, authority_to_let_attested_at, head_tenant_landlord_consent_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available, property_type, property_group_id, bedrooms, state, is_registered_rooming_house, lister_role')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
@@ -1036,6 +1041,29 @@ export default function LandlordDashboard() {
   }, [])
   showToastRef.current = showToast
 
+  const [confirmingConsentId, setConfirmingConsentId] = useState<string | null>(null)
+  const confirmHeadTenantConsent = useCallback(
+    async (propertyId: string) => {
+      setConfirmingConsentId(propertyId)
+      try {
+        const { error } = await supabase
+          .from('properties')
+          .update({ head_tenant_landlord_consent_at: new Date().toISOString() })
+          .eq('id', propertyId)
+          .eq('lister_role', 'head_tenant')
+          .eq('status', 'active')
+        if (error) throw error
+        await load()
+        showToast({ kind: 'success', message: 'Written landlord consent recorded.' })
+      } catch (e) {
+        showToast({ kind: 'error', message: messageFromSupabaseError(e) })
+      } finally {
+        setConfirmingConsentId(null)
+      }
+    },
+    [load, showToast],
+  )
+
   const {
     publishingListingId,
     duplicatingListingId,
@@ -1047,6 +1075,7 @@ export default function LandlordDashboard() {
     setAuthorityToLetPending,
     confirmDuplicateListing,
     confirmAuthorityToLetAttestation,
+    publishDraftListing,
     togglePropertyStatus,
   } = useLandlordPropertyListingActions({
     reload: load,
@@ -1303,6 +1332,13 @@ export default function LandlordDashboard() {
     [profile],
   )
   const canCreateListing = canLandlordCreateListing(profile)
+  const headTenantConsentListings = useMemo(
+    () =>
+      properties.filter(
+        (property) => property.status === 'active' && headTenantConsentMissing(property),
+      ),
+    [properties],
+  )
 
   if (!isSupabaseConfigured) {
     return (
@@ -1363,6 +1399,12 @@ export default function LandlordDashboard() {
               selectDashboardTab(section)
             }
           }}
+        />
+
+        <HeadTenantConsentPrompt
+          listings={headTenantConsentListings}
+          busyId={confirmingConsentId}
+          onConfirm={(propertyId) => void confirmHeadTenantConsent(propertyId)}
         />
 
         {tab === 'overview' && (
@@ -1542,7 +1584,17 @@ export default function LandlordDashboard() {
             duplicatingListingId={duplicatingListingId}
             updatingListingId={updatingListingId}
             attestingListingId={attestingListingId}
-            onPublish={(prop) => navigate(listingPreviewPath(prop.id))}
+            onPublish={(prop) => {
+              const full = properties.find((p) => p.id === prop.id)
+              if (!full) return
+              const gap = draftTilePublishGap(full)
+              if (gap) {
+                navigate(gap.href, { state: { listingPublishGap: gap.message } })
+                return
+              }
+              void publishDraftListing(full)
+            }}
+            onPreview={(prop) => navigate(listingPreviewPath(prop.id))}
             onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
             onToggle={togglePropertyStatus}
             onDeleteDraft={(listing) => {
@@ -1586,6 +1638,7 @@ export default function LandlordDashboard() {
                 slug: listing.slug,
                 status: listing.status,
                 authority_to_let_attested_at: null,
+                head_tenant_landlord_consent_at: null,
                 service_tier: 'listing',
                 open_to_non_students: false,
                 rent_per_week: listing.rent_per_week ?? 0,
@@ -2077,6 +2130,8 @@ export default function LandlordDashboard() {
           open={authorityToLetPending != null}
           intent={authorityToLetPending?.intent ?? 'publish'}
           listingTitle={authorityToLetPending?.property.title ?? ''}
+          requireHeadTenantConsent={authorityToLetPending?.property.lister_role === 'head_tenant'}
+          authorityAlreadyRecorded={Boolean(authorityToLetPending?.property.authority_to_let_attested_at)}
           busy={
             authorityToLetPending != null &&
             (attestingListingId === authorityToLetPending.property.id ||
