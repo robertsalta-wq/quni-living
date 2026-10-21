@@ -13,6 +13,7 @@ import {
   ADMIN_ACTIVATE_NSW_T3_MESSAGE,
   adminNewListingPath,
   adminPropertyActivateBlockedReason,
+  isHeadTenantMissingLandlordConsent,
 } from '../../lib/adminConciergeListing'
 import { isNswT3ListingFields } from '../../lib/tenancy/nswT3ComplianceAttestation'
 import { propertyHasCurrentNswT3ComplianceAttestation } from '../../lib/tenancy/nswT3ComplianceAttestationPersist'
@@ -22,7 +23,7 @@ type AdminPropertyStatus = PropertyStatus | 'suspended'
 
 type PropertyRow = Omit<Database['public']['Tables']['properties']['Row'], 'status'> & { status: AdminPropertyStatus }
 
-type ListerRoleFilter = 'all' | 'head_tenant'
+type ListerRoleFilter = 'all' | 'head_tenant' | 'consent_missing'
 
 function authorityToLetBadgeClass(attested: boolean) {
   return attested ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
@@ -64,7 +65,9 @@ export default function AdminProperties() {
   const [searchParams, setSearchParams] = useSearchParams()
   const feesParam = searchParams.get('fees')
   const feesPropertyId = useMemo(() => (feesParam && UUID_RE.test(feesParam) ? feesParam : null), [feesParam])
-  const listerRoleFilter = (searchParams.get('lister_role') ?? 'all') as ListerRoleFilter
+  const listerRoleParam = searchParams.get('lister_role')
+  const listerRoleFilter: ListerRoleFilter =
+    listerRoleParam === 'consent_missing' || listerRoleParam === 'head_tenant' ? listerRoleParam : 'all'
 
   const setListerRoleFilter = useCallback(
     (next: ListerRoleFilter) => {
@@ -111,9 +114,17 @@ export default function AdminProperties() {
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
+  const missingConsentCount = useMemo(
+    () => rows.filter((row) => isHeadTenantMissingLandlordConsent(row)).length,
+    [rows],
+  )
+
   const filteredRows = useMemo(() => {
-    if (listerRoleFilter !== 'head_tenant') return rows
-    return rows.filter((row) => row.lister_role === 'head_tenant')
+    if (listerRoleFilter === 'consent_missing') {
+      return rows.filter((row) => isHeadTenantMissingLandlordConsent(row))
+    }
+    if (listerRoleFilter === 'head_tenant') return rows.filter((row) => row.lister_role === 'head_tenant')
+    return rows
   }, [rows, listerRoleFilter])
 
   const load = useCallback(async () => {
@@ -156,6 +167,8 @@ export default function AdminProperties() {
     const activateBlock = adminPropertyActivateBlockedReason({
       nextStatus: status,
       authorityToLetAttestedAt: row?.authority_to_let_attested_at,
+      listerRole: row?.lister_role,
+      headTenantLandlordConsentAt: row?.head_tenant_landlord_consent_at,
     })
     if (activateBlock) {
       setError(activateBlock)
@@ -241,7 +254,18 @@ export default function AdminProperties() {
         >
           Head-tenant
         </button>
-        {listerRoleFilter === 'head_tenant' ? (
+        <button
+          type="button"
+          onClick={() => setListerRoleFilter('consent_missing')}
+          className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+            listerRoleFilter === 'consent_missing'
+              ? 'bg-amber-700 text-white'
+              : 'bg-amber-100 text-amber-950 hover:bg-amber-200'
+          }`}
+        >
+          Consent not recorded ({missingConsentCount})
+        </button>
+        {listerRoleFilter === 'head_tenant' || listerRoleFilter === 'consent_missing' ? (
           <span className="text-xs text-gray-500">
             {filteredRows.length} listing{filteredRows.length === 1 ? '' : 's'}
           </span>
@@ -266,8 +290,12 @@ export default function AdminProperties() {
         ) : filteredRows.length === 0 ? (
           <EmptyState
             icon="filter"
-            title="No head-tenant listings"
-            description="No listings match the head-tenant filter."
+            title={listerRoleFilter === 'consent_missing' ? 'No listings missing consent' : 'No head-tenant listings'}
+            description={
+              listerRoleFilter === 'consent_missing'
+                ? 'Every head-tenant listing has written landlord consent recorded.'
+                : 'No listings match the head-tenant filter.'
+            }
           />
         ) : (
           <table className="min-w-full border-collapse">
@@ -340,11 +368,18 @@ export default function AdminProperties() {
                         </span>
                       </td>
                       <td className={adminTdClass}>
+                        <div className="flex flex-col items-start gap-1">
                         <span
                           className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${listerRoleBadgeClass(row.lister_role ?? 'owner')}`}
                         >
                           {listerRoleLabel(row.lister_role ?? 'owner')}
                         </span>
+                        {isHeadTenantMissingLandlordConsent(row) ? (
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-950">
+                            Consent not recorded
+                          </span>
+                        ) : null}
+                        </div>
                       </td>
                       <td className={adminTdClass}>
                         <label className="inline-flex cursor-pointer items-center gap-2">

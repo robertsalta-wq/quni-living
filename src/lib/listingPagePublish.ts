@@ -21,6 +21,7 @@ export function listingActionsFromPageSnapshot(p: {
   slug: string | null
   status: PropertyStatus
   authorityToLetAttestedAt: string | null
+  headTenantLandlordConsentAt: string | null
   serviceTier: LandlordPropertyForListingActions['service_tier']
   openToNonStudents: boolean
   rentPerWeek: number | null
@@ -39,6 +40,7 @@ export function listingActionsFromPageSnapshot(p: {
     slug: p.slug ?? '',
     status: p.status,
     authority_to_let_attested_at: p.authorityToLetAttestedAt,
+    head_tenant_landlord_consent_at: p.headTenantLandlordConsentAt,
     service_tier: p.serviceTier,
     open_to_non_students: p.openToNonStudents,
     rent_per_week: p.rentPerWeek ?? 0,

@@ -24,10 +24,54 @@ export function headTenantAuthorityConsentBlock(
   return "Please confirm whether you have your landlord's written consent to sub-let or transfer."
 }
 
-export function headTenantLandlordConsentFromAttestation(
-  attestedAt: string | null | undefined,
+/** Yes is stored only on head_tenant_landlord_consent_at. An authority stamp is not consent. */
+export function headTenantLandlordConsentFromColumn(
+  consentAt: string | null | undefined,
 ): HeadTenantLandlordConsent {
-  return attestedAt ? true : null
+  return consentAt ? true : null
+}
+
+export function headTenantConsentMissing(property: {
+  lister_role?: string | null
+  head_tenant_landlord_consent_at?: string | null
+} | null | undefined): boolean {
+  return property?.lister_role === 'head_tenant' && !property.head_tenant_landlord_consent_at
+}
+
+/** Block saving an already-live head-tenant listing until they answer yes. */
+export function activeHeadTenantConsentSaveBlock(
+  status: string | null | undefined,
+  listerRole: string | null | undefined,
+  consent: HeadTenantLandlordConsent,
+): string | null {
+  if (status !== 'active') return null
+  return headTenantAuthorityConsentBlock(listerRole, consent)
+}
+
+/**
+ * Write the consent timestamp only for a head tenant who answers yes, and only
+ * once. Clear it when the role is not head_tenant, when they answer no, or when
+ * the authority stamp is cleared in the same update.
+ */
+export function headTenantLandlordConsentPatch(args: {
+  listerRole: string | null | undefined
+  consent: HeadTenantLandlordConsent
+  existingConsentAt: string | null | undefined
+  clearBecauseAuthorityCleared?: boolean
+}): { head_tenant_landlord_consent_at: string | null } | Record<string, never> {
+  const clear =
+    args.listerRole !== 'head_tenant' ||
+    args.consent === false ||
+    args.clearBecauseAuthorityCleared === true
+  if (clear) {
+    if (!args.existingConsentAt && !args.clearBecauseAuthorityCleared) return {}
+    return { head_tenant_landlord_consent_at: null }
+  }
+  if (args.listerRole === 'head_tenant' && args.consent === true) {
+    if (args.existingConsentAt) return {}
+    return { head_tenant_landlord_consent_at: new Date().toISOString() }
+  }
+  return {}
 }
 
 export interface SubletResource {

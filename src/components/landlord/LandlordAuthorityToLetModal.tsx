@@ -20,10 +20,12 @@ type Props = {
   open: boolean
   intent: AuthorityToLetListingIntent
   listingTitle: string
-  /** Head-tenant listings must answer yes before the authority checkbox unlocks. */
-  requireHeadTenantConsent?: boolean
   busy: boolean
-  onConfirm: (headTenantConsent: boolean | null) => void
+  /** Head tenant must answer yes before the authority checkbox unlocks. */
+  requireHeadTenantConsent?: boolean
+  /** Authority is already stored. Only the missing consent answer is required. */
+  authorityAlreadyRecorded?: boolean
+  onConfirm: () => void
   onCancel: () => void
 }
 
@@ -31,8 +33,9 @@ export default function LandlordAuthorityToLetModal({
   open,
   intent,
   listingTitle,
-  requireHeadTenantConsent = false,
   busy,
+  requireHeadTenantConsent = false,
+  authorityAlreadyRecorded = false,
   onConfirm,
   onCancel,
 }: Props) {
@@ -60,8 +63,9 @@ export default function LandlordAuthorityToLetModal({
   if (!open) return null
 
   const confirmLabel = intent === 'reactivate' ? 'Confirm and unpause' : 'Confirm and publish'
-  const authorityLocked = requireHeadTenantConsent && consent !== true
-  const canConfirm = agreed && !busy && !authorityLocked
+  const consentAnsweredYes = !requireHeadTenantConsent || consent === true
+  const authorityReady = authorityAlreadyRecorded || agreed
+  const canConfirm = consentAnsweredYes && authorityReady && !busy
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -84,7 +88,11 @@ export default function LandlordAuthorityToLetModal({
         {listingTitle.trim() ? (
           <p className="mt-1 truncate text-sm text-gray-500">{listingTitle.trim()}</p>
         ) : null}
-        <p className="mt-2 text-sm text-gray-600">{AUTHORITY_TO_LET_BLOCKED_MESSAGE}</p>
+        <p className="mt-2 text-sm text-gray-600">
+          {authorityAlreadyRecorded && requireHeadTenantConsent
+            ? "Confirm you have your landlord's written consent before this listing can go live."
+            : AUTHORITY_TO_LET_BLOCKED_MESSAGE}
+        </p>
         <div className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto">
           {requireHeadTenantConsent ? (
             <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
@@ -92,7 +100,8 @@ export default function LandlordAuthorityToLetModal({
               <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-800">
                 <input
                   type="radio"
-                  name="head-tenant-landlord-consent"
+                  name="modal-head-tenant-landlord-consent"
+                  data-testid="head-tenant-consent-yes"
                   checked={consent === true}
                   disabled={busy}
                   onChange={() => setConsent(true)}
@@ -103,7 +112,8 @@ export default function LandlordAuthorityToLetModal({
               <label className="flex cursor-pointer items-start gap-3 text-sm text-gray-800">
                 <input
                   type="radio"
-                  name="head-tenant-landlord-consent"
+                  name="modal-head-tenant-landlord-consent"
+                  data-testid="head-tenant-consent-no"
                   checked={consent === false}
                   disabled={busy}
                   onChange={() => {
@@ -115,41 +125,43 @@ export default function LandlordAuthorityToLetModal({
                 <span>No</span>
               </label>
               {consent === false ? (
-                <p className="text-sm text-amber-900">{HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE}</p>
+                <p className="text-sm text-gray-700">{HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE}</p>
               ) : null}
             </div>
           ) : null}
-          <label
-            className={`flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-relaxed text-gray-800 ${
-              authorityLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={agreed}
-              disabled={busy || authorityLocked}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className={`${CHECKBOX_CLASS} mt-0.5`}
-              aria-describedby={certId}
-            />
-            <span id={certId} className="space-y-2">
-              <span className="block font-medium text-gray-900">{AUTHORITY_TO_LET_ATTESTATION_LABEL}</span>
-              <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_INTRO}</span>
-              <ul className="list-disc space-y-1 pl-5 text-gray-800">
-                {AUTHORITY_TO_LET_ATTESTATION_BULLETS.map((bullet) => (
-                  <li key={bullet}>{bullet}</li>
-                ))}
-              </ul>
-              <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_FOOTER}</span>
-            </span>
-          </label>
+          {authorityAlreadyRecorded ? null : (
+            <label
+              className={`flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-relaxed text-gray-800 ${
+                consentAnsweredYes ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={agreed}
+                disabled={busy || !consentAnsweredYes}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className={`${CHECKBOX_CLASS} mt-0.5`}
+                aria-describedby={certId}
+              />
+              <span id={certId} className="space-y-2">
+                <span className="block font-medium text-gray-900">{AUTHORITY_TO_LET_ATTESTATION_LABEL}</span>
+                <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_INTRO}</span>
+                <ul className="list-disc space-y-1 pl-5 text-gray-800">
+                  {AUTHORITY_TO_LET_ATTESTATION_BULLETS.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+                <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_FOOTER}</span>
+              </span>
+            </label>
+          )}
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => {
               if (!canConfirm) return
-              onConfirm(requireHeadTenantConsent ? true : null)
+              onConfirm()
             }}
             disabled={!canConfirm}
             className="rounded-xl bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"

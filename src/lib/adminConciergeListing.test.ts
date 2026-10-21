@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ADMIN_ACTIVATE_HEAD_TENANT_CONSENT_MESSAGE,
   ADMIN_ACTIVATE_UNATTESTED_MESSAGE,
   adminNewListingPath,
+  isHeadTenantMissingLandlordConsent,
   adminNewListingStatus,
   adminPropertyActivateBlockedReason,
   filterLandlordOptionsForSearch,
@@ -77,5 +79,42 @@ describe('adminConciergeListing', () => {
         authorityToLetAttestedAt: '2026-08-20T10:00:00.000Z',
       }),
     ).toBe(null)
+    expect(
+      adminPropertyActivateBlockedReason({
+        nextStatus: 'active',
+        authorityToLetAttestedAt: '2026-08-20T10:00:00.000Z',
+        listerRole: 'head_tenant',
+        headTenantLandlordConsentAt: null,
+      }),
+    ).toBe(ADMIN_ACTIVATE_HEAD_TENANT_CONSENT_MESSAGE)
+    expect(
+      adminPropertyActivateBlockedReason({
+        nextStatus: 'active',
+        authorityToLetAttestedAt: '2026-08-20T10:00:00.000Z',
+        listerRole: 'head_tenant',
+        headTenantLandlordConsentAt: '2026-10-21T00:00:00.000Z',
+      }),
+    ).toBe(null)
+  })
+
+  it('flags head-tenant listings with no consent recorded', () => {
+    expect(
+      isHeadTenantMissingLandlordConsent({
+        lister_role: 'head_tenant',
+        head_tenant_landlord_consent_at: null,
+      }),
+    ).toBe(true)
+    expect(
+      isHeadTenantMissingLandlordConsent({
+        lister_role: 'head_tenant',
+        head_tenant_landlord_consent_at: '2026-10-21T00:00:00.000Z',
+      }),
+    ).toBe(false)
+    expect(
+      isHeadTenantMissingLandlordConsent({
+        lister_role: 'owner',
+        head_tenant_landlord_consent_at: null,
+      }),
+    ).toBe(false)
   })
 })
