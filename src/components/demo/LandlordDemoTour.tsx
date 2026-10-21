@@ -1,15 +1,21 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/documents/licenceOccupy/utils'
+import DemoPhone from './DemoPhone'
+import {
+  AcceptScreen,
+  AgreementScreen,
+  ApplicantScreen,
+  ChecksScreen,
+  ConfirmedScreen,
+  ListingScreen,
+} from './DemoTourScreens'
 import {
   DEMO_TOUR_STEP_COUNT,
-  TOUR_ACCEPT_BUTTON,
   TOUR_ACCEPT_HEADING,
   TOUR_AGREEMENT_HEADING,
   TOUR_AGREEMENT_LINES,
-  TOUR_AGREEMENT_TITLE,
   TOUR_APPLICANT_BODY,
-  TOUR_APPLICANT_CARD,
   TOUR_APPLICANT_HEADING,
   TOUR_BAND,
   TOUR_DONE_BODY,
@@ -18,9 +24,7 @@ import {
   TOUR_FEE_BODY_WAIVED,
   TOUR_ID_BODY,
   TOUR_ID_HEADING,
-  TOUR_ID_ROWS,
   TOUR_LISTING_BODY,
-  TOUR_LISTING_CARD,
   TOUR_LISTING_HEADING,
   TOUR_RESTART_LABEL,
   TOUR_SIGNUP_LABEL,
@@ -33,100 +37,37 @@ import { trackVercelEvent } from '../../lib/vercelAnalytics'
 const navButtonClass =
   'inline-flex min-h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] px-4 text-base font-semibold'
 
-function ExampleMark() {
-  return (
-    <span className="inline-flex items-center rounded-full bg-[var(--quni-coral-tint-15)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--quni-coral-active)]">
-      Example
-    </span>
-  )
+function stepHeading(step: number): string {
+  if (step === 1) return TOUR_LISTING_HEADING
+  if (step === 2) return TOUR_APPLICANT_HEADING
+  if (step === 3) return TOUR_ID_HEADING
+  if (step === 4) return TOUR_ACCEPT_HEADING
+  if (step === 5) return TOUR_AGREEMENT_HEADING
+  return TOUR_DONE_HEADING
 }
 
-function SampleCard({ children }: { children: ReactNode }) {
-  return (
-    <div className="quni-card p-4">
-      <ExampleMark />
-      <div className="mt-3 min-w-0 text-base leading-relaxed text-[var(--quni-ink)]">{children}</div>
-    </div>
-  )
-}
-
-type StepCopy = {
-  heading: string
-  body: string
-}
-
-function stepCopy(step: number, feeWaived: boolean): StepCopy {
-  if (step === 1) return { heading: TOUR_LISTING_HEADING, body: TOUR_LISTING_BODY }
-  if (step === 2) return { heading: TOUR_APPLICANT_HEADING, body: TOUR_APPLICANT_BODY }
-  if (step === 3) return { heading: TOUR_ID_HEADING, body: TOUR_ID_BODY }
+function stepCaptions(step: number, feeWaived: boolean): readonly string[] {
+  if (step === 1) return [TOUR_LISTING_BODY]
+  if (step === 2) return [TOUR_APPLICANT_BODY]
+  if (step === 3) return [TOUR_ID_BODY]
   if (step === 4) {
-    return {
-      heading: TOUR_ACCEPT_HEADING,
-      body: feeWaived
+    return [
+      feeWaived
         ? TOUR_FEE_BODY_WAIVED
         : `${LISTING_TIER_ACCEPTANCE_FEE_DISPLAY} once, when you accept. Nothing is charged on this page.`,
-    }
+    ]
   }
-  if (step === 5) return { heading: TOUR_AGREEMENT_HEADING, body: '' }
-  return {
-    heading: TOUR_DONE_HEADING,
-    body: feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY,
-  }
+  if (step === 5) return TOUR_AGREEMENT_LINES
+  return [feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY]
 }
 
-function StepSample({ step, onAccept }: { step: number; onAccept: () => void }) {
-  if (step === 1) {
-    return (
-      <SampleCard>
-        <p>{TOUR_LISTING_CARD}</p>
-      </SampleCard>
-    )
-  }
-
-  if (step === 2) {
-    return (
-      <SampleCard>
-        <p>{TOUR_APPLICANT_CARD}</p>
-      </SampleCard>
-    )
-  }
-
-  if (step === 3) {
-    return (
-      <SampleCard>
-        <ul className="m-0 list-none space-y-2 p-0">
-          {TOUR_ID_ROWS.map((row) => (
-            <li key={row}>{row}</li>
-          ))}
-        </ul>
-      </SampleCard>
-    )
-  }
-
-  if (step === 4) {
-    return (
-      <SampleCard>
-        <button
-          type="button"
-          onClick={onAccept}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-4 text-base font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
-        >
-          {TOUR_ACCEPT_BUTTON}
-        </button>
-      </SampleCard>
-    )
-  }
-
-  return (
-    <SampleCard>
-      <p className="font-semibold">{TOUR_AGREEMENT_TITLE}</p>
-      <ul className="m-0 mt-3 list-none space-y-2 p-0">
-        {TOUR_AGREEMENT_LINES.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-    </SampleCard>
-  )
+function TourScreen({ step, onAccept }: { step: number; onAccept: () => void }) {
+  if (step === 1) return <ListingScreen />
+  if (step === 2) return <ApplicantScreen />
+  if (step === 3) return <ChecksScreen />
+  if (step === 4) return <AcceptScreen onAccept={onAccept} />
+  if (step === 5) return <AgreementScreen />
+  return <ConfirmedScreen />
 }
 
 export default function LandlordDemoTour() {
@@ -134,7 +75,7 @@ export default function LandlordDemoTour() {
   const source = demoTourSourceFromParam(searchParams.get('utm_source'))
   const [step, setStep] = useState(1)
   const feeWaived = landlordTourFixture.feeWaived
-  const copy = stepCopy(step, feeWaived)
+  const captions = stepCaptions(step, feeWaived)
 
   useEffect(() => {
     trackVercelEvent('demo_tour_step', { step, source })
@@ -149,27 +90,34 @@ export default function LandlordDemoTour() {
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col overflow-x-hidden bg-[var(--quni-surface-2)] font-inter text-[var(--quni-ink-3)]">
-      <p className="sticky top-below-fixed-header z-10 border-b border-[var(--quni-line)] bg-[var(--quni-cream)] px-4 py-3 text-sm leading-snug text-[var(--quni-ink)] md:top-0">
+    <div className="flex w-full min-w-0 flex-col bg-[var(--quni-surface-2)] font-inter text-[var(--quni-ink-3)] min-h-[calc(100dvh-var(--quni-fixed-header-offset)+1.5rem)]">
+      <p className="w-full min-w-0 border-b border-[var(--quni-line)] bg-[var(--quni-cream)] px-4 py-3 text-sm leading-snug break-words text-[var(--quni-ink)]">
         {TOUR_BAND}
       </p>
 
-      <div className="mx-auto flex w-full min-w-0 max-w-site flex-1 flex-col px-4 pb-4 pt-4">
-        <p className="text-sm font-semibold text-[var(--quni-ink-4)]">
+      <div className="mx-auto grid w-full min-w-0 max-w-site flex-1 grid-cols-1 content-start gap-4 px-4 py-5 md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] md:items-center md:gap-x-12 md:px-6 md:py-8">
+        <p className="m-0 text-sm font-semibold text-[var(--quni-ink-4)] md:col-start-2">
           Step {step} of {DEMO_TOUR_STEP_COUNT}
         </p>
-        <h1 className="m-0 mt-2 font-inter text-[length:var(--text-h1-size)] font-semibold leading-tight text-[var(--quni-ink)]">
-          {copy.heading}
+        <h1 className="m-0 font-inter text-[length:var(--text-h1-size)] font-semibold leading-tight text-[var(--quni-ink)] md:col-start-2">
+          {stepHeading(step)}
         </h1>
-        {copy.body ? <p className="mt-3 text-base leading-relaxed text-[var(--quni-ink-2)]">{copy.body}</p> : null}
 
-        {step < DEMO_TOUR_STEP_COUNT ? (
-          <div className="mt-4 min-w-0">
-            <StepSample step={step} onAccept={goNext} />
-          </div>
-        ) : null}
+        <div className="min-w-0 md:col-start-1 md:row-span-4 md:row-start-1">
+          <DemoPhone>
+            <TourScreen step={step} onAccept={goNext} />
+          </DemoPhone>
+        </div>
 
-        <div className="mt-auto flex flex-col gap-3 pt-6 [padding-bottom:max(var(--space-4),env(safe-area-inset-bottom,0px))]">
+        <div className="min-w-0 space-y-2 md:col-start-2">
+          {captions.map((line) => (
+            <p key={line} className="m-0 text-base leading-relaxed text-[var(--quni-ink-2)]">
+              {line}
+            </p>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3 md:col-start-2 [padding-bottom:max(var(--space-4),env(safe-area-inset-bottom,0px))]">
           <div className="flex gap-3">
             <button
               type="button"
