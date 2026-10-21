@@ -62,29 +62,31 @@ function stepCaptions(step: number, feeWaived: boolean): readonly string[] {
   return [TOUR_BOND_CAPTION, feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY]
 }
 
-/** Put the step line just under the real header. No-op when it is already fully on screen. */
-function scrollStepUnderHeader(anchor: HTMLElement): void {
+function stepLineInView(anchor: HTMLElement): boolean {
   const header = document.querySelector('[data-chrome-header="marketing"]')
   const headerBottom = header instanceof HTMLElement ? header.getBoundingClientRect().bottom : 0
   const rect = anchor.getBoundingClientRect()
-  const alreadyVisible = rect.top >= headerBottom - 1 && rect.bottom <= window.innerHeight + 1
-  if (alreadyVisible) return
+  return rect.top >= headerBottom - 1 && rect.bottom <= window.innerHeight + 1
+}
 
-  const top = Math.max(0, window.scrollY + rect.top - headerBottom)
+/** Phone browsers keep the tapped button on screen. Scroll the document itself to the top. */
+function scrollPageToTop(): void {
   const root = document.scrollingElement ?? document.documentElement
-  const html = document.documentElement
-  const prevHtml = html.style.scrollBehavior
-  const prevBody = document.body.style.scrollBehavior
-  html.style.scrollBehavior = 'auto'
-  document.body.style.scrollBehavior = 'auto'
-  try {
-    root.scrollTop = top
-    if (document.body !== root) document.body.scrollTop = top
-    window.scrollTo({ top, left: 0, behavior: 'instant' })
-  } finally {
-    html.style.scrollBehavior = prevHtml
-    document.body.style.scrollBehavior = prevBody
+  root.scrollTop = 0
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+  window.scrollTo(0, 0)
+  let node: HTMLElement | null = document.body
+  while (node) {
+    if (node.scrollTop > 0) node.scrollTop = 0
+    node = node.parentElement
   }
+}
+
+function revealStepTop(anchor: HTMLElement | null): void {
+  const narrow = window.matchMedia('(max-width: 767px)').matches
+  if (!narrow && anchor && stepLineInView(anchor) && window.scrollY < 2) return
+  scrollPageToTop()
 }
 
 function TourScreen({ step, onAccept }: { step: number; onAccept: () => void }) {
@@ -118,33 +120,43 @@ export default function LandlordDemoTour() {
     if (!anchor) return
 
     const align = (moveFocus: boolean) => {
-      scrollStepUnderHeader(anchor)
+      revealStepTop(anchor)
       if (moveFocus && heading && document.activeElement !== heading) {
         heading.focus({ preventScroll: true })
       }
     }
 
-    align(true)
+    align(false)
     const frame = requestAnimationFrame(() => align(false))
-    const soon = window.setTimeout(() => align(false), 120)
-    const later = window.setTimeout(() => align(true), 320)
+    const soon = window.setTimeout(() => align(true), 50)
+    const later = window.setTimeout(() => align(false), 400)
+    const last = window.setTimeout(() => align(false), 800)
     return () => {
       cancelAnimationFrame(frame)
       window.clearTimeout(soon)
       window.clearTimeout(later)
+      window.clearTimeout(last)
     }
   }, [step])
 
+  function releaseTap() {
+    const active = document.activeElement
+    if (active instanceof HTMLElement && active !== headingRef.current) active.blur()
+    revealStepTop(stepAnchorRef.current)
+  }
+
   function goNext() {
+    releaseTap()
     setStep((current) => Math.min(DEMO_TOUR_STEP_COUNT, current + 1))
   }
 
   function goBack() {
+    releaseTap()
     setStep((current) => Math.max(1, current - 1))
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col bg-[var(--quni-surface-2)] font-inter text-[var(--quni-ink-3)] min-h-[calc(100dvh-var(--quni-fixed-header-offset)+1.5rem)]">
+    <div className="flex w-full min-w-0 flex-col bg-[var(--quni-surface-2)] font-inter text-[var(--quni-ink-3)] [overflow-anchor:none] [&_*]:[overflow-anchor:none] min-h-[calc(100dvh-var(--quni-fixed-header-offset)+1.5rem)]">
       <p className="w-full min-w-0 border-b border-[var(--quni-line)] bg-[var(--quni-cream)] px-4 py-3 text-sm leading-snug break-words text-[var(--quni-ink)]">
         {TOUR_BAND}
       </p>
@@ -206,7 +218,10 @@ export default function LandlordDemoTour() {
           {step === DEMO_TOUR_STEP_COUNT ? (
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => {
+                releaseTap()
+                setStep(1)
+              }}
               className="inline-flex min-h-12 w-full items-center justify-center text-base font-semibold text-[var(--quni-ink-3)] underline underline-offset-2"
             >
               {TOUR_RESTART_LABEL}
