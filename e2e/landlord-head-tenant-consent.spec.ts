@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { createConfirmedLandlord, createSupabaseAdmin, deleteTestUser, getLandlordProfileId } from './helpers/supabaseAdmin'
-import { assertNoAppErrorBoundary, signInLandlord } from './helpers/signupUi'
+import { assertNoAppErrorBoundary } from './helpers/signupUi'
 
 /**
  * Head-tenant consent on publish, unpause, and the live-listing dashboard prompt.
@@ -57,11 +57,18 @@ test.describe('landlord head-tenant consent', () => {
       consentAt: null,
     })
 
-    await signInLandlord(page, email, password)
+    await page.goto('/login', { waitUntil: 'networkidle' })
+    const emailInput = page.locator('#login-email')
+    await emailInput.fill(email)
+    await expect(emailInput).toHaveValue(email)
+    await page.locator('#login-password').fill(password)
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 60_000 })
     await page.goto('/landlord/dashboard?tab=listings')
     await assertNoAppErrorBoundary(page)
 
     await openListingAction(page, head.title, 'Preview')
+    await page.locator('.sticky').getByRole('button', { name: 'Publish', exact: true }).click()
     const declined = page.getByRole('dialog')
     await expect(declined.getByTestId('head-tenant-consent-no')).toBeVisible()
     await declined.getByTestId('head-tenant-consent-no').check()
@@ -69,7 +76,7 @@ test.describe('landlord head-tenant consent', () => {
     await declined.getByRole('button', { name: 'Cancel' }).click()
     await expectRow(admin, head.id, { status: 'draft', authority: false, consent: false })
 
-    await openListingAction(page, head.title, 'Preview')
+    await page.locator('.sticky').getByRole('button', { name: 'Publish', exact: true }).click()
     const publishing = page.getByRole('dialog')
     await publishing.getByTestId('head-tenant-consent-yes').check()
     await publishing.getByRole('checkbox').check()
@@ -77,8 +84,11 @@ test.describe('landlord head-tenant consent', () => {
     await expect(page.getByText('Listing published and now live.')).toBeVisible({ timeout: 30_000 })
     await expectRow(admin, head.id, { status: 'active', authority: true, consent: true })
 
+    await page.goto('/landlord/dashboard?tab=listings')
     await openListingAction(page, owner.title, 'Preview')
+    await page.locator('.sticky').getByRole('button', { name: 'Publish', exact: true }).click()
     await expect(page.getByTestId('head-tenant-consent-yes')).toHaveCount(0)
+    await expect(page.getByText('Listing published and now live.')).toBeVisible({ timeout: 30_000 })
     await expectRow(admin, owner.id, { status: 'active', authority: true, consent: false })
 
     const { error: pauseErr } = await admin.from('properties').update({ status: 'inactive' }).eq('id', head.id)
@@ -96,6 +106,7 @@ test.describe('landlord head-tenant consent', () => {
     await expect(unpausing.getByRole('checkbox')).toHaveCount(0)
     await unpausing.getByTestId('head-tenant-consent-yes').check()
     await unpausing.getByRole('button', { name: 'Confirm and unpause' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
     await expectRow(admin, head.id, { status: 'active', authority: true, consent: true })
 
     const { error: grandfatherErr } = await admin
@@ -162,13 +173,15 @@ async function expectRow(
   id: string,
   expected: { status: string; authority: boolean; consent: boolean },
 ) {
-  const { data, error } = await admin
-    .from('properties')
-    .select('status, authority_to_let_attested_at, head_tenant_landlord_consent_at')
-    .eq('id', id)
-    .single()
-  if (error) throw error
-  expect(data.status).toBe(expected.status)
-  expect(Boolean(data.authority_to_let_attested_at)).toBe(expected.authority)
-  expect(Boolean(data.head_tenant_landlord_consent_at)).toBe(expected.consent)
+  await expect
+    .poll(async () => {
+      const { data, error } = await admin
+        .from('properties')
+        .select('status, authority_to_let_attested_at, head_tenant_landlord_consent_at')
+        .eq('id', id)
+        .single()
+      if (error) throw error
+      return `${data.status}|${Boolean(data.authority_to_let_attested_at)}|${Boolean(data.head_tenant_landlord_consent_at)}`
+    }, { timeout: 20_000 })
+    .toBe(`${expected.status}|${expected.authority}|${expected.consent}`)
 }
