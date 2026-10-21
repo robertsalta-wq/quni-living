@@ -67,12 +67,27 @@ export function filterLandlordOptionsForSearch<T extends AdminLandlordOption>(
   })
 }
 
-/** Sync gate: authority-to-let must exist before staff can set status to active. */
+export const ADMIN_ACTIVATE_HEAD_TENANT_CONSENT_MESSAGE =
+  'Confirm the head tenant has written landlord consent before this listing can go live.'
+
+export function isHeadTenantMissingLandlordConsent(row: {
+  lister_role?: string | null
+  head_tenant_landlord_consent_at?: string | null
+}): boolean {
+  return row.lister_role === 'head_tenant' && !row.head_tenant_landlord_consent_at
+}
+
+/** Sync gate: authority-to-let, and head-tenant consent, must exist before staff can set status to active. */
 export function adminPropertyActivateBlockedReason(args: {
   nextStatus: string
   authorityToLetAttestedAt: string | null | undefined
+  listerRole?: string | null
+  headTenantLandlordConsentAt?: string | null
 }): string | null {
   if (args.nextStatus !== 'active') return null
   if (!args.authorityToLetAttestedAt) return ADMIN_ACTIVATE_UNATTESTED_MESSAGE
+  if (args.listerRole === 'head_tenant' && !args.headTenantLandlordConsentAt) {
+    return ADMIN_ACTIVATE_HEAD_TENANT_CONSENT_MESSAGE
+  }
   return null
 }

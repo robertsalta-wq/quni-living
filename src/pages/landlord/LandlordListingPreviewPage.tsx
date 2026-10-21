@@ -93,6 +93,7 @@ export default function LandlordListingPreviewPage() {
         slug: property.slug,
         status: property.status,
         authorityToLetAttestedAt: property.authority_to_let_attested_at,
+        headTenantLandlordConsentAt: property.head_tenant_landlord_consent_at,
         serviceTier: property.service_tier,
         openToNonStudents: Boolean(property.open_to_non_students),
         rentPerWeek: property.rent_per_week,
@@ -219,12 +220,13 @@ export default function LandlordListingPreviewPage() {
         intent={authorityToLetPending?.intent ?? 'publish'}
         listingTitle={authorityToLetPending?.property.title ?? ''}
         requireHeadTenantConsent={authorityToLetPending?.property.lister_role === 'head_tenant'}
+        authorityAlreadyRecorded={Boolean(authorityToLetPending?.property.authority_to_let_attested_at)}
         busy={
           authorityToLetPending != null &&
           (attestingListingId === authorityToLetPending.property.id ||
             publishingListingId === authorityToLetPending.property.id)
         }
-        onConfirm={(consent) => void confirmAuthorityToLetAttestation(consent)}
+        onConfirm={() => void confirmAuthorityToLetAttestation()}
         onCancel={() => {
           if (attestingListingId === authorityToLetPending?.property.id) return
           setAuthorityToLetPending(null)

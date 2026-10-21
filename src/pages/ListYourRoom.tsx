@@ -71,6 +71,7 @@ const SAMPLE_LISTING_BASE = {
   gas_embedded_network: null,
   strata_bylaws_applicable: null,
   authority_to_let_attested_at: null,
+  head_tenant_landlord_consent_at: null,
   water_separately_metered_efficient_attested_at: null,
   accuracy_attested_at: null,
   accuracy_attested_content_hash: null,

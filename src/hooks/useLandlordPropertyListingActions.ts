@@ -8,7 +8,11 @@ import {
   propertyHasAuthorityToLetAttestation,
   type AuthorityToLetListingIntent,
 } from '../lib/authorityToLetAttestation'
-import { headTenantAuthorityConsentBlock } from '../lib/sublettingResources'
+import {
+  headTenantAuthorityConsentBlock,
+  headTenantConsentMissing,
+  headTenantLandlordConsentPatch,
+} from '../lib/sublettingResources'
 import {
   NSW_T3_COMPLIANCE_BLOCKED_MESSAGE,
   isNswT3ListingFields,
@@ -29,6 +33,7 @@ export type LandlordPropertyForListingActions = Pick<
   | 'slug'
   | 'status'
   | 'authority_to_let_attested_at'
+  | 'head_tenant_landlord_consent_at'
   | 'service_tier'
   | 'open_to_non_students'
   | 'rent_per_week'
@@ -64,6 +69,10 @@ async function assertNswT3ComplianceBeforeActivate(
   return ok ? null : NSW_T3_COMPLIANCE_BLOCKED_MESSAGE
 }
 
+function listingNeedsGoLiveConfirmation(property: LandlordPropertyForListingActions): boolean {
+  return !propertyHasAuthorityToLetAttestation(property) || headTenantConsentMissing(property)
+}
+
 export function useLandlordPropertyListingActions(args: {
   reload: () => Promise<void>
   navigate: NavigateFunction
@@ -85,7 +94,7 @@ export function useLandlordPropertyListingActions(args: {
   const publishDraftListing = useCallback(
     async (property: LandlordPropertyForListingActions) => {
       if (property.status !== 'draft') return
-      if (!propertyHasAuthorityToLetAttestation(property)) {
+      if (listingNeedsGoLiveConfirmation(property)) {
         setAuthorityToLetPending({ property, intent: 'publish' })
         return
       }
@@ -140,7 +149,7 @@ export function useLandlordPropertyListingActions(args: {
     async (property: LandlordPropertyForListingActions) => {
       if (property.status !== 'active' && property.status !== 'inactive') return
       const nextStatus: PropertyRow['status'] = property.status === 'active' ? 'inactive' : 'active'
-      if (nextStatus === 'active' && !propertyHasAuthorityToLetAttestation(property)) {
+      if (nextStatus === 'active' && listingNeedsGoLiveConfirmation(property)) {
         setAuthorityToLetPending({ property, intent: 'reactivate' })
         return
       }
@@ -168,28 +177,46 @@ export function useLandlordPropertyListingActions(args: {
     [reload, reportMutErr, showToast],
   )
 
-  const confirmAuthorityToLetAttestation = useCallback(async (headTenantConsent: boolean | null) => {
+  const confirmAuthorityToLetAttestation = useCallback(async () => {
     const pending = authorityToLetPending
     if (!pending) return
-    const consentBlock = headTenantAuthorityConsentBlock(pending.property.lister_role, headTenantConsent)
-    if (consentBlock) {
-      showToast({ kind: 'error', message: consentBlock })
-      return
-    }
+    const isHeadTenant = pending.property.lister_role === 'head_tenant'
     const existingAttestedAt = pending.property.authority_to_let_attested_at ?? null
-    const patch = authorityToLetAttestationPatch({
+    const existingConsentAt = pending.property.head_tenant_landlord_consent_at ?? null
+    const authorityPatch = authorityToLetAttestationPatch({
       agreed: true,
       existingAttestedAt,
     })
+    const consentPatch = isHeadTenant
+      ? headTenantLandlordConsentPatch({
+          listerRole: 'head_tenant',
+          consent: true,
+          existingConsentAt,
+        })
+      : {}
+    const patch = { ...authorityPatch, ...consentPatch }
     const stampedAt =
       'authority_to_let_attested_at' in patch ? patch.authority_to_let_attested_at : existingAttestedAt
+    const consentAt =
+      'head_tenant_landlord_consent_at' in patch
+        ? patch.head_tenant_landlord_consent_at
+        : existingConsentAt
     if (!stampedAt) {
       showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
       return
     }
+    if (isHeadTenant && !consentAt) {
+      showToast({
+        kind: 'error',
+        message:
+          headTenantAuthorityConsentBlock('head_tenant', null) ??
+          AUTHORITY_TO_LET_BLOCKED_MESSAGE,
+      })
+      return
+    }
     setAttestingListingId(pending.property.id)
     try {
-      if ('authority_to_let_attested_at' in patch) {
+      if (Object.keys(patch).length > 0) {
         const { error: attestError } = await supabase
           .from('properties')
           .update(patch)
@@ -199,6 +226,7 @@ export function useLandlordPropertyListingActions(args: {
       const attested: LandlordPropertyForListingActions = {
         ...pending.property,
         authority_to_let_attested_at: stampedAt,
+        head_tenant_landlord_consent_at: isHeadTenant ? consentAt : existingConsentAt,
       }
       setAuthorityToLetPending(null)
       if (pending.intent === 'publish') {

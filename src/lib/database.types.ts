@@ -1439,6 +1439,7 @@ export interface Database {
           gas_embedded_network: boolean | null
           strata_bylaws_applicable: boolean | null
           authority_to_let_attested_at: string | null
+          head_tenant_landlord_consent_at: string | null
           water_separately_metered_efficient_attested_at: string | null
           accuracy_attested_at: string | null
           accuracy_attested_content_hash: string | null
@@ -1513,6 +1514,7 @@ export interface Database {
           gas_embedded_network?: boolean | null
           strata_bylaws_applicable?: boolean | null
           authority_to_let_attested_at?: string | null
+          head_tenant_landlord_consent_at?: string | null
           water_separately_metered_efficient_attested_at?: string | null
           accuracy_attested_at?: string | null
           accuracy_attested_content_hash?: string | null
@@ -1586,6 +1588,7 @@ export interface Database {
           gas_embedded_network?: boolean | null
           strata_bylaws_applicable?: boolean | null
           authority_to_let_attested_at?: string | null
+          head_tenant_landlord_consent_at?: string | null
           water_separately_metered_efficient_attested_at?: string | null
           accuracy_attested_at?: string | null
           accuracy_attested_content_hash?: string | null

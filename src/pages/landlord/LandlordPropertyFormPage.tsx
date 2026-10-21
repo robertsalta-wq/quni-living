@@ -238,8 +238,9 @@ import {
   canHeadTenantAttestAuthorityToLet,
   HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
   HEAD_TENANT_LANDLORD_CONSENT_QUESTION,
-  headTenantAuthorityConsentBlock,
-  headTenantLandlordConsentFromAttestation,
+  activeHeadTenantConsentSaveBlock,
+  headTenantLandlordConsentFromColumn,
+  headTenantLandlordConsentPatch,
   parseListerRole,
   type HeadTenantLandlordConsent,
   type ListerRole,
@@ -845,6 +846,7 @@ export default function LandlordPropertyFormPage() {
   const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
   const [authorityToLetAgreed, setAuthorityToLetAgreed] = useState(false)
   const [authorityToLetAttestedAt, setAuthorityToLetAttestedAt] = useState<string | null>(null)
+  const [headTenantLandlordConsentAt, setHeadTenantLandlordConsentAt] = useState<string | null>(null)
   const [accuracyAgreed, setAccuracyAgreed] = useState(false)
   const [accuracyAttestedAt, setAccuracyAttestedAt] = useState<string | null>(null)
   const [accuracyAttestedContentHash, setAccuracyAttestedContentHash] = useState<string | null>(null)
@@ -1676,8 +1678,10 @@ export default function LandlordPropertyFormPage() {
         setExistingSlug(prop.slug)
         setExistingListingStatus(prop.status)
         const loadedAttestedAt = prop.authority_to_let_attested_at ?? null
+        const loadedConsentAt = prop.head_tenant_landlord_consent_at ?? null
         setAuthorityToLetAttestedAt(loadedAttestedAt)
         setAuthorityToLetAgreed(Boolean(loadedAttestedAt))
+        setHeadTenantLandlordConsentAt(loadedConsentAt)
         setAccuracyAttestedAt(prop.accuracy_attested_at ?? null)
         setAccuracyAttestedContentHash(prop.accuracy_attested_content_hash ?? null)
         setAccuracyAgreed(false)
@@ -1694,9 +1698,7 @@ export default function LandlordPropertyFormPage() {
         const loadedListerRole = parseListerRole(prop.lister_role)
         setListerRole(loadedListerRole)
         setHeadTenantLandlordConsent(
-          loadedListerRole === 'head_tenant'
-            ? headTenantLandlordConsentFromAttestation(loadedAttestedAt)
-            : null,
+          loadedListerRole === 'head_tenant' ? headTenantLandlordConsentFromColumn(loadedConsentAt) : null,
         )
         setTitle(prop.title)
         setDescription(prop.description ?? '')
@@ -2837,11 +2839,11 @@ export default function LandlordPropertyFormPage() {
       listerRole === 'head_tenant' &&
       !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent) &&
       propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt })
-    if (revokeHeadTenantAuthority && existingListingStatus === 'active') {
-      reportSubmitError(
-        headTenantAuthorityConsentBlock(listerRole, headTenantLandlordConsent) ??
-          HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
-      )
+    const liveConsentBlock = isEdit
+      ? activeHeadTenantConsentSaveBlock(existingListingStatus, listerRole, headTenantLandlordConsent)
+      : null
+    if (liveConsentBlock) {
+      reportSubmitError(liveConsentBlock)
       document.getElementById('section-lister-role')?.scrollIntoView({ behavior: 'smooth' })
       return
     }
@@ -3003,6 +3005,12 @@ export default function LandlordPropertyFormPage() {
             agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
             existingAttestedAt: authorityToLetAttestedAt,
           })
+    const consentPatch = headTenantLandlordConsentPatch({
+      listerRole,
+      consent: listerRole === 'head_tenant' ? headTenantLandlordConsent : null,
+      existingConsentAt: headTenantLandlordConsentAt,
+      clearBecauseAuthorityCleared: revokeHeadTenantAuthority,
+    })
     const waterAttestationPatch = skipAttestations
       ? {}
       : waterSeparatelyMeteredAttestationPatch({
@@ -3079,6 +3087,7 @@ export default function LandlordPropertyFormPage() {
             strata_bylaws_applicable: null,
           }),
       ...attestationPatch,
+      ...consentPatch,
       ...waterAttestationPatch,
       ...accuracyAttestationPatch,
       lister_role: listerRole,
@@ -3171,6 +3180,12 @@ export default function LandlordPropertyFormPage() {
         if (attestationPatch.authority_to_let_attested_at) {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
+        } else if (revokeHeadTenantAuthority) {
+          setAuthorityToLetAttestedAt(null)
+          setAuthorityToLetAgreed(false)
+        }
+        if ('head_tenant_landlord_consent_at' in consentPatch) {
+          setHeadTenantLandlordConsentAt(consentPatch.head_tenant_landlord_consent_at)
         } else if (revokeHeadTenantAuthority) {
           setAuthorityToLetAttestedAt(null)
           setAuthorityToLetAgreed(false)
