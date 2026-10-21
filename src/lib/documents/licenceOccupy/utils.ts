@@ -19,8 +19,9 @@ export function licenceTerminationNoticePhrase(paymentMethod: string): string {
   return 'where the licence fee is payable weekly, at least one week\'s written notice;'
 }
 
-/** Mirrors DEFAULT_LISTING_FEE_CENTS in api/lib/pricing/resolvePlatformFee.js */
-export const LISTING_TIER_ACCEPTANCE_FEE_DISPLAY = '$99'
+import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../pricing/listingTierAcceptanceFeeDisplay.js'
+
+export { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY }
 
 export type LicenceOccupyServiceTier = 'listing' | 'managed'
 

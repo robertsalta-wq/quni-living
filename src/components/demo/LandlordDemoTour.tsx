@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/documents/licenceOccupy/utils'
+import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/pricing/listingTierAcceptanceFeeDisplay'
 import DemoPhone from './DemoPhone'
 import {
   AcceptScreen,

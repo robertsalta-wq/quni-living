@@ -1,4 +1,4 @@
-import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/documents/licenceOccupy/utils'
+import { LISTING_TIER_ACCEPTANCE_FEE_DISPLAY } from '../../lib/pricing/listingTierAcceptanceFeeDisplay'
 import {
   TOUR_ACCEPT_BUTTON,
   TOUR_ID_ROWS,
