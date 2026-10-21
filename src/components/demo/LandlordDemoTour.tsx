@@ -18,6 +18,7 @@ import {
   TOUR_APPLICANT_BODY,
   TOUR_APPLICANT_HEADING,
   TOUR_BAND,
+  TOUR_BOND_CAPTION,
   TOUR_DONE_BODY,
   TOUR_DONE_BODY_WAIVED,
   TOUR_DONE_HEADING,
@@ -58,7 +59,7 @@ function stepCaptions(step: number, feeWaived: boolean): readonly string[] {
     ]
   }
   if (step === 5) return TOUR_AGREEMENT_LINES
-  return [feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY]
+  return [TOUR_BOND_CAPTION, feeWaived ? TOUR_DONE_BODY_WAIVED : TOUR_DONE_BODY]
 }
 
 function TourScreen({ step, onAccept }: { step: number; onAccept: () => void }) {

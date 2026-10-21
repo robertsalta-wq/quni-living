@@ -41,8 +41,8 @@ export const landlordTourFixture = {
   agreementRows: ['Owner: Alex', 'Occupant: Sam', 'Room: Ryde', 'Starts: 1 February'] as const,
   waitingToSign: ['Alex: waiting to sign', 'Sam: waiting to sign'] as const,
   agreementWatermark: 'EXAMPLE, NOT FOR SIGNING',
-  confirmedTitle: 'Booking confirmed',
-  confirmedWhen: 'Sam moves in 1 February',
+  confirmedTitle: 'Tenancy is active',
+  bondRow: 'Confirm the bond',
   signedRows: ['Alex: signed', 'Sam: signed'] as const,
 }
 
@@ -82,6 +82,7 @@ export const TOUR_AGREEMENT_LINES = [
 ] as const
 
 export const TOUR_DONE_HEADING = "That's the whole process"
+export const TOUR_BOND_CAPTION = 'You confirm the bond once it arrives.'
 export const TOUR_DONE_BODY = 'Listing is free until you accept a student.'
 export const TOUR_DONE_BODY_WAIVED = 'Listing is free. So is your first accept.'
 export const TOUR_SIGNUP_LABEL = 'List your room'

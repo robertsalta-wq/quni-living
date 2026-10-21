@@ -202,7 +202,19 @@ export function AgreementScreen() {
 export function ConfirmedScreen() {
   return (
     <div className="space-y-4 p-4 pr-12">
-      <div className="flex flex-col items-center gap-2 pt-2 text-center">
+      <ul className="m-0 list-none space-y-2 p-0">
+        {sample.signedRows.map((row) => (
+          <li key={row} className="flex items-center gap-3 text-sm leading-snug text-[var(--quni-ink)]">
+            <Tick filled />
+            {row}
+          </li>
+        ))}
+        <li className="flex items-center gap-3 text-sm leading-snug text-[var(--quni-ink)]">
+          <Tick filled />
+          {sample.bondRow}
+        </li>
+      </ul>
+      <div className="flex flex-col items-center gap-2 border-t border-[var(--quni-line)] pt-4 text-center">
         <span
           className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--quni-success-bg)] text-[var(--quni-success-fg)]"
           aria-hidden
@@ -212,16 +224,7 @@ export function ConfirmedScreen() {
           </svg>
         </span>
         <p className="m-0 text-base font-semibold text-[var(--quni-ink)]">{sample.confirmedTitle}</p>
-        <p className="m-0 text-sm text-[var(--quni-ink-3)]">{sample.confirmedWhen}</p>
       </div>
-      <ul className="m-0 list-none space-y-2 border-t border-[var(--quni-line)] pt-3 p-0">
-        {sample.signedRows.map((row) => (
-          <li key={row} className="flex items-center gap-3 text-sm leading-snug text-[var(--quni-ink)]">
-            <Tick filled />
-            {row}
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }
