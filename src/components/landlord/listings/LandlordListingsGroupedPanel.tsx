@@ -27,6 +27,7 @@ type Props = {
   updatingListingId: string | null
   attestingListingId?: string | null
   onPublish: (p: LandlordPropertyForListingActions) => void
+  onPreview: (p: LandlordPropertyForListingActions) => void
   onDuplicateClick: (p: LandlordPropertyForListingActions) => void
   onToggle: (p: LandlordPropertyForListingActions) => void
   onDeleteDraft?: (listing: LandlordListingForGroup) => void
@@ -47,6 +48,7 @@ export default function LandlordListingsGroupedPanel({
   updatingListingId,
   attestingListingId = null,
   onPublish,
+  onPreview,
   onDuplicateClick,
   onToggle,
   onDeleteDraft,
@@ -222,6 +224,7 @@ export default function LandlordListingsGroupedPanel({
               onDuplicate={(listing) => onDuplicateClick(toActionListing(listing))}
               onTogglePause={(listing) => void onToggle(toActionListing(listing))}
               onPublish={(listing) => void onPublish(toActionListing(listing))}
+              onPreview={(listing) => onPreview(toActionListing(listing))}
               onDeleteDraft={onDeleteDraft}
               onInviteTenant={onInviteTenant}
               onView={(listing) => {

@@ -26,14 +26,14 @@ export default function LandlordListingEditEntry() {
   if (!isMobile) {
     const redirectTo = resolveListingEditDesktopRedirect(location.pathname)
     if (redirectTo) {
-      return <Navigate to={redirectTo} replace />
+      return <Navigate to={redirectTo} replace state={location.state} />
     }
     return <LandlordPropertyFormPage />
   }
 
   const fromHash = resolveListingEditMobileHashRedirect(location.pathname, location.hash)
   if (fromHash) {
-    return <Navigate to={fromHash} replace />
+    return <Navigate to={fromHash} replace state={location.state} />
   }
 
   if (isListingEditSectionPath(location.pathname)) {

@@ -8,6 +8,7 @@ import {
   propertyHasAuthorityToLetAttestation,
   type AuthorityToLetListingIntent,
 } from '../lib/authorityToLetAttestation'
+import { headTenantAuthorityConsentBlock } from '../lib/sublettingResources'
 import {
   NSW_T3_COMPLIANCE_BLOCKED_MESSAGE,
   isNswT3ListingFields,
@@ -167,9 +168,14 @@ export function useLandlordPropertyListingActions(args: {
     [reload, reportMutErr, showToast],
   )
 
-  const confirmAuthorityToLetAttestation = useCallback(async () => {
+  const confirmAuthorityToLetAttestation = useCallback(async (headTenantConsent: boolean | null) => {
     const pending = authorityToLetPending
     if (!pending) return
+    const consentBlock = headTenantAuthorityConsentBlock(pending.property.lister_role, headTenantConsent)
+    if (consentBlock) {
+      showToast({ kind: 'error', message: consentBlock })
+      return
+    }
     const existingAttestedAt = pending.property.authority_to_let_attested_at ?? null
     const patch = authorityToLetAttestationPatch({
       agreed: true,

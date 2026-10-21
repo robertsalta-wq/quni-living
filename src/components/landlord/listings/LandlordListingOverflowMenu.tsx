@@ -13,7 +13,7 @@ export type LandlordListingOverflowMenuProps = {
   onDuplicate: () => void
   onTogglePause?: () => void
   onDeleteDraft?: () => void
-  onPublish?: () => void
+  onPreview?: () => void
   onInviteTenant?: () => void
   onView?: () => void
 }
@@ -43,7 +43,7 @@ export default function LandlordListingOverflowMenu({
   onDuplicate,
   onTogglePause,
   onDeleteDraft,
-  onPublish,
+  onPreview,
   onInviteTenant,
   onView,
 }: LandlordListingOverflowMenuProps) {
@@ -145,7 +145,7 @@ export default function LandlordListingOverflowMenu({
   const canView = !isDraft && Boolean(listing.slug?.trim()) && Boolean(onView)
   const canShare = !isDraft && Boolean(listing.slug?.trim())
   const canInvite = Boolean(onInviteTenant) && listingCanInviteTenant(listing)
-  const canPublish = isDraft && Boolean(onPublish)
+  const canPreview = isDraft && Boolean(onPreview)
 
   async function handleShare() {
     const result = await shareListing({ slug: listing.slug, title: listing.title })
@@ -221,14 +221,14 @@ export default function LandlordListingOverflowMenu({
                 Invite a tenant
               </button>
             ) : null}
-            {canPublish ? (
+            {canPreview ? (
               <button
                 type="button"
                 role="menuitem"
                 className={itemClass}
                 onClick={() => {
                   close()
-                  onPublish?.()
+                  onPreview?.()
                 }}
               >
                 Preview
