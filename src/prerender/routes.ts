@@ -17,6 +17,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/services/landlord-partnerships',
   '/landlords/ai',
   '/list-your-room',
+  '/see-quni',
   '/qld-house-rules',
 ] as const
 
