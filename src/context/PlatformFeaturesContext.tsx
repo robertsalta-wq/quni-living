@@ -87,7 +87,7 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
       }
 
       setFeatures({
-        managedTierEnabled: featuresResult.data.managed_tier_enabled === true,
+        managedTierEnabled: false,
         listingModuleEnabled: featuresResult.data.listing_module_enabled === true,
         managedOverrides,
         loaded: true,

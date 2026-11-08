@@ -19,8 +19,6 @@ import {
 } from '../lib/site'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
-import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
-import { MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
@@ -72,7 +70,7 @@ const STUDENT_HOW_STEPS = [
   {
     n: 3,
     title: 'Book',
-    desc: 'Pay your deposit securely and complete signing in one place where supported',
+    desc: 'Apply and sign. Rent and bond are paid to the landlord.',
   },
 ] as const
 
@@ -189,7 +187,6 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { managedTierEnabled } = usePlatformFeatures()
   const { showUniversityCampusFilters, locationPlaceholder, isProfessionalRenter } =
     useRenterSearchPersona()
   const [locationInput, setLocationInput] = useState('')
@@ -205,7 +202,6 @@ export default function Home() {
   const [locationSearchBusy, setLocationSearchBusy] = useState(false)
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')
-  const [dynamicManagedFeeText, setDynamicManagedFeeText] = useState('7%')
   const landlordFaqRef = useRef<HTMLDivElement | null>(null)
 
   // Fee strings only appear in landlord FAQ answers — load when that block nears the viewport.
@@ -219,13 +215,10 @@ export default function Home() {
       started = true
       void (async () => {
         try {
-          const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
           const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
-          const managed = formatFeeForDisplay(managedCell)
           const listing = formatFeeForDisplay(listingCell)
           if (!cancelled) {
             setDynamicListingFeeText(listing.landlordFeeDisplay)
-            setDynamicManagedFeeText(managed.landlordFeeDisplay)
           }
         } catch {
           // keep defaults
@@ -613,20 +606,9 @@ export default function Home() {
           <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-3">
             How it works
           </h2>
-          <p className="mx-auto mb-4 max-w-2xl text-center text-sm text-gray-600 sm:text-base">
+          <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
             Whether you&apos;re looking for a room or listing one, Quni keeps the journey clear and on-platform.
           </p>
-          {!managedTierEnabled ? (
-            <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-[var(--quni-trust)] sm:mb-12 sm:text-base">
-              <Link to="/pricing" className="font-medium underline underline-offset-2 hover:opacity-90">
-                Quni Listing is live
-              </Link>
-              {' · '}
-              Quni Managed (rent collection &amp; weekly payouts) - launching within the next month.
-            </p>
-          ) : (
-            <div className="mb-10 sm:mb-12" aria-hidden />
-          )}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
             <HowStepColumn heading="For students" steps={STUDENT_HOW_STEPS} />
             <HowStepColumn heading="For landlords" steps={LANDLORD_HOW_STEPS} />
@@ -717,9 +699,7 @@ export default function Home() {
                 const open = openFaqId === item.id
                 const answer =
                   item.id === 'faq-l-1'
-                    ? managedTierEnabled
-                      ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent. Quni Managed is ${dynamicManagedFeeText} of weekly rent.`
-                      : `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. ${MANAGED_LISTING_DUAL_INTRO}`
+                    ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. Rent and bond are paid to you.`
                     : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">

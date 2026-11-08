@@ -94,7 +94,6 @@ function VicForm1ClauseChunkBody({ text, styles: styles2 }) {
 
 // src/lib/documents/vic/form1Generator.tsx
 import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
-var QUNI_RENT_PORTAL_URL = "https://quni.com.au";
 function rentDueWeekdayFromCommencement(isoDate) {
   const raw = isoDate.slice(0, 10);
   const [y, m, d] = raw.split("-").map(Number);
@@ -112,9 +111,7 @@ function item8RentPaymentDetails(preference, bank) {
   const bsb = bank?.bsb?.trim() ? formatBsbDisplay(bank.bsb) : "";
   const name = bank?.accountName?.trim() ?? "";
   const bankLine = acct && bsb && name ? `Direct deposit - Account name: ${name}; BSB: ${bsb}; Account number: ${acct}.` : "Direct deposit (bank deposit) - account details to be provided by the rental provider.";
-  if (preference === "quni_platform") {
-    return `${bankLine} Recurring rent may also be paid via the Quni Living platform (${QUNI_RENT_PORTAL_URL}) using the payment facility activated in the renter's Quni account.`;
-  }
+  void preference;
   return bankLine;
 }
 var styles = StyleSheet.create({
@@ -445,7 +442,7 @@ function VicResidentialRentalAgreementForm1(props) {
       /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Part B - Standard terms (schedule highlights)" }),
       /* @__PURE__ */ jsx2(Text2, { style: { ...styles.body, marginBottom: 4 }, children: "8. Rental provider's preferred methods of payment" }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: true, label: "bank deposit" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: rentPaymentPreference === "quni_platform", label: "other electronic form of payment, including Centrepay" }),
+      /* @__PURE__ */ jsx2(CheckboxLine, { checked: false, label: "other electronic form of payment, including Centrepay" }),
       /* @__PURE__ */ jsx2(Field, { label: "Payment details:", children: paymentDetails }),
       /* @__PURE__ */ jsx2(Text2, { style: { ...styles.body, marginTop: 6, fontFamily: "Helvetica-Bold" }, children: "9. Electronic service of notices" }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: electronicService.landlordConsentsToEmailService, label: `Rental provider - yes (${electronicService.landlordEmail})` }),

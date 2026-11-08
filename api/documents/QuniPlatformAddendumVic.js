@@ -563,28 +563,6 @@ function OccupancyMatchScheduleTable({
   ] });
 }
 
-// src/lib/platformIdentity.ts
-var DEFAULT_PLATFORM_LEGAL_NAME = "Quni Living Pty Ltd";
-function formatAustralianAbn(raw) {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length !== 11) return raw.trim();
-  return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 11)}`;
-}
-function buildPlatformIdentificationLine(fields) {
-  const parts = [];
-  const abn = typeof fields.abn === "string" ? fields.abn.trim() : "";
-  if (abn) parts.push(`ABN ${formatAustralianAbn(abn)}`);
-  const acn = typeof fields.acn === "string" ? fields.acn.trim() : "";
-  if (acn) parts.push(`ACN ${acn}`);
-  const director = typeof fields.directorName === "string" ? fields.directorName.trim() : "";
-  if (director) parts.push(`Director: ${director}`);
-  return parts.length ? parts.join(" \xB7 ") : null;
-}
-function resolvePlatformLegalEntityName(legalName) {
-  const t = typeof legalName === "string" ? legalName.trim() : "";
-  return t || DEFAULT_PLATFORM_LEGAL_NAME;
-}
-
 // src/lib/documents/addendumCoTenantExecution.tsx
 import { Text as Text2, View as View2 } from "@react-pdf/renderer";
 
@@ -674,7 +652,7 @@ function AddendumSection5UtilitiesAndBills(props) {
     if (props.signingPackage === "residential_tenancy_qld") {
       paragraphs.push(
         /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
-          "Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). This is the tenant's payment timing for excess-usage amounts invoiced through the platform - it is separate from the landlord's obligation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of relevant supplier account documents within ",
+          "Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). This is the tenant's payment timing for excess-usage amounts invoiced to the tenant. It is separate from the landlord's obligation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of relevant supplier account documents within ",
           /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "4 weeks" }),
           " of the property manager/owner receiving them, where the tenant is required to pay for a utility service by reference to the supplier's account."
         ] }, nextKey())
@@ -682,7 +660,7 @@ function AddendumSection5UtilitiesAndBills(props) {
     } else {
       paragraphs.push(
         body(
-          "Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). Evidence of usage may be supplied as utility account summaries, meter readings, or other reasonable records consistent with how similar properties are typically managed through the platform.",
+          "Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). Evidence of usage may be supplied as utility account summaries, meter readings, or other reasonable records.",
           nextKey()
         )
       );
@@ -779,23 +757,15 @@ function vicBondAuthorityLabel() {
   const bond = VIC_T2_BOND_RULES;
   return bond.schemeApplies ? bond.authorityPublicLabel : "the relevant state bond authority";
 }
-function vicBondAuthorityUrl() {
-  const bond = VIC_T2_BOND_RULES;
-  return bond.schemeApplies ? bond.authorityUrl : "https://www.rtba.vic.gov.au/";
-}
-function vicFeeFreeBankTransferParagraph() {
-  return `A fee-free bank transfer option remains available at all times for recurring rent in accordance with the ${VIC_ADDENDUM_LEGISLATION} (including provisions about how rent is to be paid).`;
-}
 var VIC_CONDITION_REPORT_INTRO = "The parties acknowledge that an ingoing condition report may be prepared for the premises (or the rented part of the premises) in accordance with the Residential Tenancies Act 1997 (Vic) and Form 1. The renter will be given a reasonable opportunity to review and comment on the report and to attach photographs where appropriate.";
 var VIC_CONDITION_REPORT_RETURN = "The renter should return a signed copy (or written comments) within the timeframe notified by the rental provider or the platform, failing which the report may be taken as accepted except for manifest errors or items the renter could not reasonably have inspected.";
-var VIC_CONDITION_REPORT_OUTGOING = "At the end of the tenancy, an outgoing condition report may be used to compare the state of the premises with the ingoing report, fair wear and tear excepted. The renter should attend any scheduled inspection where practicable and should lodge final meter readings or other handover items through the move-out workflow when requested.";
+var VIC_CONDITION_REPORT_OUTGOING = "At the end of the tenancy, an outgoing condition report may be used to compare the state of the premises with the ingoing report, fair wear and tear excepted. The renter should attend any scheduled inspection where practicable and should give the rental provider final meter readings or other handover items when asked.";
 var VIC_ELECTRONIC_TRANSACTIONS_ACT = "Electronic Transactions (Victoria) Act 2000";
 var VIC_DISPUTES_TRIBUNAL = "Victorian Civil and Administrative Tribunal (VCAT)";
 
 // src/lib/documents/vic/addendumGenerator.tsx
 import { jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
 var QUNI_MAINTENANCE_PORTAL_URL = "https://quni.com.au/maintenance";
-var QUNI_MOVE_OUT_FORM_URL = "https://quni.com.au/move-out";
 function formatMoney2(n) {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
 }
@@ -811,11 +781,6 @@ function yn(v) {
   if (v === true) return "Yes";
   if (v === false) return "No";
   return "-";
-}
-function formatBsbDisplay(raw) {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length === 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return raw.trim();
 }
 function Section1TenancySummary(props) {
   const { landlord, tenant, premises, term, rent, bond, utilitiesDescription } = props;
@@ -860,58 +825,10 @@ function Section1TenancySummary(props) {
   ] });
 }
 function Section2QuniPlatformAndFee(props) {
-  const { rent, rentPaymentMethod, bankDetails } = props;
-  const entityName = resolvePlatformLegalEntityName(props.platformLegalName);
-  const identificationLine = buildPlatformIdentificationLine({
-    abn: props.platformAbn,
-    acn: props.platformAcn,
-    directorName: props.platformDirectorName
-  });
-  const bsb = formatBsbDisplay(bankDetails.bsb.trim());
-  const acct = bankDetails.accountNumber.trim();
-  const name = bankDetails.accountName.trim();
-  const bankName = bankDetails.bankName.trim();
-  const bankRows = [
-    { label: "Account name:", value: name || "-" },
-    { label: "BSB:", value: bsb || "-" },
-    { label: "Account number:", value: acct || "-" },
-    { label: "Bank:", value: bankName || "-" }
-  ];
-  const cardDomestic = `${props.cardSurchargeDomesticText ?? "1.7% + $0.30"} per transaction (domestic cards)`;
-  const cardInternational = `${props.cardSurchargeInternationalText ?? "3.5% + $0.30"} per transaction (international cards)`;
-  const landlordServiceFeeText = props.landlordServiceFeeText ?? "10%";
+  void props;
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 2, title: "Quni platform & service fee" }),
-    /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
-      entityName,
-      ' (the "Platform") operates an online marketplace and payment facilitation service. The Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the',
-      " ",
-      VIC_ADDENDUM_LEGISLATION,
-      " and ",
-      VIC_ADDENDUM_FORM_LABEL,
-      "."
-    ] }),
-    identificationLine ? /* @__PURE__ */ jsx4(Text4, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }], children: identificationLine }) : null,
-    /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
-      "A service fee of ",
-      landlordServiceFeeText,
-      " of the gross weekly rent is deducted from amounts payable to the landlord through the Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms. The tenant pays no Quni platform fee, booking fee, or renter service fee; the tenant's agreed weekly rent is not increased by the landlord-side service fee."
-    ] }),
-    /* @__PURE__ */ jsx4(Text4, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "Rent is payable by direct bank transfer using the following account details (reference your name and the property address when transferring):" }),
-    /* @__PURE__ */ jsx4(OccupancyMatchScheduleTable, { rows: bankRows.map((r) => ({ label: r.label, value: r.value })) }),
-    rentPaymentMethod === "quni_platform" ? /* @__PURE__ */ jsx4(View4, { style: [occupancyMatchPdf.noteBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.noteItalicMuted, children: [
-      "The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card payments incur a payment processing surcharge passed through at Stripe's actual cost - typically",
-      " ",
-      cardDomestic,
-      ", or ",
-      cardInternational,
-      ". The agreed rent amount is unchanged; the surcharge is shown separately at checkout."
-    ] }) }) : null,
-    /* @__PURE__ */ jsx4(Text4, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: vicFeeFreeBankTransferParagraph() }),
-    /* @__PURE__ */ jsxs4(Text4, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: [
-      "The payment method summary in the tenancy agreement (Section 1 above) remains part of the agreed rent arrangements: ",
-      rent.paymentMethod
-    ] })
+    /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 2, title: "Quni Living" }),
+    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the landlord, is not a party to this agreement, and is not the landlord's agent. Rent is paid to the landlord at the account named in this agreement. The tenant pays Quni Living nothing." })
   ] });
 }
 function Section3CommunicationChannels(props) {
@@ -919,7 +836,6 @@ function Section3CommunicationChannels(props) {
   const rows = [
     { label: "Maintenance portal (non-urgent requests):", value: QUNI_MAINTENANCE_PORTAL_URL },
     { label: "Emergency contact (urgent repairs):", value: emergencyContact.trim() || "-" },
-    { label: "Move-out notice form:", value: QUNI_MOVE_OUT_FORM_URL },
     { label: "Rent account enquiries:", value: rentEnquiriesEmail.trim() || "-" },
     { label: "General enquiries:", value: generalEnquiriesEmail.trim() || "-" },
     { label: "House communications:", value: houseCommunicationsChannel.trim() || "-" }
@@ -988,7 +904,6 @@ function Section8ConditionReport(_props) {
 function Section9MoveOutProcedures(props) {
   const dailyRent = props.rent.weeklyRent / 7;
   const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? "$50";
-  const internationalTransferFeeText = props.moveOutInternationalTransferFeeText ?? "$50";
   const feeRows = [
     {
       label: "Cleaning (if not to standard)",
@@ -1009,10 +924,6 @@ function Section9MoveOutProcedures(props) {
     {
       label: "Linen replacement if significantly damaged",
       value: "Replacement cost (charged at actual cost)"
-    },
-    {
-      label: "International bank transfer administration (bond refund)",
-      value: `${internationalTransferFeeText} flat fee`
     }
   ];
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
@@ -1023,9 +934,7 @@ function Section9MoveOutProcedures(props) {
       ",",
       " ",
       VIC_ADDENDUM_FORM_LABEL,
-      ", and any agreed notice period. Where the platform collects a move-out notice, the tenant should complete the move-out notice form at ",
-      QUNI_MOVE_OUT_FORM_URL,
-      " and keep a copy of any confirmation received."
+      ", and any agreed notice period."
     ] }),
     /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Unless otherwise agreed in writing, the tenant must vacate and return possession by",
@@ -1065,7 +974,7 @@ function Section9MoveOutProcedures(props) {
     /* @__PURE__ */ jsxs4(Text4, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: [
       "The tenant should supply a forwarding address and contact details for bond and correspondence. Bond release (if applicable) will follow ",
       vicBondAuthorityLabel(),
-      " requirements and any instructions given through the signing or bond workflow. The parties agree to cooperate promptly with reasonable requests for information needed to finalise the tenancy."
+      " requirements. The parties agree to cooperate promptly with reasonable requests for information needed to finalise the tenancy."
     ] })
   ] });
 }
@@ -1073,7 +982,6 @@ function Section10Bond(props) {
   const bond = props.bond.amount;
   const lodgementPhrase = vicBondLodgementDeadlinePhrase();
   const authorityLabel = vicBondAuthorityLabel();
-  const authorityUrl = vicBondAuthorityUrl();
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 10, title: "Bond" }),
     /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
@@ -1092,17 +1000,8 @@ function Section10Bond(props) {
       "The bond amount recorded in the tenancy agreement is",
       " ",
       bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney2(bond) : "as stated in the tenancy agreement",
-      ". The parties agree to complete any bond lodgement, variation, or claim steps notified through the platform or the landlord's agent, and to provide accurate bank details for refunds where required."
-    ] }),
-    /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
-      "Bond lodgement and claim processes are administered by ",
-      authorityLabel,
-      ". Further information is available at",
-      " ",
-      /* @__PURE__ */ jsx4(Text4, { style: { fontFamily: "Helvetica-Bold" }, children: authorityUrl }),
-      "."
-    ] }),
-    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Where an international bank transfer administration fee applies to a bond refund (as set out in the move-out fee schedule), that fee is separate from the bond amount and is payable only where applicable and lawfully recoverable." })
+      ". The tenant pays the bond to the Residential Tenancies Bond Authority, or to the landlord, who lodges it with the Residential Tenancies Bond Authority as required by law. Quni Living does not hold, transfer or refund the bond and charges no fee on a bond refund."
+    ] })
   ] });
 }
 function Section11InspectionsAndAccess(_props) {

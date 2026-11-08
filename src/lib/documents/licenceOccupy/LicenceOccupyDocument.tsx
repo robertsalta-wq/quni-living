@@ -10,7 +10,6 @@ import {
   OccupancyMatchSectionHeading,
   occupancyMatchPdf,
 } from '../quniDocumentPdfTheme.js'
-import { buildLicencePlatformEntityDisplay } from '../../platformIdentity.js'
 import type { LicenceOccupyContent, LicenceOccupyTerminationBlock } from './contentTypes.js'
 import {
   licenceTerminationNoticePhrase,
@@ -19,8 +18,6 @@ import {
   occupancyClause11PayeeLines,
   occupancyFinancialTermsPayeeNote,
   occupancyQldBondPaymentSupplement,
-  ownerServiceFeeParagraphForTier,
-  type LicenceOccupyServiceTier,
 } from './utils.js'
 import {
   LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE,
@@ -244,12 +241,6 @@ export function LicenceOccupyDocument({
     ? `${landlord.fullName} (${landlord.companyName})`
     : landlord.fullName
 
-  const platformEntityDisplay = buildLicencePlatformEntityDisplay({
-    legalName: props.platformLegalName,
-    acn: props.platformAcn,
-    tradingName: props.platformTradingName,
-  })
-
   const bondAmountLine =
     bond.amount != null && Number.isFinite(bond.amount)
       ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.`
@@ -264,7 +255,6 @@ export function LicenceOccupyDocument({
     ...(bookingNotes?.trim() ? [bookingNotes.trim()] : []),
   ]
 
-  const serviceTier: LicenceOccupyServiceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
   const hasExtraTerms = extraLines.length > 0
   const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0
   const financialTermsPayeeNote = occupancyFinancialTermsPayeeNote(props)
@@ -280,7 +270,6 @@ export function LicenceOccupyDocument({
 
   const entrySectionTitle = content.entrySectionTitle ?? "Owner's right of entry"
   const terminationSectionTitle = content.terminationSectionTitle ?? 'Termination'
-  const platformSectionTitle = content.platformSectionTitle ?? 'Quni platform and owner service fee'
   const houseRulesIntro =
     content.houseRulesIntro ??
     `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`
@@ -424,22 +413,13 @@ export function LicenceOccupyDocument({
         {content.disputesParagraphs
           ? content.disputesParagraphs.map((p, i) => <BodyParagraph key={`d-${i}`}>{p}</BodyParagraph>)
           : <BodyParagraph>{content.disputesParagraph}</BodyParagraph>}
-        <OccupancyMatchSectionHeading num={11} title={platformSectionTitle} />
+        <OccupancyMatchSectionHeading num={11} title="Quni Living" />
         <BodyParagraph>
-          {platformEntityDisplay} (the &quot;Platform&quot;) {content.platformIntroPrefix}
+          {`Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the ${partyLabel}, is not a party to this agreement, and is not the ${partyLabel}'s agent. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.`}
         </BodyParagraph>
         {content.platformWarrantyParagraph ? (
           <BodyParagraph>{content.platformWarrantyParagraph}</BodyParagraph>
         ) : null}
-        <BodyParagraph>
-          {ownerServiceFeeParagraphForTier(
-            serviceTier,
-            rent.platformFeePercent,
-            undefined,
-            partyLabel,
-          )}
-        </BodyParagraph>
-        <BodyParagraph>{content.feeFreeBankTransfer}</BodyParagraph>
         <BodyParagraph>{clause11BankIntro}</BodyParagraph>
         {clause11PayeeLines.map((line, i) => (
           <BodyParagraph key={`payee-${i}`}>{line}</BodyParagraph>

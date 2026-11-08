@@ -169,10 +169,7 @@ import {
 } from '../../lib/pricing'
 import { resolveServiceTierAvailability } from '../../lib/serviceTier'
 import { usePlatformFeatures, useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
-import {
-  MANAGED_COMING_SOON_SHORT,
-  MANAGED_LANDLORD_PROPERTY_FORM_HINT,
-} from '../../lib/managedComingSoonCopy'
+import { MANAGED_COMING_SOON_SHORT } from '../../lib/managedComingSoonCopy'
 import { LISTING_TIER_ADDRESS_ON_LEASE_NOTICE } from '../../lib/listingTierAddressNotice'
 import {
   canSwitchPropertyServiceTier,
@@ -5016,10 +5013,12 @@ export default function LandlordPropertyFormPage() {
                 <p className="mb-3 text-xs text-gray-500">
                   {managedTierEnabled
                     ? 'Choose how this property runs. Listing is self-managed; Managed can be selected now or upgraded later, but Managed properties cannot move back to Listing.'
-                    : MANAGED_LANDLORD_PROPERTY_FORM_HINT}
+                    : 'Quni Listing. You handle bond, rent, maintenance, and disputes directly with the renter.'}
                 </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {(['listing', 'managed'] as const).map((tier) => {
+                <div className={managedTierEnabled || serviceTier === 'managed' ? 'grid gap-3 md:grid-cols-2' : 'grid gap-3'}>
+                  {(['listing', 'managed'] as const)
+                  .filter((tier) => tier === 'listing' || managedTierEnabled || serviceTier === 'managed')
+                  .map((tier) => {
                     const selected = serviceTier === tier
                     const managedComingSoon = tier === 'managed' && !managedTierEnabled
                     const available =

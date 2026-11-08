@@ -2,7 +2,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody, requestContextFromNodeRequest } from './lib/nodeHandler.js'
-import { runManagedConfirmBooking } from './lib/booking/confirmManaged.js'
 import { runListingConfirmBooking } from './lib/booking/confirmListing.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import {
@@ -235,6 +234,17 @@ export default async function handler(req, res) {
     }
 
     const useListing = effectiveTier === 'listing'
+    if (!useListing) {
+      return corsJson(
+        res,
+        {
+          error: 'managed_retired',
+          message: 'Managed bookings are no longer available. This booking cannot be accepted as Managed.',
+        },
+        410,
+        origin,
+      )
+    }
 
     const stripe = new Stripe(stripeSecret)
 
@@ -295,48 +305,6 @@ export default async function handler(req, res) {
         origin,
       )
     }
-
-    if (landlord.stripe_charges_enabled !== true) {
-      return corsJson(res, { error: 'Landlord Stripe account not ready for charges' }, 400, origin)
-    }
-
-    try {
-      await recordLandlordReviewAudit(admin, bookingId, {
-        eventType: 'landlord_confirm',
-        outcome: 'confirm_requested',
-      })
-    } catch (e) {
-      console.error('confirm-booking compliance audit', e)
-      const msg =
-        e instanceof AiMatchingAuditError
-          ? e.message
-          : 'Compliance audit failed; booking was not confirmed.'
-      return corsJson(res, { error: 'compliance_audit_failed', message: msg }, 503, origin)
-    }
-
-    const managedResult = await runManagedConfirmBooking({
-      stripe,
-      admin,
-      landlord,
-      bookingId,
-      origin,
-    })
-
-    if (!managedResult.ok) {
-      return corsJson(res, managedResult.body, managedResult.status, origin)
-    }
-
-    return corsJson(
-      res,
-      {
-        ok: true,
-        branch: 'managed',
-        subscriptionId: managedResult.subscriptionId,
-        subscriptionStatus: managedResult.subscriptionStatus,
-      },
-      200,
-      origin,
-    )
   } catch (e) {
     console.error('confirm-booking', e)
     let msg = 'Booking confirmation failed'

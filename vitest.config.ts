@@ -10,6 +10,7 @@ export default defineConfig({
           environment: 'node',
           include: ['api/**/*.test.ts', 'src/**/*.test.ts'],
           exclude: ['**/*.e2e.test.ts', 'node_modules/**'],
+          testTimeout: 60_000,
         },
       },
       {

@@ -18,6 +18,7 @@ export const STATIC_PRERENDER_PATHS = [
   '/landlords/ai',
   '/list-your-room',
   '/by-the-room', // noindex; keep out of api/sitemap.xml until legal notes have approved wording
+  '/see-quni',
   '/qld-house-rules',
 ] as const
 

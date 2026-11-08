@@ -77,5 +77,21 @@ describe('QuniPlatformAddendum (NSW)', () => {
     const text = parsed.text.replace(/\s+/g, ' ')
     expect(text).toContain('No bond required')
     expect(text).toContain('No bond is required for this tenancy')
+    expect(text).toContain('Quni Living is not the landlord')
+    expect(text).toContain('NSW Fair Trading (Rental Bonds Online)')
+    expect(text).toContain('does not hold, transfer or refund the bond')
+    for (const banned of [
+      'service fee',
+      'payment facilitation',
+      'deducted',
+      '$99',
+      'via the Quni Living platform',
+      'through the platform',
+      'bond workflow',
+      '/move-out',
+      'international transfer fee',
+    ]) {
+      expect(text).not.toContain(banned)
+    }
   })
 })

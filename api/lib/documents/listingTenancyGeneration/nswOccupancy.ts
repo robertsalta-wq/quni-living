@@ -14,14 +14,10 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
-import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { sendForSigning } from '../../docuseal.js'
 import { fetchPlatformBusinessIdentityForDocuments } from '../../platformConfig.js'
 import type { PlatformBusinessIdentity } from '../../platformConfig.js'
-import {
-  licenceFacilitatedThroughLine,
-  licenceManagedPaymentMethod,
-  licencePlatformBrandShort,
-} from './occupancyPlatformProse.js'
+import { licencePlatformBrandShort } from './occupancyPlatformProse.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 import { leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
@@ -209,15 +205,9 @@ async function loadNswOccupancyContext(
     return { ok: false, status: 500, error: PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED }
   }
 
-  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
-  const platformFeePercent =
-    serviceTier === 'managed'
-      ? await getManagedLandlordFeePercentForProperty(booking.property_id)
-      : 0
-  const paymentMethod =
-    serviceTier === 'listing'
-      ? 'Direct credit (see clause 11)'
-      : licenceManagedPaymentMethod(platformIdentity.tradingName)
+  const serviceTier = 'listing' as const
+  const platformFeePercent = 0
+  const paymentMethod = 'Direct credit (see clause 11)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
@@ -229,6 +219,9 @@ async function loadNswOccupancyContext(
     sp,
     propertyAddressLine: propertyAddressLine(prop),
   })
+  if (!payeeFields.ok) {
+    return { ok: false, status: payeeFields.status, error: payeeFields.error }
+  }
 
   return {
     ok: true,
@@ -309,9 +302,8 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
     platformAcn: ctx.platformIdentity.acn || undefined,
     platformTradingName: ctx.platformIdentity.tradingName || undefined,
     specialConditions: [
-      licenceFacilitatedThroughLine(ctx.platformIdentity.tradingName),
       `Any security deposit is held directly by the Principal. ${licencePlatformBrandShort(ctx.platformIdentity.tradingName)} does not hold or manage security deposits.`,
-      'The weekly licence fee is paid directly to the Principal by fee-free direct credit and is not collected through the platform.',
+      'The weekly licence fee is paid to the Principal at the account named in clause 11. The resident pays Quni Living nothing.',
       ...ctx.coTenantSpecialConditions,
     ],
     coResidentName: occupancyCoResidentNameFromBooking(booking),

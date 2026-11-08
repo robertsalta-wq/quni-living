@@ -79,6 +79,11 @@ describe('QuniPlatformAddendumQld', () => {
     for (const marker of QLD_PLATFORM_ADDENDUM_PDF_MARKERS) {
       expect(text).toContain(marker.replace(/\s+/g, ' '))
     }
+    expect(text).toContain('The tenant pays Quni Living nothing')
+    expect(text).toContain('Residential Tenancies Authority')
+    expect(text).not.toContain('through the platform')
+    expect(text).not.toContain('/move-out')
+    expect(text).not.toContain('service fee')
   })
 
   it('renders no-bond copy in summary and section 10 when bond amount is null', async () => {

@@ -18,11 +18,12 @@ import {
   listingContextLoadFailure,
 } from '../../booking/listingContextLoad.js'
 import {
+  type BankDetailsForRta,
   buildRtaRentPaymentMethodLine,
-  fetchBankDetailsForRta,
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../../platformConfig.js'
+import { loadLandlordPayoutBankForDocument } from './landlordPayoutBank.js'
 import { fetchUtilitiesResolverStateFlags } from '../utilitiesResolverFlags.js'
 import { featureNamesFromPropertyRow } from '../../../../src/lib/propertyFeatureSignals.js'
 import {
@@ -33,10 +34,8 @@ import {
 } from '../../../../src/lib/propertyUtilitiesResolver.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
-import {
-  formatFeeForDisplay,
-  getActivePricingSnapshotForProperty,
-} from '../../pricing/index.js'
+import { type PricingCell, formatFeeForDisplay } from '../../pricing/index.js'
+import { RETIRED_MANAGED_PRICING_CELL } from './retiredManagedPricing.js'
 import { buildAddendumUtilitiesFields } from '../../../../src/lib/documents/addendumUtilitiesFields.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
@@ -122,9 +121,9 @@ type LoadedQldContext = {
   endDate: string | null
   bondNum: number | null
   serviceTier: 'managed' | 'listing'
-  bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
+  bankDetails: BankDetailsForRta
   rentPaymentMethodLine: string
-  managedPricingCell: Awaited<ReturnType<typeof getActivePricingSnapshotForProperty>>
+  managedPricingCell: PricingCell
   managedPricingDisplay: ReturnType<typeof formatFeeForDisplay>
   platformFeePercent: number
   platformFee: number
@@ -260,39 +259,17 @@ async function loadQldForm18aContext(
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
-  let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
-  try {
-    bankDetails = await fetchBankDetailsForRta(admin)
-  } catch (e) {
-    console.error('[qld-form18a] platform_config bank fetch', e)
-    await captureSentryMessageEdge('QLD Form 18a: failed to load platform_config for bank details', {
-      booking_id: bookingId,
-      error: e instanceof Error ? e.message : String(e),
-    })
-    return { ok: false, status: 500, error: 'Could not load platform payment settings' }
-  }
-
-  if (!bankDetails.bsb || !bankDetails.accountNumber) {
-    await captureSentryMessageEdge(
-      'QLD Form 18a: bank BSB or account number missing in platform_config',
-      { booking_id: bookingId },
-    )
-    return {
-      ok: false,
-      status: 400,
-      error:
-        'Rent payment details are not configured: set bank BSB and account number under Admin → Business settings before generating this document.',
-    }
-  }
+  const landlordBank = await loadLandlordPayoutBankForDocument(admin, booking.property_id)
+  if (!landlordBank.ok) return landlordBank
+  const bankDetails = landlordBank.bankDetails
 
   const rentPaymentMethodLine = buildRtaRentPaymentMethodLine(bankDetails)
-  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
-  const managedPricingCell = await getActivePricingSnapshotForProperty(booking.property_id, 'managed')
+  const serviceTier = 'listing' as const
+  const managedPricingCell = RETIRED_MANAGED_PRICING_CELL
   const managedPricingDisplay = formatFeeForDisplay(managedPricingCell)
-  const platformFeePercent =
-    managedPricingCell.fee_mode === 'percent' ? Number(managedPricingCell.fee_percent || 0) : 0
-  const platformFee = Math.round(weeklyRent * (platformFeePercent / 100) * 100) / 100
-  const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
+  const platformFeePercent = 0
+  const platformFee = 0
+  const totalWeekly = weeklyRent
 
   let rentEnquiriesEmail = ''
   let generalEnquiriesEmail = ''
@@ -331,9 +308,7 @@ async function loadQldForm18aContext(
     })
   }
 
-  const rpm = booking.rent_payment_method
-  const rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null =
-    rpm === 'bank_transfer' || rpm === 'quni_platform' ? rpm : null
+  const rentPaymentPreference = 'bank_transfer' as const
 
   const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
 

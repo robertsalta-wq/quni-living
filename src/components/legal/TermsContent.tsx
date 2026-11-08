@@ -186,21 +186,17 @@ export function TermsContent() {
       <LegalH2 id="payments">6. Payments</LegalH2>
       <LegalH3 id="payments-fees">6.1 Fees</LegalH3>
       <LegalP>
-        Quni offers <strong>Quni Listing</strong> and <strong>Quni Managed</strong>. Fees depend on the landlord&apos;s
-        chosen tier and are shown when you list or book.
+        Quni offers <strong>Quni Listing</strong>. The landlord fee is shown when you list or accept a booking.
       </LegalP>
       <LegalP>
         <strong>Renters</strong> pay <strong>no</strong> booking fee, platform fee, service fee, or card surcharge to
-        Quni in either tier. You may still pay <strong>tenancy money</strong> (for example <strong>bond</strong> and{' '}
-        <strong>rent</strong>) to your landlord or through payment flows that lawfully handle tenancy funds.
+        Quni. Bond and rent are paid to the landlord. Quni does not collect them.
       </LegalP>
       <LegalP>
         <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a flat <strong>$99</strong> acceptance fee per
-        accepted booking. There is no commission on rent, no subscription, and no letting fee on Listing.{' '}
-        <strong>Landlords</strong> on <strong>Quni Managed</strong> pay a <strong>percentage of weekly rent</strong>{' '}
-        while a managed tenancy is active, collected as part of managed rent flows via our payment provider. We may
-        change the Listing acceptance fee on notice. We will not introduce a commission on rent for Quni Listing. The
-        terms in effect at the time of the relevant action apply.
+        accepted booking. There is no commission on rent, no subscription, and no letting fee. We may change the
+        Listing acceptance fee on notice. We will not introduce a commission on rent for Quni Listing. The terms in
+        effect at the time of the relevant action apply.
       </LegalP>
       <LegalH3 id="payments-stripe">6.2 Payment Processing</LegalH3>
       <LegalP>

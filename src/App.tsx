@@ -308,6 +308,7 @@ function App() {
                 />
                 <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
                 <Route path="/list-your-room" element={<Marketing.ListYourRoomE />} />
+                <Route path="/see-quni" element={<Marketing.SeeQuni />} />
                 <Route path="/list-your-room-b" element={<Lazy.ListYourRoomB />} />
                 <Route path="/list-your-room-c" element={<Lazy.ListYourRoomC />} />
                 <Route path="/qld-house-rules" element={<Marketing.QldHouseRulesPage />} />

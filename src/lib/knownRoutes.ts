@@ -37,6 +37,7 @@ const EXACT = new Set([
   '/for-landlords',
   '/list-your-room',
   '/by-the-room',
+  '/see-quni',
   '/list-your-room-b',
   '/list-your-room-c',
   '/list-your-room-e',
