@@ -16,7 +16,7 @@ import {
 } from '../../lib/byTheRoom'
 
 const fieldClass =
-  'w-full max-w-xs rounded-admin-md border border-admin-line bg-admin-surface-1 px-3 py-2 text-sm text-admin-ink shadow-admin-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral'
+  'w-full max-w-xs rounded-admin-md border border-admin-line bg-admin-surface-1 px-3 py-2 text-sm text-admin-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral'
 
 const stepBtnClass =
   'inline-flex h-9 w-9 items-center justify-center bg-admin-surface-2 text-base font-semibold text-admin-ink-2 hover:bg-admin-coral-tint disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral'
