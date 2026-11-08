@@ -1,6 +1,6 @@
 # Quni feature inventory (living document)
 
-**Last reviewed:** 2026-07-25  
+**Last reviewed:** 2026-11-09  
 **Source of truth:** codebase (`src/`, `api/`, Supabase functions). If this doc disagrees with the app, the app wins until someone updates this file.
 
 Granular list of **renter** (student / non-student tenant) and **landlord** capabilities - including small actions (e.g. **duplicate listing**, **request more information** on a booking). Admin-only tools remain out of scope except a one-line pointer.
@@ -46,7 +46,7 @@ Map tenant/landlord tickets to a bullet (e.g. “Bond receipt download” → St
 ### 6. Scope and prioritisation
 
 - **Roadmap:** mark new bullets as Live when shipped; move wishlist items to a “Backlog (not in product)” subsection if you add them.
-- **Dual-tier work:** see also [`dual-tier-service-model.md`](./dual-tier-service-model.md) for Listing vs Managed rules; this doc lists *what users can click*, not fee tables.
+- **Service model:** Quni Listing is the only service. Rent and bond are paid to the landlord. Quni does not collect them. [`dual-tier-service-model.md`](./dual-tier-service-model.md) is a historical note, not the live product.
 
 ### 7. Onboarding teammates
 
@@ -95,11 +95,11 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 
 - **Verified host** (core trust feature): landlords complete **Stripe Connect identity verification** (regulated KYC by Stripe, not manual Quni ID review) before they can **accept** any booking; when Stripe enables charges, a **Verified host** badge shows on profile and listings so renters get peace of mind
 - Renters may **browse, message, and submit booking requests** before a host finishes Stripe - only **acceptance** is gated on verification
-- **Renters**: no Quni booking/platform/service fees; booking **deposit** via Stripe (card hold/charge at application); ongoing rent via **Quni card** (Stripe Customer) or **bank transfer**; bond is tenancy money between parties (Quni is not the bond custodian)
-- **Landlords - Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
-- **Landlords - Quni Managed**: **Stripe Connect** for identity + **weekly rent collection**; service fee deducted before payout to bank (~2–3 business days typical). Product UI is **feature-flagged** (`managed_tier_enabled`; default off → “coming soon” in marketing/listing tier picker until enabled)
+- **Renters**: no Quni booking, platform, or service fee. Applying does not take a deposit. Bond and rent are paid to the landlord. Quni does not collect, hold, or refund them.
+- **Landlords - Quni Listing**: saved card for a flat **$99** acceptance fee, charged on accept via Stripe. Bond and weekly rent are paid to the landlord. Quni does not collect them and does not take a percentage of rent.
+- **Quni Managed** is not offered.
 - Native apps (Capacitor iOS/Android) with push notifications where installed; primary product surface remains the web app
-- Declined bookings: deposit hold **released/refunded** via automated Stripe flows (often 5–7 business days)
+- If the landlord declines, nothing is charged to the renter.
 - Legal/info: Terms, Privacy, Refunds, How it works, FAQ, Contact, About, Landlord Service Agreement
 - Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) - no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
 
@@ -190,14 +190,14 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 
 ### Booking application (`/booking/:propertyId`) - Live
 
-- Renter role only; multi-step: dates & occupancy → rent method → bond ack → deposit payment
+- Renter role only; multi-step: dates and occupancy, then bond acknowledgement. Applying does not take a deposit.
 - Move-in (min 7 days), lease length, **1–2 occupants**, **co-tenant** fields when 2
 - Optional parking surcharge; message to landlord
-- Rent: **Quni card** or **bank transfer**
-- Bond acknowledgment; Stripe **booking deposit**
+- Rent and bond are paid to the landlord. Quni does not collect them.
+- Bond acknowledgment. Quni does not take a deposit.
 - **Booking draft** in localStorage; date overlap / conflict UI
 - Cannot book own listings (if user is also landlord)
-- **Listing-tier** properties: deposit/booking request allowed before host finishes Stripe identity; **Managed-tier** blocked until host Connect ready
+- A booking request is allowed before the host finishes Stripe identity. Accept stays blocked until then.
 - Statuses: `pending`, `pending_payment`, `pending_confirmation`, `awaiting_info`, `bond_pending`, `confirmed`, `active`, `declined`, `expired`, `payment_failed`, `cancelled`, `completed`, etc.
 - Tenant invite accept flow: `/invite/:token`
 
@@ -214,11 +214,11 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Reply when status is `awaiting_info`
 - Bond receipt download where supported (state / rooming-house rules)
 - **Booking reinstatement** request / confirm / decline where eligible (`/api/booking/reinstatement/*`)
-- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); NSW T3 Standard Occupancy Agreement (registered boarding house); QLD Form R18 rooming on Listing (Managed unsupported); VIC T3 not available
+- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); NSW T3 Standard Occupancy Agreement (registered boarding house); QLD Form R18 rooming on Listing. Managed is not offered. VIC T3 is not available.
 
 ### Payments - Live
 
-- Booking deposit (Stripe); saved card for rent; method stored on booking
+- No renter deposit and no rent payout through Quni. Bond and rent are paid to the landlord.
 
 ### AI & support - Live
 
@@ -240,7 +240,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 
 ### Account & auth - Live
 
-- Signup as landlord; tier intent from pricing (`?tier=listing|managed` → localStorage)
+- Signup as landlord. Quni Listing is the only service.
 - `/landlord-signup` → `/signup`; post-auth → profile/dashboard
 - Sign out; email verification
 - Legacy `/landlord-profile`, `/landlord/profile`, `/landlord-dashboard` → `/landlord/dashboard?tab=…`
@@ -257,7 +257,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Messages via shared `/messages` (chrome / nav)
 - Overview: profile funnel / finish CTA, Stripe payouts card, stats, support
 - **Add new listing** (gated until publish-ready)
-- **Get support** (Qase); Managed Connect banner when needed
+- **Get support** (Qase)
 - **View sample agreements** → `/sample-agreements`
 - **Invite tenant** modal → share `/invite/:token` link for a listing
 
@@ -281,7 +281,7 @@ Per listing:
 - House rules (Yes/No/Approval) + custom; **Reset to platform default**
 - Location + geocode; suggested campuses; extra universities
 - Description; **AI description generator** + **AI proofread**
-- **Quni Listing** vs **Quni Managed** (Managed option gated by `managed_tier_enabled`); rent/week; **AI price suggestion**; occupants; couple/carpark surcharges; bond; lease length; available from
+- **Quni Listing** only. Managed is not offered. Rent per week; **AI price suggestion**; occupants; couple/carpark surcharges; bond; lease length; available from
 - Photos: upload, reorder, captions, remove (HEIC-aware prep)
 - **Publish listing** / **Save changes**; draft resume / start fresh
 
@@ -289,7 +289,7 @@ Per listing:
 
 - Fit summary; occupancy/rent; verification badges; read-only thread
 - **AI assessment** (generate / refresh, cooldown; all applicant tiers)
-- **Accept as Listing** / **Accept as Managed** / **Upgrade and accept as Managed**
+- **Accept as Listing**. Managed accept is not offered.
 - **Decline** (optional reason); **Request more information** (suggested chips + message)
 - **Bond received from renter** (Listing); **Cancel booking**
 - Boarding/lodger: **Mark bond received** → **generate bond receipt**
@@ -318,20 +318,20 @@ Per listing:
 ### Host identity & trust - Live
 
 - **Verified host** badge when Stripe Connect has `charges_enabled` (webhook + sync; flips off if Stripe disables)
-- **Accept booking** gated on Stripe identity for **both** Listing and Managed; Listing also needs saved card for acceptance fee
+- **Accept booking** gated on Stripe identity. Listing also needs a saved card for the $99 acceptance fee.
 - List, message, and receive booking **requests** without verification; only **accept** requires Stripe
 - Admin **manual verified** toggle sets `admin_override_verified` so webhooks do not overwrite
 
 ### Payments & payouts - Live
 
-- **Stripe Connect** (Managed rent payouts; host identity KYC)
-- **Listing fee card**; charge on accept via `/api/confirm-booking` (3DS when needed)
-- Refund deposit on decline; Listing cancel with fee rules
+- **Stripe Connect** is identity verification before accept. Quni does not collect rent.
+- **Listing fee card**; the $99 acceptance fee is charged on accept via `/api/confirm-booking` (3DS when needed)
+- Nothing is charged to the renter if the landlord declines. Listing cancel follows the published fee rules.
 
 ### Service tiers - Live / flagged
 
-- **Quni Listing** - self-managed; card fee on accept; bond/rent with renter; optional upgrade to Managed on accept when Managed is enabled
-- **Quni Managed** - Connect required; managed workflow; no downgrade after upgrade. **UI only / coming soon** while `managed_tier_enabled` is false (APIs exist; marketing and tier picker show coming soon)
+- **Quni Listing** - the landlord self-manages. A flat $99 fee is charged to the landlord's saved card on accept. Bond and rent are paid to the landlord. Quni does not collect them.
+- **Quni Managed** is not offered.
 
 ### AI & support - Live
 
@@ -342,7 +342,7 @@ Per listing:
 
 - Landlord partnerships + lead form → `landlord_leads`
 - Landlord AI page (`/landlords/ai`); pricing CTAs with tier; Landlord Service Agreement
-- `/for-landlords` — desk page behind `desk_shell_enabled` (Preview); Production HTTP 302 → `/services/landlord-partnerships`
+- `/for-landlords` is a desk page behind `desk_shell_enabled` (Preview). Production HTTP 302 to `/services/landlord-partnerships`
 
 ---
 
@@ -366,7 +366,7 @@ Per listing:
 ## Related docs
 
 - [`faq-comprehensive-review.md`](./faq-comprehensive-review.md) - customer-facing FAQ copy  
-- [`dual-tier-service-model.md`](./dual-tier-service-model.md) - Listing vs Managed product rules  
+- [`dual-tier-service-model.md`](./dual-tier-service-model.md) - historical Listing vs Managed note. Managed is not offered.  
 - [`mobile-testing-checklist.md`](./mobile-testing-checklist.md) - device QA  
 - [`professional-workplace-search-scope.md`](./professional-workplace-search-scope.md) - non-student search behaviour  
 - [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) - how chat AI stays aligned with this inventory  
@@ -377,6 +377,7 @@ Per listing:
 
 | Date | Change |
 |------|--------|
+| 2026-11-09 | Listing only. Rent and bond are paid to the landlord. Quni does not collect them. No renter deposit. Managed is not offered. Landlord accept fee remains $99. |
 | 2026-09-15 | QLD Form R18 Listing on Preview (Stage 6): tenancy packages and listing form name Form R18; NSW T3 already live; VIC T3 still not available |
 | 2026-07-25 | Full codebase rescan: profile-first onboarding redirects; renter situation hub + readiness chrome; landlord Overview/Profile tabs + Listing Health; invite tenant; shared app chrome / incomplete nudge; deprecate profile Bookings tab; Managed flag; reinstatement; T3 rooming gap; AI proofread |
 | 2026-06-02 | Trust/Stripe/payments section for AI; sample agreements; knowledge sync script |
