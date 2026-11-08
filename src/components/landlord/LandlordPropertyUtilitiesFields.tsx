@@ -160,7 +160,7 @@ function PerServiceUtilitiesFields({
               value={form.howMustBePaid}
               onChange={(e) => onChange({ howMustBePaid: e.target.value })}
               className={inputClass}
-              placeholder="e.g. Billed quarterly via Quni platform"
+              placeholder="e.g. Invoiced quarterly by the retailer"
             />
           </div>
         </>
