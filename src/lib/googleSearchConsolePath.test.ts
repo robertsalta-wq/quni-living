@@ -33,6 +33,7 @@ describe('classifyPagePath', () => {
     expect(classifyPagePath('/guides')).toBe('guide')
     expect(classifyPagePath('/guides/bond')).toBe('guide')
     expect(classifyPagePath('/for-landlords')).toBe('landlord')
+    expect(classifyPagePath('/by-the-room')).toBe('landlord')
     expect(classifyPagePath('/landlord-dashboard')).toBe('landlord')
     expect(classifyPagePath('/landlords/foo')).toBe('landlord')
     expect(classifyPagePath('/services/managed')).toBe('landlord')

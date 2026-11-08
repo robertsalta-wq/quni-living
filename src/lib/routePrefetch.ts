@@ -55,6 +55,7 @@ const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/landlords/ai': [routeImports.landlordAIFeaturePage],
   '/list-your-room': [routeImports.listYourRoomE],
   '/qld-house-rules': [routeImports.qldHouseRulesPage],
+  '/by-the-room': [routeImports.byTheRoom],
   '/auth/callback': [routeImports.authCallback],
   '/forgot-password': [routeImports.forgotPassword],
   '/reset-password': [routeImports.resetPassword],

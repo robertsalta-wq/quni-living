@@ -247,6 +247,7 @@ export function classifyPagePath(pagePath: string): SearchConsolePageKind {
 
   if (
     p === '/for-landlords' ||
+    p === '/by-the-room' ||
     p.startsWith('/landlords/') ||
     p.startsWith('/landlord-') ||
     p.startsWith('/services/')
