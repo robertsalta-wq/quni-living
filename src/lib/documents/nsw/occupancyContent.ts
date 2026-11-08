@@ -113,13 +113,8 @@ export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'The weekly licence fee and all other obligations under this licence remain unchanged during any periodic continuation unless varied by written agreement of both parties.',
     'For the avoidance of doubt, during any periodic continuation the resident\'s liability on termination is limited to the applicable notice period; the mitigation and re-letting obligations in clause 6 apply only during the fixed period.',
   ],
-  feeFreeBankTransfer:
-    'A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the Principal-side service fee described below.',
   bankDetailsTemplate:
     'Direct credit details for payment of the weekly licence fee will be provided by the Principal (account name, BSB and account number). Use your name and the property address as the payment reference.',
-  platformIntroPrefix:
-    'operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The Principal remains responsible for the allocated room, shared areas and this licence.',
-  platformSectionTitle: "Quni platform, Principal's warranty and service fee",
   platformWarrantyParagraph:
     "Principal's warranty. The Principal warrants that they have the right to grant this licence and, where they are not the registered proprietor of the premises, that they hold any consent required from the registered owner, any co-owners, or the Principal's own landlord to grant it. The resident acknowledges that their right to occupy depends on the Principal's continuing right to grant it.",
   executionIntro:
@@ -134,7 +129,7 @@ export const NSW_OCCUPANCY_PDF_MARKERS = [
   'Security deposit',
   'Residential Tenancies Act 2010',
   'not lodged with NSW Fair Trading',
-  'Quni platform fees, booking fees or resident service fees',
+  'The resident pays Quni Living nothing',
   'Subject to final legal review',
   'Principal',
   'Term and termination',

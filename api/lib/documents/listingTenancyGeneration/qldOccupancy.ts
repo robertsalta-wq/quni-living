@@ -14,13 +14,9 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
-import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { sendForSigning } from '../../docuseal.js'
 import { fetchPlatformBusinessIdentityForDocuments } from '../../platformConfig.js'
 import type { PlatformBusinessIdentity } from '../../platformConfig.js'
-import {
-  licenceFacilitatedThroughLine,
-  licenceManagedPaymentMethod,
-} from './occupancyPlatformProse.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 import {
@@ -237,15 +233,9 @@ async function loadQldOccupancyContext(
     return { ok: false, status: 500, error: PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED }
   }
 
-  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
-  const platformFeePercent =
-    serviceTier === 'managed'
-      ? await getManagedLandlordFeePercentForProperty(booking.property_id)
-      : 0
-  const paymentMethod =
-    serviceTier === 'listing'
-      ? 'Direct credit (see clause 11)'
-      : licenceManagedPaymentMethod(platformIdentity.tradingName)
+  const serviceTier = 'listing' as const
+  const platformFeePercent = 0
+  const paymentMethod = 'Direct credit (see clause 11)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
@@ -274,6 +264,9 @@ async function loadQldOccupancyContext(
     sp,
     propertyAddressLine: propertyAddressLine(prop),
   })
+  if (!payeeFields.ok) {
+    return { ok: false, status: payeeFields.status, error: payeeFields.error }
+  }
 
   return {
     ok: true,
@@ -356,8 +349,7 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
     platformAcn: ctx.platformIdentity.acn || undefined,
     platformTradingName: ctx.platformIdentity.tradingName || undefined,
     specialConditions: [
-      licenceFacilitatedThroughLine(ctx.platformIdentity.tradingName),
-      "Where a bond is required under this Licence, it must not exceed the equivalent of four (4) weeks' licence fee. The bond must be lodged with the Residential Tenancies Authority (RTA) and may be lodged either by the resident directly through RTA Web Services, or by the Principal within 10 days of receiving it. The bond is held by the RTA - not by the Principal and not by Quni; where Quni's payment facilities are used, Quni acts only as a conduit for transmission and is never the custodian of any bond. At the end of the occupancy the bond is dealt with through the RTA's Refund of Rental Bond process. Any claim by the Principal against the bond will be supported by evidence (including the condition reports and photographs) provided to the resident, and unresolved claims are dealt with through the RTA's dispute resolution service and, if necessary, QCAT.",
+      "Where a bond is required under this Licence, it must not exceed the equivalent of four (4) weeks' licence fee. The bond must be lodged with the Residential Tenancies Authority (RTA) and may be lodged either by the resident directly through RTA Web Services, or by the Principal within 10 days of receiving it. The bond is held by the RTA - not by the Principal and not by Quni. At the end of the occupancy the bond is dealt with through the RTA's Refund of Rental Bond process. Any claim by the Principal against the bond will be supported by evidence (including the condition reports and photographs) provided to the resident, and unresolved claims are dealt with through the RTA's dispute resolution service and, if necessary, QCAT.",
       ...(ctx.roomsForResidents != null ? [qldSection43PdfAcknowledgement(ctx.roomsForResidents)] : []),
       ...ctx.coTenantSpecialConditions,
     ],

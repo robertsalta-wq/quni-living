@@ -16,7 +16,6 @@ import { formatDisplayName } from '../lib/formatDisplayName'
 import { studentDisplayName } from '../lib/nameResolution'
 import { formatDate } from './admin/adminUi'
 import { apiUrl } from '../lib/apiUrl'
-import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import {
   PROFILE_INCOMPLETE_NUDGE_CARD_CLASS,
   ProfileIncompleteNudge,
@@ -602,12 +601,6 @@ export default function StudentDashboard() {
                 </span>
               </button>
             </div>
-
-            {profile && (
-              <div className="mb-5">
-                <StudentStripePaymentsCard profile={profile} onRefresh={load} />
-              </div>
-            )}
 
             <Link
               to="/sample-agreements"

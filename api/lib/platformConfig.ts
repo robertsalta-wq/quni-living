@@ -90,13 +90,6 @@ export async function fetchServiceTierResolverContext(
   return { ...flags, managedOverrides }
 }
 
-const BANK_KEYS_FOR_RTA = [
-  PLATFORM_CONFIG_KEYS.BANK_BSB,
-  PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NUMBER,
-  PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NAME,
-  PLATFORM_CONFIG_KEYS.BANK_BANK_NAME,
-] as const
-
 const BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS = [
   PLATFORM_CONFIG_KEYS.BUSINESS_LEGAL_NAME,
   PLATFORM_CONFIG_KEYS.BUSINESS_TRADING_NAME,
@@ -240,26 +233,8 @@ export type BankDetailsForRta = {
   bankName: string
 }
 
-/**
- * Loads bank.* from platform_config. Does not throw - callers validate non-empty fields.
- */
-export async function fetchBankDetailsForRta(
-  client: SupabaseClient<Database>,
-): Promise<BankDetailsForRta> {
-  const map = await fetchPlatformConfigValueMap(client, BANK_KEYS_FOR_RTA)
-  return {
-    bsb: (map[PLATFORM_CONFIG_KEYS.BANK_BSB] ?? '').trim(),
-    accountNumber: (map[PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NUMBER] ?? '').trim(),
-    accountName: (map[PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NAME] ?? '').trim(),
-    bankName: (map[PLATFORM_CONFIG_KEYS.BANK_BANK_NAME] ?? '').trim(),
-  }
-}
-
-/** FT6600 schedule line: direct deposit + platform option (RTA s.35 free transfer). */
+/** Direct deposit line for the landlord account named in the agreement. */
 export function buildRtaRentPaymentMethodLine(details: BankDetailsForRta): string {
   const bsb = formatBsbDisplay(details.bsb)
-  return (
-    `Direct deposit - Account name: ${details.accountName}; BSB: ${bsb}; Account number: ${details.accountNumber}. ` +
-    'Tenants may also pay recurring rent via the Quni Living platform (quni.com.au).'
-  )
+  return `Direct deposit - Account name: ${details.accountName}; BSB: ${bsb}; Account number: ${details.accountNumber}.`
 }

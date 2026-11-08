@@ -9,7 +9,6 @@ export {
   fetchPlatformConfigRows,
   fetchPlatformConfigValueMap,
   fetchServiceTierPlatformFlags,
-  fetchBankDetailsForRta,
   buildRtaRentPaymentMethodLine,
   parseBooleanConfig,
   parseIntegerCentsConfig,

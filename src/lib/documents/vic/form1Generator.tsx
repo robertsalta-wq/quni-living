@@ -21,8 +21,6 @@ import {
 /** Reuses the QLD/NSW residential schedule prop bag - no VIC-specific types. */
 export type VicResidentialRentalAgreementForm1Props = QldGeneralTenancyAgreementProps
 
-const QUNI_RENT_PORTAL_URL = 'https://quni.com.au'
-
 function rentDueWeekdayFromCommencement(isoDate: string): string {
   const raw = isoDate.slice(0, 10)
   const [y, m, d] = raw.split('-').map(Number)
@@ -50,9 +48,7 @@ export function item8RentPaymentDetails(
       ? `Direct deposit - Account name: ${name}; BSB: ${bsb}; Account number: ${acct}.`
       : 'Direct deposit (bank deposit) - account details to be provided by the rental provider.'
 
-  if (preference === 'quni_platform') {
-    return `${bankLine} Recurring rent may also be paid via the Quni Living platform (${QUNI_RENT_PORTAL_URL}) using the payment facility activated in the renter's Quni account.`
-  }
+  void preference
   return bankLine
 }
 
@@ -455,7 +451,7 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
       <Text style={styles.subHeading}>Part B - Standard terms (schedule highlights)</Text>
       <Text style={{ ...styles.body, marginBottom: 4 }}>8. Rental provider&apos;s preferred methods of payment</Text>
       <CheckboxLine checked label="bank deposit" />
-      <CheckboxLine checked={rentPaymentPreference === 'quni_platform'} label="other electronic form of payment, including Centrepay" />
+      <CheckboxLine checked={false} label="other electronic form of payment, including Centrepay" />
       <Field label="Payment details:" children={paymentDetails} />
 
       <Text style={{ ...styles.body, marginTop: 6, fontFamily: 'Helvetica-Bold' }}>9. Electronic service of notices</Text>

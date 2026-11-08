@@ -50,11 +50,7 @@ export type LicenceOccupyContent = {
   conditionReportParagraphs?: readonly string[]
   /** Clause 13 - continuation after fixed period (NSW). */
   continuationParagraphs?: readonly string[]
-  feeFreeBankTransfer: string
   bankDetailsTemplate: string
-  platformIntroPrefix: string
-  /** Section 11 heading (default Quni platform and owner service fee). */
-  platformSectionTitle?: string
   platformWarrantyParagraph?: string
   executionIntro: string
   /** Embed DocuSeal width/height on signature/date tags (NSW). */

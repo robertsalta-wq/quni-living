@@ -62,9 +62,9 @@ export const QUINN_ROBERT_FT6600_LISTING_INPUT = {
   },
   property: QUINN_ROBERT_FT6600_PROPERTY,
   bankDetails: {
-    bsb: '939200',
-    accountNumber: '823175945',
-    accountName: 'QUINNVESTMENTS PTY LTD',
-    bankName: 'Bank',
+    bsb: '062000',
+    accountNumber: '11223344',
+    accountName: 'Quinn Lee',
+    bankName: 'Commonwealth Bank',
   },
 }

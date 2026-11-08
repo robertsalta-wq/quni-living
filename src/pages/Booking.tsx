@@ -13,7 +13,6 @@ import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import QldRtaLodgementGuidance from '../components/bond/QldRtaLodgementGuidance'
 import {
-  isLandlordHeldBondContext,
   isPropertyListingType,
   PROPERTY_LISTING_TYPE_LABELS,
   type PropertyListingType,
@@ -62,7 +61,7 @@ import {
   QLD_ITEM_5_RESIDENT_HELPER,
 } from '../lib/tenancy/qldRoomingListingFields'
 import { QldNoticeConsentFields } from '../components/tenancy/QldNoticeConsentFields'
-import { statutoryRentBankTransferCopy, normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
+import { normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
 import {
   earliestSelectableMoveInIso,
   isListingAvailableNow,
@@ -659,7 +658,7 @@ export default function Booking() {
   const [moveIn, setMoveIn] = useState(() => listingIsoDateUtc())
   const [leaseLength, setLeaseLength] = useState<LeaseOption>('6 months')
   const [message, setMessage] = useState('')
-  const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('quni_platform')
+  const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('bank_transfer')
   const [bondCheck, setBondCheck] = useState(false)
   const [listingCheck, setListingCheck] = useState(false)
   const [occupantCount, setOccupantCount] = useState<1 | 2>(1)
@@ -1075,8 +1074,8 @@ export default function Booking() {
           if (typeof d.message === 'string') setMessage(d.message)
           if (typeof d.bondCheck === 'boolean') setBondCheck(d.bondCheck)
           if (typeof d.listingCheck === 'boolean') setListingCheck(d.listingCheck)
-          if (d.rentPaymentMethod === 'bank_transfer' || d.rentPaymentMethod === 'quni_platform') {
-            setRentPaymentMethod(d.rentPaymentMethod)
+          if (d.rentPaymentMethod === 'bank_transfer') {
+            setRentPaymentMethod('bank_transfer')
           }
           if (d.occupantCount === 2) setOccupantCount(2)
           else if (d.occupantCount === 1) setOccupantCount(1)
@@ -1833,14 +1832,13 @@ export default function Booking() {
     )
   }
 
-  const hostStripeChargesReady = property.landlord_profiles?.stripe_charges_enabled === true
-  if (!isListingProperty && !hostStripeChargesReady) {
+  if (!isListingProperty) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Bookings not available yet</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Bookings not available</h1>
         <p className="text-gray-600 text-sm mt-3 leading-relaxed">
-          This host has not finished Stripe payout setup for Quni Managed bookings. Online booking and deposit payments
-          will be available once they complete Stripe Connect from their landlord dashboard.
+          Managed bookings are no longer available. Rent is paid to the landlord, and this listing cannot be booked
+          until it is a Listing property.
         </p>
         <Link
           to={property.slug ? `/properties/${property.slug}` : '/listings'}
@@ -1899,8 +1897,6 @@ export default function Booking() {
       : undefined
 
   const stateAu = normalizeAuStateCode(property?.state)
-  const rtaExemptArrangement = isLandlordHeldBondContext(property?.property_type, property?.state)
-  const statutoryRentCopy = statutoryRentBankTransferCopy(property?.state, rtaExemptArrangement)
 
   return (
     <div
@@ -2210,7 +2206,7 @@ export default function Booking() {
                 setOccupancyError(null)
                 setDetailsDateError(null)
                 setSubmitError(null)
-                setStep(isListingProperty ? 3 : 2)
+                setStep(3)
               }}
               disabled={rentResolution != null && 'error' in rentResolution}
               className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50 disabled:pointer-events-none"
@@ -2224,96 +2220,6 @@ export default function Booking() {
             >
               Back to listing
             </Link>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && !isListingProperty && (
-        <div className="mt-8 space-y-6" role="radiogroup" aria-labelledby="rent-payment-heading">
-          <h2 id="rent-payment-heading" className="text-lg font-bold text-gray-900">
-            How would you like to pay your weekly rent?
-          </h2>
-          {rtaExemptArrangement ? (
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Paying through Quni by card is the usual way to get started; any card surcharge is passed through at cost. You
-              can also pay rent by bank transfer. There is no legal requirement to offer bank transfer for this listing type,
-              but both options are available for consistency.
-            </p>
-          ) : statutoryRentCopy ? (
-            <p className="text-sm text-gray-600 leading-relaxed">{statutoryRentCopy}</p>
-          ) : (
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Bank transfer and card payment through Quni are available. Card surcharges apply at actual cost.
-            </p>
-          )}
-
-          <div className="space-y-3">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={rentPaymentMethod === 'quni_platform'}
-              onClick={() => setRentPaymentMethod('quni_platform')}
-              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
-                rentPaymentMethod === 'quni_platform'
-                  ? 'border-[var(--quni-coral)] bg-admin-coral/5 shadow-sm'
-                  : 'border-stone-200 bg-white hover:border-stone-300'
-              }`}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-bold text-gray-900">Pay via Quni (card)</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-100 text-emerald-900 px-2 py-0.5">
-                  Recommended
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Pay by card via the Quni platform. A processing surcharge applies at actual cost: 1.7% + $0.30 for Australian
-                cards, 3.5% + $0.30 for international cards.
-              </p>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={rentPaymentMethod === 'bank_transfer'}
-              onClick={() => setRentPaymentMethod('bank_transfer')}
-              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
-                rentPaymentMethod === 'bank_transfer'
-                  ? 'border-[var(--quni-coral)] bg-admin-coral/5'
-                  : 'border-stone-200 bg-white hover:border-stone-300'
-              }`}
-            >
-              <div className="text-sm font-bold text-gray-900">Bank transfer (free - no additional cost)</div>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Transfer directly to Quni&apos;s account each week. BSB and account details are provided after booking is
-                confirmed.
-              </p>
-            </button>
-          </div>
-
-          {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="flex-1 rounded-xl border border-gray-200 text-gray-800 py-3 text-sm font-medium hover:bg-gray-50"
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const moveInErr = validateMoveInStep()
-                if (moveInErr) {
-                  setSubmitError(moveInErr)
-                  return
-                }
-                setSubmitError(null)
-                setStep(3)
-              }}
-              className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
-            >
-              Continue
-            </button>
           </div>
         </div>
       )}
@@ -2459,7 +2365,7 @@ export default function Booking() {
             <button
               type="button"
               onClick={() => {
-                setStep(isListingProperty ? 1 : 2)
+                setStep(1)
                 setClientSecret(null)
                 setDepositCents(null)
               }}
