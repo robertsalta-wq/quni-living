@@ -86,10 +86,6 @@ export function LandlordServiceAgreementContent() {
         not a tenancy agreement, and it does not create a tenancy between you and us.
       </LegalP>
       <LegalP>
-        Quni Managed is a different product, governed by the Quni Managed Landlord Service Agreement. If
-        you are on Quni Listing, that agreement does not apply to you.
-      </LegalP>
-      <LegalP>
         By creating a landlord account on Quni Listing you agree to this Agreement, our{' '}
         <Link to="/terms" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
           Terms of Service

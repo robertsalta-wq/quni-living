@@ -1978,7 +1978,7 @@ export default function PropertyDetail({
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
-                      Secure payments via Quni
+                      Rent and bond paid to the landlord
                     </p>
                     <p className="flex gap-2">
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
