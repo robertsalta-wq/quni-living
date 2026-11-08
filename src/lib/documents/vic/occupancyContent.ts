@@ -67,12 +67,8 @@ export const VIC_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'The resident should return a signed copy or written comments within the timeframe notified by the owner or the platform, failing which the report may be taken as accepted except for manifest errors or items the resident could not reasonably have inspected.',
   conditionReportOutgoing:
     'At the end of the licence, an outgoing condition report may be used to compare the state of the allocated room and shared areas with the ingoing report, fair wear and tear excepted.',
-  feeFreeBankTransfer:
-    'A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the owner-side service fee described below.',
   bankDetailsTemplate:
     'Direct credit details for payment of the weekly licence fee will be provided by the owner (account name, BSB and account number). Use your name and the property address as the payment reference.',
-  platformIntroPrefix:
-    'operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The owner remains responsible for the allocated room, shared areas and this licence.',
   executionIntro:
     'The parties intend that electronic signing, where used, is valid and binding. Signature and date fields may be completed through a future signing workflow.',
 }

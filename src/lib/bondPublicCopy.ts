@@ -2,16 +2,13 @@
 export const BOND_NEUTRAL_MARKETING =
   'For standard residential tenancies, bond is lodged with your state or territory bond authority. In NSW, bond for hosted rooms (boarder/lodger arrangements) may be held by the landlord. In Queensland, if a bond is taken for a boarder/lodger arrangement it must still be lodged with the RTA within 10 days. Quni does not hold bond money for any tenancy.'
 
-/**
- * Listing vs Managed: payment conduit vs bond custodian - use where tier distinction matters
- * (how-it-works, refunds context, long-form marketing).
- */
+/** Bond stays on the statutory route. Quni does not carry it. */
 export const BOND_CONDUIT_VS_CUSTODY =
-  'On Quni Listing, bond and weekly rent are paid directly between landlord and renter; Quni does not route those tenancy funds. On Quni Managed, bond and rent may pass through Quni’s payment infrastructure for a limited time (for example card capture and settlement). That conduit role is not the same as Quni acting as bond custodian under state bond laws - ultimate lodgement and custody still follow the landlord or the relevant bond authority as the law requires.'
+  'Bond follows the statutory route for the tenancy. The renter pays the bond authority, or pays the landlord who lodges it, as the law requires. Quni does not hold, transfer or refund the bond.'
 
-/** Managed conduit vs custody - short line for step lists (e.g. how-it-works). */
+/** Short bond line for step lists. */
 export const BOND_MANAGED_CONDUIT_SHORT =
-  'On Managed, bond and rent may pass through Quni’s payment infrastructure briefly (for example card capture); that conduit role is not the same as Quni acting as bond custodian under state bond laws.'
+  'Bond is paid to the state bond authority, or to the landlord who lodges it. Quni does not hold, transfer or refund the bond.'
 
 /** Shorter line for compact pricing cards (renter column). */
 export const BOND_NEUTRAL_PRICING_SHORT =
@@ -19,7 +16,7 @@ export const BOND_NEUTRAL_PRICING_SHORT =
 
 /** FAQ / pricing accordion - bond handling question. */
 export const BOND_FAQ_HOW_HANDLED =
-  'For standard residential tenancies, bond is lodged with your state or territory bond authority. In NSW, bond for hosted rooms (boarder/lodger arrangements) may be held by the landlord. In Queensland, if a bond is taken for a boarder/lodger arrangement it must still be lodged with the RTA within 10 days. Quni does not hold bond money for any tenancy. On Quni Listing, bond is between landlord and renter. On Quni Managed, lodgement may be coordinated where your tenancy requires a statutory scheme.'
+  'For standard residential tenancies, bond is lodged with your state or territory bond authority. In NSW, bond for hosted rooms (boarder/lodger arrangements) may be held by the landlord. In Queensland, if a bond is taken for a boarder/lodger arrangement it must still be lodged with the RTA within 10 days. Quni does not hold, transfer or refund the bond.'
 
 /** FAQ - hosted room vs private room bond distinction. */
 export const BOND_FAQ_HOSTED_VS_PRIVATE =

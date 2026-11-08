@@ -3,14 +3,18 @@ import type { Database } from '../../../../src/lib/database.types.js'
 import type { OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 import { effectiveQldBondRemittancePreference, parseQldBondRemittancePreference } from '../../tenancy/qldBondRemittance.js'
-import { propertyPayoutDetailsComplete } from '../../../../src/lib/propertyPayoutDetails.js'
+import { loadLandlordPayoutBankForDocument } from './landlordPayoutBank.js'
 
 export type OccupancyListingPayeeFields = {
-  payout: OccupancyPayeePdf | null
+  payout: OccupancyPayeePdf
   paymentReference: string
   qldBondRemittancePreference: 'landlord_collects_remits' | 'tenant_choice' | null
   schemeApplies: boolean
 }
+
+export type OccupancyListingPayeeLoad =
+  | ({ ok: true } & OccupancyListingPayeeFields)
+  | { ok: false; status: number; error: string }
 
 function studentDisplayName(sp: {
   first_name?: string | null
@@ -25,7 +29,7 @@ function studentDisplayName(sp: {
 }
 
 /**
- * Listing occupancy PDF: load payee + QLD preference + scheme flag (best-effort payout).
+ * Occupancy PDF payee. Refuses to build when the landlord account is incomplete.
  */
 export async function loadOccupancyListingPayeeFields(
   admin: SupabaseClient<Database>,
@@ -37,7 +41,8 @@ export async function loadOccupancyListingPayeeFields(
     sp: { first_name?: string | null; last_name?: string | null; full_name?: string | null }
     propertyAddressLine: string
   },
-): Promise<OccupancyListingPayeeFields> {
+): Promise<OccupancyListingPayeeLoad> {
+  void args.serviceTier
   const propState = typeof args.prop.state === 'string' && args.prop.state.trim() ? args.prop.state.trim() : 'NSW'
   const tenancyPackage = resolveTenancyPackage(
     tenancyPackageInputFromPropertyRow(args.prop, { date: args.moveIn || undefined }),
@@ -58,30 +63,16 @@ export async function loadOccupancyListingPayeeFields(
       ? effectiveQldBondRemittancePreference(parseQldBondRemittancePreference(qldPrefRaw))
       : null
 
-  let payout: OccupancyPayeePdf | null = null
-  const propertyId =
-    typeof args.propertyId === 'string' && args.propertyId.trim() ? args.propertyId.trim() : ''
-  if (args.serviceTier === 'listing' && propertyId) {
-    const { data: payoutRow, error: payoutErr } = await admin
-      .from('property_payout_details')
-      .select('account_name, bsb, account_number')
-      .eq('property_id', propertyId)
-      .maybeSingle()
-    if (payoutErr) {
-      console.error('[occupancy-payee] load payout details', payoutErr)
-    } else if (payoutRow && propertyPayoutDetailsComplete(payoutRow)) {
-      payout = {
-        account_name: payoutRow.account_name!.trim(),
-        bsb: payoutRow.bsb!.trim(),
-        account_number: payoutRow.account_number!.trim(),
-      }
-    } else if (args.serviceTier === 'listing') {
-      console.warn('[occupancy-payee] listing occupancy missing complete payout at generation', propertyId)
-    }
-  }
+  const bank = await loadLandlordPayoutBankForDocument(admin, args.propertyId)
+  if (!bank.ok) return bank
 
   return {
-    payout,
+    ok: true,
+    payout: {
+      account_name: bank.bankDetails.accountName,
+      bsb: bank.bankDetails.bsb,
+      account_number: bank.bankDetails.accountNumber,
+    },
     paymentReference,
     qldBondRemittancePreference,
     schemeApplies,

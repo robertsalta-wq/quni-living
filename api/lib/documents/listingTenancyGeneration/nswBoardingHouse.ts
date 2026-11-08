@@ -262,6 +262,9 @@ async function loadNswBoardingHouseContext(
     sp,
     propertyAddressLine: propertyAddressLine(prop),
   })
+  if (!payeeFields.ok) {
+    return { ok: false, status: payeeFields.status, error: payeeFields.error }
+  }
 
   const sharedAreas = parseNswT3SharedAreas(prop.shared_areas)
   const additionalCharges = parseNswT3AdditionalCharges(prop.additional_charges)

@@ -1,25 +1,17 @@
 /**
- * Student booking apply - tier-branched (mirrors confirmListing / confirmManaged on accept).
+ * Student booking apply.
  *
- * Managed: PaymentIntent (manual capture) + commit with paymentIntentId.
- * Listing: no student Stripe call - commit inserts pending_confirmation with no deposit fields.
+ * Listing: preview and commit insert a request. No renter PaymentIntent, deposit, bond, or rent charge.
+ * Any other tier, including Managed, is refused. Rent is paid to the landlord.
  *
- * POST JSON (Managed create PI): {
- *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, listingAcknowledged,
- *   occupantCount?: 1|2, parkingSelected?: boolean
- * }
- * POST JSON (Listing apply preview): same body → { listingApply: true, weeklyRent, ... }
- * POST JSON (commit): {
- *   commit: true, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
- *   listingAcknowledged,
- *   paymentIntentId?,  // Managed only
- *   propertyType?, rentPaymentMethod?, conversationId?, occupantCount?, parkingSelected?,
+ * POST JSON (preview or commit): {
+ *   commit?: true, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   listingAcknowledged, propertyType?, conversationId?, occupantCount?, parkingSelected?,
  *   coTenant?: { full_name, email, phone, date_of_birth }
  * }
  *
  * Authorization: Bearer <Supabase access_token>
  */
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import {
   buildBookingRejectVisibility,
@@ -29,10 +21,6 @@ import {
 } from './lib/booking/captureBookingRejected.js'
 import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
 import { mergeDeviceContextMetadata, requestContextFromRequest } from './lib/journey/requestContext.js'
-import {
-  calculateBookingFeeCents,
-  getActivePricingSnapshotForProperty,
-} from './lib/pricing/index.js'
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import { moveInFloorError } from './lib/booking/moveInFloor.js'
@@ -48,7 +36,6 @@ import {
   insertRentInviteOfferAppliedEvent,
 } from './lib/booking/tenantInviteRentOffer.js'
 import {
-  assertPiMetadataMatchesOccupancy,
   OCCUPANCY_PROPERTY_COLUMNS,
   parseOccupancyScalarsFromBody,
   housematesCountFromOccupantCount,
@@ -64,7 +51,6 @@ import {
   isListingServiceTier,
   LISTING_SNAPSHOT_PROPERTY_COLUMNS,
 } from './lib/booking/listingBookingApply.js'
-import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
 import { landlordResponseExpiresAtIso } from './lib/booking/landlordResponseExpiry.js'
 import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
 import { isQldRoomingArrangement, resolveTenancyPackage } from './lib/resolveTenancyPackage.js'
@@ -723,427 +709,6 @@ async function handleListingBookingCommit(request, origin, body) {
   )
 }
 
-async function handlePaymentIntentCommit(request, origin, body) {
-  const deviceCtx = requestContextFromRequest(request)
-  const stripeSecret = process.env.STRIPE_SECRET_KEY
-  const supabaseUrl = process.env.SUPABASE_URL
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
-
-  if (!stripeSecret || !supabaseUrl || !serviceRole || !anonKey) {
-    return json({ error: 'Server misconfigured' }, 500, origin)
-  }
-
-  const paymentIntentId =
-    typeof body.paymentIntentId === 'string' ? body.paymentIntentId.trim() : ''
-  const propertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
-  const moveInDate = typeof body.moveInDate === 'string' ? body.moveInDate.trim() : ''
-  const leaseLength = typeof body.leaseLength === 'string' ? body.leaseLength.trim() : ''
-  const studentMessage = typeof body.studentMessage === 'string' ? body.studentMessage.slice(0, 4000) : ''
-  const bondAcknowledged = body.bondAcknowledged === true
-  const listingAcknowledged = body.listingAcknowledged === true
-  const propertyTypeRaw = typeof body.propertyType === 'string' ? body.propertyType.trim() : ''
-  const propertyType = VALID_PROPERTY_TYPES.has(propertyTypeRaw) ? propertyTypeRaw : 'entire_property'
-  const rentPaymentMethodRaw =
-    typeof body.rentPaymentMethod === 'string' ? body.rentPaymentMethod.trim() : ''
-  const rentPaymentMethod =
-    rentPaymentMethodRaw === 'bank_transfer' || rentPaymentMethodRaw === 'quni_platform'
-      ? rentPaymentMethodRaw
-      : null
-  const conversationIdHint =
-    typeof body.conversationId === 'string' ? body.conversationId.trim() : ''
-
-  const occupancyParsed = parseOccupancyScalarsFromBody(body)
-  if (!occupancyParsed.ok) {
-    return json(occupancyParsed.body, occupancyParsed.status, origin)
-  }
-  const { occupantCount, parkingSelected } = occupancyParsed
-
-  if (!paymentIntentId || !propertyId || !moveInDate || !leaseLength) {
-    return json({ error: 'paymentIntentId, propertyId, moveInDate, and leaseLength are required' }, 400, origin)
-  }
-  if (!bondAcknowledged) {
-    return json({ error: 'Bond acknowledgement is required' }, 400, origin)
-  }
-  if (!listingAcknowledged) {
-    return json({ error: 'Listing acknowledgement is required' }, 400, origin)
-  }
-  if (!rentPaymentMethod) {
-    return json(
-      { error: 'rentPaymentMethod is required and must be bank_transfer or quni_platform' },
-      400,
-      origin,
-    )
-  }
-
-  const auth = request.headers.get('authorization') || ''
-  const token = auth.replace(/^Bearer\s+/i, '').trim()
-  if (!token) {
-    return json({ error: 'Missing authorization' }, 401, origin)
-  }
-
-  const supabaseAuth = createClient(supabaseUrl, anonKey)
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabaseAuth.auth.getUser(token)
-
-  if (userErr || !user) {
-    return json({ error: 'Invalid or expired session' }, 401, origin)
-  }
-
-  const attemptId = readAttemptIdFromBody(body)
-  const admin = createClient(supabaseUrl, serviceRole)
-  recordBookingSubmitAttempt(admin, user, propertyId, 'managed_commit', attemptId, null, deviceCtx)
-
-  const emailBlockManaged = assertRenterEmailConfirmed(
-    user,
-    json,
-    origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId, ...deviceCtx }),
-  )
-  if (emailBlockManaged) return emailBlockManaged
-
-  const eligibilityBlockManaged = await assertRenterEligibleForBooking(
-    admin,
-    user.id,
-    propertyId,
-    json,
-    origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId, ...deviceCtx }),
-  )
-  if (eligibilityBlockManaged) return eligibilityBlockManaged
-
-  const stripe = new Stripe(stripeSecret)
-
-  const { data: student, error: stErr } = await admin
-    .from('student_profiles')
-    .select('id, user_id, email, full_name, first_name, last_name, stripe_customer_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (stErr || !student) {
-    return json({ error: 'Student profile not found' }, 404, origin)
-  }
-
-  const coTenantResolved = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant, {
-    primaryTenantEmail: student.email,
-  })
-  if (!coTenantResolved.ok) {
-    return json(coTenantResolved.body, coTenantResolved.status, origin)
-  }
-  const coTenant = coTenantResolved.coTenant
-
-  const managedVis = buildBookingRejectVisibility(user, propertyId, 'managed_commit', {
-    attempt_id: attemptId,
-    student_profile_id: student.id,
-    email: student.email ?? user.email ?? null,
-    ...deviceCtx,
-  })
-
-  const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
-  if (block1) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_unavailable_precheck', managedVis)
-    const blocked1 = await rejectIfBlocked(block1, managedVis, 'property_unavailable')
-    if (blocked1) return blocked1
-  }
-  const block2 = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
-  if (block2) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'duplicate_booking_precheck', managedVis)
-    const blocked2 = await rejectIfBlocked(block2, managedVis, 'duplicate_booking')
-    if (blocked2) return blocked2
-  }
-  const block2b = await assertStudentPropertyGroupFree(
-    admin,
-    student.id,
-    propertyId,
-    moveInDate,
-    origin,
-  )
-  if (block2b) {
-    await releaseAuthorisedDepositIntent(
-      stripe,
-      paymentIntentId,
-      'property_group_double_hold_precheck',
-      managedVis,
-    )
-    const blocked2b = await rejectIfBlocked(block2b, managedVis, 'property_group_double_hold')
-    if (blocked2b) return blocked2b
-  }
-  const block3 = await assertNoCrossPropertyDateOverlap(
-    admin,
-    student.id,
-    propertyId,
-    moveInDate,
-    leaseLength,
-    origin,
-    { stripe, paymentIntentId },
-  )
-  if (block3) {
-    const blocked3 = await rejectIfBlocked(block3, managedVis, 'date_overlap')
-    if (blocked3) return blocked3
-  }
-
-  const { data: property, error: propErr } = await admin
-    .from('properties')
-    .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, rooms_rented_to_residents, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
-    )
-    .eq('id', propertyId)
-    .maybeSingle()
-
-  if (propErr || !property) {
-    return json({ error: 'Property not found' }, 404, origin)
-  }
-
-  const moveInFloorErrManaged = moveInFloorError(moveInDate, property.available_from)
-  if (moveInFloorErrManaged) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'invalid_move_in_date', managedVis)
-    return json({ error: moveInFloorErrManaged }, 400, origin)
-  }
-
-  if (property.status !== 'active') {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_not_active', managedVis)
-    await captureBookingRejected({
-      ...managedVis,
-      service_tier: property.service_tier ?? null,
-      error_code: 'property_unavailable',
-      http_status: 409,
-    })
-    return json(
-      {
-        error: 'property_unavailable',
-        message: 'This property is no longer available.',
-      },
-      409,
-      origin,
-    )
-  }
-
-  if (isListingServiceTier(property.service_tier)) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'listing_property_managed_commit')
-    return json({ error: 'This Listing property does not use a deposit authorization' }, 400, origin)
-  }
-
-  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
-  if (!rentResolved.ok) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'invalid_rent_commit')
-    return json(rentResolved.body, rentResolved.status, origin)
-  }
-  const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
-  const depositCents = weeklyRentCents
-
-  let pi
-  try {
-    pi = await stripe.paymentIntents.retrieve(paymentIntentId)
-  } catch (e) {
-    console.error('retrieve PI commit', e)
-    return json({ error: 'Invalid payment' }, 400, origin)
-  }
-
-  const meta = pi.metadata || {}
-  const metaStudent = typeof meta.studentProfileId === 'string' ? meta.studentProfileId.trim() : ''
-  const metaProperty = typeof meta.propertyId === 'string' ? meta.propertyId.trim() : ''
-  if (metaStudent !== student.id || metaProperty !== propertyId) {
-    return json({ error: 'Payment does not match this listing' }, 400, origin)
-  }
-
-  const customerOk =
-    typeof student.stripe_customer_id === 'string' &&
-    student.stripe_customer_id.trim() &&
-    pi.customer === student.stripe_customer_id.trim()
-  if (!customerOk) {
-    return json({ error: 'Payment does not match your account' }, 400, origin)
-  }
-
-  if (pi.status !== 'requires_capture' && pi.status !== 'succeeded') {
-    return json({ error: `Payment is not authorised (status: ${pi.status})` }, 400, origin)
-  }
-
-  const metaMatch = assertPiMetadataMatchesOccupancy(meta, {
-    occupantCount,
-    parkingSelected,
-    weeklyRentCents,
-    depositCents,
-  })
-  if (!metaMatch.ok) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'pi_occupancy_mismatch')
-    return json(metaMatch.body, 400, origin)
-  }
-
-  let pricingCell
-  try {
-    pricingCell = await getActivePricingSnapshotForProperty(
-      property.id,
-      property.service_tier === 'listing' ? 'listing' : 'managed',
-    )
-  } catch (e) {
-    console.error('load pricing for booking commit', e)
-    return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
-  }
-  const bookingFeeCents = await calculateBookingFeeCents(pricingCell, depositCents, 1, {
-    admin,
-    landlordProfileId: property.landlord_id,
-  })
-
-  const expectedAmountCents = bookingFeeCents > 0 ? depositCents + bookingFeeCents : depositCents
-  if (pi.amount !== expectedAmountCents) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'pi_amount_mismatch')
-    return json(
-      {
-        error: 'payment_amount_mismatch',
-        message: 'Payment amount does not match resolved weekly rent for this booking',
-      },
-      400,
-      origin,
-    )
-  }
-
-  const tierContext = await fetchServiceTierResolverContext(admin)
-
-  const serviceTierAtRequest = computeServiceTierAtRequestSnapshot({
-    state: property.state,
-    propertyType: property.property_type,
-    isRegisteredRoomingHouse: property.is_registered_rooming_house,
-    roomsRentedToResidents: property.rooms_rented_to_residents,
-    moduleEnabled: tierContext.moduleEnabled,
-    managedGloballyEnabled: tierContext.managedGloballyEnabled,
-    managedOverrides: tierContext.managedOverrides,
-    propertyServiceTier: property.service_tier,
-  })
-
-  const expiresAt = landlordResponseExpiresAtIso('managed')
-  const endDate = leaseEndDateIso(moveInDate, leaseLength)
-
-  const bondAmount = bondAmountAtApplyFromProperty(property, weeklyRent)
-
-  let listingAcknowledgment
-  try {
-    listingAcknowledgment = await buildListingAcknowledgmentColumns(admin, property)
-  } catch (snapErr) {
-    console.error('[managed-commit] listing snapshot', snapErr)
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'listing_snapshot_failed', managedVis)
-    return json({ error: 'Could not capture listing acknowledgment snapshot' }, 500, origin)
-  }
-
-  const row = {
-    property_id: property.id,
-    student_id: student.id,
-    landlord_id: property.landlord_id,
-    start_date: moveInDate,
-    move_in_date: moveInDate,
-    end_date: endDate,
-    weekly_rent: weeklyRent,
-    ...(bondAmount != null ? { bond_amount: bondAmount } : {}),
-    status: 'pending_confirmation',
-    notes: null,
-    student_message: studentMessage.trim() || null,
-    lease_length: leaseLength,
-    bond_acknowledged: true,
-    listing_acknowledged: listingAcknowledgment.listing_acknowledged,
-    listing_acknowledged_at: listingAcknowledgment.listing_acknowledged_at,
-    listing_snapshot: listingAcknowledgment.listing_snapshot,
-    listing_snapshot_hash: listingAcknowledgment.listing_snapshot_hash,
-    stripe_payment_intent_id: paymentIntentId,
-    deposit_amount: depositCents,
-    platform_fee_amount: bookingFeeCents,
-    booking_fee_paid: true,
-    property_type: propertyType,
-    rent_payment_method: rentPaymentMethod,
-    expires_at: expiresAt,
-    occupant_count: occupantCount,
-    parking_selected: parkingSelected,
-    rent_breakdown: breakdownAud,
-    co_tenant: coTenant,
-    housemates_count: housematesCountFromOccupantCount(occupantCount),
-    ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),
-  }
-
-  const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()
-
-  if (!insErr && inserted?.id) {
-    try {
-      await attachBookingToConversationOnCreate(admin, {
-        bookingId: inserted.id,
-        propertyId: property.id,
-        tenantUserId: student.user_id,
-        tenantProfileId: student.id,
-        conversationIdHint: conversationIdHint || null,
-      })
-    } catch (e) {
-      console.error('[booking] attach conversation', e)
-    }
-    recordBookingCompleted(
-      admin,
-      user,
-      propertyId,
-      'managed_commit',
-      attemptId,
-      inserted.id,
-      property.service_tier ?? null,
-      deviceCtx,
-      {
-        listing_acknowledged: true,
-        listing_snapshot_hash: listingAcknowledgment.listing_snapshot_hash,
-      },
-    )
-    return json({ ok: true, bookingId: inserted.id }, 200, origin)
-  }
-
-  if (!isUniqueViolation(insErr)) {
-    console.error('booking insert', insErr)
-    return json({ error: insErr?.message || 'Could not save booking' }, 500, origin)
-  }
-
-  let piAfter
-  try {
-    piAfter = await stripe.paymentIntents.retrieve(paymentIntentId)
-  } catch (e) {
-    console.error('race handler retrieve PI', e)
-    piAfter = pi
-  }
-
-  const st = piAfter.status
-  try {
-    if (st === 'requires_capture' || st === 'requires_confirmation') {
-      await stripe.paymentIntents.cancel(paymentIntentId)
-    } else if (st === 'succeeded') {
-      await stripe.refunds.create({ payment_intent: paymentIntentId })
-    }
-  } catch (stripeErr) {
-    console.error('race handler stripe cleanup', stripeErr)
-    await captureBookingRejected({
-      ...managedVis,
-      service_tier: property.service_tier ?? null,
-      error_code: 'race_stripe_cleanup_failed',
-      http_status: 500,
-      paymentIntentId,
-      piStatus: st,
-      stripeErr: stripeErr instanceof Error ? stripeErr.message : String(stripeErr),
-    })
-  }
-
-  await captureBookingRejected({
-    ...managedVis,
-    service_tier: property.service_tier ?? null,
-    error_code: 'race_condition',
-    http_status: 409,
-    paymentIntentId,
-    supabaseMessage: insErr?.message,
-    piStatusAfter: st,
-  })
-
-  return json(
-    {
-      error: 'race_condition',
-      message:
-        'Sorry, this property was just booked by another student. Your payment has been cancelled and you will not be charged.',
-    },
-    409,
-    origin,
-  )
-}
-
 export default async function handler(request) {
   const origin = request.headers.get('origin') || '*'
 
@@ -1170,6 +735,17 @@ export default async function handler(request) {
     return json({ error: 'Invalid JSON' }, 400, origin)
   }
 
+  if (body && typeof body.rentPaymentMethod === 'string' && body.rentPaymentMethod.trim() === 'quni_platform') {
+    return json(
+      {
+        error: 'managed_retired',
+        message: 'Paying rent via Quni is no longer available. Rent is paid to the landlord.',
+      },
+      410,
+      origin,
+    )
+  }
+
   if (body && body.commit === true) {
     const commitPropertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
     if (commitPropertyId) {
@@ -1181,17 +757,33 @@ export default async function handler(request) {
         if (tier === 'listing') {
           return handleListingBookingCommit(request, origin, body)
         }
+        if (tier === 'managed') {
+          return json(
+            {
+              error: 'managed_retired',
+              message: 'Managed bookings are no longer available.',
+            },
+            410,
+            origin,
+          )
+        }
       }
     }
-    return handlePaymentIntentCommit(request, origin, body)
+    return json(
+      {
+        error: 'managed_retired',
+        message: 'Managed bookings are no longer available. Rent is paid to the landlord.',
+      },
+      410,
+      origin,
+    )
   }
 
-  const stripeSecret = process.env.STRIPE_SECRET_KEY
   const supabaseUrl = process.env.SUPABASE_URL
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
-  if (!stripeSecret || !supabaseUrl || !serviceRole || !anonKey) {
+  if (!supabaseUrl || !serviceRole || !anonKey) {
     return json({ error: 'Server misconfigured' }, 500, origin)
   }
 
@@ -1204,7 +796,6 @@ export default async function handler(request) {
   const propertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
   const moveInDate = typeof body.moveInDate === 'string' ? body.moveInDate.trim() : ''
   const leaseLength = typeof body.leaseLength === 'string' ? body.leaseLength.trim() : ''
-  const studentMessage = typeof body.studentMessage === 'string' ? body.studentMessage.slice(0, 4000) : ''
   const bondAcknowledged = body.bondAcknowledged === true
 
   if (!propertyId || !moveInDate || !leaseLength) {
@@ -1346,8 +937,17 @@ export default async function handler(request) {
     return json({ error: 'You cannot book your own listing' }, 400, origin)
   }
 
-  const lp = property.landlord_profiles
   const propertyServiceTier = isListingServiceTier(property.service_tier) ? 'listing' : 'managed'
+  if (propertyServiceTier !== 'listing') {
+    return json(
+      {
+        error: 'managed_retired',
+        message: 'Managed bookings are no longer available.',
+      },
+      410,
+      origin,
+    )
+  }
 
   const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
   if (!rentResolved.ok) {
@@ -1396,96 +996,12 @@ export default async function handler(request) {
     )
   }
 
-  if (propertyServiceTier === 'managed' && (!lp?.stripe_connect_account_id || !lp.stripe_charges_enabled)) {
-    return json(
-      {
-        error: 'stripe_not_ready',
-        message:
-          'This host has not finished connecting their payout account yet. Try again once they have linked their bank in Stripe.',
-      },
-      400,
-      origin,
-    )
-  }
-
-  const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
-  const depositCents = weeklyRentCents
-
-  let pricingCell
-  try {
-    pricingCell = await getActivePricingSnapshotForProperty(property.id, propertyServiceTier)
-  } catch (e) {
-    console.error('load pricing for booking PI', e)
-    return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
-  }
-  const bookingFeeCents = await calculateBookingFeeCents(pricingCell, depositCents, 1, {
-    admin,
-    landlordProfileId: property.landlord_id,
-  })
-  const amountCents = bookingFeeCents > 0 ? depositCents + bookingFeeCents : depositCents
-
-  const stripe = new Stripe(stripeSecret)
-
-  let customerId = student.stripe_customer_id?.trim() || null
-  if (!customerId) {
-    const email =
-      (typeof student.email === 'string' && student.email.includes('@') && student.email) ||
-      (typeof user.email === 'string' && user.email) ||
-      undefined
-    const name =
-      (typeof student.full_name === 'string' && student.full_name.trim()) ||
-      [student.first_name, student.last_name].filter(Boolean).join(' ').trim() ||
-      undefined
-
-    const customer = await stripe.customers.create({
-      email,
-      name: name || undefined,
-      metadata: {
-        student_profile_id: student.id,
-        supabase_user_id: user.id,
-      },
-    })
-    customerId = customer.id
-    await admin.from('student_profiles').update({ stripe_customer_id: customerId }).eq('id', student.id)
-  }
-
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountCents,
-    currency: 'aud',
-    capture_method: 'manual',
-    customer: customerId,
-    setup_future_usage: 'off_session',
-    automatic_payment_methods: { enabled: true },
-    metadata: {
-      bookingType: 'deposit',
-      propertyId: property.id,
-      studentProfileId: student.id,
-      landlordProfileId: property.landlord_id,
-      moveInDate,
-      leaseLength,
-      occupantCount: String(occupantCount),
-      parkingSelected: parkingSelected ? 'true' : 'false',
-      weeklyRentCents: String(weeklyRentCents),
-      depositCents: String(depositCents),
-      bookingFeeCents: String(bookingFeeCents),
-      studentMessage: studentMessage ? studentMessage.slice(0, 500) : '',
-    },
-  })
-
   return json(
     {
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amountCents,
-      depositCents,
-      bookingFeeCents,
-      weeklyRent,
-      weeklyRentCents,
-      breakdownAud,
-      occupantCount,
-      parkingSelected,
+      error: 'managed_retired',
+      message: 'Managed bookings are no longer available.',
     },
-    200,
+    410,
     origin,
   )
 }

@@ -543,19 +543,6 @@ function OccupancyMatchScheduleTable({
   ] });
 }
 
-// src/lib/platformIdentity.ts
-var PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED = "platform legal entity not configured in Business settings";
-function buildLicencePlatformEntityDisplay(fields) {
-  const legal = typeof fields.legalName === "string" ? fields.legalName.trim() : "";
-  if (!legal) throw new Error(PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED);
-  const acn = typeof fields.acn === "string" ? fields.acn.trim() : "";
-  const trading = typeof fields.tradingName === "string" ? fields.tradingName.trim() : "";
-  let display = legal;
-  if (acn) display = `${legal} (ACN ${acn})`;
-  if (trading) display = `${display} trading as ${trading}`;
-  return display;
-}
-
 // api/lib/tenancy/rules/qld.ts
 var QLD_T1_BOND = {
   schemeApplies: true,
@@ -729,20 +716,6 @@ function licenceTerminationNoticePhrase(paymentMethod) {
     return "where the licence fee is payable monthly, at least one calendar month's written notice;";
   }
   return "where the licence fee is payable weekly, at least one week's written notice;";
-}
-var LISTING_TIER_ACCEPTANCE_FEE_DISPLAY = "$99";
-function formatManagedFeePercent(percent) {
-  const n = Number(percent);
-  if (!Number.isFinite(n) || n <= 0) return "7%";
-  return `${n.toLocaleString("en-AU", { maximumFractionDigits: 2 })}%`;
-}
-function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY, partyLabel = "Owner") {
-  const party = partyLabel === "Principal" ? "Principal" : partyLabel.toLowerCase();
-  if (tier === "managed") {
-    const pct = formatManagedFeePercent(managedFeePercent);
-    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the ${party} before payout to the ${party}, as disclosed in the ${party} service agreement and listing terms.`;
-  }
-  return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`;
 }
 function occupancyClause11BankDetailsIntro(content, props) {
   if (!props.payout || !props.paymentReference?.trim()) {
@@ -946,18 +919,12 @@ function LicenceOccupyDocument({
   const headerWatermark = content.watermark;
   const footerText = headerWatermark ? "" : content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
-  const platformEntityDisplay = buildLicencePlatformEntityDisplay({
-    legalName: props.platformLegalName,
-    acn: props.platformAcn,
-    tradingName: props.platformTradingName
-  });
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
   const houseRulesLines = houseRules?.trim() ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean) : [...content.defaultHouseRules];
   const extraLines = [
     ...specialConditions.filter((c) => c.trim()),
     ...bookingNotes?.trim() ? [bookingNotes.trim()] : []
   ];
-  const serviceTier = props.serviceTier === "managed" ? "managed" : "listing";
   const hasExtraTerms = extraLines.length > 0;
   const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0;
   const financialTermsPayeeNote = occupancyFinancialTermsPayeeNote(props);
@@ -971,7 +938,6 @@ function LicenceOccupyDocument({
   const executionClauseNum = hasContinuation ? hasExtraTerms ? 15 : 14 : hasExtraTerms ? 14 : 13;
   const entrySectionTitle = content.entrySectionTitle ?? "Owner's right of entry";
   const terminationSectionTitle = content.terminationSectionTitle ?? "Termination";
-  const platformSectionTitle = content.platformSectionTitle ?? "Quni platform and owner service fee";
   const houseRulesIntro = content.houseRulesIntro ?? `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`;
   const pageShellProps = { content, documentId, generatedAt, footerText };
   const docusealSized = content.docusealSizedSignatureFields === true;
@@ -1072,20 +1038,9 @@ function LicenceOccupyDocument({
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 10, title: "Disputes" }),
       content.disputesParagraphs ? content.disputesParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `d-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: platformSectionTitle }),
-      /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
-        platformEntityDisplay,
-        ' (the "Platform") ',
-        content.platformIntroPrefix
-      ] }),
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: "Quni Living" }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: `Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the ${partyLabel}, is not a party to this agreement, and is not the ${partyLabel}'s agent. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.` }),
       content.platformWarrantyParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.platformWarrantyParagraph }) : null,
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(
-        serviceTier,
-        rent.platformFeePercent,
-        void 0,
-        partyLabel
-      ) }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.feeFreeBankTransfer }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: clause11BankIntro }),
       clause11PayeeLines.map((line, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: line }, `payee-${i}`))
     ] }),
@@ -1291,10 +1246,7 @@ var NSW_LICENCE_OCCUPY_CONTENT = {
     "The weekly licence fee and all other obligations under this licence remain unchanged during any periodic continuation unless varied by written agreement of both parties.",
     "For the avoidance of doubt, during any periodic continuation the resident's liability on termination is limited to the applicable notice period; the mitigation and re-letting obligations in clause 6 apply only during the fixed period."
   ],
-  feeFreeBankTransfer: "A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the Principal-side service fee described below.",
   bankDetailsTemplate: "Direct credit details for payment of the weekly licence fee will be provided by the Principal (account name, BSB and account number). Use your name and the property address as the payment reference.",
-  platformIntroPrefix: "operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The Principal remains responsible for the allocated room, shared areas and this licence.",
-  platformSectionTitle: "Quni platform, Principal's warranty and service fee",
   platformWarrantyParagraph: "Principal's warranty. The Principal warrants that they have the right to grant this licence and, where they are not the registered proprietor of the premises, that they hold any consent required from the registered owner, any co-owners, or the Principal's own landlord to grant it. The resident acknowledges that their right to occupy depends on the Principal's continuing right to grant it.",
   executionIntro: "The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow.",
   docusealSizedSignatureFields: true
@@ -1305,7 +1257,7 @@ var NSW_OCCUPANCY_PDF_MARKERS = [
   "Security deposit",
   "Residential Tenancies Act 2010",
   "not lodged with NSW Fair Trading",
-  "Quni platform fees, booking fees or resident service fees",
+  "The resident pays Quni Living nothing",
   "Subject to final legal review",
   "Principal",
   "Term and termination",

@@ -50,7 +50,7 @@ export const VIC_CONDITION_REPORT_RETURN =
 export const VIC_CONDITION_REPORT_OUTGOING =
   'At the end of the tenancy, an outgoing condition report may be used to compare the state of the premises with the ' +
   'ingoing report, fair wear and tear excepted. The renter should attend any scheduled inspection where practicable and ' +
-  'should lodge final meter readings or other handover items through the move-out workflow when requested.'
+  'should give the rental provider final meter readings or other handover items when asked.'
 
 export const VIC_ELECTRONIC_TRANSACTIONS_ACT = 'Electronic Transactions (Victoria) Act 2000'
 export const VIC_DISPUTES_TRIBUNAL = 'Victorian Civil and Administrative Tribunal (VCAT)'

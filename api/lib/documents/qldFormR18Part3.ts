@@ -12,13 +12,11 @@ export const QLD_FORM_R18_PART3_SPECIAL_TERMS = [
   '',
   '3. The provider remains responsible for complying with the Residential Tenancies and Rooming Accommodation Act 2008 and with this agreement.',
   '',
-  '4. The provider pays Quni Living a one-off platform fee. That fee is a matter between the provider and Quni Living. It does not increase the rent payable by the resident, and the resident owes Quni Living nothing under this agreement.',
+  '4. Quni Living is not a party to any dispute between the provider and the resident, does not represent either of them, and takes no part in proceedings before the tribunal.',
   '',
-  '5. Quni Living is not a party to any dispute between the provider and the resident, does not represent either of them, and takes no part in proceedings before the tribunal.',
+  '5. Quni Living handles personal information in accordance with its privacy policy at quni.com.au/privacy.',
   '',
-  '6. Quni Living handles personal information in accordance with its privacy policy at quni.com.au/privacy.',
-  '',
-  '7. These special terms are subject to the Act and to the standard terms in Part 2. Anything in them that is inconsistent with the Act or with a standard term does not apply.',
+  '6. These special terms are subject to the Act and to the standard terms in Part 2. Anything in them that is inconsistent with the Act or with a standard term does not apply.',
 ].join('\n')
 
 export const QLD_FORM_R18_PART3_OVERFLOW_MESSAGE =

@@ -57,7 +57,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'about-what',
         question: 'What is Quni Living?',
         answer:
-          'Quni is a verified accommodation marketplace near Australian university campuses and workplaces. Students, graduates, and professionals can browse, message landlords, and book where supported; landlords can list with Quni Listing or Quni Managed depending on state and property type.',
+          'Quni is software for verified accommodation near Australian university campuses and workplaces. Students, graduates, and professionals can browse, message landlords, and apply. Landlords list the place and run the tenancy. Quni is not the landlord and is not the landlord\'s agent.',
       },
       {
         id: 'about-who',
@@ -69,7 +69,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'about-states',
         question: 'Which states does Quni operate in?',
         answer:
-          'Quni Listing is available nationwide. Quni Managed is currently live in Queensland, with New South Wales and Victoria coming as we complete state-specific compliance work. See Pricing and How it works for what is available in your state and for your property type.',
+          'Quni Listing is available in Queensland, New South Wales, and Victoria for typical private-room listings. See Pricing for what is available in your state and for your property type.',
       },
     ],
   },
@@ -111,7 +111,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-declined',
         question: 'What if my booking request is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
+          'Nothing was charged to you. A declined request does not move rent, bond, or a deposit through Quni.',
       },
       {
         id: 'students-data-residency',
@@ -188,12 +188,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-fees',
         question: 'How much does Quni charge landlords?',
         answerText:
-          'Landlords choose Quni Listing (flat fee per accepted booking) or Quni Managed (percentage of weekly rent while active). There are no listing charges until a booking is accepted. Current amounts are on /pricing.',
+          'Landlords pay a flat acceptance fee when they accept a booking. There is no charge until then, and no percentage of rent. Current amounts are on /pricing. Renters do not pay this fee.',
         answer: (
           <>
-            Landlords choose <strong>Quni Listing</strong> (flat fee per accepted booking) or <strong>Quni Managed</strong>{' '}
-            (percentage of weekly rent while active). There are no listing charges until a booking is accepted. Current
-            amounts are on our {pricingLink} page.
+            Landlords pay a flat acceptance fee when they accept a booking. There is no charge until then, and no
+            percentage of rent. Current amounts are on our {pricingLink} page. Renters do not pay this fee.
           </>
         ),
       },
@@ -226,13 +225,13 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-host-verify',
         question: 'How does Quni verify landlords?',
         answer:
-          'Before you can accept a booking (Listing or Managed), you complete Stripe Connect identity verification. When Stripe enables charges on your account, you may show a Verified host badge on your profile and listings. Quni does not manually review profiles or check property titles. Quni Listing also requires a saved card for the acceptance fee when you confirm.',
+          'Before you can accept a booking, you complete Stripe identity verification. When Stripe enables charges on your account, you may show a Verified host badge on your profile and listings. Quni does not manually review profiles or check property titles. You also save a card for the acceptance fee when you confirm.',
       },
       {
         id: 'landlords-rent',
         question: 'How do I receive rent payments?',
         answer:
-          'On Quni Listing, bond and weekly rent flow directly between landlord and renter - Quni is not in the payment chain after a booking is accepted. On Quni Managed, weekly rent is collected through Stripe Connect and the service fee is deducted before payout to your bank account.',
+          'Bond and rent are paid to you at the account named in the agreement. Quni does not collect, hold, or refund them.',
       },
       {
         id: 'landlords-campus',
@@ -283,22 +282,9 @@ export const FAQ_SECTIONS: FaqSection[] = [
         ),
       },
       {
-        id: 'money-managed-fee',
-        question: 'What does a landlord pay on Quni Managed?',
-        answerText:
-          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts - see /pricing for the current Managed service fee.',
-        answer: (
-          <>
-            A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent
-            payouts - see {pricingLink} for the current Managed service fee.
-          </>
-        ),
-      },
-      {
         id: 'money-card-surcharge',
         question: 'Is there a card surcharge?',
-        answer:
-          'An optional card surcharge may apply when paying by card where Stripe applies it. Free bank transfer is offered where available.',
+        answer: 'No. Renters do not pay Quni by card. Rent and bond are paid to the landlord.',
       },
     ],
   },
@@ -326,31 +312,25 @@ export const FAQ_SECTIONS: FaqSection[] = [
   },
   {
     id: 'listing-managed',
-    label: 'Listing vs Managed',
+    label: 'Rent and bond',
     items: [
       {
         id: 'tier-difference',
-        question: 'What is the difference between Quni Listing and Quni Managed?',
+        question: 'Does Quni collect rent or bond?',
         answer:
-          'Listing: landlord pays a flat fee per accepted booking and runs bond and rent directly with the renter. Managed: landlord pays a percentage of weekly rent while active; weekly rent is collected via Stripe Connect with fee deduction before payout; availability varies by state and property type.',
+          'No. The landlord runs bond and rent with the renter. Quni does not hold, transfer, or refund them, and takes no percentage of rent.',
       },
       {
         id: 'tier-availability',
-        question: 'Where is each tier available?',
+        question: 'Where can I list?',
         answerText:
-          'Quni Listing is available nationwide. Quni Managed is currently live in Queensland. See availability on /pricing for the latest state-by-state coverage and any property-type constraints.',
+          'See availability on /pricing for Queensland, New South Wales, and Victoria, and for your property type.',
         answer: (
           <>
-            Quni Listing is available nationwide. Quni Managed is currently live in Queensland. See availability on{' '}
-            {pricingLink} for the latest state-by-state coverage and any property-type constraints.
+            See availability on {pricingLink} for Queensland, New South Wales, and Victoria, and for your property
+            type.
           </>
         ),
-      },
-      {
-        id: 'tier-mix',
-        question: 'Do I have to pick the same tier for every property?',
-        answer:
-          'No. Each property carries its own service model. You can run one property as Listing and another as Managed. Listing properties may be upgraded to Managed later (for example when accepting a booking), but Managed properties cannot move back to Listing.',
       },
     ],
   },

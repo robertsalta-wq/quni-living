@@ -14,7 +14,6 @@ import {
   type LandlordWizardStep,
 } from '../../lib/landlordOnboarding'
 import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
-import { MANAGED_COMING_SOON_SHORT } from '../../lib/managedComingSoonCopy'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { nonDiscriminationAcceptancePatch } from '../../lib/nonDiscriminationPolicy'
 import { landlordServiceAgreementAcceptancePatch, LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../lib/landlordServiceAgreement'
@@ -1214,40 +1213,6 @@ export default function LandlordOnboarding() {
                     You&apos;ll need a saved card before accepting your first Quni Listing booking. You can save it later
                     from your profile if you skip now.
                   </p>
-                  {!managedTierEnabled ? (
-                    <div className="rounded-lg border border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] px-3 py-2.5 text-xs text-stone-700 leading-relaxed">
-                      <p className="font-semibold text-[var(--quni-trust)]">Quni Managed - coming soon</p>
-                      <p className="mt-1">{MANAGED_COMING_SOON_SHORT} You can connect a bank account now if you want to be ready when Managed opens.</p>
-                      <button
-                        type="button"
-                        disabled={connectLoading}
-                        onClick={() => void startStripeConnect()}
-                        className="mt-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-50"
-                      >
-                        {connectLoading ? 'Opening Stripe…' : 'Connect bank account (optional)'}
-                      </button>
-                    </div>
-                  ) : (
-                    <details className="rounded-lg border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-700">
-                      <summary className="cursor-pointer font-medium text-stone-800">
-                        Planning to also list a Quni Managed property?
-                      </summary>
-                      <div className="mt-2 space-y-2 leading-relaxed">
-                        <p>
-                          Managed properties pay rent through Stripe Connect, so you&apos;d also need to connect a bank
-                          account before accepting Managed bookings. You can do that here or anytime from your dashboard.
-                        </p>
-                        <button
-                          type="button"
-                          disabled={connectLoading}
-                          onClick={() => void startStripeConnect()}
-                          className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-50"
-                        >
-                          {connectLoading ? 'Opening Stripe…' : 'Connect bank account (optional)'}
-                        </button>
-                      </div>
-                    </details>
-                  )}
                   {stripeSkippedForNow && (
                     <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       Card setup skipped for now. You can save a card later from your profile.

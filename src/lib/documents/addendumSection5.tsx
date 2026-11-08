@@ -58,7 +58,7 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
         <Text style={occupancyMatchPdf.bodyParagraph} key={nextKey()}>
           Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as
           otherwise agreed in writing). This is the tenant&apos;s payment timing for excess-usage amounts invoiced
-          through the platform - it is separate from the landlord&apos;s obligation under the Residential Tenancies and
+          to the tenant. It is separate from the landlord&apos;s obligation under the Residential Tenancies and
           Rooming Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of
           relevant supplier account documents within <Text style={{ fontFamily: 'Helvetica-Bold' }}>4 weeks</Text> of the
           property manager/owner receiving them, where the tenant is required to pay for a utility service by reference
@@ -68,7 +68,7 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
     } else {
       paragraphs.push(
         body(
-          'Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). Evidence of usage may be supplied as utility account summaries, meter readings, or other reasonable records consistent with how similar properties are typically managed through the platform.',
+          'Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). Evidence of usage may be supplied as utility account summaries, meter readings, or other reasonable records.',
           nextKey(),
         ),
       )

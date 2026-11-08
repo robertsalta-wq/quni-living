@@ -14,7 +14,7 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
-import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { sendForSigning } from '../../docuseal.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
@@ -216,15 +216,9 @@ async function loadVicOccupancyContext(
     resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent) ??
     Math.round(weeklyRent * 4 * 100) / 100
 
-  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
-  const platformFeePercent =
-    serviceTier === 'managed'
-      ? await getManagedLandlordFeePercentForProperty(booking.property_id)
-      : 0
-  const paymentMethod =
-    serviceTier === 'listing'
-      ? 'Direct credit (see clause 11)'
-      : 'Via Quni Living platform (quni.com.au)'
+  const serviceTier = 'listing' as const
+  const platformFeePercent = 0
+  const paymentMethod = 'Direct credit (see clause 11)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
@@ -236,6 +230,9 @@ async function loadVicOccupancyContext(
     sp,
     propertyAddressLine: propertyAddressLine(prop),
   })
+  if (!payeeFields.ok) {
+    return { ok: false, status: payeeFields.status, error: payeeFields.error }
+  }
 
   return {
     ok: true,
@@ -312,11 +309,8 @@ function buildVicOccupancyPdfProps(ctx: LoadedVicOccupancyContext, documentId: s
     },
     bond: { amount: ctx.bondNum },
     specialConditions: [
-      'This licence is facilitated through the Quni Living platform (quni.com.au).',
       'Any security deposit under this licence is held directly by the owner and is not lodged with the Residential Tenancies Bond Authority (RTBA). Quni Living does not hold or manage security deposits.',
-      ...(ctx.serviceTier === 'listing'
-        ? ['Licence fee payments are made by direct credit to the owner account as set out in clause 11.']
-        : ["Licence fee payments are processed through Quni Living's secure payment system powered by Stripe."]),
+      'Licence fee payments are made by direct credit to the owner account as set out in clause 11.',
       ...ctx.coTenantSpecialConditions,
     ],
     coResidentName: occupancyCoResidentNameFromBooking(booking),

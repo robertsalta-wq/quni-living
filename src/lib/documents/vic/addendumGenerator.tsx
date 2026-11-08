@@ -12,10 +12,6 @@ import {
   occupancyMatchPdf,
 } from '../quniDocumentPdfTheme.js'
 import {
-  buildPlatformIdentificationLine,
-  resolvePlatformLegalEntityName,
-} from '../../platformIdentity.js'
-import {
   AddendumCoTenantSignatureBlock,
   coTenantNameFromAddendumProps,
 } from '../addendumCoTenantExecution.js'
@@ -30,14 +26,10 @@ import {
   VIC_DISPUTES_TRIBUNAL,
   VIC_ELECTRONIC_TRANSACTIONS_ACT,
   vicBondAuthorityLabel,
-  vicBondAuthorityUrl,
   vicBondLodgementDeadlinePhrase,
-  vicFeeFreeBankTransferParagraph,
 } from './addendumContent.js'
 
 const QUNI_MAINTENANCE_PORTAL_URL = 'https://quni.com.au/maintenance'
-const QUNI_MOVE_OUT_FORM_URL = 'https://quni.com.au/move-out'
-
 function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
 }
@@ -55,12 +47,6 @@ function yn(v: boolean | null) {
   if (v === true) return 'Yes'
   if (v === false) return 'No'
   return '-'
-}
-
-function formatBsbDisplay(raw: string) {
-  const digits = raw.replace(/\D/g, '')
-  if (digits.length === 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-  return raw.trim()
 }
 
 /** Section 1 - Tenancy summary (two-column schedule table). */
@@ -121,78 +107,16 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 2 - Quni platform & service fee. */
+/** Section 2 - Quni Living is software. Rent is paid to the landlord. */
 function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
-  const { rent, rentPaymentMethod, bankDetails } = props
-  const entityName = resolvePlatformLegalEntityName(props.platformLegalName)
-  const identificationLine = buildPlatformIdentificationLine({
-    abn: props.platformAbn,
-    acn: props.platformAcn,
-    directorName: props.platformDirectorName,
-  })
-  const bsb = formatBsbDisplay(bankDetails.bsb.trim())
-  const acct = bankDetails.accountNumber.trim()
-  const name = bankDetails.accountName.trim()
-  const bankName = bankDetails.bankName.trim()
-
-  const bankRows: { label: string; value: string }[] = [
-    { label: 'Account name:', value: name || '-' },
-    { label: 'BSB:', value: bsb || '-' },
-    { label: 'Account number:', value: acct || '-' },
-    { label: 'Bank:', value: bankName || '-' },
-  ]
-
-  const cardDomestic = `${props.cardSurchargeDomesticText ?? '1.7% + $0.30'} per transaction (domestic cards)`
-  const cardInternational = `${props.cardSurchargeInternationalText ?? '3.5% + $0.30'} per transaction (international cards)`
-  const landlordServiceFeeText = props.landlordServiceFeeText ?? '10%'
-
+  void props
   return (
     <View style={{ marginBottom: 10 }}>
-      <OccupancyMatchSectionHeading num={2} title="Quni platform & service fee" />
-
+      <OccupancyMatchSectionHeading num={2} title="Quni Living" />
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        {entityName} (the &quot;Platform&quot;) operates an online marketplace and payment facilitation service. The
-        Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed
-        in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the{' '}
-        {VIC_ADDENDUM_LEGISLATION} and {VIC_ADDENDUM_FORM_LABEL}.
-      </Text>
-
-      {identificationLine ? (
-        <Text style={[occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }]}>{identificationLine}</Text>
-      ) : null}
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        A service fee of {landlordServiceFeeText} of the gross weekly rent is deducted from amounts payable to the landlord through the
-        Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms.
-        The tenant pays no Quni platform fee, booking fee, or renter service fee; the tenant&apos;s agreed weekly rent is not
-        increased by the landlord-side service fee.
-      </Text>
-
-      <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 6 }]}>
-        Rent is payable by direct bank transfer using the following account details (reference your name and the
-        property address when transferring):
-      </Text>
-
-      <OccupancyMatchScheduleTable rows={bankRows.map((r) => ({ label: r.label, value: r.value }))} />
-
-      {rentPaymentMethod === 'quni_platform' ? (
-        <View style={[occupancyMatchPdf.noteBox, { marginTop: 6 }]}>
-          <Text style={occupancyMatchPdf.noteItalicMuted}>
-            The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card
-            payments incur a payment processing surcharge passed through at Stripe&apos;s actual cost - typically{' '}
-            {cardDomestic}, or {cardInternational}. The agreed rent amount is unchanged; the surcharge is shown
-            separately at checkout.
-          </Text>
-        </View>
-      ) : null}
-
-      <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 6 }]}>
-        {vicFeeFreeBankTransferParagraph()}
-      </Text>
-
-      <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 4 }]}>
-        The payment method summary in the tenancy agreement (Section 1 above) remains part of the agreed rent
-        arrangements: {rent.paymentMethod}
+        Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the
+        landlord, is not a party to this agreement, and is not the landlord&apos;s agent. Rent is paid to the landlord
+        at the account named in this agreement. The tenant pays Quni Living nothing.
       </Text>
     </View>
   )
@@ -205,7 +129,6 @@ function Section3CommunicationChannels(props: QuniPlatformAddendumProps) {
   const rows: { label: string; value: string }[] = [
     { label: 'Maintenance portal (non-urgent requests):', value: QUNI_MAINTENANCE_PORTAL_URL },
     { label: 'Emergency contact (urgent repairs):', value: emergencyContact.trim() || '-' },
-    { label: 'Move-out notice form:', value: QUNI_MOVE_OUT_FORM_URL },
     { label: 'Rent account enquiries:', value: rentEnquiriesEmail.trim() || '-' },
     { label: 'General enquiries:', value: generalEnquiriesEmail.trim() || '-' },
     { label: 'House communications:', value: houseCommunicationsChannel.trim() || '-' },
@@ -347,7 +270,6 @@ function Section8ConditionReport(_props: QuniPlatformAddendumProps) {
 function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   const dailyRent = props.rent.weeklyRent / 7
   const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? '$50'
-  const internationalTransferFeeText = props.moveOutInternationalTransferFeeText ?? '$50'
   const feeRows: { label: string; value: string }[] = [
     {
       label: 'Cleaning (if not to standard)',
@@ -369,10 +291,6 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
       label: 'Linen replacement if significantly damaged',
       value: 'Replacement cost (charged at actual cost)',
     },
-    {
-      label: 'International bank transfer administration (bond refund)',
-      value: `${internationalTransferFeeText} flat fee`,
-    },
   ]
 
   return (
@@ -381,8 +299,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
         To end the tenancy, the tenant must give notice in accordance with the {VIC_ADDENDUM_LEGISLATION},{' '}
-        {VIC_ADDENDUM_FORM_LABEL}, and any agreed notice period. Where the platform collects a move-out notice, the tenant
-        should complete the move-out notice form at {QUNI_MOVE_OUT_FORM_URL} and keep a copy of any confirmation received.
+        {VIC_ADDENDUM_FORM_LABEL}, and any agreed notice period.
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
@@ -415,8 +332,8 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
 
       <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 4 }]}>
         The tenant should supply a forwarding address and contact details for bond and correspondence. Bond release (if
-        applicable) will follow {vicBondAuthorityLabel()} requirements and any instructions given through the signing or bond
-        workflow. The parties agree to cooperate promptly with reasonable requests for information needed to finalise the
+        applicable) will follow {vicBondAuthorityLabel()} requirements. The parties agree to cooperate promptly with
+        reasonable requests for information needed to finalise the
         tenancy.
       </Text>
     </View>
@@ -428,7 +345,6 @@ function Section10Bond(props: QuniPlatformAddendumProps) {
   const bond = props.bond.amount
   const lodgementPhrase = vicBondLodgementDeadlinePhrase()
   const authorityLabel = vicBondAuthorityLabel()
-  const authorityUrl = vicBondAuthorityUrl()
 
   return (
     <View style={{ marginBottom: 10 }}>
@@ -442,20 +358,10 @@ function Section10Bond(props: QuniPlatformAddendumProps) {
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
         The bond amount recorded in the tenancy agreement is{' '}
-        {bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney(bond) : 'as stated in the tenancy agreement'}. The
-        parties agree to complete any bond lodgement, variation, or claim steps notified through the platform or the
-        landlord&apos;s agent, and to provide accurate bank details for refunds where required.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Bond lodgement and claim processes are administered by {authorityLabel}. Further information is available at{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{authorityUrl}</Text>.
-      </Text>
-
-      <Text style={occupancyMatchPdf.bodyParagraph}>
-        Where an international bank transfer administration fee applies to a bond refund (as set out in the move-out fee
-        schedule), that fee is separate from the bond amount and is payable only where applicable and lawfully
-        recoverable.
+        {bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney(bond) : 'as stated in the tenancy agreement'}.
+        The tenant pays the bond to the Residential Tenancies Bond Authority, or to the landlord, who lodges it with the
+        Residential Tenancies Bond Authority as required by law. Quni Living does not hold, transfer or refund the bond
+        and charges no fee on a bond refund.
       </Text>
     </View>
   )

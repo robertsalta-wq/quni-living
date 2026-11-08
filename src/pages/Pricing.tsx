@@ -7,11 +7,7 @@ import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED } from '../lib/bondPub
 import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
-import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
-import {
-  MANAGED_COMING_SOON_HEADLINE,
-  MANAGED_COMING_SOON_SUBLINE,
-} from '../lib/managedComingSoonCopy'
+import { useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
 
 type LineTone = 'default' | 'muted'
 type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
@@ -93,16 +89,10 @@ const faqBuckets: FaqBucket[] = [
           'A flat $99 when you accept a booking. No commission on rent, no subscription, no letting fee. Nothing if you never accept. Fees may change on notice; we will not introduce a rent commission on Listing. Renters do not pay this fee.',
       },
       {
-        id: 'money-fees-2',
-        question: 'What does a landlord pay on Quni Managed?',
-        answer:
-          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts - shown above as the Managed service fee.',
-      },
-      {
         id: 'money-fees-3',
         question: 'Is there a card surcharge?',
         answer:
-          'Optional card surcharge may apply when paying by card where Stripe applies it. Free bank transfer is offered where available.',
+          'No. Renters do not pay Quni by card. Rent and bond are paid to the landlord.',
       },
     ],
   },
@@ -137,7 +127,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'bookings-cancellations-1',
         question: 'What if my booking is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank.',
+          'Nothing was charged to you. A declined request does not move rent, bond, or a deposit through Quni.',
       },
       {
         id: 'bookings-cancellations-2',
@@ -149,25 +139,19 @@ const faqBuckets: FaqBucket[] = [
   },
   {
     id: 'listing-managed',
-    label: 'Listing vs Managed',
+    label: 'How Listing works',
     items: [
       {
         id: 'listing-managed-0',
-        question: 'What is the difference between Quni Listing and Quni Managed?',
+        question: 'Does Quni collect rent or bond?',
         answer:
-          'Listing: landlord pays a flat fee per accepted booking and runs bond and rent directly with the renter. Managed: landlord pays a percentage of weekly rent while active; tenancy money may pass briefly through Quni before Stripe Connect payout; availability varies by state.',
+          'No. The landlord runs bond and rent directly with the renter. Quni does not hold, transfer, or refund them.',
       },
       {
         id: 'listing-managed-1',
-        question: 'Where is each tier available?',
+        question: 'Where is Listing available?',
         answer:
-          'See the availability lines under each landlord column on this page - they reflect Queensland, New South Wales, and Victoria for typical private-room listings.',
-      },
-      {
-        id: 'listing-managed-2',
-        question: 'Do I have to pick the same tier for every property?',
-        answer:
-          'No. Each property you list carries its own Quni service model. You can run one property as Quni Listing and another as Quni Managed in the same account. Listing properties can be upgraded to Managed later (for example, when accepting a booking), but Managed properties cannot move back to Listing.',
+          'See the availability line under the landlord column on this page. It reflects Queensland, New South Wales, and Victoria for typical private-room listings.',
       },
     ],
   },
@@ -208,22 +192,17 @@ const faqBuckets: FaqBucket[] = [
 ]
 
 export default function Pricing() {
-  const { managedTierEnabled } = usePlatformFeatures()
   const serviceTierOptions = useServiceTierResolverOptions()
   const [listingFeeText, setListingFeeText] = useState('$99')
-  const [managedFeeText, setManagedFeeText] = useState('7%')
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
         const listingCell = await fetchPricingForPropertyTier('t2', 'listing')
-        const managedCell = await fetchPricingForPropertyTier('t2', 'managed')
         const listing = formatFeeForDisplay(listingCell)
-        const managed = formatFeeForDisplay(managedCell)
         if (!cancelled) {
           setListingFeeText(listing.landlordFeeDisplay)
-          setManagedFeeText(managed.landlordFeeDisplay)
         }
       } catch {
         // Keep defaults when pricing endpoint is unavailable.
@@ -234,8 +213,6 @@ export default function Pricing() {
     }
   }, [])
 
-  const ctaPrimary =
-    'mt-4 flex w-full items-center justify-center rounded-[10px] bg-[var(--quni-rust)] px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-[#993C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-rust)]'
   const ctaSecondary =
     'mt-4 flex w-full items-center justify-center rounded-[10px] border border-[var(--quni-rust)] bg-transparent px-3 py-3 text-sm font-medium text-[var(--quni-rust)] transition-colors hover:bg-[rgba(216,90,48,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-rust)]'
 
@@ -245,7 +222,7 @@ export default function Pricing() {
     <>
       <Seo
         title="Pricing - Quni Living"
-        description="Free for renters. Free to list for landlords. Choose Listing or Managed pricing."
+        description="Free for renters. Free to list. Landlords pay the Listing acceptance fee when they accept a booking. Quni does not collect rent or bond."
         canonicalPath="/pricing"
         jsonLd={faqJsonLd ? [faqJsonLd] : undefined}
       />
@@ -275,7 +252,7 @@ export default function Pricing() {
             Pricing
           </h1>
           <p className="m-0 mb-12 text-center text-base text-[var(--quni-ink-4)]">
-            Free for renters. Free to list for landlords. Choose how much you want Quni to do.
+            Free for renters. Free to list. You pay when you accept a booking. Quni does not collect rent or bond.
           </p>
 
           <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1fr_2fr]">
@@ -341,7 +318,7 @@ export default function Pricing() {
                 </div>
 
                 <p className="mt-auto pt-2 text-xs italic leading-normal text-[var(--quni-ink-4)]">
-                  Optional card surcharge if you pay rent by card. Free bank transfer always offered.
+                  Rent and bond are paid to the landlord. You pay Quni nothing.
                 </p>
 
                 <Link to="/properties" className={ctaSecondary}>
@@ -356,7 +333,7 @@ export default function Pricing() {
                 For landlords
               </div>
 
-              <div className="grid flex-1 grid-cols-1 divide-y divide-[rgba(108,142,89,0.2)] md:grid-cols-2 md:divide-x md:divide-y-0 md:divide-[rgba(108,142,89,0.2)]">
+              <div className="grid flex-1 grid-cols-1">
                 {/* Quni Listing */}
                 <div className="flex flex-col px-7 pb-6 pt-7">
                   <div className="font-lora text-[22px] font-semibold text-[var(--quni-ink)]">Quni Listing</div>
@@ -499,162 +476,6 @@ export default function Pricing() {
                   </Link>
                 </div>
 
-                {/* Quni Managed */}
-                <div className="flex flex-col px-7 pb-6 pt-7">
-                  <div className="font-lora text-[22px] font-semibold text-[var(--quni-ink)]">Quni Managed</div>
-                  <p className="mt-1.5 text-[13px] leading-snug text-[var(--quni-ink-4)]">
-                    We run the whole tenancy. From listing to move-out.
-                  </p>
-                  {!managedTierEnabled ? (
-                    <div
-                      className="mt-3 rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-3.5 py-2.5"
-                      role="status"
-                    >
-                      <p className="font-lora text-sm font-semibold text-[var(--quni-trust)]">{MANAGED_COMING_SOON_HEADLINE}</p>
-                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--quni-ink-4)]">{MANAGED_COMING_SOON_SUBLINE}</p>
-                    </div>
-                  ) : null}
-
-                  <div className={managedTierEnabled ? 'mt-[22px]' : 'mt-4'}>
-                    <LineItem
-                      icon={
-                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
-                          <path d="M3 7l5-4 5 4v6H3z" />
-                          <path d="M6 13V9h4v4" />
-                        </svg>
-                      }
-                      name="Service fee"
-                      value={managedFeeText}
-                      description="Of weekly rent. All-inclusive - no letting fees or extras. Only charged when you have an active tenant."
-                      valueKind="coralLg"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Everything in Listing"
-                      value="Included"
-                      description="Verified renters, AI tools, tenancy documents, e-signing."
-                      valueKind="coralSm"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Rent collection"
-                      value="Included"
-                      description="Tenant pays Quni. We pay you weekly via Stripe."
-                      valueKind="coralSm"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Bond lodgement"
-                      value="Included"
-                      description="We coordinate lodgement with the bond authority where your tenancy requires it. Bond remains tenancy money - not a Quni fee."
-                      valueKind="coralSm"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Dispute support"
-                      value="Included"
-                      description="We mediate between you and your tenant."
-                      valueKind="coralSm"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Move-in protection"
-                      value="Included"
-                      description="Funds held until tenant moves in safely."
-                      valueKind="coralSm"
-                    />
-                    <LineItem
-                      icon={
-                        <svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3,8 7,12 13,4" />
-                        </svg>
-                      }
-                      name="Maintenance routing"
-                      value="Included"
-                      description="Tenant requests routed to you, tracked in-platform."
-                      valueKind="coralSm"
-                    />
-                  </div>
-
-                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[var(--quni-ink-4)]">
-                    {pricingTierAvailabilitySummary('managed', serviceTierOptions)}
-                  </p>
-
-                  {managedTierEnabled ? (
-                    <Link to="/landlord-signup?tier=managed" className={ctaPrimary}>
-                      Choose Managed
-                    </Link>
-                  ) : (
-                    <span
-                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed bg-[var(--quni-ink-5)] hover:bg-[var(--quni-ink-5)]`}
-                      aria-disabled="true"
-                    >
-                      Coming soon
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -663,16 +484,14 @@ export default function Pricing() {
         <section className="max-w-site mx-auto w-full px-6 py-10 md:py-12">
           <h2 className="font-display text-center text-3xl font-bold text-[var(--quni-coral)] sm:text-4xl">How it works</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--quni-ink-4)]">
-            {managedTierEnabled
-              ? 'Parallel flows for Quni Listing and Quni Managed - three steps each for renters and landlords.'
-              : 'Quni Listing is live now. Compare both tiers - Quni Managed launches within the next month.'}
+            Find a place, sign the agreement, and pay the landlord directly.
           </p>
           <div className="mt-8 flex justify-center">
             <Link
               to="/how-it-works"
               className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
-              See Listing vs Managed flows →
+              See how it works →
             </Link>
           </div>
         </section>

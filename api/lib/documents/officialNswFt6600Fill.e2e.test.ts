@@ -33,7 +33,8 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(props.bond.amount).toBe(800)
     expect(props.maxOccupantsPermitted).toBe(2)
     expect(props.propertyCompliance.smokeAlarmType).toBe('battery')
-    expect(props.rent.paymentMethod).toContain('QUINNVESTMENTS')
+    expect(props.rent.paymentMethod).toContain('Quinn Lee')
+    expect(props.rent.paymentMethod).not.toContain('via the Quni Living platform')
   })
 
   it('fills renamed PDF per ft6600-correct-fill-spec.md (Quinn/Robert booking)', async () => {
@@ -61,7 +62,9 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
 
     expect(form.getTextField(F.rent_amount).getText()).toBe('400.00')
     expect(form.getTextField(F.rent_due_day_text).getText()).toBe('Wednesday')
-    expect(form.getTextField(F.rent_payment_details).getText()).toContain('939 200')
+    expect(form.getTextField(F.rent_payment_details).getText()).toContain('062 000')
+    expect(form.getTextField(F.rent_payment_details).getText()).toContain('11223344')
+    expect(form.getTextField(F.rent_payment_details).getText()).not.toContain('via the Quni Living platform')
 
     expect(form.getTextField(F.max_occupants).getText()).toBe('2')
     expect(form.getTextField(F.bond_amount).getText()).toBe('800.00')
