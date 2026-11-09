@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { resolveListingBondAud } from '../lib/booking/resolveBookingBondAmount'
-import { RENT_BOND_SHORT } from '../lib/bondPublicCopy'
+import { bookingBondWordingFromPackage } from '../../api/lib/tenancy/bookingBondWording'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
@@ -1263,15 +1263,15 @@ export default function PropertyDetail({
 
   const houseRuleRows = property.property_house_rules ?? []
   const hasHouseRuleBadges = houseRuleRows.length > 0
-  const qldRoomingListing = isQldRoomingArrangement(
-    resolveTenancyPackage({
-      state: property.state ?? '',
-      property_type: property.property_type ?? '',
-      is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-      rooms_rented_to_residents: property.rooms_rented_to_residents,
-      shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
-    }),
-  )
+  const tenancyPackage = resolveTenancyPackage({
+    state: property.state ?? '',
+    property_type: property.property_type ?? '',
+    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    rooms_rented_to_residents: property.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
+  })
+  const qldRoomingListing = isQldRoomingArrangement(tenancyPackage)
+  const bondWording = bookingBondWordingFromPackage(tenancyPackage)
   const hasWrittenHouseRules = Boolean(property.house_rules?.trim()) && !qldRoomingListing
   const quickInfoItems: { icon: string; text: string }[] = (() => {
     const items: { icon: string; text: string }[] = [{ icon: '📍', text: quickLocation }]
@@ -1979,7 +1979,9 @@ export default function PropertyDetail({
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
-                      {RENT_BOND_SHORT}
+                      {bondWording
+                        ? `${bondWording.bondLine} ${bondWording.rentLine}`
+                        : 'Bond follows the agreement for this property.'}
                     </p>
                     <p className="flex gap-2">
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>

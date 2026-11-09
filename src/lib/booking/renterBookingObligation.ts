@@ -3,6 +3,8 @@
  * never reconstructed from booking_events.
  */
 
+import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
+import { resolveTenancyPackage } from '../tenancy/resolveTenancyPackage'
 import { resolveBookingBondAmountAud } from './resolveBookingBondAmount'
 
 export type RenterObligationBand = {
@@ -40,6 +42,11 @@ export type RenterObligationProperty = {
   bond?: number | null
   bond_weeks?: number | null
   rent_per_week?: number | null
+  state?: string | null
+  property_type?: string | null
+  is_registered_rooming_house?: boolean | null
+  rooms_rented_to_residents?: number | null
+  qld_shares_kitchen_or_bathroom?: boolean | null
 } | null
 
 /**
@@ -67,11 +74,22 @@ export function renterBookingObligation(
     const bondReceived = Boolean(booking.bond_received_by_landlord_at)
 
     if (!bondReceived && bondAud != null && bondAud > 0) {
+      const wording = property?.state
+        ? bookingBondWordingFromPackage(
+            resolveTenancyPackage({
+              state: property.state,
+              property_type: property.property_type ?? '',
+              is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+              rooms_rented_to_residents: property.rooms_rented_to_residents,
+              shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
+            }),
+          )
+        : null
+      const agreement = wording ? `${wording.bondLine} ${wording.rentLine}` : ''
+      const amount = due ? `${formatAud(bondAud)} by ${due}.` : `${formatAud(bondAud)}.`
       return {
-        title: 'Bond payment due',
-        detail: due
-          ? `${formatAud(bondAud)} to your landlord by ${due}`
-          : `${formatAud(bondAud)} to your landlord`,
+        title: wording && !wording.lodgementApplies ? 'Deposit payment due' : 'Bond payment due',
+        detail: agreement ? `${amount} ${agreement}` : amount,
       }
     }
 

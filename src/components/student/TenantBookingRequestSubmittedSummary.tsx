@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
 import { formatIsoDateAuNumeric } from '../../lib/listingAvailabilityDates'
 import { bookingReferenceLabel } from '../../lib/bookingReference'
 import { landlordResponseExpiryLabel } from '../../lib/booking/landlordResponseExpiry'
@@ -13,6 +12,9 @@ type Props = {
   leaseLength: string
   /** Quni Listing apply - no student payment or deposit hold through Quni. */
   isListing?: boolean
+  /** Agreement sentences for this property. */
+  bondLine?: string | null
+  rentLine?: string | null
 }
 
 export default function TenantBookingRequestSubmittedSummary({
@@ -22,6 +24,8 @@ export default function TenantBookingRequestSubmittedSummary({
   moveInDate,
   leaseLength,
   isListing = false,
+  bondLine = null,
+  rentLine = null,
 }: Props) {
   const locationLine = [propertyTitle.trim() || 'Your listing', propertySuburb?.trim()].filter(Boolean).join(' · ')
   const moveInDisplay = formatIsoDateAuNumeric(moveInDate) || moveInDate
@@ -75,7 +79,9 @@ export default function TenantBookingRequestSubmittedSummary({
               {isListing ? (
                 <>
                   <span className="font-semibold">No payment through Quni.</span> This is a Quni Listing property - we did
-                  not charge your card or hold a deposit. If your host accepts, {RENT_BOND_SHORT}
+                  not charge your card or hold a deposit.
+                  {bondLine ? ` If your host accepts, ${bondLine}` : ''}
+                  {rentLine ? ` ${rentLine}` : ''}
                 </>
               ) : (
                 <>

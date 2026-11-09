@@ -32,15 +32,18 @@ describe('bondStepRegulatoryCopy', () => {
     const copy = bondStepRegulatoryCopy(nswTenancyRules('T1').bond, 'NSW')
     expect(copy.mode).toBe('landlord_held')
     expect(copy.bondCapFragment).toBeNull()
-    expect(copy.landlordHeldParagraphs[0]).toMatch(/boarding\/lodger/)
+    expect(copy.landlordHeldParagraphs[0]).toBe(
+      'The deposit is held by the landlord and is not lodged with NSW Fair Trading (Rental Bonds Online).',
+    )
+    expect(copy.landlordHeldParagraphs[1]).toMatch(/boarding\/lodger/)
   })
 
   it('NSW T3 uses proprietor-held security deposit copy', () => {
     const copy = bondStepRegulatoryCopy(nswTenancyRules('T3').bond, 'NSW', { tier: 'T3' })
     expect(copy.mode).toBe('landlord_held')
-    expect(copy.landlordHeldParagraphs[0]).toContain('Boarding Houses Act 2012')
-    expect(copy.landlordHeldParagraphs[0]).not.toMatch(/boarding\/lodger/)
-    expect(copy.acknowledgementCheckbox).toMatch(/proprietor/)
+    expect(copy.landlordHeldParagraphs[0]).toContain('not lodged with NSW Fair Trading (Rental Bonds Online)')
+    expect(copy.landlordHeldParagraphs[1]).toContain('Boarding Houses Act 2012')
+    expect(copy.acknowledgementCheckbox).toContain('held by the landlord')
   })
 
   it('VIC omits cap fragment when maxBondCopy is null', () => {

@@ -73,6 +73,7 @@ import {
   type QldBondRemittancePreference,
 } from '../../lib/tenancy/qldBondRemittance'
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
+import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
 import { isQldRoomingArrangement, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
   parseQldRoomingHouseRulesStored,
@@ -1177,6 +1178,17 @@ export default function LandlordPropertyFormPage() {
     [state, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
+  const formBondWording = useMemo(() => {
+    return bookingBondWordingFromPackage(
+      resolveTenancyPackage({
+        state: state.trim() || '',
+        property_type: propertyListingType,
+        is_registered_rooming_house: Boolean(isRegisteredRoomingHouse),
+        rooms_rented_to_residents: parseRoomsRentedToResidents(roomsRentedToResidents),
+        shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
+      }),
+    )
+  }, [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom])
   const showQldBondRemittance = useMemo(() => {
     if ((state.trim() || '').toUpperCase() !== 'QLD') return false
     const pkg = resolveTenancyPackage({
@@ -5349,9 +5361,9 @@ export default function LandlordPropertyFormPage() {
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900">Payee bank details</h3>
                     <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                      {isNswT3Listing
-                        ? 'Residents pay the security deposit and occupancy fee directly to this account by fee-free bank transfer, using their name and the property address as the reference.'
-                        : "Renters pay rent to this account by fee-free bank transfer, using their name and the property address as the reference. Bond is lodged with your state's bond authority."}
+                      {formBondWording
+                        ? `${formBondWording.rentLine} ${formBondWording.bondLine} Use your name and the property address as the reference.`
+                        : 'Rent is paid directly to the landlord at the account named in the agreement. Use your name and the property address as the reference.'}
                     </p>
                     {showQldRoomingHouseRules ? (
                       <p className="mt-2 text-xs text-amber-800/90">

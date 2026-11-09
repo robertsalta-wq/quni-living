@@ -77,6 +77,8 @@ type PropertyBookingEmbed = Pick<
   | 'property_type'
   | 'state'
   | 'is_registered_rooming_house'
+  | 'rooms_rented_to_residents'
+  | 'qld_shares_kitchen_or_bathroom'
   | 'qld_bond_remittance_preference'
   | 'room_type'
   | 'available_from'
@@ -142,6 +144,8 @@ function ListingBondGuidanceForBooking({
     state: property.state ?? 'NSW',
     property_type: property.property_type ?? '',
     is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    rooms_rented_to_residents: property.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
     date: moveIn,
   })
   if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
@@ -276,7 +280,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, qld_bond_remittance_preference, room_type, available_from, max_occupants, parking_available, furnished, lease_length, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ), property_features ( features ( name ) ) )',
+          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, qld_bond_remittance_preference, room_type, available_from, max_occupants, parking_available, furnished, lease_length, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ), property_features ( features ( name ) ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })

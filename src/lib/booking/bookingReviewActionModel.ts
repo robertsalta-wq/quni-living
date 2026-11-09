@@ -3,7 +3,13 @@
  * Pure copy resolution only; buttons/handlers stay wired in the page (existing API calls).
  * Visual SoT: Booking-review-v3-unpacked.html ACTION MODEL (~1538-1612) + MD §6/§11/§17.
  */
+import type { BookingBondWording } from '../../../api/lib/tenancy/bookingBondWording'
 import type { Database } from '../database.types'
+
+function agreementSentences(wording: BookingBondWording | null | undefined): string | null {
+  if (!wording) return null
+  return `${wording.bondLine} ${wording.rentLine}`
+}
 
 export type BookingReviewActionStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -66,6 +72,8 @@ export type LandlordBookingReviewActionCopyInput = {
   bondDeadlineLabel: string | null
   /** True when the readiness driver / non-gate blocker is showing (drives eyebrow tone for pre). */
   hasActionRequired: boolean
+  /** Agreement for this booking. Required for bond_pending copy. */
+  bondWording?: BookingBondWording | null
 }
 
 /**
@@ -103,7 +111,9 @@ export function resolveLandlordBookingReviewActionCopy(
         eyebrow: 'What you need to do',
         eyebrowTone: 'action',
         title: 'Confirm the bond',
-        sub: `Bond is lodged with the state bond authority. Confirm once ${name} has lodged it, or once you have received it and lodged it.`,
+        sub: input.bondWording
+          ? `${agreementSentences(input.bondWording)} ${input.bondWording.confirmPhrase[0].toUpperCase()}${input.bondWording.confirmPhrase.slice(1)}.`
+          : null,
         deadlineLabel: input.bondDeadlineLabel,
         deadlineTone: 'warning',
       }
@@ -195,6 +205,8 @@ export type RenterBookingReviewActionCopyInput = {
   bondDeadlineLabel: string | null
   /** From `renterBookingObligation` - takes precedence over the generic sub when present. */
   obligationSub: string | null
+  /** Agreement for this booking. Used when obligationSub is absent. */
+  bondWording?: BookingBondWording | null
 }
 
 /** Renter action-card copy - HTML SoT §6/§8/§11/§17 (role-flipped mirror of the landlord model). */
@@ -229,7 +241,7 @@ export function resolveRenterBookingReviewActionCopy(
         eyebrow: 'What you need to do',
         eyebrowTone: 'action',
         title: 'Pay your bond',
-        sub: input.obligationSub ?? 'Bond is lodged with your state\'s bond authority. Pay the authority, or pay your host, who must lodge it.',
+        sub: input.obligationSub ?? agreementSentences(input.bondWording),
         deadlineLabel: input.bondDeadlineLabel,
         deadlineTone: 'warning',
       }
