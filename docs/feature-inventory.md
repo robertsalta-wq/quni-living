@@ -46,7 +46,7 @@ Map tenant/landlord tickets to a bullet (e.g. “Bond receipt download” → St
 ### 6. Scope and prioritisation
 
 - **Roadmap:** mark new bullets as Live when shipped; move wishlist items to a “Backlog (not in product)” subsection if you add them.
-- **Service model:** Quni Listing is the only service. Rent and bond are paid to the landlord. Quni does not collect them. [`dual-tier-service-model.md`](./dual-tier-service-model.md) is a historical note, not the live product.
+- **Service model:** Quni Listing is the only service. Rent is paid to the landlord. For a standard residential tenancy, the bond is lodged with the state authority: NSW Fair Trading (Rental Bonds Online), the Residential Tenancies Authority in Queensland, or the Residential Tenancies Bond Authority in Victoria. The renter pays it to the authority directly, or to the landlord, who must lodge it. Under some occupancy or boarder arrangements, the landlord holds the deposit directly. Quni never holds, transfers, or refunds bond. [`dual-tier-service-model.md`](./dual-tier-service-model.md) is a historical note, not the live product.
 
 ### 7. Onboarding teammates
 
@@ -95,8 +95,8 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 
 - **Verified host** (core trust feature): landlords complete **Stripe Connect identity verification** (regulated KYC by Stripe, not manual Quni ID review) before they can **accept** any booking; when Stripe enables charges, a **Verified host** badge shows on profile and listings so renters get peace of mind
 - Renters may **browse, message, and submit booking requests** before a host finishes Stripe - only **acceptance** is gated on verification
-- **Renters**: no Quni booking, platform, or service fee. Applying does not take a deposit. Bond and rent are paid to the landlord. Quni does not collect, hold, or refund them.
-- **Landlords - Quni Listing**: saved card for a flat **$99** acceptance fee, charged on accept via Stripe. Bond and weekly rent are paid to the landlord. Quni does not collect them and does not take a percentage of rent.
+- **Renters**: no Quni booking, platform, or service fee. Applying does not take a deposit. Rent is paid to the landlord. For a standard residential tenancy, the bond is lodged with the state authority: NSW Fair Trading (Rental Bonds Online), the Residential Tenancies Authority in Queensland, or the Residential Tenancies Bond Authority in Victoria. The renter pays it to the authority directly, or to the landlord, who must lodge it. Under some occupancy or boarder arrangements, the landlord holds the deposit directly. Quni never holds, transfers, or refunds bond.
+- **Landlords - Quni Listing**: saved card for a flat **$99** acceptance fee, charged on accept via Stripe. Weekly rent is paid to the landlord. Quni does not collect rent and does not take a percentage of rent. Bond follows the lodgement rule in the renters bullet above.
 - **Quni Managed** is not offered.
 - Native apps (Capacitor iOS/Android) with push notifications where installed; primary product surface remains the web app
 - If the landlord declines, nothing is charged to the renter.
@@ -193,7 +193,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Renter role only; multi-step: dates and occupancy, then bond acknowledgement. Applying does not take a deposit.
 - Move-in (min 7 days), lease length, **1–2 occupants**, **co-tenant** fields when 2
 - Optional parking surcharge; message to landlord
-- Rent and bond are paid to the landlord. Quni does not collect them.
+- Rent is paid to the landlord. For a standard residential tenancy, the bond is lodged with the state authority (the renter pays the authority directly, or the landlord, who must lodge it). Under some occupancy or boarder arrangements, the landlord holds the deposit directly. Quni never holds, transfers, or refunds bond.
 - Bond acknowledgment. Quni does not take a deposit.
 - **Booking draft** in localStorage; date overlap / conflict UI
 - Cannot book own listings (if user is also landlord)
@@ -218,7 +218,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 
 ### Payments - Live
 
-- No renter deposit and no rent payout through Quni. Bond and rent are paid to the landlord.
+- No renter deposit and no rent payout through Quni. Rent is paid to the landlord. For a standard residential tenancy, the bond is lodged with the state authority. Under some occupancy or boarder arrangements, the landlord holds the deposit directly. Quni never holds, transfers, or refunds bond.
 
 ### AI & support - Live
 
@@ -330,7 +330,7 @@ Per listing:
 
 ### Service tiers - Live / flagged
 
-- **Quni Listing** - the landlord self-manages. A flat $99 fee is charged to the landlord's saved card on accept. Bond and rent are paid to the landlord. Quni does not collect them.
+- **Quni Listing** - the landlord self-manages. A flat $99 fee is charged to the landlord's saved card on accept. Rent is paid to the landlord. For a standard residential tenancy, the bond is lodged with the state authority. Under some occupancy or boarder arrangements, the landlord holds the deposit directly. Quni never holds, transfers, or refunds bond.
 - **Quni Managed** is not offered.
 
 ### AI & support - Live
@@ -377,6 +377,7 @@ Per listing:
 
 | Date | Change |
 |------|--------|
+| 2026-11-09 | Bond lodgement. Standard residential bonds are lodged with the state authority. The renter pays the authority directly, or the landlord, who must lodge it. Some occupancy or boarder deposits are held by the landlord. Quni never holds, transfers, or refunds bond. Rent is still paid to the landlord. |
 | 2026-11-09 | Listing only. Rent and bond are paid to the landlord. Quni does not collect them. No renter deposit. Managed is not offered. Landlord accept fee remains $99. |
 | 2026-09-15 | QLD Form R18 Listing on Preview (Stage 6): tenancy packages and listing form name Form R18; NSW T3 already live; VIC T3 still not available |
 | 2026-07-25 | Full codebase rescan: profile-first onboarding redirects; renter situation hub + readiness chrome; landlord Overview/Profile tabs + Listing Health; invite tenant; shared app chrome / incomplete nudge; deprecate profile Bookings tab; Managed flag; reinstatement; T3 rooming gap; AI proofread |

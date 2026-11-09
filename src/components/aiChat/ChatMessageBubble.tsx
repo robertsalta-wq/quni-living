@@ -1,4 +1,5 @@
 import type { ChatRole } from '../../lib/aiChat/chatTypes'
+import ChatAssistantMarkdown from './ChatAssistantMarkdown'
 
 type Props = {
   role: ChatRole
@@ -24,14 +25,14 @@ export default function ChatMessageBubble({ role, text, isStreaming }: Props) {
     <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={[
-          'max-w-[85%] whitespace-pre-wrap break-words px-4 py-2.5 text-sm leading-relaxed',
+          'max-w-[85%] break-words px-4 py-2.5 text-sm leading-relaxed',
           isUser
-            ? 'rounded-2xl bg-[var(--quni-coral)] text-white shadow-sm'
+            ? 'whitespace-pre-wrap rounded-2xl bg-[var(--quni-coral)] text-white shadow-sm'
             : 'rounded-2xl bg-white border border-gray-100 text-gray-900 shadow-sm',
         ].join(' ')}
         aria-live={isUser ? undefined : 'polite'}
       >
-        <span>{text}</span>
+        {isUser ? <span>{text}</span> : <ChatAssistantMarkdown text={text} />}
         {!isUser && isStreaming ? streamingDots() : null}
       </div>
     </div>
