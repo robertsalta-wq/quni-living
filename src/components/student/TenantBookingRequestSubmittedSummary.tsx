@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
 import { formatIsoDateAuNumeric } from '../../lib/listingAvailabilityDates'
 import { bookingReferenceLabel } from '../../lib/bookingReference'
 import { landlordResponseExpiryLabel } from '../../lib/booking/landlordResponseExpiry'
@@ -74,8 +75,7 @@ export default function TenantBookingRequestSubmittedSummary({
               {isListing ? (
                 <>
                   <span className="font-semibold">No payment through Quni.</span> This is a Quni Listing property - we did
-                  not charge your card or hold a deposit. If your host accepts, you will pay bond directly to them (or via
-                  the state bond authority where required) before move-in.
+                  not charge your card or hold a deposit. If your host accepts, {RENT_BOND_SHORT}
                 </>
               ) : (
                 <>

@@ -10,7 +10,7 @@ const SIGNUP_LANDLORD = '/signup?role=landlord'
 
 const CHECKLIST = [
   'Student screening & placement',
-  'Rent and bond management',
+  'Bond lodged with the state authority, not with Quni',
   'Property condition oversight',
   'Tenant issues & escalation',
   'Ongoing reporting and visibility',

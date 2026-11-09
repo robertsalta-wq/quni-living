@@ -378,7 +378,7 @@ Per listing:
 | Date | Change |
 |------|--------|
 | 2026-11-09 | Bond lodgement. Standard residential bonds are lodged with the state authority. The renter pays the authority directly, or the landlord, who must lodge it. Some occupancy or boarder deposits are held by the landlord. Quni never holds, transfers, or refunds bond. Rent is still paid to the landlord. |
-| 2026-11-09 | Listing only. Rent and bond are paid to the landlord. Quni does not collect them. No renter deposit. Managed is not offered. Landlord accept fee remains $99. |
+| 2026-11-09 | Listing only. The earlier combined rent-and-bond sentence was removed the same day. No renter deposit. Managed is not offered. Landlord accept fee remains $99. |
 | 2026-09-15 | QLD Form R18 Listing on Preview (Stage 6): tenancy packages and listing form name Form R18; NSW T3 already live; VIC T3 still not available |
 | 2026-07-25 | Full codebase rescan: profile-first onboarding redirects; renter situation hub + readiness chrome; landlord Overview/Profile tabs + Listing Health; invite tenant; shared app chrome / incomplete nudge; deprecate profile Bookings tab; Managed flag; reinstatement; T3 rooming gap; AI proofread |
 | 2026-06-02 | Trust/Stripe/payments section for AI; sample agreements; knowledge sync script |

@@ -95,7 +95,7 @@ export default function LandlordListingAcceptedSummary({
             <span className="font-semibold">Bond ({bondLine}):</span>{' '}
             {bondObligations
               ? `Offer the renter the state bond authority route first, or accept payment to you - see obligations below. Quni does not hold bond.`
-              : `Collect directly from the renter off-platform (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.`}
+              : `Bond is lodged with your state's bond authority. The renter pays the authority, or pays you and you must lodge it. Under some occupancy or boarder arrangements you hold the deposit. Quni never holds, transfers or refunds bond.`}
           </span>
         </li>
         <li className="flex gap-2">

@@ -5,6 +5,7 @@ import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
 import { isRenterRole } from '../../lib/authProfile'
 import type { Database } from '../../lib/database.types'
+import { RENT_BOND_LONG, RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
 import { isValidAuPhone } from '../../lib/studentOnboarding'
 import {
   inferLandlordWizardStep,
@@ -1165,9 +1166,8 @@ export default function LandlordOnboarding() {
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Add a card for Quni Listing fees</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
-                You picked Quni Listing on the pricing page - you run the tenancy and bond &amp; rent stay between you and
-                your renter. Quni only charges a flat acceptance fee on your saved card when you accept a booking. You
-                won&apos;t be charged today.
+                You picked Quni Listing on the pricing page. {RENT_BOND_LONG} Quni only charges a flat acceptance fee on
+                your saved card when you accept a booking. You won&apos;t be charged today.
               </p>
 
               {cardSaved || landlordStripeStepComplete(profile) ? (
@@ -1228,8 +1228,8 @@ export default function LandlordOnboarding() {
               <h2 className="text-lg font-bold text-stone-900">Connect your bank account to receive rent payments</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
                 We use Stripe to securely process Quni Managed rent payouts. You&apos;ll complete a short Stripe Express
-                onboarding - we never see your full bank details. If you intend to run only Quni Listing properties (you
-                handle bond and rent directly), you can skip this and just save a card from your profile instead.
+                onboarding - we never see your full bank details. If you intend to run only Quni Listing properties,{' '}
+                {RENT_BOND_SHORT} You can skip this and just save a card from your profile instead.
               </p>
 
               {landlordStripeStepComplete(profile) ? (

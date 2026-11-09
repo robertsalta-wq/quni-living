@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { resolveListingBondAud } from '../lib/booking/resolveBookingBondAmount'
+import { RENT_BOND_SHORT } from '../lib/bondPublicCopy'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
@@ -1978,7 +1979,7 @@ export default function PropertyDetail({
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
-                      Rent and bond paid to the landlord
+                      {RENT_BOND_SHORT}
                     </p>
                     <p className="flex gap-2">
                       <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>

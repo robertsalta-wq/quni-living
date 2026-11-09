@@ -3,6 +3,7 @@
  * Visual SoT: Booking-review-v3-unpacked.html ~1217-1269 + JS state (~1483-1518).
  * Bond is always its own line - never folded into "Quni holds" (§14).
  */
+import { RENT_BOND_SHORT } from '../bondPublicCopy'
 import type { RentBreakdownAud } from '../pricing/resolveWeeklyRent'
 import { formatDate } from '../../pages/admin/adminUi'
 
@@ -80,11 +81,11 @@ export function resolveBookingReviewHoldRow(input: BookingReviewHoldRowInput): B
 /** Beige footer note under the Terms summary - landlord voice, tier + state aware. */
 export function resolveBookingReviewHoldNote(input: BookingReviewHoldRowInput): string {
   if (input.tier !== 'managed') {
-    return 'Bond and rent are paid to you directly. Quni holds $0 at any point.'
+    return `${RENT_BOND_SHORT} Quni holds $0 at any point.`
   }
 
   if (PRE_ACCEPT_STATUSES.has(input.status)) {
-    return 'Quni will hold a one-week holding deposit from confirmation until the day after move-in, then release it to you. The bond is lodged by Quni.'
+    return 'Quni will hold a one-week holding deposit from confirmation until the day after move-in, then release it to you. Quni never holds, transfers or refunds bond.'
   }
 
   const isReleasedPhase = input.status === 'active' || input.status === 'completed'
@@ -92,11 +93,11 @@ export function resolveBookingReviewHoldNote(input: BookingReviewHoldRowInput): 
   if (isReleasedPhase) {
     const releasedLabel = input.depositReleasedAt?.trim() ? formatDate(input.depositReleasedAt.slice(0, 10)) : null
     return releasedLabel
-      ? `Quni holds $0 - the ${amount} holding deposit was released ${releasedLabel}, the day after move-in. The bond is handled by Quni.`
-      : 'Quni holds $0 - the holding deposit has been released. The bond is handled by Quni.'
+      ? `Quni holds $0 - the ${amount} holding deposit was released ${releasedLabel}, the day after move-in. Quni never holds, transfers or refunds bond.`
+      : 'Quni holds $0 - the holding deposit has been released. Quni never holds, transfers or refunds bond.'
   }
 
-  return `Quni is holding a ${amount} holding deposit until the day after move-in, then releases it to you. The bond is handled separately by Quni.`
+  return `Quni is holding a ${amount} holding deposit until the day after move-in, then releases it to you. Quni never holds, transfers or refunds bond.`
 }
 
 export type BookingReviewBreakdownRow = {

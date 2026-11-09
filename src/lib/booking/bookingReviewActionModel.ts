@@ -103,7 +103,7 @@ export function resolveLandlordBookingReviewActionCopy(
         eyebrow: 'What you need to do',
         eyebrowTone: 'action',
         title: 'Confirm the bond',
-        sub: `${name} pays the bond directly to you. Confirm once it lands to progress.`,
+        sub: `Bond is lodged with the state bond authority. Confirm once ${name} has lodged it, or once you have received it and lodged it.`,
         deadlineLabel: input.bondDeadlineLabel,
         deadlineTone: 'warning',
       }
@@ -229,7 +229,7 @@ export function resolveRenterBookingReviewActionCopy(
         eyebrow: 'What you need to do',
         eyebrowTone: 'action',
         title: 'Pay your bond',
-        sub: input.obligationSub ?? `Pay your bond directly to ${host} to secure the room and start your lease.`,
+        sub: input.obligationSub ?? 'Bond is lodged with your state\'s bond authority. Pay the authority, or pay your host, who must lodge it.',
         deadlineLabel: input.bondDeadlineLabel,
         deadlineTone: 'warning',
       }

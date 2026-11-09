@@ -10,6 +10,7 @@ import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
 import type { Property } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { RENT_BOND_LONG } from '../lib/bondPublicCopy'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import QldRtaLodgementGuidance from '../components/bond/QldRtaLodgementGuidance'
 import {
@@ -2229,9 +2230,8 @@ export default function Booking() {
           <h2 className="text-lg font-bold text-gray-900">About your bond</h2>
           {isListingProperty ? (
             <p className="text-sm text-gray-600 leading-relaxed">
-              Quni does not collect bond or rent on Listing stays. If your host accepts, you will pay bond directly to
-              them (or lodge it with the state authority where required). No card payment is taken when you submit this
-              request.
+              Quni does not collect bond or rent on Listing stays. {RENT_BOND_LONG} No card payment is taken when you
+              submit this request.
             </p>
           ) : null}
           <div className="quni-card space-y-4 p-5 text-sm leading-relaxed text-gray-700 sm:p-6">
@@ -2245,7 +2245,7 @@ export default function Booking() {
                       (<span className="tabular-nums">{bondWeeksAtRentPhrase(bondWeeksVsRent, weeklyRent)}</span>)
                     </>
                   ) : null}
-                  , payable directly to them before or on your move-in date.
+                  , due before or on your move-in date.
                   {bondRegulatoryCopy?.bondCapFragment}
                 </>
               ) : (
@@ -2329,8 +2329,7 @@ export default function Booking() {
                   bondRegulatoryCopy.acknowledgementCheckbox
                 ) : (
                   <>
-                    I understand the bond is paid directly to my landlord and must be lodged with the relevant state
-                    authority.
+                    I understand: {RENT_BOND_LONG}
                   </>
                 )
               ) : (
