@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
-import { BOND_NEUTRAL_MARKETING } from '../lib/bondPublicCopy'
+import { RENT_BOND_LONG, RENT_BOND_SHORT } from '../lib/bondPublicCopy'
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
 type Step = { title: string; description: string }
@@ -33,7 +33,7 @@ const LISTING_STUDENT: Step[] = [
   },
   {
     title: '3. Sign and pay the landlord',
-    description: `Sign the agreement. Pay bond and rent to the landlord at the account named in the agreement. ${BOND_NEUTRAL_MARKETING}`,
+    description: `Sign the agreement. ${RENT_BOND_LONG}`,
   },
 ]
 
@@ -50,7 +50,7 @@ const LISTING_LANDLORD: Step[] = [
   },
   {
     title: '3. Run the tenancy',
-    description: 'Collect bond and rent directly from your renter. Quni does not hold tenancy funds.',
+    description: RENT_BOND_SHORT,
   },
 ]
 
@@ -84,7 +84,7 @@ export default function HowItWorks() {
           <section className="mx-auto mt-14 max-w-[1180px]">
             <h2 className="font-display text-center text-2xl font-bold text-[var(--quni-trust)] sm:text-3xl">Quni Listing</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--quni-ink-4)]">
-              You run the tenancy. Bond and rent stay between landlord and renter.
+              You run the tenancy. {RENT_BOND_SHORT}
             </p>
             <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
               <FlowColumn

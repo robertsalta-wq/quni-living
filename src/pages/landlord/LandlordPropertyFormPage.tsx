@@ -5351,7 +5351,7 @@ export default function LandlordPropertyFormPage() {
                     <p className="mt-1 text-xs text-gray-600 leading-relaxed">
                       {isNswT3Listing
                         ? 'Residents pay the security deposit and occupancy fee directly to this account by fee-free bank transfer, using their name and the property address as the reference.'
-                        : 'Renters pay bond and rent directly to this account by fee-free bank transfer, using their name and the property address as the reference.'}
+                        : "Renters pay rent to this account by fee-free bank transfer, using their name and the property address as the reference. Bond is lodged with your state's bond authority."}
                     </p>
                     {showQldRoomingHouseRules ? (
                       <p className="mt-2 text-xs text-amber-800/90">

@@ -23,6 +23,7 @@ import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
+import { RENT_BOND_LONG, RENT_BOND_SHORT } from '../lib/bondPublicCopy'
 
 /** First-party LCP hero (same Unsplash photo-1571260899304…, 4:3). See public/hero/. */
 const HERO_COLLAGE_TOP_FALLBACK = '/hero/hero-top-800.webp'
@@ -70,7 +71,7 @@ const STUDENT_HOW_STEPS = [
   {
     n: 3,
     title: 'Book',
-    desc: 'Apply and sign. Rent and bond are paid to the landlord.',
+    desc: `Apply and sign. ${RENT_BOND_SHORT}`,
   },
 ] as const
 
@@ -88,7 +89,7 @@ const LANDLORD_HOW_STEPS = [
   {
     n: 3,
     title: 'Collect rent',
-    desc: 'The tenant pays you directly. Quni does not collect rent or bond.',
+    desc: RENT_BOND_SHORT,
   },
 ] as const
 
@@ -140,7 +141,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-3',
     q: 'How do I receive rent payments?',
-    a: 'On Quni Listing, rent is paid by your tenant directly to you. Quni does not collect rent or bond.',
+    a: RENT_BOND_LONG,
   },
   {
     id: 'faq-l-4',
@@ -699,7 +700,7 @@ export default function Home() {
                 const open = openFaqId === item.id
                 const answer =
                   item.id === 'faq-l-1'
-                    ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. Rent and bond are paid to you.`
+                    ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. ${RENT_BOND_LONG}`
                     : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">

@@ -13,6 +13,7 @@ import LandlordApplicantProfileDrawer from '../../components/landlord/LandlordAp
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
+import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
 import { isBondPaymentReceiptContext } from '../../lib/listings'
@@ -1061,7 +1062,7 @@ export default function LandlordBookingReviewPage() {
   const planTooltip =
     serviceTierResolved === 'managed'
       ? 'Managed by Quni - we collect rent, chase signatures and handle the tenancy for a 6% fee.'
-      : 'Quni Listing - you manage this tenancy yourself. Quni holds no money; bond and rent are paid to you directly.'
+      : `Quni Listing - you manage this tenancy yourself. Quni holds no money. ${RENT_BOND_SHORT}`
   const listingHref = property?.id ? `/property/${property.id}` : null
   const propertySubtitle = propertyAddressLine || propertyStreetLine || null
 
@@ -1175,8 +1176,8 @@ export default function LandlordBookingReviewPage() {
                   >
                     <p className="font-medium">Add payee bank details to accept</p>
                     <p className="mt-1 text-admin-warning-fg/90">
-                      This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
-                      weekly rent directly to this account by fee-free bank transfer.
+                      This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay weekly
+                      rent to this account by fee-free bank transfer. Bond is lodged with your state&apos;s bond authority.
                     </p>
                     <Link
                       to={`/landlord/property/edit/${property.id}/section/pricing`}

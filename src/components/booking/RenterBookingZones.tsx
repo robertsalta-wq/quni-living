@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { User, TrendingUp, MessageSquare, FileText, Clock } from 'lucide-react'
+import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
 import { supabase } from '../../lib/supabase'
 import Section from '../ui/Section'
 import BookingTermsBlock from './BookingTermsBlock'
@@ -269,7 +270,7 @@ export default function RenterBookingZones({
   } else if (booking.status === 'bond_pending') {
     actionBody = (
       <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
-        Paid directly to {hostName}. Quni holds $0 and never touches your bond.
+        {RENT_BOND_SHORT} Quni holds $0 and never touches your bond.
       </p>
     )
   } else if (booking.status === 'confirmed') {

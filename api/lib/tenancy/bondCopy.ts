@@ -78,7 +78,7 @@ export function bondStepRegulatoryCopy(
     amberTitle: 'Always get a receipt when you pay your bond.',
     amberBody: 'Never pay a bond without receiving official confirmation of lodgement from the state authority.',
     acknowledgementCheckbox:
-      'I understand the bond is paid directly to my landlord and must be lodged with the relevant state authority.',
+      'I understand the bond is lodged with the state bond authority, paid either directly or through the landlord, who must lodge it. Quni never holds, transfers or refunds bond.',
   }
 }
 

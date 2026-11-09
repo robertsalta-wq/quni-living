@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatContractingPartyName, LEGAL_ENTITY_ABN, LEGAL_ENTITY_ACN } from '../../lib/legalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
+import { RENT_BOND_LONG } from '../../lib/bondPublicCopy'
 import { LegalH2, LegalH3, LegalP, LegalUl, type LegalTocItem } from './LegalPageShell'
 
 export const TERMS_TOC: LegalTocItem[] = [
@@ -190,7 +191,7 @@ export function TermsContent() {
       </LegalP>
       <LegalP>
         <strong>Renters</strong> pay <strong>no</strong> booking fee, platform fee, service fee, or card surcharge to
-        Quni. Bond and rent are paid to the landlord. Quni does not collect them.
+        Quni. {RENT_BOND_LONG}
       </LegalP>
       <LegalP>
         <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a flat <strong>$99</strong> acceptance fee per

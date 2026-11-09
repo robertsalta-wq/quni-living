@@ -1,3 +1,11 @@
+/** Cards, property page, pricing. */
+export const RENT_BOND_SHORT =
+  "Rent goes to the landlord. Bond is lodged with your state's bond authority."
+
+/** FAQ, Terms, and other places with room for the full rule. */
+export const RENT_BOND_LONG =
+  'Rent is paid directly to the landlord. For standard tenancies, bond is lodged with the state bond authority (NSW Fair Trading, the RTA in Queensland, or the RTBA in Victoria), paid either directly or through the landlord, who must lodge it. Under some occupancy or boarder arrangements, the landlord holds the deposit. Quni never holds, transfers or refunds bond.'
+
 /** Canonical neutral bond custody - jurisdiction-aware; NSW hosted-room hold preserved. */
 export const BOND_NEUTRAL_MARKETING =
   'For standard residential tenancies, bond is lodged with your state or territory bond authority. In NSW, bond for hosted rooms (boarder/lodger arrangements) may be held by the landlord. In Queensland, if a bond is taken for a boarder/lodger arrangement it must still be lodged with the RTA within 10 days. Quni does not hold bond money for any tenancy.'

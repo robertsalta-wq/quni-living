@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import CssCollapseAccordion from '../components/CssCollapseAccordion'
 import Seo from '../components/Seo'
 import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
-import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED } from '../lib/bondPublicCopy'
+import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED, RENT_BOND_LONG, RENT_BOND_SHORT } from '../lib/bondPublicCopy'
 import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
@@ -92,7 +92,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'money-fees-3',
         question: 'Is there a card surcharge?',
         answer:
-          'No. Renters do not pay Quni by card. Rent and bond are paid to the landlord.',
+          `No. Renters do not pay Quni by card. ${RENT_BOND_LONG}`,
       },
     ],
   },
@@ -145,7 +145,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'listing-managed-0',
         question: 'Does Quni collect rent or bond?',
         answer:
-          'No. The landlord runs bond and rent directly with the renter. Quni does not hold, transfer, or refund them.',
+          RENT_BOND_LONG,
       },
       {
         id: 'listing-managed-1',
@@ -318,7 +318,7 @@ export default function Pricing() {
                 </div>
 
                 <p className="mt-auto pt-2 text-xs italic leading-normal text-[var(--quni-ink-4)]">
-                  Rent and bond are paid to the landlord. You pay Quni nothing.
+                  {RENT_BOND_SHORT} You pay Quni nothing.
                 </p>
 
                 <Link to="/properties" className={ctaSecondary}>
@@ -442,7 +442,7 @@ export default function Pricing() {
                       }
                       name="Bond lodgement"
                       value="Self-managed"
-                      description="You lodge bond under state rules with your renter. Quni does not hold bond money."
+                      description={RENT_BOND_SHORT}
                       tone="muted"
                       valueKind="mutedSm"
                     />

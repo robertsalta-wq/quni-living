@@ -5,6 +5,7 @@ import {
   BOND_FAQ_HOSTED_VS_PRIVATE,
   BOND_FAQ_HOW_HANDLED,
   BOND_FAQ_NO_BOND_REQUIRED,
+  RENT_BOND_LONG,
 } from './bondPublicCopy'
 
 export type FaqItem = {
@@ -231,7 +232,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-rent',
         question: 'How do I receive rent payments?',
         answer:
-          'Bond and rent are paid to you at the account named in the agreement. Quni does not collect, hold, or refund them.',
+          RENT_BOND_LONG,
       },
       {
         id: 'landlords-campus',
@@ -284,7 +285,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'money-card-surcharge',
         question: 'Is there a card surcharge?',
-        answer: 'No. Renters do not pay Quni by card. Rent and bond are paid to the landlord.',
+        answer: `No. Renters do not pay Quni by card. ${RENT_BOND_LONG}`,
       },
     ],
   },
@@ -318,7 +319,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'tier-difference',
         question: 'Does Quni collect rent or bond?',
         answer:
-          'No. The landlord runs bond and rent with the renter. Quni does not hold, transfer, or refund them, and takes no percentage of rent.',
+          RENT_BOND_LONG,
       },
       {
         id: 'tier-availability',
