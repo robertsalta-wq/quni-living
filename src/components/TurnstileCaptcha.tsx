@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo } from 'react'
 import { Turnstile } from '@marsidev/react-turnstile'
+import { reportTurnstileWidgetError } from '../lib/turnstileHealth'
 
 const siteKey = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
 
@@ -19,7 +20,13 @@ type Props = {
 function TurnstileCaptcha({ resetKey, onTokenChange, disabled, labelClassName, showLabel = true }: Props) {
   const onSuccess = useCallback((t: string) => onTokenChange(t), [onTokenChange])
   const onExpire = useCallback(() => onTokenChange(null), [onTokenChange])
-  const onError = useCallback(() => onTokenChange(null), [onTokenChange])
+  const onError = useCallback(
+    (error?: unknown) => {
+      onTokenChange(null)
+      reportTurnstileWidgetError(error)
+    },
+    [onTokenChange],
+  )
   const options = useMemo(() => DEFAULT_OPTIONS, [])
 
   if (!siteKey) {

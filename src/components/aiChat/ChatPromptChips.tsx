@@ -18,7 +18,7 @@ const CHIPS: Record<PersonaKey, string[]> = {
     'Why do I need Stripe to accept bookings?',
     'Where can I see sample agreements?',
     'Help me complete my listing',
-    'Listing vs Managed payments',
+    'What does Quni charge when I accept a tenant?',
     'How do payouts work?',
   ],
   visitor: [
