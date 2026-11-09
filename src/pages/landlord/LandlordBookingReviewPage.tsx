@@ -13,7 +13,7 @@ import LandlordApplicantProfileDrawer from '../../components/landlord/LandlordAp
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
-import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
+import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
 import { isBondPaymentReceiptContext } from '../../lib/listings'
@@ -404,6 +404,28 @@ export default function LandlordBookingReviewPage() {
     data?.property?.is_registered_rooming_house,
     data?.property?.rooms_rented_to_residents,
     data?.property?.qld_shares_kitchen_or_bathroom,
+  ])
+
+  const listingBondWording = useMemo(() => {
+    if (!data?.property) return null
+    const moveIn =
+      (typeof data.booking.move_in_date === 'string' && data.booking.move_in_date.trim()) ||
+      (typeof data.booking.start_date === 'string' && data.booking.start_date.trim()) ||
+      undefined
+    return bookingBondWordingFromPackage(
+      resolveTenancyPackage({
+        state: data.property.state ?? '',
+        property_type: data.property.property_type ?? '',
+        is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+        rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+        shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
+        date: moveIn,
+      }),
+    )
+  }, [
+    data?.booking?.move_in_date,
+    data?.booking?.start_date,
+    data?.property,
   ])
 
   const qldRoomingArrangement = useMemo(() => {
@@ -1042,6 +1064,7 @@ export default function LandlordBookingReviewPage() {
 
   // Action-card copy by status (pure model). copyStatus may borrow bond_pending when mark-bond.
   const actionCopy = resolveLandlordBookingReviewActionCopy({
+    bondWording: listingBondWording,
     status: primaryAction.copyStatus,
     studentDisplayName: displayName,
     askedAtLabel: awaitingInfoQuestion?.askedAtLabel ?? null,
@@ -1062,7 +1085,9 @@ export default function LandlordBookingReviewPage() {
   const planTooltip =
     serviceTierResolved === 'managed'
       ? 'Managed by Quni - we collect rent, chase signatures and handle the tenancy for a 6% fee.'
-      : `Quni Listing - you manage this tenancy yourself. Quni holds no money. ${RENT_BOND_SHORT}`
+      : listingBondWording
+        ? `Quni Listing - you manage this tenancy yourself. Quni holds no money. ${listingBondWording.bondLine} ${listingBondWording.rentLine}`
+        : 'Quni Listing - you manage this tenancy yourself. Quni holds no money.'
   const listingHref = property?.id ? `/property/${property.id}` : null
   const propertySubtitle = propertyAddressLine || propertyStreetLine || null
 
@@ -1176,8 +1201,10 @@ export default function LandlordBookingReviewPage() {
                   >
                     <p className="font-medium">Add payee bank details to accept</p>
                     <p className="mt-1 text-admin-warning-fg/90">
-                      This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay weekly
-                      rent to this account by fee-free bank transfer. Bond is lodged with your state&apos;s bond authority.
+                      This listing needs payout bank details before you can accept Quni Listing bookings.{' '}
+                      {listingBondWording
+                        ? `${listingBondWording.rentLine} ${listingBondWording.bondLine}`
+                        : 'Rent is paid directly to the landlord at the account named in the agreement.'}
                     </p>
                     <Link
                       to={`/landlord/property/edit/${property.id}/section/pricing`}
@@ -1446,6 +1473,8 @@ export default function LandlordBookingReviewPage() {
                 bondDeadlineIso={booking.bond_window_expires_at}
                 listingFeeDisplay={listingFeeDisplay}
                 bondObligations={listingBondObligations}
+                agreementBondLine={listingBondWording?.bondLine ?? null}
+                confirmPhrase={listingBondWording?.confirmPhrase ?? null}
                 justAccepted={listingAcceptCelebration}
                 onDismissCelebration={() => setListingAcceptCelebration(false)}
               />
@@ -1568,6 +1597,7 @@ export default function LandlordBookingReviewPage() {
                 serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
                 leaseHolderName={displayName}
                 inputsDisabled={reviewLayout.inputsDisabled}
+                bondWording={listingBondWording}
                 onSaved={() => {
                   void reload()
                   setLeasePanelRefreshKey((k) => k + 1)
@@ -1791,13 +1821,14 @@ export default function LandlordBookingReviewPage() {
                   {isListingPropertyContext ? (
                     isListingBondPending ? (
                       <>
-                        They remain as backups until you confirm bond receipt below; confirming bond will automatically
-                        decline them. Quni does not hold deposits on Listing applications.
+                        They remain as backups until you {listingBondWording?.confirmPhrase ?? 'confirm'} below; confirming
+                        will automatically decline them. Quni does not hold deposits on Listing applications.
                       </>
                     ) : (
                       <>
-                        They stay as backups while you review this request. If you accept and later confirm bond receipt,
-                        remaining applicants are automatically declined. Quni does not hold deposits on Listing applications.
+                        They stay as backups while you review this request. If you accept and later{' '}
+                        {listingBondWording?.confirmPhrase ?? 'confirm'}, remaining applicants are automatically declined.
+                        Quni does not hold deposits on Listing applications.
                       </>
                     )
                   ) : (

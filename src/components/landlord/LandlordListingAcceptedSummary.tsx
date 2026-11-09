@@ -11,6 +11,8 @@ type Props = {
   bondDeadlineIso: string | null
   listingFeeDisplay: string
   bondObligations?: ListingBondPaymentLandlordObligations | null
+  agreementBondLine?: string | null
+  confirmPhrase?: 'confirm once lodged' | 'confirm once received' | null
   justAccepted?: boolean
   onDismissCelebration?: () => void
 }
@@ -29,6 +31,8 @@ export default function LandlordListingAcceptedSummary({
   bondDeadlineIso,
   listingFeeDisplay,
   bondObligations = null,
+  agreementBondLine = null,
+  confirmPhrase = null,
   justAccepted = false,
   onDismissCelebration,
 }: Props) {
@@ -93,9 +97,11 @@ export default function LandlordListingAcceptedSummary({
           </span>
           <span>
             <span className="font-semibold">Bond ({bondLine}):</span>{' '}
-            {bondObligations
-              ? `Offer the renter the state bond authority route first, or accept payment to you - see obligations below. Quni does not hold bond.`
-              : `Bond is lodged with your state's bond authority. The renter pays the authority, or pays you and you must lodge it. Under some occupancy or boarder arrangements you hold the deposit. Quni never holds, transfers or refunds bond.`}
+            {agreementBondLine
+              ? `${agreementBondLine}${confirmPhrase ? ` ${confirmPhrase[0].toUpperCase()}${confirmPhrase.slice(1)} on Quni before the deadline.` : ''}`
+              : bondObligations
+                ? `Offer the renter the state bond authority route first, or accept payment to you - see obligations below. Quni does not hold bond.`
+                : 'Bond follows the agreement for this booking.'}
           </span>
         </li>
         <li className="flex gap-2">
@@ -103,7 +109,11 @@ export default function LandlordListingAcceptedSummary({
             ✓
           </span>
           <span>
-            <span className="font-semibold">Deadline:</span> Confirm bond receipt on Quni before{' '}
+            <span className="font-semibold">Deadline:</span>{' '}
+            {confirmPhrase
+              ? `${confirmPhrase[0].toUpperCase()}${confirmPhrase.slice(1)}`
+              : 'Confirm'}{' '}
+            on Quni before{' '}
             <span className="font-semibold">{formatBondDeadline(bondDeadlineIso)}</span> so the booking stays active.
           </span>
         </li>

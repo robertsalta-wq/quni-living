@@ -1,6 +1,7 @@
 import type { Database } from '../../lib/database.types'
 import { formatDate } from '../../pages/admin/adminUi'
 import { resolveBookingBondAmountAud } from '../../lib/booking/resolveBookingBondAmount'
+import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import {
   formatPropertyPayoutBsbDisplay,
@@ -13,7 +14,18 @@ type BookingRow = Database['public']['Tables']['bookings']['Row']
 
 type PropertyFields = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'title' | 'address' | 'suburb' | 'state' | 'postcode' | 'property_type' | 'is_registered_rooming_house' | 'rent_per_week' | 'bond' | 'bond_weeks'
+  | 'title'
+  | 'address'
+  | 'suburb'
+  | 'state'
+  | 'postcode'
+  | 'property_type'
+  | 'is_registered_rooming_house'
+  | 'rooms_rented_to_residents'
+  | 'qld_shares_kitchen_or_bathroom'
+  | 'rent_per_week'
+  | 'bond'
+  | 'bond_weeks'
 > & {
   property_payout_details?: PropertyPayoutDetailsInput | PropertyPayoutDetailsInput[] | null
 }
@@ -56,6 +68,8 @@ export function shouldShowListingPaymentInstructions(args: {
     state: args.property.state ?? 'NSW',
     property_type: args.property.property_type ?? '',
     is_registered_rooming_house: Boolean(args.property.is_registered_rooming_house),
+    rooms_rented_to_residents: args.property.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: args.property.qld_shares_kitchen_or_bathroom,
     date: bookingMoveInIso(args.booking),
   })
   if (!pkg.supported || pkg.pdfKind !== 'occupancy_agreement') return false
@@ -87,9 +101,12 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
     state: property.state ?? 'NSW',
     property_type: property.property_type ?? '',
     is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    rooms_rented_to_residents: property.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
     date: moveInRaw,
   })
   const schemeApplies = pkg.supported && pkg.rules.bond.schemeApplies
+  const agreement = bookingBondWordingFromPackage(pkg)
   const isT3 = pkg.supported && pkg.tier === 'T3'
   const depositLabel = isT3 ? 'Security deposit' : 'Bond'
   const payeeLabel = isT3 ? 'proprietor' : 'host'
@@ -131,6 +148,11 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
       role="note"
     >
       <p className="font-semibold leading-snug">{heading}</p>
+      {agreement ? (
+        <p className="text-xs leading-relaxed text-indigo-900/95">
+          {agreement.bondLine} {agreement.rentLine}
+        </p>
+      ) : null}
       <p className="text-xs leading-relaxed text-indigo-900/95">
         {showBondSection
           ? `Pay your ${payeeLabel} directly by fee-free bank transfer. Use the reference below so they can match your payment.`

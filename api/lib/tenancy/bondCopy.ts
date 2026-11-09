@@ -3,6 +3,7 @@
  * Paragraphs live here, not on TenancyBondRules.
  */
 import type { TenancyBondRules } from './rules/types.js'
+import { bookingBondWording } from './bookingBondWording.js'
 import { landlordHeldBondIntroParagraph, normalizeAuStateCode } from './jurisdictionCopy.js'
 
 export interface BondRegulatoryCopy {
@@ -35,13 +36,20 @@ export function bondStepRegulatoryCopy(
 ): BondRegulatoryCopy {
   const st = normalizeAuStateCode(stateCode) || 'NSW'
 
+  const agreement = bookingBondWording({ state: stateCode, schemeApplies: bond.schemeApplies })
+  const agreementAck = agreement
+    ? `I understand: ${agreement.bondLine} ${agreement.rentLine}`
+    : null
+
   if (!bond.schemeApplies) {
     const t3 = opts?.tier === 'T3'
+    const heldDetail = landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName, { tier: opts?.tier })
     return {
       mode: 'landlord_held',
       bondCapFragment: bondCapFragmentFromBond(bond),
       landlordHeldParagraphs: [
-        landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName, { tier: opts?.tier }),
+        agreement?.bondLine ?? heldDetail,
+        heldDetail,
         t3
           ? 'Get a written receipt when you pay your security deposit, and keep a copy for your records.'
           : 'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
@@ -56,9 +64,11 @@ export function bondStepRegulatoryCopy(
       authorityPublicLine: '',
       amberTitle: '',
       amberBody: '',
-      acknowledgementCheckbox: t3
-        ? `I understand the security deposit is paid directly to the proprietor and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`
-        : `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`,
+      acknowledgementCheckbox:
+        agreementAck ??
+        (t3
+          ? `I understand the security deposit is paid directly to the proprietor and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`
+          : `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`),
     }
   }
 
@@ -78,7 +88,8 @@ export function bondStepRegulatoryCopy(
     amberTitle: 'Always get a receipt when you pay your bond.',
     amberBody: 'Never pay a bond without receiving official confirmation of lodgement from the state authority.',
     acknowledgementCheckbox:
-      'I understand the bond is lodged with the state bond authority, paid either directly or through the landlord, who must lodge it. Quni never holds, transfers or refunds bond.',
+      agreementAck ??
+      'I understand the bond is lodged with the state bond authority, paid either directly or through the landlord, who must lodge it.',
   }
 }
 

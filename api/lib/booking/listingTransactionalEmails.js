@@ -192,6 +192,7 @@ async function loadListingEmailContext(admin, bookingId) {
     bondPaymentTenantHtml,
     bondPaymentLandlordHtml,
     bondSchemeApplies: Boolean(bondRules?.schemeApplies),
+    propertyState: tenancyPackage.ragState,
     isBoarderLodger,
     payout,
     paymentReference,
@@ -219,6 +220,7 @@ export function buildListingRenterPaymentEmailPayload(ctx, opts) {
     student_dashboard_url: studentDash,
     bond_payment_html: ctx.bondPaymentTenantHtml,
     bond_scheme_applies: ctx.bondSchemeApplies,
+    property_state: ctx.propertyState,
     is_boarder_lodger: ctx.isBoarderLodger,
     payout: ctx.payout,
     weekly_rent: ctx.weeklyRent,
@@ -316,6 +318,8 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         mark_bond_received_url: markBond,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
         bond_obligations_html: ctx.bondPaymentLandlordHtml,
+        bond_scheme_applies: ctx.bondSchemeApplies,
+        property_state: ctx.propertyState,
         review_url: markBond,
       })
       await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })

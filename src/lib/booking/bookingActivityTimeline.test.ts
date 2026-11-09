@@ -148,6 +148,44 @@ describe('renterBookingObligation', () => {
     expect(band?.detail).toContain('18 July')
   })
 
+  it('names the agreement bond line for a residential booking and a deposit for occupancy', () => {
+    const residential = renterBookingObligation(
+      {
+        status: 'bond_pending',
+        bond_amount: 1000,
+        bond_window_expires_at: '2026-07-18T00:00:00.000Z',
+        bond_received_by_landlord_at: null,
+      },
+      {
+        state: 'NSW',
+        property_type: 'entire_property',
+        is_registered_rooming_house: false,
+        rent_per_week: 250,
+      },
+    )
+    expect(residential?.title).toBe('Bond payment due')
+    expect(residential?.detail).toContain('Bond is lodged with NSW Fair Trading (Rental Bonds Online)')
+
+    const occupancy = renterBookingObligation(
+      {
+        status: 'bond_pending',
+        bond_amount: 1000,
+        bond_window_expires_at: '2026-07-18T00:00:00.000Z',
+        bond_received_by_landlord_at: null,
+      },
+      {
+        state: 'VIC',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+        rent_per_week: 250,
+      },
+    )
+    expect(occupancy?.title).toBe('Deposit payment due')
+    expect(occupancy?.detail).toContain(
+      'The deposit is held by the landlord and is not lodged with the Residential Tenancies Bond Authority.',
+    )
+  })
+
   it('returns null when nothing is outstanding', () => {
     expect(
       renterBookingObligation({

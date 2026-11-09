@@ -15,6 +15,7 @@ import {
 import LandlordBookingTermsEditor from '../../landlord/LandlordBookingTermsEditor'
 import LandlordBookingAgreedRentEditor from '../../landlord/LandlordBookingAgreedRentEditor'
 import { resolveBookingReviewTermsEditorMode } from '../../../lib/booking/bookingReviewTermsEditorMode'
+import type { BookingBondWording } from '../../../../api/lib/tenancy/bookingBondWording'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 
@@ -30,6 +31,7 @@ export type BookingReviewTermsRailProps = {
   /** True on expired / cancelled / declined shells - hides Edit entirely. */
   inputsDisabled: boolean
   onSaved: () => void
+  bondWording?: BookingBondWording | null
 }
 
 function fmtAud(n: number | null | undefined): string {
@@ -58,6 +60,7 @@ export default function BookingReviewTermsRail({
   leaseHolderName,
   inputsDisabled,
   onSaved,
+  bondWording = null,
 }: BookingReviewTermsRailProps) {
   const [detailOpen, setDetailOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -87,6 +90,7 @@ export default function BookingReviewTermsRail({
     status: booking.status,
     depositAmountCents: booking.deposit_amount ?? null,
     depositReleasedAt: booking.deposit_released_at ?? null,
+    bondWording,
   })
   const breakdownRows = resolveBookingReviewRentBreakdownRows({
     weeklyRentAud,

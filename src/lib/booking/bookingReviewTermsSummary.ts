@@ -3,7 +3,7 @@
  * Visual SoT: Booking-review-v3-unpacked.html ~1217-1269 + JS state (~1483-1518).
  * Bond is always its own line - never folded into "Quni holds" (§14).
  */
-import { RENT_BOND_SHORT } from '../bondPublicCopy'
+import type { BookingBondWording } from '../../../api/lib/tenancy/bookingBondWording'
 import type { RentBreakdownAud } from '../pricing/resolveWeeklyRent'
 import { formatDate } from '../../pages/admin/adminUi'
 
@@ -36,6 +36,8 @@ export type BookingReviewHoldRowInput = {
   depositAmountCents: number | null
   /** Set by the release-deposits cron the day after move-in. */
   depositReleasedAt: string | null
+  /** Listing agreement for this property. Omitted on Managed. */
+  bondWording?: BookingBondWording | null
 }
 
 export type BookingReviewHoldRow = {
@@ -81,7 +83,9 @@ export function resolveBookingReviewHoldRow(input: BookingReviewHoldRowInput): B
 /** Beige footer note under the Terms summary - landlord voice, tier + state aware. */
 export function resolveBookingReviewHoldNote(input: BookingReviewHoldRowInput): string {
   if (input.tier !== 'managed') {
-    return `${RENT_BOND_SHORT} Quni holds $0 at any point.`
+    return input.bondWording
+      ? `${input.bondWording.bondLine} ${input.bondWording.rentLine} Quni holds $0 at any point.`
+      : 'Quni holds $0 at any point.'
   }
 
   if (PRE_ACCEPT_STATUSES.has(input.status)) {

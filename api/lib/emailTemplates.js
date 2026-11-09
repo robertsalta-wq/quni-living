@@ -1,15 +1,27 @@
 /**
  * Inline HTML for booking notifications (Resend). Primary colour: #FF6F61
  */
+import { bookingBondWording } from './tenancy/bookingBondWording.js'
+
+function agreementWordingFromEmail(data) {
+  if (!data || typeof data !== 'object') return null
+  return bookingBondWording({
+    state: data.property_state || data.state,
+    schemeApplies: data.bond_scheme_applies === true,
+  })
+}
+
+function agreementMoneyParagraph(data) {
+  const wording = agreementWordingFromEmail(data)
+  if (!wording) return ''
+  return `<p>${escapeHtml(`${wording.bondLine} ${wording.rentLine}`)}</p>`
+}
 
 export function propertyAddressLine(prop) {
   if (!prop || typeof prop !== 'object') return ''
   const parts = [prop.address, prop.suburb, prop.state, prop.postcode].filter(Boolean)
   return parts.join(', ') || String(prop.title || '')
 }
-
-const RENT_BOND_LONG_EMAIL =
-  'Rent is paid directly to the landlord. For standard tenancies, bond is lodged with the state bond authority (NSW Fair Trading, the RTA in Queensland, or the RTBA in Victoria), paid either directly or through the landlord, who must lodge it. Under some occupancy or boarder arrangements, the landlord holds the deposit. Quni never holds, transfers or refunds bond.'
 
 function escapeHtml(s) {
   if (s == null || s === '') return ''
@@ -107,7 +119,7 @@ export function bookingConfirmedStudent(data) {
   <tr><td style="padding: 8px; border-bottom: 1px solid #f0f0f0; color: #666;">Landlord contact</td><td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">${landlordPhone}</td></tr>
 </table>
 <p><strong>Your booking deposit of ${escapeHtml(depositAmount)} will be released to your landlord 24 hours after your move-in date.</strong></p>
-<p>${RENT_BOND_LONG_EMAIL}</p>
+${agreementMoneyParagraph(data)}
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking details →</a>`
 
   return {
@@ -128,13 +140,17 @@ export function bookingConfirmedLandlord(data) {
   const bondAmountFormatted =
     data.bond_amount_formatted ||
     (data.bond_amount_cents != null ? formatAudFromCents(data.bond_amount_cents) : '')
-  const bondAuthority = escapeHtml(data.bond_authority || '')
   const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
-  const bondBlock =
-    bondAmountFormatted && bondAuthority
-      ? `<p><strong>Bond record:</strong> We&apos;ve logged a bond of <strong>${escapeHtml(bondAmountFormatted)}</strong> for this booking. Please collect the bond from the student and lodge it with <strong>${bondAuthority}</strong> within the timeframe required in your state. Quni Living has recorded your acknowledgement of this obligation.</p>`
-      : `<p><strong>Remember:</strong> ${RENT_BOND_LONG_EMAIL}</p>`
+  const wording = agreementWordingFromEmail(data)
+  const recorded = bondAmountFormatted
+    ? `Amount recorded: <strong>${escapeHtml(bondAmountFormatted)}</strong>. `
+    : ''
+  const bondBlock = wording
+    ? `<p><strong>Bond record:</strong> ${recorded}${escapeHtml(wording.bondLine)} ${escapeHtml(wording.rentLine)}</p>`
+    : bondAmountFormatted
+      ? `<p><strong>Bond record:</strong> We&apos;ve logged a bond of <strong>${escapeHtml(bondAmountFormatted)}</strong> for this booking.</p>`
+      : ''
 
   const inner = `<h2 style="color: #1A1A2E;">Booking confirmed</h2>
 <p>Hi ${landlordName},</p>
@@ -320,19 +336,20 @@ export function listingRenterPaymentInstructionsBlockHtml(data) {
       : null
   const statutoryBondHtml =
     typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim() ? data.bond_payment_html : ''
+  const agreement = agreementMoneyParagraph(data)
 
   // Any Listing property with complete payee details: show bank transfer block (bond+rent or rent-only when scheme).
   if (payout && schemeApplies) {
     const rentBlock = listingRentPayeeBlockHtml({ ...data, rent_only_heading: true })
-    return `${statutoryBondHtml}${rentBlock}`
+    return `${agreement}${statutoryBondHtml}${rentBlock}`
   }
   if (payout) {
-    return listingRentPayeeBlockHtml({ ...data, rent_only_heading: false })
+    return `${agreement}${listingRentPayeeBlockHtml({ ...data, rent_only_heading: false })}`
   }
   if (statutoryBondHtml) {
-    return statutoryBondHtml
+    return `${agreement}${statutoryBondHtml}`
   }
-  return `<p><strong>Bond payment:</strong> ${RENT_BOND_LONG_EMAIL}</p>`
+  return agreement || ''
 }
 
 /** Listing tier - renter: slim payment-instructions resend (no acceptance / DocuSeal copy). */
@@ -369,7 +386,7 @@ export function listingBookingAcceptedRenter(data) {
 <p><strong>Tenancy agreement:</strong> We&apos;re preparing your agreement for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
 ${bondPaymentBlock}
 <p><strong>Deadline:</strong> Please arrange bond payment before <strong>${bondDeadline}</strong>. If bond isn&apos;t received in time, this booking may lapse.</p>
-<p style="margin-top:12px;font-size:14px;color:#555;">Your host will confirm bond receipt on Quni when they have received it.</p>
+<p style="margin-top:12px;font-size:14px;color:#555;">Your host will ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni.</p>
 <a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
 
   return {
@@ -407,10 +424,11 @@ export function listingBookingAcceptedLandlord(data) {
   const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
   const markBondUrl = escapeHtml(data.mark_bond_received_url || data.dashboard_url || '#')
   const reviewUrl = escapeHtml(data.review_url || markBondUrl)
-  const bondObligationsBlock =
+  const bondObligationsBlock = `${agreementMoneyParagraph(data)}${
     typeof data.bond_obligations_html === 'string' && data.bond_obligations_html.trim()
       ? data.bond_obligations_html
-      : `<p><strong>Bond:</strong> ${RENT_BOND_LONG_EMAIL} Confirm on Quni before <strong>${bondDeadline}</strong>.</p>`
+      : `<p>Please ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni before <strong>${bondDeadline}</strong>.</p>`
+  }`
 
   const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
 <p>Hi ${landlordName},</p>
@@ -418,9 +436,9 @@ export function listingBookingAcceptedLandlord(data) {
 <p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation.</p>
 <p><strong>Tenancy agreement:</strong> We&apos;re preparing your state-appropriate agreement. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
 ${bondObligationsBlock}
-<p>When bond is received (by you or lodged with the authority), confirm on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
+<p>Please ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
 <a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>
-<a href="${markBondUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Mark bond received →</a>`
+<a href="${markBondUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">${agreementWordingFromEmail(data)?.confirmPhrase === 'confirm once received' ? 'Confirm once received' : 'Confirm once lodged'} →</a>`
 
   return {
     subject: `Listing booking confirmed - ${data.property_address || data.property_title || 'your listing'}`,

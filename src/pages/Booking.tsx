@@ -10,7 +10,7 @@ import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
 import type { Property } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
-import { RENT_BOND_LONG } from '../lib/bondPublicCopy'
+import { bookingBondWordingFromPackage } from '../../api/lib/tenancy/bookingBondWording'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import QldRtaLodgementGuidance from '../components/bond/QldRtaLodgementGuidance'
 import {
@@ -1745,6 +1745,8 @@ export default function Booking() {
 
   const qldRoomingApplyHold = tenancyPackage ? isQldRoomingArrangement(tenancyPackage) : false
 
+  const bondWording = bookingBondWordingFromPackage(tenancyPackage)
+
   const bondRegulatoryCopy = useMemo(() => {
     if (!tenancyPackage.supported) {
       return null
@@ -1861,6 +1863,8 @@ export default function Booking() {
           moveInDate={moveIn}
           leaseLength={leaseLength}
           isListing={isListingProperty}
+          bondLine={bondWording?.bondLine ?? null}
+          rentLine={bondWording?.rentLine ?? null}
         />
       )
     }
@@ -2230,7 +2234,8 @@ export default function Booking() {
           <h2 className="text-lg font-bold text-gray-900">About your bond</h2>
           {isListingProperty ? (
             <p className="text-sm text-gray-600 leading-relaxed">
-              Quni does not collect bond or rent on Listing stays. {RENT_BOND_LONG} No card payment is taken when you
+              Quni does not collect bond or rent on Listing stays.
+              {bondWording ? ` ${bondWording.bondLine} ${bondWording.rentLine}` : ''} No card payment is taken when you
               submit this request.
             </p>
           ) : null}
@@ -2329,7 +2334,7 @@ export default function Booking() {
                   bondRegulatoryCopy.acknowledgementCheckbox
                 ) : (
                   <>
-                    I understand: {RENT_BOND_LONG}
+                    I understand: {bondWording ? `${bondWording.bondLine} ${bondWording.rentLine}` : 'bond follows the agreement for this booking.'}
                   </>
                 )
               ) : (

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { User, TrendingUp, MessageSquare, FileText, Clock } from 'lucide-react'
-import { RENT_BOND_SHORT } from '../../lib/bondPublicCopy'
+import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
+import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import { supabase } from '../../lib/supabase'
 import Section from '../ui/Section'
 import BookingTermsBlock from './BookingTermsBlock'
@@ -184,6 +185,18 @@ export default function RenterBookingZones({
   const askedQuestion = resolveLandlordAwaitingInfoQuestion(messages)
   const obligation = renterBookingObligation(booking, property ?? undefined)
 
+  const bondWording = property
+    ? bookingBondWordingFromPackage(
+        resolveTenancyPackage({
+          state: property.state ?? '',
+          property_type: property.property_type ?? '',
+          is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+          rooms_rented_to_residents: property.rooms_rented_to_residents,
+          shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
+        }),
+      )
+    : null
+
   const actionCopy = resolveRenterBookingReviewActionCopy({
     status: booking.status,
     landlordDisplayName: hostName,
@@ -191,6 +204,7 @@ export default function RenterBookingZones({
     sentAtLabel: formatBookingReviewShortDate(booking.created_at),
     bondDeadlineLabel,
     obligationSub: obligation?.detail ?? null,
+    bondWording,
   })
 
   const chatThread = useMemo(
@@ -270,7 +284,8 @@ export default function RenterBookingZones({
   } else if (booking.status === 'bond_pending') {
     actionBody = (
       <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
-        {RENT_BOND_SHORT} Quni holds $0 and never touches your bond.
+        {bondWording ? `${bondWording.bondLine} ${bondWording.rentLine} ` : ''}
+        Quni holds $0 and never touches your bond.
       </p>
     )
   } else if (booking.status === 'confirmed') {

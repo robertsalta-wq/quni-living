@@ -1,3 +1,4 @@
+import { bookingBondWording } from '../../../api/lib/tenancy/bookingBondWording'
 import NswRentalBondOnlineLink from '../bond/NswRentalBondOnlineLink'
 import QldRtaLodgementGuidance from '../bond/QldRtaLodgementGuidance'
 import type { ListingBondPaymentTenantGuidance } from '../../lib/tenancy/listingBondPaymentCopy'
@@ -34,6 +35,7 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
   }
 
   const amountPhrase = formatBondAud(bondAmountAud)
+  const agreement = bookingBondWording({ state: guidance.stateLabel, schemeApplies: true })
 
   const authorityStep = (
     <>
@@ -100,6 +102,11 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
       role="note"
     >
       <p className="font-semibold leading-snug">How to pay your bond ({amountPhrase})</p>
+      {agreement ? (
+        <p className="text-xs leading-relaxed text-admin-warning-fg">
+          {agreement.bondLine} {agreement.rentLine}
+        </p>
+      ) : null}
       <p className="text-xs leading-relaxed text-admin-warning-fg">
         Under {guidance.stateLabel} law, your host must let you choose how to pay
         {guidance.preferLandlordCollection
