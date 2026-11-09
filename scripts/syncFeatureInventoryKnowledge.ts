@@ -29,7 +29,7 @@ type KnowledgeSeed = {
 }
 
 const PREAMBLE =
-  'Source: docs/feature-inventory.md (living product inventory). Live = shipped end-to-end. UI only = shown in the app but not fully backed - say "coming soon" if asked. Deprecated = replaced. Do not invent features or routes not listed here.\n\n'
+  'Source: docs/feature-inventory.md (living product inventory). Live = shipped end-to-end. UI only = shown in the app but not fully backed - say "coming soon" if asked. There is no Managed option and it is not coming soon. Deprecated = replaced. Do not invent features or routes not listed here. Quni has one option for landlords: software for listing a place and preparing the agreement. Quni does not manage tenancies, collect rent, or hold bond.\n\n'
 
 function extractSection(md: string, startHeading: string, endHeading: string | null): string {
   const startIdx = md.indexOf(startHeading)

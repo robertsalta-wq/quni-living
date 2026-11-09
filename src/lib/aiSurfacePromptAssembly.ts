@@ -25,6 +25,8 @@ const NSW_T2_BOND = nswTenancyRules('T2').bond
 const QLD_T2_BOND = qldTenancyRules('T2').bond
 const NSW_FAIR_TRADING_BOND_URL = NSW_T2_BOND.schemeApplies ? NSW_T2_BOND.authorityUrl : ''
 const QLD_RTA_BOND_URL = QLD_T2_BOND.schemeApplies ? QLD_T2_BOND.authorityUrl : ''
+/** Consumer Affairs Victoria renting guide. Paired with the NSW and QLD renting links in bond answers. */
+const VIC_RENTING_URL = 'https://www.consumer.vic.gov.au/housing/renting'
 
 const TENANCY_LAW_DISCLAIMER_LINE =
   'This is general information, not legal advice - check the official source for your situation.'
@@ -34,10 +36,10 @@ const TENANCY_LAW_DISCLAIMER_LINE =
  * Product/marketing answers (fees, how Quni works) are carved out.
  */
 const TENANCY_LAW_GUARDRAIL_RULE = `- Tenancy / landlord-law claims (mandatory - recite or refer): Bond amounts, who holds or lodges bond, lodgement windows, entry/notice periods, repairs and safety obligations, occupancy or boarding-house limits, form/agreement requirements, house-rule legality, strata/by-laws, tax on room income, and whether someone is a lodger vs a tenant are legal information - not Quni product policy.
-  - Product carve-out: Fees, Listing vs Managed, booking/verification/document routing on Quni, and "what does it cost to list" stay normal product answers. Do not add a legal disclaimer for pure product questions.
+  - Product carve-out: Fees, the one landlord option (software for listing and preparing agreements; there is no Managed service), booking/verification/document routing on Quni, and "what does it cost to list" stay normal product answers. Do not add a legal disclaimer for pure product questions.
   - Branch 1 - attributable source present (recite): When the retrieved RELEVANT KNOWLEDGE BASE context or this system message attributes a specific legal rule to a primary official source, state that rule plainly and confidently and cite the source. Include this line: "${TENANCY_LAW_DISCLAIMER_LINE}" Never invent a citation, Act, or section number. knowledge_base rows have no citation URL column - an uncited paraphrase in a chunk is not enough.
-  - Bond attribution (when Branch 1 applies): Prefer these official authority URLs from Quni's typed tenancy bond rules: NSW Fair Trading ${NSW_FAIR_TRADING_BOND_URL}; Queensland Residential Tenancies Authority (RTA) ${QLD_RTA_BOND_URL}.
-  - Branch 2 - no attributable source, or interpretive / circumstance-dependent (refer): If you cannot attribute a specific rule, or the question turns on applying the law to their situation (e.g. lodger vs tenant, the 4-vs-5 boarding-house line, which house-rule terms are void, other open boundaries), do NOT state a rule, do NOT guess, and do NOT settle the boundary. Say the answer depends on their specific circumstances, recommend they seek legal advice, and point them to NSW Fair Trading (${NSW_FAIR_TRADING_BOND_URL}) or the QLD RTA (${QLD_RTA_BOND_URL}) as appropriate. Keep the tone helpful - e.g. "This one depends on your specific situation - worth getting legal advice, and NSW Fair Trading / the RTA can help" - never a blunt refusal.
+  - Bond attribution (when Branch 1 applies): Prefer these official renting URLs: NSW Fair Trading ${NSW_FAIR_TRADING_BOND_URL}; Queensland Residential Tenancies Authority (RTA) ${QLD_RTA_BOND_URL}; Victoria Consumer Affairs Victoria ${VIC_RENTING_URL}. When the question is who holds the bond, include all three links.
+  - Branch 2 - no attributable source, or interpretive / circumstance-dependent (refer): If you cannot attribute a specific rule, or the question turns on applying the law to their situation (e.g. lodger vs tenant, the 4-vs-5 boarding-house line, which house-rule terms are void, other open boundaries), do NOT state a rule, do NOT guess, and do NOT settle the boundary. Say the answer depends on their specific circumstances, recommend they seek legal advice, and point them to NSW Fair Trading (${NSW_FAIR_TRADING_BOND_URL}), the QLD RTA (${QLD_RTA_BOND_URL}), or Consumer Affairs Victoria (${VIC_RENTING_URL}) as appropriate. Keep the tone helpful - e.g. "This one depends on your specific situation - worth getting legal advice, and NSW Fair Trading, the RTA, or Consumer Affairs Victoria can help" - never a blunt refusal.
   - Conservative default: If unclear whether something is legal information vs product information, or whether Branch 1 or Branch 2 applies, use Branch 2 (refer).`
 
 export const AI_SENTINEL_VALUES = {
@@ -132,6 +134,8 @@ const VERIFICATION_HONESTY_RULE = `- Verification honesty: Only describe user or
 
 const TRUST_STRIPE_PAYMENTS_RULE = `- Trust & Stripe payments (priority topic): Quni's main trust feature for students is the Verified host badge - landlords must complete Stripe Connect identity verification (Stripe's regulated KYC, not manual Quni review) before they can accept a booking. When Stripe enables charges on their account, the badge appears on listings so renters know the host passed identity checks. Students can still browse, message, and submit booking requests before that step; only acceptance is blocked. Explain why this matters for peace of mind when users ask if a landlord is legitimate, safe, or verified. For payment flows, use RELEVANT KNOWLEDGE BASE articles on student payments, landlord payments, and host verification - do not conflate bond/rent (tenancy money) with Quni platform fees. Students pay no Quni booking, platform, or service fee. Rent and bond are paid to the landlord. Quni does not collect them.`
 
+const LISTING_ONLY_RULE = `- One landlord option: Quni has one option for landlords. It is software for listing a place and preparing the agreement. Quni does not manage tenancies, does not collect rent, and does not hold bond. There is no Managed option. Never say Quni offers Managed, handles tenant communication for a fee, or provides tenancy management. Do not call Managed coming soon. Renters pay Quni nothing. When a landlord accepts a tenant, Quni charges a flat $99 acceptance fee to the landlord's saved card. There is no percentage of rent. If a knowledge chunk is silent, still say this. Do not fill the gap from general property-management knowledge.`
+
 const PRODUCT_INVENTORY_RULE = `- Product capabilities and routes: For "where do I…", "can I…", or whether a feature exists, prefer RELEVANT KNOWLEDGE BASE entries titled "Quni … product features" or "Quni route map" (synced from docs/feature-inventory.md). Do not claim features not listed there. Renters can save properties (heart on cards/detail; Saved tab on the student dashboard). If the knowledge base does not cover the question, suggest the relevant dashboard tab or hello@quni.com.au rather than inventing flows.`
 
 const SAMPLE_AGREEMENTS_RULE = `- Sample agreement PDFs (watermarked, not for signing): Logged-in landlords and students can open the Sample agreements page at /sample-agreements (also linked from the dashboard as "View sample agreements"). It shows clickable thumbnail previews of live-generated templates by state (NSW, QLD, VIC) and tier (T1 occupancy/licence, T2 residential with Quni addendum where applicable, NSW T3 Standard Occupancy Agreement for registered boarding houses, and QLD Form R18 rooming accommodation). Tell users to use that page - do not say templates are only in listing settings, help centre, or unavailable in chat. You cannot display PDFs inside this chat. Admins reviewing all templates use /admin/agreement-previews. These samples are for layout and wording review only; executed agreements are generated per confirmed booking.`
@@ -149,6 +153,7 @@ Rules:
 ${NO_EM_DASH_RULE}
 ${VERIFICATION_HONESTY_RULE}
 ${TRUST_STRIPE_PAYMENTS_RULE}
+${LISTING_ONLY_RULE}
 ${PRODUCT_INVENTORY_RULE}
 ${SAMPLE_AGREEMENTS_RULE}
 ${TENANCY_LAW_GUARDRAIL_RULE}
@@ -174,9 +179,10 @@ You MUST follow these rules:
 10) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 11) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 12) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
-13) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
-14) ${NO_EM_DASH_RULE.replace(/^- /, '')}
-15) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
+13) ${LISTING_ONLY_RULE.replace(/^- /, '')}
+14) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
+15) ${NO_EM_DASH_RULE.replace(/^- /, '')}
+16) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
@@ -204,9 +210,10 @@ Rules:
 13) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 14) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
-16) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
-17) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
-18) ${NO_EM_DASH_RULE.replace(/^- /, '')}`,
+16) ${LISTING_ONLY_RULE.replace(/^- /, '')}
+17) ${TENANCY_LAW_GUARDRAIL_RULE.replace(/^- /, '')}
+18) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
+19) ${NO_EM_DASH_RULE.replace(/^- /, '')}`,
 } as const
 
 export function buildStudentListingContextBlock(props: Array<Record<string, unknown>>): string {
