@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { LegalPageShell } from '../components/legal/LegalPageShell'
 import {
   LANDLORD_SERVICE_AGREEMENT_TOC,
@@ -13,6 +14,7 @@ import {
 const LEGACY_FEE_HASHES = new Set(['fees-deduction', 'fees-payout'])
 
 export default function LandlordServiceAgreement() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   useEffect(() => {
     function redirectLegacyFeeHash() {
       const raw = window.location.hash.replace(/^#/, '')
@@ -32,7 +34,11 @@ export default function LandlordServiceAgreement() {
     <>
       <Seo
         title={LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE}
-        description="Agreement for landlords on Quni Listing: marketplace terms, $99 on accept, and what Quni does not do as an agent."
+        description={
+          pricingV2Enabled
+            ? 'Agreement for landlords on Quni Listing. Quni is a technology platform, not an agent. The lease fee is $5 plus GST for each rented month, charged when the lease is signed.'
+            : 'Agreement for landlords on Quni Listing: marketplace terms, $99 on accept, and what Quni does not do as an agent.'
+        }
         canonicalPath="/landlord-service-agreement"
       />
       <LegalPageShell

@@ -1,4 +1,5 @@
 import Seo from '../components/Seo'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import PageHeroBand from '../components/PageHeroBand'
 import { ORGANIZATION_EMAIL } from '../lib/site'
 import { BOND_CONDUIT_VS_CUSTODY, BOND_NEUTRAL_MARKETING } from '../lib/bondPublicCopy'
@@ -8,6 +9,7 @@ const TH = 'border border-stone-200 bg-stone-50 px-3 py-2.5 text-left text-xs fo
 const TD = 'border border-stone-200 px-3 py-3 text-sm leading-relaxed text-gray-700 align-top'
 
 export default function Refunds() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   return (
     <>
       <Seo
@@ -34,7 +36,7 @@ export default function Refunds() {
 
             <section className="space-y-4">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                Quni Listing - landlord acceptance fee
+                {pricingV2Enabled ? 'Quni Listing - landlord lease fee' : 'Quni Listing - landlord acceptance fee'}
               </h2>
               <p>
                 Applies to <strong>landlords</strong> on Quni Listing only. Renters pay <strong>no</strong> booking,
@@ -45,7 +47,11 @@ export default function Refunds() {
                   <thead>
                     <tr>
                       <th className={TH}>Situation</th>
-                      <th className={TH}>Refund of the Listing acceptance fee ($99, subject to change at booking)</th>
+                      <th className={TH}>
+                        {pricingV2Enabled
+                          ? 'Lease fee ($5.50 including GST per rented month, charged when everyone has signed)'
+                          : 'Refund of the Listing acceptance fee ($99, subject to change at booking)'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -63,9 +69,14 @@ export default function Refunds() {
                       </td>
                     </tr>
                     <tr>
-                      <td className={TD}>Landlord accepted the booking; tenancy proceeds</td>
                       <td className={TD}>
-                        <strong>No refund</strong> - the fee covers acceptance and platform use for that booking.
+                        {pricingV2Enabled ? 'The lease is signed and proceeds' : 'Landlord accepted the booking; tenancy proceeds'}
+                      </td>
+                      <td className={TD}>
+                        <strong>No cash refund.</strong>{' '}
+                        {pricingV2Enabled
+                          ? 'If the renter leaves early, unused whole months become credit on that room for its next lease.'
+                          : 'The fee covers acceptance and platform use for that booking.'}
                       </td>
                     </tr>
                     <tr>
@@ -82,8 +93,9 @@ export default function Refunds() {
                 </table>
               </div>
               <p className="text-xs italic text-gray-600">
-                Note: Listing acceptance fees are not yet charged automatically at landlord confirm in all flows; until
-                billing is fully wired, alignment with this table is handled case-by-case via{' '}
+                {pricingV2Enabled
+                  ? 'The lease fee is not refunded as cash. Credit on a room is used on that room\'s next lease and never paid out. Questions: '
+                  : 'Note: Listing acceptance fees are not yet charged automatically at landlord confirm in all flows; until billing is fully wired, alignment with this table is handled case-by-case via '}
                 <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                   {ORGANIZATION_EMAIL}
                 </a>

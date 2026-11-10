@@ -27,19 +27,19 @@ const SHARED_TERM = {
 
 const SHARED_RENT = {
   weeklyRent: 420,
-  platformFeePercent: 10,
+  platformFeePercent: 0,
   totalWeekly: 420,
   paymentMethod:
-    'Direct deposit - Account name: Quni Living Pty Ltd; BSB: 123-456; Account number: 987654321. Tenants may also pay recurring rent via the Quni Living platform (quni.com.au).',
+    'Direct deposit - Account name: Alex Rental Provider; BSB: 062-000; Account number: 11223344.',
 }
 
 const SHARED_BOND = { amount: 1680 }
 
 const SHARED_BANK = {
-  bsb: '123456',
-  accountNumber: '987654321',
-  accountName: 'Quni Living Pty Ltd',
-  bankName: 'Example Bank',
+  bsb: '062000',
+  accountNumber: '11223344',
+  accountName: 'Alex Rental Provider',
+  bankName: 'Commonwealth Bank',
 }
 
 function premisesFor(state, suburb, postcode, propertyType, roomType) {
@@ -70,6 +70,12 @@ export function nswOccupancySampleProps() {
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 840 },
+    payout: {
+      account_name: 'Alex Rental Provider',
+      bsb: '062000',
+      account_number: '11223344',
+    },
+    paymentReference: 'Jordan Resident - 45 Brunswick Street, Newtown, NSW, 2042',
     specialConditions: [],
     bookingNotes: null,
     houseRules: 'Quiet hours 10pm-7am. Shared kitchen cleaned after use.',
@@ -145,6 +151,12 @@ export function qldOccupancySampleProps() {
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 760 },
+    payout: {
+      account_name: 'Alex Rental Provider',
+      bsb: '062000',
+      account_number: '11223344',
+    },
+    paymentReference: 'Jordan Resident - 45 Brunswick Street, West End, QLD, 4101',
     specialConditions: [],
     bookingNotes: null,
     houseRules: 'Quiet hours 10pm-7am. No shoes on carpet.',
@@ -168,6 +180,12 @@ export function vicOccupancySampleProps() {
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 760 },
+    payout: {
+      account_name: 'Alex Rental Provider',
+      bsb: '062000',
+      account_number: '11223344',
+    },
+    paymentReference: 'Jordan Resident - 45 Brunswick Street, Carlton, VIC, 3053',
     specialConditions: ['Co-occupant (partner) may stay up to 3 nights per week with owner consent.'],
     bookingNotes: null,
     houseRules: 'Quiet hours 10pm-7am. No shoes on carpet. Owner uses kitchen 7-9am weekdays.',
@@ -203,7 +221,7 @@ export function nswT2AgreementSampleProps() {
     landlordPostcode: '2042',
     premisesPostcode: '2042',
     rentPaymentBankDetails: { ...SHARED_BANK },
-    rentPaymentPreference: 'quni_platform',
+    rentPaymentPreference: 'bank_transfer',
     specialConditions: [],
     bookingNotes: null,
     premisesPartDescription: null,
@@ -248,19 +266,19 @@ function addendumFromAgreement(base, signingPackage) {
     utilitiesDescription:
       'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
     signingPackage,
-    serviceTier: 'managed',
+    serviceTier: 'listing',
     allInclusive: true,
     billsIncluded: true,
     listingDisclosureLabels: ['Bills included', 'Water included in rent'],
-    rentPaymentMethod: 'quni_platform',
+    rentPaymentMethod: 'bank_transfer',
     bankDetails: { ...SHARED_BANK },
     emergencyContact: 'Sam Renter - 0411333444',
-    rentEnquiriesEmail: 'rent@quni.com.au',
+    rentEnquiriesEmail: 'alex.provider@example.com',
     generalEnquiriesEmail: 'hello@quni.com.au',
     houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
     utilitiesCap: 150,
     houseRules: 'Quiet hours 10pm-7am. No smoking indoors.',
-    landlordServiceFeeText: '10%',
+    landlordServiceFeeText: '',
     cardSurchargeDomesticText: '1.7% + $0.30',
     cardSurchargeInternationalText: '3.5% + $0.30',
     moveOutLateCheckoutFeeText: '$50',

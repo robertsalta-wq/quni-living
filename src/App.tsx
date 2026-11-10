@@ -245,6 +245,7 @@ function App() {
               <Route path="feature-inventory" element={<Lazy.AdminFeatureInventory />} />
               <Route path="documents" element={<Lazy.DocumentsPage />} />
               <Route path="agreement-previews" element={<Lazy.AgreementPreviewsPage />} />
+              <Route path="corrected-addendum" element={<Lazy.CorrectedAddendumPage />} />
               <Route path="domains" element={<Lazy.DomainsPage />} />
               <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
               <Route path="document-access-log" element={<Lazy.AdminDocumentAccessLog />} />
@@ -309,8 +310,8 @@ function App() {
                 <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
                 <Route path="/list-your-room" element={<Marketing.ListYourRoomE />} />
                 <Route path="/see-quni" element={<Marketing.SeeQuni />} />
-                <Route path="/list-your-room-b" element={<Lazy.ListYourRoomB />} />
-                <Route path="/list-your-room-c" element={<Lazy.ListYourRoomC />} />
+                <Route path="/list-your-room-b" element={<Navigate to="/list-your-room" replace />} />
+                <Route path="/list-your-room-c" element={<Navigate to="/list-your-room" replace />} />
                 <Route path="/qld-house-rules" element={<Marketing.QldHouseRulesPage />} />
                 <Route path="/by-the-room" element={<Marketing.ByTheRoom />} />
                 <Route

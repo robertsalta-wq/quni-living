@@ -37,7 +37,7 @@ describe('runCancelListingBookingLandlord', () => {
     mocks.fetchListingFeePaymentIntentId.mockResolvedValue('pi_fee')
     mocks.refundListingFeePaymentIntentFull.mockResolvedValue({
       refundId: 're_123',
-      refundAmountCents: 9900,
+      refundAmountCents: null,
     })
 
     let bookingsPhase = 0
@@ -101,7 +101,7 @@ describe('runCancelListingBookingLandlord', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.idempotent).toBe(false)
-    expect(mocks.refundListingFeePaymentIntentFull).toHaveBeenCalled()
+    expect(mocks.refundListingFeePaymentIntentFull).not.toHaveBeenCalled()
     expect(mocks.sendListingCancelledByLandlordEmails).toHaveBeenCalledTimes(1)
   })
 
@@ -322,7 +322,7 @@ describe('runCancelListingBookingLandlord', () => {
     mocks.fetchListingFeePaymentIntentId.mockResolvedValue('pi_fee')
     mocks.refundListingFeePaymentIntentFull.mockResolvedValue({
       refundId: 're_123',
-      refundAmountCents: 9900,
+      refundAmountCents: null,
     })
     mocks.sendListingCancelledByLandlordEmails.mockRejectedValueOnce(new Error('smtp'))
 

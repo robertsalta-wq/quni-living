@@ -24,6 +24,7 @@ import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 import { RENT_BOND_LONG, RENT_BOND_SHORT } from '../lib/bondPublicCopy'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 
 /** First-party LCP hero (same Unsplash photo-1571260899304…, 4:3). See public/hero/. */
 const HERO_COLLAGE_TOP_FALLBACK = '/hero/hero-top-800.webp'
@@ -188,6 +189,7 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
 
 export default function Home() {
   const navigate = useNavigate()
+  const { pricingV2Enabled } = usePlatformFeatures()
   const { showUniversityCampusFilters, locationPlaceholder, isProfessionalRenter } =
     useRenterSearchPersona()
   const [locationInput, setLocationInput] = useState('')
@@ -700,7 +702,9 @@ export default function Home() {
                 const open = openFaqId === item.id
                 const answer =
                   item.id === 'faq-l-1'
-                    ? `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. ${RENT_BOND_LONG}`
+                    ? pricingV2Enabled
+                      ? `$5.50 including GST for each rented month, once, when the lease is signed. No commission on rent. ${RENT_BOND_LONG}`
+                      : `Quni Listing is ${dynamicListingFeeText} once when you accept. No commission on rent, no subscription. ${RENT_BOND_LONG}`
                     : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">

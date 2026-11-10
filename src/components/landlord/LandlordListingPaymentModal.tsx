@@ -240,7 +240,7 @@ export default function LandlordListingPaymentModal({ open, onClose, onSuccess }
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Save a payment method</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Used for Quni Listing booking fees when you accept a booking. You won&apos;t be charged until then.
+              Used for the Quni Listing lease fee, charged once when everyone required has signed. You won&apos;t be charged for accepting.
             </p>
           </div>
           <button

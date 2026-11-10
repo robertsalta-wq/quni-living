@@ -177,7 +177,7 @@ export function landlordBookingConfirmBlockedUserMessage(
     case 'host_identity_required':
       return 'Complete Stripe identity verification on your dashboard before you can accept.'
     case 'listing_no_payment_method':
-      return 'Add a saved card for the Listing acceptance fee before you can accept.'
+      return 'Add a saved card before you can accept. The lease fee is charged when everyone has signed, not when you accept.'
     case 'listing_payout_details_missing':
       return 'Add payee bank details for this listing before you can accept.'
     case 'listing_module_disabled':

@@ -1,4 +1,5 @@
 import Seo from '../components/Seo'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import PageHeroBand from '../components/PageHeroBand'
 import {
   VerificationLandlordSection,
@@ -46,16 +47,25 @@ const QUICK_ANSWERS = [
 ] as const
 
 export default function Verification() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col bg-gray-50">
       <Seo
         title="What you'll verify on Quni"
-        description="What renters and landlords verify before booking on Quni Listing. Free for renters; landlords pay $99 only when they accept."
+        description={
+          pricingV2Enabled
+            ? 'What renters and landlords verify before booking on Quni Listing. Free for renters. Landlords pay $5.50 including GST per rented month when the lease is signed.'
+            : 'What renters and landlords verify before booking on Quni Listing. Free for renters; landlords pay $99 only when they accept.'
+        }
         canonicalPath="/verification"
       />
       <PageHeroBand
         title="What you'll verify on Quni"
-        subtitle="You can browse listings before you finish verification. Sign up and explore straight away. Renting is free for renters; landlords on Quni Listing pay a flat $99 only when they accept a booking."
+        subtitle={
+          pricingV2Enabled
+            ? 'You can browse listings before you finish verification. Sign up and explore straight away. Renting is free. Landlords pay $5.50 including GST for each rented month, once, when the lease is signed.'
+            : 'You can browse listings before you finish verification. Sign up and explore straight away. Renting is free for renters; landlords on Quni Listing pay a flat $99 only when they accept a booking.'
+        }
       />
 
       <div className="max-w-site mx-auto w-full px-6 py-10 md:py-14">
@@ -125,12 +135,18 @@ export default function Verification() {
               Quick answers
             </h2>
             <dl className="quni-card mt-6 divide-y divide-gray-100">
-              {QUICK_ANSWERS.map((item) => (
-                <div key={item.q} className="px-5 py-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-900 sm:text-base">{item.q}</dt>
-                  <dd className="mt-2 text-sm leading-relaxed text-gray-600">{item.a}</dd>
-                </div>
-              ))}
+              {QUICK_ANSWERS.map((item) => {
+                const answer =
+                  pricingV2Enabled && item.q === 'When does a landlord pay?'
+                    ? 'When everyone required has signed. It is $5.50 including GST for each rented month, paid once. Listing is free, and nothing is charged for accepting.'
+                    : item.a
+                return (
+                  <div key={item.q} className="px-5 py-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-900 sm:text-base">{item.q}</dt>
+                    <dd className="mt-2 text-sm leading-relaxed text-gray-600">{answer}</dd>
+                  </div>
+                )
+              })}
             </dl>
           </section>
         </div>

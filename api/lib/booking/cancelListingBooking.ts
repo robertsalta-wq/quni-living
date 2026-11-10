@@ -1,9 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
-import {
-  fetchListingFeePaymentIntentId,
-  refundListingFeePaymentIntentFull,
-} from './listingFeePaymentIntent.js'
 import { sendListingCancelledByLandlordEmails } from './listingTransactionalEmails.js'
 import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
 
@@ -21,7 +17,7 @@ export type CancelListingBookingResult =
 
 /**
  * Landlord cancels a Listing booking while `bond_pending`.
- * Refunds the Listing fee when a PI exists; fee-exempt accepts (no PI) skip refund.
+ * There is no cash refund. Unused months, once a lease has been charged, stay as room credit.
  */
 export async function runCancelListingBookingLandlord(args: {
   stripe: Stripe
@@ -72,31 +68,9 @@ export async function runCancelListingBookingLandlord(args: {
     }
   }
 
-  const piId = await fetchListingFeePaymentIntentId(admin, bookingId)
-
-  let refundId: string | null = null
-  let refundAmountCents: number | null = null
-  if (piId) {
-    try {
-      const r = await refundListingFeePaymentIntentFull(
-        stripe,
-        piId,
-        `listing-cancel-${bookingId}`,
-      )
-      refundId = r.refundId
-      refundAmountCents = r.refundAmountCents ?? 9900
-    } catch (e) {
-      console.error('[cancel-listing] stripe refund', bookingId, e)
-      return {
-        ok: false,
-        status: 502,
-        code: 'refund_failed',
-        message: 'Refund could not be processed. Try again or contact support.',
-      }
-    }
-  } else {
-    console.warn('[cancel-listing] no listing fee PI; skipping refund', { bookingId })
-  }
+  const refundId: string | null = null
+  const refundAmountCents: number | null = null
+  void stripe
 
   const nowIso = new Date().toISOString()
   const reasonTrim =
@@ -120,9 +94,7 @@ export async function runCancelListingBookingLandlord(args: {
       ok: false,
       status: 500,
       code: 'state_out_of_sync',
-      message: piId
-        ? 'Refund may have succeeded but we could not update the booking. Contact support.'
-        : 'Could not update the booking. Try again or contact support.',
+      message: 'Could not update the booking. Try again or contact support.',
     }
   }
 
@@ -156,7 +128,6 @@ export async function runCancelListingBookingLandlord(args: {
     ...(refundId != null ? { refund_id: refundId } : {}),
     ...(refundAmountCents != null ? { refund_amount_cents: refundAmountCents } : { fee_exempt: true }),
     reason: reasonTrim || undefined,
-    ...(piId ? { stripe_payment_intent_id: piId } : {}),
   }
 
   try {
@@ -168,8 +139,8 @@ export async function runCancelListingBookingLandlord(args: {
       eventType: 'bond.pending_cancelled_by_landlord',
       actorType: 'landlord',
       reason: reasonTrim || null,
-      provider: piId ? 'stripe' : null,
-      providerRef: piId || null,
+      provider: null,
+      providerRef: null,
       metadata: {
         ...metaPayload,
         service_tier: 'listing',

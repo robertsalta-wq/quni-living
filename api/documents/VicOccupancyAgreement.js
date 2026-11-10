@@ -1039,7 +1039,7 @@ function LicenceOccupyDocument({
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 10, title: "Disputes" }),
       content.disputesParagraphs ? content.disputesParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `d-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: "Quni Living" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: `Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the ${partyLabel}, is not a party to this agreement, and is not the ${partyLabel}'s agent. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.` }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: `Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or property management services. It does not act for the ${partyLabel}, it does not conduct the letting, and it is not a party to this agreement. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.` }),
       content.platformWarrantyParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.platformWarrantyParagraph }) : null,
       /* @__PURE__ */ jsx2(BodyParagraph, { children: clause11BankIntro }),
       clause11PayeeLines.map((line, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: line }, `payee-${i}`))

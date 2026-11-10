@@ -72,7 +72,7 @@ export async function refundListingFeePaymentIntentFull(stripe, paymentIntentId,
       msg.includes('has already been refunded')
 
     if (decline) {
-      return { refundId: null, refundAmountCents: 9900, alreadyRefunded: true }
+      return { refundId: null, refundAmountCents: null, alreadyRefunded: true }
     }
 
     console.error('[listing-fee-refund] refunds.create failed', piId, e)

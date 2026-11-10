@@ -271,6 +271,22 @@ function createLifecycleAdmin(store: Store) {
       }
     }
 
+    if (table === 'listing_lease_charges') {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              gte: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+              maybeSingle: async () => ({ data: null, error: null }),
+            }),
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+        }),
+      }
+    }
+
     return {}
   })
 

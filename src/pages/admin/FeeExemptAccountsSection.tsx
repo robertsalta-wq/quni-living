@@ -105,7 +105,7 @@ export function FeeExemptAccountsSection() {
       <div>
         <h3 className="text-sm font-semibold text-gray-900">Fee-exempt accounts</h3>
         <p className="mt-1 text-[13px] leading-relaxed text-gray-600">
-          Internal only - landlords with these emails pay no listing ($99) or managed (7%) platform fees. Not visible to
+          Internal only - landlords with these emails pay no listing lease fee or managed platform fee. Not visible to
           landlords. New sign-ups and existing profiles sync automatically.
         </p>
       </div>

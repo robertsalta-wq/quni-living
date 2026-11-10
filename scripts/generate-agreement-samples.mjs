@@ -32,7 +32,7 @@ const { VicResidentialRentalAgreementForm1 } = await import('../src/lib/document
 const { QuniPlatformAddendumVic } = await import('../src/lib/documents/vic/addendumGenerator.tsx')
 const { NswBoardingHouseOccupancyAgreement } = await import('../src/lib/documents/nsw/boardingHouse/generator.tsx')
 
-const SAMPLE_ROOT = join(process.cwd(), 'public', 'agreement-samples')
+const SAMPLE_ROOT = join(process.cwd(), process.env.AGREEMENT_SAMPLE_DIR || join('public', 'agreement-samples'))
 const WATERMARK_TEXT = 'SAMPLE - not for execution'
 
 function element(Component, props) {

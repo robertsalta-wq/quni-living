@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import {
@@ -18,6 +19,7 @@ import {
   FEE_ROWS_DRAWER,
   FEE_ROWS_VISIBLE,
   FOR_LANDLORDS_DESCRIPTION,
+  FOR_LANDLORDS_DESCRIPTION_V2,
   FOR_LANDLORDS_PATH,
   LISTING_AI_DOES,
   RELATED_LANDLORD_LINKS,
@@ -60,15 +62,26 @@ function FeeRows({ rows, paidId }: { rows: typeof FEE_ROWS_VISIBLE; paidId?: str
  * No marketing header/footer; wordmark + home return live in the grand Listing desk.
  */
 export default function ForLandlords() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   const [listingDrawerOpen, setListingDrawerOpen] = useState(false)
   const [feesDrawerOpen, setFeesDrawerOpen] = useState(false)
-  const jsonLd = buildForLandlordsJsonLd(SITE_URL)
+  const jsonLd = buildForLandlordsJsonLd(SITE_URL, { pricingV2: pricingV2Enabled })
+  const feeRowsVisible = pricingV2Enabled
+    ? FEE_ROWS_VISIBLE.map((row) =>
+        row.id === 'accept' ? { ...row, label: 'When the lease is signed', figure: '$5.50 / rented month' } : row,
+      )
+    : FEE_ROWS_VISIBLE
+  const feeRowsDrawer = pricingV2Enabled
+    ? FEE_ROWS_DRAWER.map((row) =>
+        row.id === 'renew' ? { ...row, figure: 'Charged for the new lease' } : row,
+      )
+    : FEE_ROWS_DRAWER
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-[var(--quni-surface-2)] text-[var(--quni-ink-3)]">
       <Seo
         title="List a room - for landlords"
-        description={FOR_LANDLORDS_DESCRIPTION}
+        description={pricingV2Enabled ? FOR_LANDLORDS_DESCRIPTION_V2 : FOR_LANDLORDS_DESCRIPTION}
         canonicalPath={FOR_LANDLORDS_PATH}
         jsonLd={jsonLd}
         noindex
@@ -267,14 +280,24 @@ export default function ForLandlords() {
             nameplate={<DeskNameplate>Fees</DeskNameplate>}
             letterhead={
               <DeskLetterhead className="text-[17px] text-[var(--quni-ink-2)]">
-                Free to list.{' '}
-                <em className="not-italic text-[var(--quni-coral-active)]">$99</em> once, only when
-                you accept.
+                {pricingV2Enabled ? (
+                  <>
+                    Free to list.{' '}
+                    <em className="not-italic text-[var(--quni-coral-active)]">$5.50</em> a rented month,
+                    once, when the lease is signed.
+                  </>
+                ) : (
+                  <>
+                    Free to list.{' '}
+                    <em className="not-italic text-[var(--quni-coral-active)]">$99</em> once, only when
+                    you accept.
+                  </>
+                )}
               </DeskLetterhead>
             }
             inTray={
               <DeskInTray className="mt-1">
-                <FeeRows rows={FEE_ROWS_VISIBLE} paidId="accept" />
+                <FeeRows rows={feeRowsVisible} paidId="accept" />
               </DeskInTray>
             }
             drawer={
@@ -284,7 +307,7 @@ export default function ForLandlords() {
                 onOpenChange={setFeesDrawerOpen}
                 controlClassName={drawerCtlPaper}
               >
-                <FeeRows rows={FEE_ROWS_DRAWER} />
+                <FeeRows rows={feeRowsDrawer} />
               </DeskDrawer>
             }
           />
