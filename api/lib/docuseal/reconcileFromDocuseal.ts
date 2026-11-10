@@ -556,6 +556,17 @@ export async function syncFullySignedDocusealSubmission(args: {
     } catch (advErr) {
       console.warn('[syncFullySignedDocusealSubmission] maybeAdvanceListingBookingToActive', advErr)
     }
+    try {
+      if (docRow.tenancy_id) {
+        const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
+        if (bookingIds?.bookingId) {
+          const { chargeListingLeaseOnSigned } = await import('../billing/listingLeaseCharge.js')
+          await chargeListingLeaseOnSigned(admin, bookingIds.bookingId)
+        }
+      }
+    } catch (chargeErr) {
+      console.warn('[syncFullySignedDocusealSubmission] lease charge', chargeErr)
+    }
   }
 
   return {

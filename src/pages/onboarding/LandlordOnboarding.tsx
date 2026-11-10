@@ -1166,8 +1166,9 @@ export default function LandlordOnboarding() {
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Add a card for Quni Listing fees</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
-                You picked Quni Listing on the pricing page. {RENT_BOND_LONG} Quni only charges a flat acceptance fee on
-                your saved card when you accept a booking. You won&apos;t be charged today.
+                You picked Quni Listing on the pricing page. {RENT_BOND_LONG} The lease fee is charged to this card
+                once, when everyone required has signed. You won&apos;t be charged today, and you won&apos;t be charged
+                for accepting.
               </p>
 
               {cardSaved || landlordStripeStepComplete(profile) ? (

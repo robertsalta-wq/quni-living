@@ -53,7 +53,7 @@ describe('officialQldFormR18Fill', () => {
     expect(form.getCheckBox(C.notice_resident_fax_no).isChecked()).toBe(true)
     expect(form.getTextField(F.Special_terms).getText()).toBe(QLD_FORM_R18_PART3_SPECIAL_TERMS)
     expect(form.getTextField(F.Room_number).getText()).toBe('1')
-    expect(form.getTextField(F.Payment_reference).getText()).toBe('Resident room 1')
+    expect(form.getTextField(F.Payment_reference).getText()).toBe('Example room 1')
     expect(form.getCheckBox(C.rent_can_increase_no).isChecked()).toBe(true)
     expect(form.getCheckBox(C.rent_can_increase_yes).isChecked()).toBe(false)
 
@@ -73,8 +73,8 @@ describe('officialQldFormR18Fill', () => {
     expect(compact).not.toContain('one-off platform fee')
     expect(compact).toContain('Quni Living is not a party to any dispute')
     expect(compact).toMatch(/Direct credit/)
-    expect(compact).toMatch(/Robert Resident/)
-    expect(compact).toContain('Resident room 1')
+    expect(compact).toMatch(/Jordan Example/)
+    expect(compact).toContain('Example room 1')
   },
     20_000,
   )
@@ -126,6 +126,6 @@ describe('officialQldFormR18Fill', () => {
     const { pdfBytes } = await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())
     const text = await allPageText(pdfBytes)
     expect(text).toMatch(/Direct credit/)
-    expect(text).toMatch(/Robert Resident/)
+    expect(text).toMatch(/Jordan Example/)
   })
 })

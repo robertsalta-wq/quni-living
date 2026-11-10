@@ -131,7 +131,8 @@ describe('booking bond line matches the agreement', () => {
     expect(renter.html).toContain(confirm)
     expect(landlord.html).toContain(bondLine)
     expect(landlord.html).toContain(confirm)
-    expect(landlord.html).toContain('$99.00')
+    expect(landlord.html).toContain('when everyone required has signed')
+    expect(landlord.html).not.toContain('$99.00')
 
     const otherAuthorities = [
       'NSW Fair Trading (Rental Bonds Online)',

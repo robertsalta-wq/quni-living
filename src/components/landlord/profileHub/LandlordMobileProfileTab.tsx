@@ -1608,7 +1608,7 @@ function PayoutsSectionForm({
                 </span>
               </>
             }
-            subtitle="Covers the $99 fee per accepted booking. Not charged until you accept one."
+            subtitle="Used for the lease fee, charged once when everyone required has signed. Not charged for accepting."
             statusLabel={cardLabel ?? undefined}
             action={
               cardLabel ? null : (

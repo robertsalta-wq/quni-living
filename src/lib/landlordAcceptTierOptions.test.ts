@@ -27,8 +27,8 @@ describe('landlordAcceptTierUiModel', () => {
       studentDepositAuthorized: true,
     })
     expect(m.showListing).toBe(true)
-    expect(m.showManaged).toBe(true)
-    expect(m.showManagedUpgrade).toBe(true)
+    expect(m.showManaged).toBe(false)
+    expect(m.showManagedUpgrade).toBe(false)
     expect(m.defaultTier).toBe('listing')
   })
 
@@ -41,7 +41,7 @@ describe('landlordAcceptTierUiModel', () => {
       propertyServiceTier: 'managed',
     })
     expect(m.showListing).toBe(false)
-    expect(m.showManaged).toBe(true)
+    expect(m.showManaged).toBe(false)
     expect(m.showManagedUpgrade).toBe(false)
     expect(m.defaultTier).toBe('managed')
   })
@@ -55,8 +55,8 @@ describe('landlordAcceptTierUiModel', () => {
       propertyServiceTier: 'listing',
     })
     expect(m.showListing).toBe(false)
-    expect(m.showManaged).toBe(true)
-    expect(m.defaultTier).toBe('managed')
+    expect(m.showManaged).toBe(false)
+    expect(m.defaultTier).toBe('listing')
   })
 
   it('NSW Tier 2: Managed gated → Listing only', () => {
@@ -88,7 +88,7 @@ describe('landlordAcceptTierUiModel', () => {
       moduleEnabled: true,
       propertyServiceTier: 'listing',
     })
-    expect(both.showManagedUpgrade).toBe(true)
+    expect(both.showManagedUpgrade).toBe(false)
     expect(listingOnly.showManagedUpgrade).toBe(false)
   })
 

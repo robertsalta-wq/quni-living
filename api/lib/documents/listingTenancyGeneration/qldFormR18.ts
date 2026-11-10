@@ -479,7 +479,7 @@ export function qldFormR18SamplePackageProps() {
     r18: qldFormR18SampleFillProps(),
     houseRules: {
       commonAreas: 'Kitchen, bathrooms, and shared living room.',
-      premisesLine: '22 Rental Street, Jamboree Heights QLD 4074',
+      premisesLine: '9 Sample Road, Exampletown QLD 4000',
     },
   }
 }

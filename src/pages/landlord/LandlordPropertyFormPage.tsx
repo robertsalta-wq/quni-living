@@ -162,9 +162,6 @@ import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 import {
   fetchLockedPricingSnapshotsForProperty,
   fetchPricingForPropertyTier,
-  formatFeeForDisplay,
-  formatListingTierAcceptanceFee,
-  landlordNetWeeklyAfterManagedFee,
   resolvePropertyTierFromListing,
   type PricingCell,
 } from '../../lib/pricing'
@@ -5161,36 +5158,12 @@ export default function LandlordPropertyFormPage() {
                           <span className="tabular-nums">
                             ${weeklyRentNum.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
                           </span>
-                          /week from rent. Quni charges{' '}
-                          <span className="tabular-nums">{formatListingTierAcceptanceFee(tierPricingListing)}</span> once
-                          when a booking is accepted.
-                        </span>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-admin-coral/80" aria-hidden />
-                        <span>
-                          <strong className="text-gray-900">Quni Managed:</strong>{' '}
-                          {(() => {
-                            const net = landlordNetWeeklyAfterManagedFee(weeklyRentNum, tierPricingManaged)
-                            const feeDisp = formatFeeForDisplay(tierPricingManaged).landlordFeeDisplay
-                            return net != null ? (
-                              <>
-                                <span className="tabular-nums">
-                                  ${net.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                                </span>
-                                /week after {feeDisp} service fee (deducted before payout). All-inclusive for this tier -
-                                no separate acceptance fee.
-                              </>
-                            ) : (
-                              <>Managed payout estimate unavailable for this rent.</>
-                            )
-                          })()}
+                          /week from rent. Quni charges $5.50 including GST for each rented month, once, when the lease is signed.
                         </span>
                       </li>
                     </ul>
                     <p className="mt-2 text-[11px] text-gray-500 leading-snug">
-                      This property is set to {landlordServiceTierTitle(serviceTier)}. Listing can be upgraded to
-                      Managed later; Managed cannot be changed back to Listing.
+                      This property is on {landlordServiceTierTitle(serviceTier)}. New Managed bookings are not available.
                     </p>
                     {tierPricingLockedForListing ? (
                       <p className="mt-2 text-[11px] text-amber-900/85 leading-snug rounded-lg bg-amber-50/90 border border-amber-100 px-2 py-2">

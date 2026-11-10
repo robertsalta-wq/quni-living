@@ -7,7 +7,8 @@ import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED, RENT_BOND_LONG, RENT_
 import { buildFaqPageJsonLd } from '../lib/buildFaqPageJsonLd'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
-import { useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
+import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
+import PricingV2 from './PricingV2'
 
 type LineTone = 'default' | 'muted'
 type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
@@ -192,6 +193,12 @@ const faqBuckets: FaqBucket[] = [
 ]
 
 export default function Pricing() {
+  const { pricingV2Enabled } = usePlatformFeatures()
+  if (pricingV2Enabled) return <PricingV2 />
+  return <PricingLegacy />
+}
+
+function PricingLegacy() {
   const serviceTierOptions = useServiceTierResolverOptions()
   const [listingFeeText, setListingFeeText] = useState('$99')
 

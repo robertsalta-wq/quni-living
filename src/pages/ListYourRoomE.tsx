@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import type { LucideIcon } from 'lucide-react'
 import { Banknote, FilePenLine, MessageSquareText, SpellCheck, UserCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -174,13 +175,24 @@ function SmartToolsPanel() {
 }
 
 function TrustPanel({ onOpenVerification }: { onOpenVerification: (opener: HTMLElement) => void }) {
+  const { pricingV2Enabled } = usePlatformFeatures()
+  const items = pricingV2Enabled
+    ? SAFE_ITEMS.map((item) =>
+        item.name === 'See them before you pay'
+          ? {
+              ...item,
+              description: 'Full request review before anyone signs. Accept or decline with no fee.',
+            }
+          : item,
+      )
+    : SAFE_ITEMS
   return (
     <section className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-trust-bg)] p-5">
       <span className="rounded-[var(--radius-sm)] border border-[var(--quni-trust-soft)] bg-[var(--quni-surface-1)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--quni-trust)]">
         Safe and simple
       </span>
       <ul className="mt-3">
-        {SAFE_ITEMS.map((item) => (
+        {items.map((item) => (
           <li key={item.name} className="flex gap-3 py-2">
             <TrustTick />
             <div className="min-w-0 flex-1">
@@ -285,6 +297,7 @@ function PapersFooter() {
 }
 
 export default function ListYourRoomE() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   const previewDialogRef = useRef<HTMLDialogElement>(null)
   const lastOpenerRef = useRef<HTMLElement | null>(null)
   const hadOverlayRef = useRef(false)
@@ -325,10 +338,18 @@ export default function ListYourRoomE() {
     <div className="bg-[var(--quni-surface-2)]">
       <Seo
         title="List your room on Quni"
-        description="List your spare room to verified university students. Free to list. You only pay $99 when you accept."
+        description={
+          pricingV2Enabled
+            ? 'List your spare room to verified university students. Free to list. $5.50 including GST for each rented month, once, when the lease is signed.'
+            : 'List your spare room to verified university students. Free to list. You only pay $99 when you accept.'
+        }
         canonicalPath="/list-your-room"
         image={LIST_YOUR_ROOM_OG_IMAGE}
-        imageAlt="List your room on Quni - verified students, free to list, $99 on accept"
+        imageAlt={
+          pricingV2Enabled
+            ? 'List your room on Quni - verified students, free to list, $5.50 a rented month when the lease is signed'
+            : 'List your room on Quni - verified students, free to list, $99 on accept'
+        }
         noindex
       />
 

@@ -22,7 +22,7 @@ const sample = {
   bond_deadline_display: '18 May 2026',
   lease_preview_url: 'https://example.test/student-dashboard',
   student_dashboard_url: 'https://example.test/student-dashboard',
-  listing_fee_display: '$99.00',
+  listing_fee_display: '',
   mark_bond_received_url: 'https://example.test/landlord/bookings/x/review',
   sign_agreement_url: 'https://example.test/student-dashboard',
   listings_url: 'https://example.test/listings',
@@ -70,7 +70,7 @@ describe('Listing email templates', () => {
     const l = listingBookingAcceptedLandlord(sample)
     expect(r.subject.length).toBeGreaterThan(5)
     expect(r.html).toContain('Bond is lodged with NSW Fair Trading (Rental Bonds Online)')
-    expect(l.html).toContain('Listing fee')
+    expect(l.html).toContain('Lease fee')
   })
 
   it('keeps acceptance email byte-identical after payment block extraction', () => {

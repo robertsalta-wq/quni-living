@@ -134,7 +134,6 @@ export const QLD_OCCUPANCY_PDF_MARKERS = [
   'RTA Web Services',
   'Term and termination',
   'Continuation after fixed period',
-  'Subject to final legal review',
   'The resident pays Quni Living nothing',
   's 32',
   'boarders and lodgers',

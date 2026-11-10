@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import { RENT_BOND_LONG, RENT_BOND_SHORT } from '../lib/bondPublicCopy'
@@ -55,6 +56,18 @@ const LISTING_LANDLORD: Step[] = [
 ]
 
 export default function HowItWorks() {
+  const { pricingV2Enabled } = usePlatformFeatures()
+  const landlordSteps = pricingV2Enabled
+    ? LISTING_LANDLORD.map((step) =>
+        step.title.startsWith('2.')
+          ? {
+              ...step,
+              description:
+                'Review the renter and confirm. Nothing is charged for accepting. The lease fee is $5.50 including GST for each rented month, charged once when everyone has signed.',
+            }
+          : step,
+      )
+    : LISTING_LANDLORD
   return (
     <>
       <Seo
@@ -72,8 +85,11 @@ export default function HowItWorks() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm leading-relaxed text-[var(--quni-ink-4)] sm:text-base">
               Renters pay <strong className="font-semibold text-gray-800">no</strong> booking, platform, service, or
-              surcharge fees to Quni. Landlords pay the Listing acceptance fee when they accept a booking. Quni does
-              not collect rent or bond.
+              surcharge fees to Quni.{' '}
+              {pricingV2Enabled
+                ? 'Landlords pay $5.50 including GST for each rented month, once, when the lease is signed.'
+                : 'Landlords pay the Listing acceptance fee when they accept a booking.'}{' '}
+              Quni does not collect rent or bond.
             </p>
           </div>
 
@@ -95,7 +111,7 @@ export default function HowItWorks() {
               />
               <FlowColumn
                 heading="Landlords"
-                steps={LISTING_LANDLORD}
+                steps={landlordSteps}
                 bgClass="bg-[var(--quni-coral-soft)]"
                 accentClass="text-[#C8554A]"
               />

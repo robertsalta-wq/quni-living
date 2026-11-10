@@ -1,9 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
-import {
-  fetchListingFeePaymentIntentId,
-  refundListingFeePaymentIntentFull,
-} from './listingFeePaymentIntent.js'
 import { sendListingBondPendingExpiredEmails } from './listingTransactionalEmails.js'
 import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
 import { guardBondExpiryForSignedLease } from './guardSignedLeaseExpiry.js'
@@ -26,7 +22,7 @@ export type ExpireListingBondPendingResult =
 
 /**
  * Expire one Listing `bond_pending` booking past its bond window.
- * Refunds the Listing fee when a PI exists; fee-exempt accepts (no PI) skip refund.
+ * No cash refund of a lease fee. The lease fee is charged at signing, not at accept.
  */
 export async function runExpireListingBondPendingBooking(args: {
   stripe: Stripe
@@ -34,7 +30,8 @@ export async function runExpireListingBondPendingBooking(args: {
   booking: ExpireListingBondPendingRow
   nowIso: string
 }): Promise<ExpireListingBondPendingResult> {
-  const { stripe, admin, booking, nowIso } = args
+  const { admin, booking, nowIso } = args
+  void args.stripe
   const bookingId = booking.id
 
   // Never expire a booking whose lease is already fully signed (missed
@@ -44,30 +41,8 @@ export async function runExpireListingBondPendingBooking(args: {
     return { ok: true, expired: false, blocked: 'signed_lease' }
   }
 
-  const piId = await fetchListingFeePaymentIntentId(admin, bookingId)
-
-  let refundId: string | null = null
-  let refundAmountCents: number | null = null
-
-  if (piId) {
-    try {
-      const r = await refundListingFeePaymentIntentFull(
-        stripe,
-        piId,
-        `listing-expire-${bookingId}`,
-      )
-      refundId = r.refundId
-      refundAmountCents =
-        typeof r.refundAmountCents === 'number' && Number.isFinite(r.refundAmountCents)
-          ? r.refundAmountCents
-          : 9900
-    } catch (re) {
-      console.error('expire-bookings bond refund', bookingId, re)
-      return { ok: false, retry: true }
-    }
-  } else {
-    console.warn('[expire-listing-bond] no listing fee PI; skipping refund', { bookingId })
-  }
+  const refundId: string | null = null
+  const refundAmountCents: number | null = null
 
   const { error: upBondErr } = await admin
     .from('bookings')
@@ -86,7 +61,6 @@ export async function runExpireListingBondPendingBooking(args: {
     ...(refundAmountCents != null
       ? { refund_amount_cents: refundAmountCents }
       : { fee_exempt: true }),
-    ...(piId ? { stripe_payment_intent_id: piId } : {}),
   }
 
   try {
@@ -97,8 +71,8 @@ export async function runExpireListingBondPendingBooking(args: {
       studentId: booking.student_id,
       eventType: 'bond.pending_expired',
       actorType: 'cron',
-      provider: piId ? 'stripe' : null,
-      providerRef: piId || null,
+      provider: null,
+      providerRef: null,
       metadata: {
         ...metadata,
         service_tier: 'listing',

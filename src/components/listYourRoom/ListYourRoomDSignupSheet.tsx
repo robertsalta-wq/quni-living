@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type TransitionEvent } from 'react'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { Link } from 'react-router-dom'
 import Signup from '../../pages/Signup'
 import { trackVercelEvent } from '../../lib/vercelAnalytics'
@@ -28,6 +29,7 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
   const [entered, setEntered] = useState(false)
   /** Defer Signup until first open so SSR/prerender does not pull the auth form (sessionStorage). */
   const [signupMounted, setSignupMounted] = useState(false)
+  const { pricingV2Enabled } = usePlatformFeatures()
 
   useEffect(() => {
     if (open) setSignupMounted(true)
@@ -133,7 +135,9 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
               Quni
             </Link>
             <p className="min-w-0 flex-1 text-xs font-bold leading-tight text-white sm:text-sm">
-              Free to list · Verified students · No subscription · $99 only when someone moves in
+              {pricingV2Enabled
+                ? 'Free to list · Verified students · No subscription · $5.50 a rented month when the lease is signed'
+                : 'Free to list · Verified students · No subscription · $99 only when someone moves in'}
             </p>
           </div>
           <button
@@ -199,10 +203,15 @@ export default function ListYourRoomDSignupSheet({ open, onOpen, onClose }: List
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-white/60">For landlords</p>
                 <h2 className="mt-1 font-display text-2xl font-bold text-white">List your property</h2>
-                <p className="mt-1 text-sm text-white/70">One-off on accept. No subscription.</p>
+                <p className="mt-1 text-sm text-white/70">
+                  {pricingV2Enabled ? 'Once, when the lease is signed. No subscription.' : 'One-off on accept. No subscription.'}
+                </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold tabular-nums text-white">$99.00</span>
+                <span className="text-right text-2xl font-bold tabular-nums text-white">
+                  {pricingV2Enabled ? '$5.50' : '$99.00'}
+                  {pricingV2Enabled ? <span className="block text-xs font-semibold text-white/70">a rented month</span> : null}
+                </span>
                 <button
                   type="button"
                   onClick={requestClose}

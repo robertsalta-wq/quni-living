@@ -92,6 +92,7 @@ export const ADMIN_NAV_ZONES: readonly AdminNavZone[] = [
       { id: 'document-access-log', label: 'Document access log', icon: 'file-text', to: '/admin/document-access-log' },
       { id: 'state-workflows', label: 'State workflows', icon: 'workflow', to: '/admin/state-workflows' },
       { id: 'agreement-previews', label: 'Agreement previews', icon: 'file-text', to: '/admin/agreement-previews' },
+      { id: 'corrected-addendum', label: 'Corrected addendum', icon: 'file-text', to: '/admin/corrected-addendum' },
       { id: 'documents', label: 'Documents', icon: 'file-text', to: '/admin/documents' },
     ],
   },

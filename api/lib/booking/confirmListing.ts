@@ -7,11 +7,8 @@ import {
 } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
-import {
-  isLandlordFeeExempt,
-  resolveListingPlatformFeeCents,
-} from '../pricing/resolvePlatformFee.js'
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
+import { landlordHasUnpaidLeaseCharge } from '../billing/listingLeaseCharge.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
@@ -21,11 +18,6 @@ import {
   resolveTenancyPackage,
   tenancyPackageInputFromBooking,
 } from '../resolveTenancyPackage.js'
-
-const LISTING_FEE_CENTS = 9900
-const LISTING_PRODUCT_ID =
-  (typeof process !== 'undefined' && process.env?.STRIPE_LISTING_PRODUCT_ID?.trim()) ||
-  'prod_UTXU1Ilz3bfCY7'
 
 type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
 type ConfirmOk = {
@@ -113,6 +105,14 @@ export async function runListingConfirmBooking(
 
   if (booking.landlord_id !== landlord.id) {
     return jsonFail(403, { error: 'Forbidden' })
+  }
+
+  if (await landlordHasUnpaidLeaseCharge(admin, landlord.id)) {
+    return jsonFail(402, {
+      error: 'listing_charge_unpaid',
+      message:
+        'A lease fee is still unpaid. Pay that invoice before accepting another booking. The signed lease itself is not affected.',
+    })
   }
 
   const confirmableListing =
@@ -211,9 +211,6 @@ export async function runListingConfirmBooking(
     })
   }
 
-  const feeExempt = await isLandlordFeeExempt(admin, landlord.id)
-  const listingFeeCents = resolveListingPlatformFeeCents(feeExempt, LISTING_FEE_CENTS)
-
   // Legacy Listing applies may still have a deposit hold until this cancel runs; new applies have no PI.
   const piHold =
     typeof booking.stripe_payment_intent_id === 'string' ? booking.stripe_payment_intent_id.trim() : ''
@@ -229,130 +226,6 @@ export async function runListingConfirmBooking(
     }
   }
 
-  const idempotencyKey = `confirm-listing-${booking.id}`
-
-  let chargePi: Stripe.PaymentIntent | null = null
-  if (listingFeeCents > 0) {
-    const customerId = typeof landlord.stripe_customer_id === 'string' ? landlord.stripe_customer_id.trim() : ''
-    if (!customerId) {
-      return jsonFail(400, {
-        error: 'listing_billing_incomplete',
-        message: 'Add a saved card for Listing billing before confirming.',
-      })
-    }
-
-    let customer: Stripe.Customer | Stripe.DeletedCustomer
-    try {
-      customer = await stripe.customers.retrieve(customerId, {
-        expand: ['invoice_settings.default_payment_method'],
-      })
-    } catch (e) {
-      console.error('[confirm-listing] retrieve customer', e)
-      return jsonFail(400, {
-        error: 'listing_billing_incomplete',
-        message: 'Could not load your billing profile.',
-      })
-    }
-
-    if (customer.deleted) {
-      return jsonFail(400, {
-        error: 'listing_billing_incomplete',
-        message: 'Billing customer record is invalid.',
-      })
-    }
-
-    const pm = customer.invoice_settings?.default_payment_method
-    let defaultPaymentMethodId: string | null = null
-    if (typeof pm === 'string') defaultPaymentMethodId = pm
-    else if (pm && typeof pm === 'object' && 'id' in pm && typeof pm.id === 'string')
-      defaultPaymentMethodId = pm.id
-
-    if (!defaultPaymentMethodId) {
-      return jsonFail(400, {
-        error: 'listing_billing_incomplete',
-        message: 'Set a default payment method for Listing billing before confirming.',
-      })
-    }
-
-    try {
-      chargePi = await stripe.paymentIntents.create(
-        {
-          amount: listingFeeCents,
-          currency: 'aud',
-          customer: customerId,
-          payment_method: defaultPaymentMethodId,
-          off_session: true,
-          confirm: true,
-          description: `Quni Listing fee - booking ${booking.id.slice(0, 8)}`,
-          metadata: {
-            booking_id: booking.id,
-            property_id: booking.property_id ?? '',
-            landlord_id: landlord.id,
-            service_tier: 'listing',
-            stripe_product_id: LISTING_PRODUCT_ID,
-          },
-        },
-        { idempotencyKey },
-      )
-    } catch (e) {
-      const err = e as Stripe.errors.StripeError
-      const code = err?.code ? String(err.code) : ''
-      const raw = err?.raw && typeof err.raw === 'object' ? err.raw : null
-      const piFromErr = err?.payment_intent
-      const piFromRaw =
-        raw && 'payment_intent' in raw && raw.payment_intent && typeof raw.payment_intent === 'object'
-          ? raw.payment_intent
-          : null
-      const paymentIntent = (piFromErr && typeof piFromErr === 'object' ? piFromErr : piFromRaw) as
-        | Stripe.PaymentIntent
-        | null
-
-      if (code === 'authentication_required' && paymentIntent?.client_secret && paymentIntent?.id) {
-        return {
-          ok: false,
-          status: 402,
-          body: {
-            error: 'requires_action',
-            requires_action: true,
-            payment_intent_id: paymentIntent.id,
-            client_secret: paymentIntent.client_secret,
-          },
-        }
-      }
-
-      const declineCode = err?.decline_code ? String(err.decline_code) : ''
-      const msg = err?.message ? String(err.message) : 'Payment failed'
-
-      return jsonFail(402, {
-        error: 'charge_failed',
-        message: msg.slice(0, 500),
-        decline_code: declineCode || undefined,
-        code: code || undefined,
-      })
-    }
-
-    if (chargePi.status === 'requires_action' && chargePi.client_secret) {
-      return {
-        ok: false,
-        status: 402,
-        body: {
-          error: 'requires_action',
-          requires_action: true,
-          payment_intent_id: chargePi.id,
-          client_secret: chargePi.client_secret,
-        },
-      }
-    }
-
-    if (chargePi.status !== 'succeeded') {
-      return jsonFail(402, {
-        error: 'charge_incomplete',
-        message: `Charge did not succeed (status: ${chargePi.status}).`,
-        payment_intent_status: chargePi.status,
-      })
-    }
-  }
-
   const nowIso = new Date().toISOString()
   const bondWindow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -363,7 +236,7 @@ export async function runListingConfirmBooking(
       service_tier_final: 'listing',
       bond_window_expires_at: bondWindow,
       confirmed_at: nowIso,
-      listing_fee_stripe_payment_intent_id: chargePi?.id ?? null,
+      listing_fee_stripe_payment_intent_id: null,
       listing_agreement_status: 'pending',
       listing_agreement_error: null,
     })
@@ -373,7 +246,7 @@ export async function runListingConfirmBooking(
 
   if (upErr) {
     console.error('[confirm-listing] booking update', upErr)
-    return jsonFail(500, { error: 'Could not update booking after charge' })
+    return jsonFail(500, { error: 'Could not update booking' })
   }
 
   const updated = Array.isArray(updatedRows) ? updatedRows[0] : updatedRows
@@ -416,13 +289,11 @@ export async function runListingConfirmBooking(
       eventType: 'booking.confirmed',
       actorType: 'landlord',
       actorId: landlord.id,
-      provider: chargePi?.id ? 'stripe' : null,
-      providerRef: chargePi?.id ?? null,
+      provider: null,
+      providerRef: null,
       deviceCtx,
       metadata: {
-        stripe_payment_intent_id: chargePi?.id ?? null,
-        amount_cents: listingFeeCents,
-        fee_exempt: feeExempt,
+        lease_fee_timing: 'on_signing',
         bond_window_expires_at: bondWindow,
         service_tier: 'listing',
       },
@@ -493,7 +364,7 @@ export async function runListingConfirmBooking(
     status: 'bond_pending',
     bond_window_expires_at: bondWindow,
     service_tier_final: 'listing',
-    listing_fee_payment_intent_id: chargePi?.id ?? null,
+    listing_fee_payment_intent_id: null,
     listing_agreement_status: listingAgreementStatus,
   }
 }

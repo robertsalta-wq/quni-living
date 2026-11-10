@@ -60,7 +60,7 @@ export default function SampleAgreementsPage() {
           </p>
           <div className="mt-3 text-sm text-gray-700">
             <p>
-              Watermark: <span className="font-semibold">{manifest?.watermark ?? 'SAMPLE - not for execution'}</span>
+              Watermark: <span className="font-semibold">{manifest?.watermark ?? 'SAMPLE: not a real agreement'}</span>
             </p>
             {manifest?.generatedAt ? (
               <p className="mt-1 text-gray-500">Generated at: {new Date(manifest.generatedAt).toLocaleString('en-AU')}</p>

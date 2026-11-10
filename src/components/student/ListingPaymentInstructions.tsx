@@ -72,7 +72,7 @@ export function shouldShowListingPaymentInstructions(args: {
     shares_kitchen_or_bathroom: args.property.qld_shares_kitchen_or_bathroom,
     date: bookingMoveInIso(args.booking),
   })
-  if (!pkg.supported || pkg.pdfKind !== 'occupancy_agreement') return false
+  if (!pkg.supported) return false
 
   return propertyPayoutDetailsComplete(normalizePropertyPayoutEmbed(args.property.property_payout_details))
 }
@@ -109,7 +109,12 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
   const agreement = bookingBondWordingFromPackage(pkg)
   const isT3 = pkg.supported && pkg.tier === 'T3'
   const depositLabel = isT3 ? 'Security deposit' : 'Bond'
-  const payeeLabel = isT3 ? 'proprietor' : 'host'
+  const payeeLabel =
+    pkg.supported && (pkg.pdfKind === 'residential_tenancy_agreement' || pkg.pdfKind === 'residential_rental_agreement')
+      ? 'landlord'
+      : isT3
+        ? 'proprietor'
+        : 'host'
   const occupancyFeeLabel = isT3 ? 'occupancy fee' : 'rent'
 
   const bondAmountAud = resolveBookingBondAmountAud(

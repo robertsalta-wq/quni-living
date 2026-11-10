@@ -415,12 +415,12 @@ export function listingAgreementReadyRenter(data) {
   }
 }
 
-/** Listing tier - landlord: $99 charged; bond direct from renter */
+/** Listing tier - landlord: fee is charged when everyone has signed */
 export function listingBookingAcceptedLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
   const bookingRef = escapeHtml(data.booking_reference || '-')
-  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
+  void data.listing_fee_display
   const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
   const markBondUrl = escapeHtml(data.mark_bond_received_url || data.dashboard_url || '#')
   const reviewUrl = escapeHtml(data.review_url || markBondUrl)
@@ -433,7 +433,7 @@ export function listingBookingAcceptedLandlord(data) {
   const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
 <p>Hi ${landlordName},</p>
 <p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation.</p>
+<p><strong>Lease fee:</strong> Charged to your saved card once, when everyone required has signed. Nothing is charged for accepting. Renters pay Quni nothing.</p>
 <p><strong>Tenancy agreement:</strong> We&apos;re preparing your state-appropriate agreement. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
 ${bondObligationsBlock}
 <p>Please ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
@@ -585,17 +585,16 @@ export function listingBondPendingExpiredRenter(data) {
   }
 }
 
-/** Listing tier - bond window expired (landlord); fee refunded */
+/** Listing tier - bond window expired (landlord) */
 export function listingBondPendingExpiredLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
-  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
   const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
-  const inner = `<h2 style="color: #1A1A2E;">Booking lapsed - Listing fee refunded</h2>
+  const inner = `<h2 style="color: #1A1A2E;">Booking lapsed</h2>
 <p>Hi ${landlordName},</p>
 <p>The bond window closed without bond confirmation for <strong>${propertyAddress}</strong>, so this Listing booking has expired.</p>
-<p>Your <strong>${listingFee}</strong> Listing fee has been refunded to your original payment method (typically 5–10 business days, depending on your bank).</p>
+<p>No lease fee was charged for accepting. A signed lease is a separate charge and is not refunded as cash.</p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open dashboard →</a>`
 
   return {
@@ -628,21 +627,20 @@ ${reasonBlock}
   }
 }
 
-/** Listing tier - landlord cancelled (landlord confirmation); fee refunded */
+/** Listing tier - landlord cancelled (landlord confirmation) */
 export function listingCancelledByLandlordLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
-  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
   const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
-  const inner = `<h2 style="color: #1A1A2E;">Booking cancelled - fee refunded</h2>
+  const inner = `<h2 style="color: #1A1A2E;">Booking cancelled</h2>
 <p>Hi ${landlordName},</p>
 <p>We&apos;ve cancelled your Listing booking for <strong>${propertyAddress}</strong> as requested.</p>
-<p>Your <strong>${listingFee}</strong> Listing fee refund has been submitted to your original payment method.</p>
+<p>Accepting a booking does not charge a fee. A lease fee, once charged at signing, is not refunded as cash.</p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Dashboard →</a>`
 
   return {
-    subject: `Cancellation confirmed - fee refunded (${data.property_address || data.property_title || 'listing'})`,
+    subject: `Cancellation confirmed (${data.property_address || data.property_title || 'listing'})`,
     html: wrapContent(inner),
   }
 }

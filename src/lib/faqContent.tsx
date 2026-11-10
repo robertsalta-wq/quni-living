@@ -425,6 +425,28 @@ export const FAQ_SECTIONS: FaqSection[] = [
   },
 ]
 
+const PRICING_V2_LANDLORD_FEE =
+  '$5 plus GST ($5.50) for each rented month, charged once when everyone required has signed. A lease with no end date is $16.50 every 3 months. Listing is free and renters pay nothing.'
+
+/** Public FAQ stays on the old acceptance-fee answers until pricing_v2_enabled is on. */
+export function faqSectionsForFlag(pricingV2Enabled: boolean): FaqSection[] {
+  if (!pricingV2Enabled) return FAQ_SECTIONS
+  return FAQ_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.map((item) => {
+      if (item.id === 'landlords-fees' || item.id === 'money-listing-fee') {
+        return { ...item, answer: PRICING_V2_LANDLORD_FEE, answerText: PRICING_V2_LANDLORD_FEE }
+      }
+      if (item.id === 'landlords-host-verify') {
+        const answer =
+          'Before you can accept a booking, you complete Stripe identity verification. When Stripe enables charges on your account, you may show a Verified host badge on your profile and listings. Quni does not manually review profiles or check property titles. You save a card for the lease fee, which is charged when everyone has signed.'
+        return { ...item, answer, answerText: answer }
+      }
+      return item
+    }),
+  }))
+}
+
 export const ALL_FAQ_ITEMS: FaqItem[] = FAQ_SECTIONS.flatMap((s) => s.items)
 
 export function faqItemToPlain(item: FaqItem): { question: string; answer: string } | null {

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { formatContractingPartyName, LEGAL_ENTITY_ABN, LEGAL_ENTITY_ACN } from '../../lib/legalEntity'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
 import { RENT_BOND_LONG } from '../../lib/bondPublicCopy'
@@ -20,6 +21,7 @@ export const TERMS_TOC: LegalTocItem[] = [
 ]
 
 export function TermsContent() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   return (
     <>
       <LegalH2 id="about">1. About These Terms</LegalH2>
@@ -194,10 +196,22 @@ export function TermsContent() {
         Quni. {RENT_BOND_LONG}
       </LegalP>
       <LegalP>
-        <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a flat <strong>$99</strong> acceptance fee per
-        accepted booking. There is no commission on rent, no subscription, and no letting fee. We may change the
-        Listing acceptance fee on notice. We will not introduce a commission on rent for Quni Listing. The terms in
-        effect at the time of the relevant action apply.
+        <strong>Landlords</strong> on <strong>Quni Listing</strong>{' '}
+        {pricingV2Enabled ? (
+          <>
+            pay <strong>$5 plus GST ($5.50)</strong> for each rented month, once, when everyone required has signed.
+            A lease with no end date, and a fixed lease that continues after its end date, is{' '}
+            <strong>$16.50 every 3 months</strong>. Unused months if a renter leaves early become credit on that room,
+            not a cash refund.
+          </>
+        ) : (
+          <>
+            pay a flat <strong>$99</strong> acceptance fee per accepted booking.
+          </>
+        )}{' '}
+        There is no commission on rent, no subscription, and no letting fee. We may change the Listing fee on notice.
+        We will not introduce a commission on rent for Quni Listing. The terms in effect at the time of the relevant
+        action apply.
       </LegalP>
       <LegalH3 id="payments-stripe">6.2 Payment Processing</LegalH3>
       <LegalP>

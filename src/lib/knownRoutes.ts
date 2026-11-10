@@ -26,6 +26,7 @@ const EXACT = new Set([
   '/how-it-works',
   '/refunds',
   '/pricing',
+  '/sample-lease',
   '/contact',
   '/faq',
   '/verification',

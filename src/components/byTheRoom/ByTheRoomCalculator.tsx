@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import DeskPen from '../desk/DeskPen'
 import '../desk/desk.css'
 import { formatAud } from '../../lib/formatAud'
@@ -84,6 +85,7 @@ function MoneyField({ id, label, value, onChange, onBlur, hint }: MoneyFieldProp
 
 /** Landlord comparison. Rents stay blank until typed. Costs default to 0. */
 export default function ByTheRoomCalculator() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   const [wholeHome, setWholeHome] = useState('')
   const [rooms, setRooms] = useState(ROOMS_MIN)
   const [differentRents, setDifferentRents] = useState(false)
@@ -414,7 +416,11 @@ export default function ByTheRoomCalculator() {
         <DeskPen to={BY_THE_ROOM_LIST_PATH} variant="coral" className="!w-auto self-start">
           List my rooms <span className="desk-pen-arw" aria-hidden>→</span>
         </DeskPen>
-        <p className="m-0 text-sm text-admin-ink-3">{BY_THE_ROOM_FEE_LINE}</p>
+        <p className="m-0 text-sm text-admin-ink-3">
+          {pricingV2Enabled
+            ? 'Free to list. $5.50 including GST for each rented month, once, when the lease is signed.'
+            : BY_THE_ROOM_FEE_LINE}
+        </p>
       </div>
     </div>
   )

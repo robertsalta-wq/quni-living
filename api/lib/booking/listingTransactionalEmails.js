@@ -313,7 +313,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         property_address: ctx.propertyAddress,
         property_title: ctx.propertyTitle,
         booking_reference: bookingRef,
-        listing_fee_display: '$99.00',
+        listing_fee_display: '',
         bond_deadline_display: bondDeadline,
         mark_bond_received_url: markBond,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
@@ -481,7 +481,7 @@ export async function sendListingBondPendingExpiredEmails(admin, bookingRow, ref
         landlord_name: landlordName,
         property_address: addr || title,
         property_title: title,
-        listing_fee_display: '$99.00',
+        listing_fee_display: '',
         refund_id: refundMeta.refund_id ?? undefined,
         refund_amount_cents: refundMeta.refund_amount_cents ?? undefined,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
@@ -527,7 +527,7 @@ export async function sendListingCancelledByLandlordEmails(admin, bookingId, met
         landlord_name: ctx.landlordName,
         property_address: ctx.propertyAddress,
         property_title: ctx.propertyTitle,
-        listing_fee_display: '$99.00',
+        listing_fee_display: '',
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
       })
       await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })

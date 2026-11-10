@@ -382,19 +382,15 @@ export default function RenterBookingZones({
             </div>
           ) : null}
 
-          {booking.status === 'bond_pending' ? (
-            <>
-              {bondGuidance}
-              {showLeaseStrip &&
-              property &&
-              shouldShowListingPaymentInstructions({ booking, property: property as never }) ? (
-                <ListingPaymentInstructions
-                  booking={booking}
-                  property={property as never}
-                  renterDisplayName={renterDisplayName}
-                />
-              ) : null}
-            </>
+          {booking.status === 'bond_pending' ? bondGuidance : null}
+          {showLeaseStrip &&
+          property &&
+          shouldShowListingPaymentInstructions({ booking, property: property as never }) ? (
+            <ListingPaymentInstructions
+              booking={booking}
+              property={property as never}
+              renterDisplayName={renterDisplayName}
+            />
           ) : null}
 
           {booking.status === 'expired' ? (

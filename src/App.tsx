@@ -245,6 +245,7 @@ function App() {
               <Route path="feature-inventory" element={<Lazy.AdminFeatureInventory />} />
               <Route path="documents" element={<Lazy.DocumentsPage />} />
               <Route path="agreement-previews" element={<Lazy.AgreementPreviewsPage />} />
+              <Route path="corrected-addendum" element={<Lazy.CorrectedAddendumPage />} />
               <Route path="domains" element={<Lazy.DomainsPage />} />
               <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
               <Route path="document-access-log" element={<Lazy.AdminDocumentAccessLog />} />
@@ -268,6 +269,7 @@ function App() {
                 <Route path="/for-universities" element={<Marketing.ForUniversities />} />
                 <Route path="/listings" element={<Marketing.Listings />} />
                 <Route path="/pricing" element={<Marketing.Pricing />} />
+                <Route path="/sample-lease" element={<Marketing.SampleLease />} />
                 <Route path="/faq" element={<Marketing.Faq />} />
                 <Route path="/how-it-works" element={<Marketing.HowItWorks />} />
                 <Route path="/verification" element={<Marketing.Verification />} />

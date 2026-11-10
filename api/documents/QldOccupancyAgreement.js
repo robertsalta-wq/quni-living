@@ -984,7 +984,7 @@ function LicenceOccupyDocument({
   );
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
-      !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
+      !headerWatermark && content.draftFooter ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
       /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),
@@ -1143,8 +1143,7 @@ function LicenceOccupyDocument({
 }
 
 // src/lib/documents/licenceOccupy/watermark.ts
-var LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF = "Subject to final legal review; terms may be updated with written notice";
-var LICENCE_OCCUPY_WATERMARK = LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF;
+var LICENCE_OCCUPY_WATERMARK = "";
 
 // src/lib/tenancy/qldBoarderLodger.ts
 var QLD_RTRA_ACT_SHORT = "Residential Tenancies and Rooming Accommodation Act 2008 (Qld)";
@@ -1265,7 +1264,6 @@ var QLD_OCCUPANCY_PDF_MARKERS = [
   "RTA Web Services",
   "Term and termination",
   "Continuation after fixed period",
-  "Subject to final legal review",
   "The resident pays Quni Living nothing",
   "s 32",
   "boarders and lodgers",
