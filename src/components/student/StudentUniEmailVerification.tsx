@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
-import { isValidUniEmailForVerification, uniEmailDomainErrorMessage } from '../../lib/uniEmailDomains'
+import { UNI_DOMAIN_REQUEST_EMAIL, uniEmailRejection } from '../../lib/uniEmailDomains'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { formatDate } from '../../pages/admin/adminUi'
 import { isStudentUniEmailVerified } from '../../lib/studentUniEmailVerification'
@@ -27,6 +27,21 @@ import {
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 const RESEND_SECONDS = 60
+
+function UniEmailSendError({ message }: { message: string }) {
+  const email = UNI_DOMAIN_REQUEST_EMAIL
+  const at = message.indexOf(email)
+  if (at < 0) return message
+  return (
+    <>
+      {message.slice(0, at)}
+      <a href={`mailto:${email}`} className="font-medium underline underline-offset-2">
+        {email}
+      </a>
+      {message.slice(at + email.length)}
+    </>
+  )
+}
 
 type Props = {
   profile: StudentRow
@@ -128,8 +143,9 @@ export function StudentUniEmailVerification({
     setSendError(null)
     setVerifyError(null)
     const trimmed = uniEmailInput.trim().toLowerCase()
-    if (!isValidUniEmailForVerification(trimmed)) {
-      setSendError(uniEmailDomainErrorMessage())
+    const rejection = uniEmailRejection(trimmed)
+    if (rejection) {
+      setSendError(rejection.message)
       return
     }
     setSending(true)
@@ -299,7 +315,7 @@ export function StudentUniEmailVerification({
           </p>
           {sendError && (
             <p className={errorClass} role="alert">
-              {sendError}
+              <UniEmailSendError message={sendError} />
             </p>
           )}
           <button
