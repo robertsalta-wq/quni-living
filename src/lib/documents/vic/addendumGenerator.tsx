@@ -114,10 +114,9 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
     <View style={{ marginBottom: 10 }}>
       <OccupancyMatchSectionHeading num={2} title="Quni Living" />
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or
-        property management services. It does not act on the landlord&apos;s behalf, it does not conduct a letting, and
-        it is not a party to this agreement. Rent is paid to the landlord at the account named in this agreement. The
-        tenant pays Quni Living nothing.
+        Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the
+        landlord, is not a party to this agreement, and is not the landlord&apos;s agent. Rent is paid to the landlord
+        at the account named in this agreement. The tenant pays Quni Living nothing.
       </Text>
     </View>
   )
@@ -270,7 +269,7 @@ function Section8ConditionReport(_props: QuniPlatformAddendumProps) {
 /** Section 9 - Move-out procedures. */
 function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   const dailyRent = props.rent.weeklyRent / 7
-  void props.moveOutLateCheckoutFeeText
+  const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? '$50'
   const feeRows: { label: string; value: string }[] = [
     {
       label: 'Cleaning (if not to standard)',
@@ -279,6 +278,10 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
     {
       label: 'Removal of personal items / rubbish left behind',
       value: '$250 per hour, minimum charge $250',
+    },
+    {
+      label: 'Late checkout (after 10:00am on vacate date)',
+      value: `${lateCheckoutFeeText} flat fee`,
     },
     {
       label: 'Late checkout (still occupying after midnight on vacate date)',
@@ -302,7 +305,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
       <Text style={occupancyMatchPdf.bodyParagraph}>
         Unless otherwise agreed in writing, the tenant must vacate and return possession by{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>10:00am</Text> on the agreed vacate date. If the tenant remains
-        after 10:00am, the parties should agree any extra time in writing. If the
+        after 10:00am, a <Text style={{ fontFamily: 'Helvetica-Bold' }}>{lateCheckoutFeeText}</Text> late checkout flat fee applies. If the
         tenant is still occupying the room after midnight on the vacate date, the tenant agrees that{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>full day rent</Text> applies for that day, calculated as one
         day&apos;s rent (one-seventh of the agreed weekly rent), currently {formatMoney(dailyRent)} per day, in addition
@@ -486,9 +489,9 @@ function Section13Disputes(_props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        Quni Living is the software used to prepare this agreement. It does not manage the tenancy, it does not hold rent
-        or bond, and it does not resolve disputes between the parties. For questions about the software, contact{' '}
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>info@quni.com.au</Text>. Quni Living does not provide legal advice.
+        Quni Living may assist with facilitation or information exchange where appropriate and where all parties agree. For
+        facilitation enquiries, contact <Text style={{ fontFamily: 'Helvetica-Bold' }}>info@quni.com.au</Text>. Quni Living
+        does not provide legal advice and is not a substitute for independent legal advice where needed.
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>

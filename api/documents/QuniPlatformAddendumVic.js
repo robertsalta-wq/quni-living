@@ -828,7 +828,7 @@ function Section2QuniPlatformAndFee(props) {
   void props;
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 2, title: "Quni Living" }),
-    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or property management services. It does not act on the landlord's behalf, it does not conduct a letting, and it is not a party to this agreement. Rent is paid to the landlord at the account named in this agreement. The tenant pays Quni Living nothing." })
+    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the landlord, is not a party to this agreement, and is not the landlord's agent. Rent is paid to the landlord at the account named in this agreement. The tenant pays Quni Living nothing." })
   ] });
 }
 function Section3CommunicationChannels(props) {
@@ -903,7 +903,7 @@ function Section8ConditionReport(_props) {
 }
 function Section9MoveOutProcedures(props) {
   const dailyRent = props.rent.weeklyRent / 7;
-  void props.moveOutLateCheckoutFeeText;
+  const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? "$50";
   const feeRows = [
     {
       label: "Cleaning (if not to standard)",
@@ -912,6 +912,10 @@ function Section9MoveOutProcedures(props) {
     {
       label: "Removal of personal items / rubbish left behind",
       value: "$250 per hour, minimum charge $250"
+    },
+    {
+      label: "Late checkout (after 10:00am on vacate date)",
+      value: `${lateCheckoutFeeText} flat fee`
     },
     {
       label: "Late checkout (still occupying after midnight on vacate date)",
@@ -936,7 +940,9 @@ function Section9MoveOutProcedures(props) {
       "Unless otherwise agreed in writing, the tenant must vacate and return possession by",
       " ",
       /* @__PURE__ */ jsx4(Text4, { style: { fontFamily: "Helvetica-Bold" }, children: "10:00am" }),
-      " on the agreed vacate date. If the tenant remains after 10:00am, the parties should agree any extra time in writing. If the tenant is still occupying the room after midnight on the vacate date, the tenant agrees that",
+      " on the agreed vacate date. If the tenant remains after 10:00am, a ",
+      /* @__PURE__ */ jsx4(Text4, { style: { fontFamily: "Helvetica-Bold" }, children: lateCheckoutFeeText }),
+      " late checkout flat fee applies. If the tenant is still occupying the room after midnight on the vacate date, the tenant agrees that",
       " ",
       /* @__PURE__ */ jsx4(Text4, { style: { fontFamily: "Helvetica-Bold" }, children: "full day rent" }),
       " applies for that day, calculated as one day's rent (one-seventh of the agreed weekly rent), currently ",
@@ -1087,10 +1093,9 @@ function Section13Disputes(_props) {
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 13, title: "Disputes" }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The parties should attempt to resolve disagreements about this tenancy or the use of the Quni platform directly, promptly, and in good faith before escalating matters." }),
     /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
-      "Quni Living is the software used to prepare this agreement. It does not manage the tenancy, it does not hold rent or bond, and it does not resolve disputes between the parties. For questions about the software, contact",
-      " ",
+      "Quni Living may assist with facilitation or information exchange where appropriate and where all parties agree. For facilitation enquiries, contact ",
       /* @__PURE__ */ jsx4(Text4, { style: { fontFamily: "Helvetica-Bold" }, children: "info@quni.com.au" }),
-      ". Quni Living does not provide legal advice."
+      ". Quni Living does not provide legal advice and is not a substitute for independent legal advice where needed."
     ] }),
     /* @__PURE__ */ jsxs4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Either party may apply to ",

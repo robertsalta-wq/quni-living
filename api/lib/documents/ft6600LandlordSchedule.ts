@@ -37,10 +37,9 @@ export function ft6600LandlordPhone(lp: Ft6600LandlordProfileInput): string {
   return typeof lp.phone === 'string' ? lp.phone.trim() : ''
 }
 
-/** Quni is the software platform, never the landlord's agent on the FT6600 schedule. */
+/** Managed tier: Quni is the landlord's agent on the FT6600 schedule. */
 export function hasManagingAgentForFt6600(serviceTier: 'listing' | 'managed'): boolean {
-  void serviceTier
-  return false
+  return serviceTier === 'managed'
 }
 
 export function landlordOrdinarilyResidesInNsw(state: string | null | undefined): boolean {

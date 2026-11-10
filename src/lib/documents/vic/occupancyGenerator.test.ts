@@ -83,7 +83,7 @@ describe('VicLicenceToOccupyOnSite', () => {
     expect(text).toContain('paid to the same account set out in clause 11')
     expect(text).toContain('direct credit to the owner account as set out in clause 11')
     expect(text).toContain('The resident pays Quni Living nothing')
-    expect(text).toContain('does not act for the Owner')
+    expect(text).toContain('is not the Owner')
     expect(text).not.toContain('powered by Stripe')
     expect(text).not.toContain('service fee')
     expect(text).not.toContain('will be provided by the owner')

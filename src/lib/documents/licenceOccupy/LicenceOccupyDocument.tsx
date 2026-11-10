@@ -415,7 +415,7 @@ export function LicenceOccupyDocument({
           : <BodyParagraph>{content.disputesParagraph}</BodyParagraph>}
         <OccupancyMatchSectionHeading num={11} title="Quni Living" />
         <BodyParagraph>
-          {`Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or property management services. It does not act for the ${partyLabel}, it does not conduct the letting, and it is not a party to this agreement. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.`}
+          {`Quni Living is software used to advertise the premises and to prepare this agreement. Quni Living is not the ${partyLabel}, is not a party to this agreement, and is not the ${partyLabel}'s agent. The weekly licence fee is paid to the ${partyLabel} at the account named in this agreement. The resident pays Quni Living nothing.`}
         </BodyParagraph>
         {content.platformWarrantyParagraph ? (
           <BodyParagraph>{content.platformWarrantyParagraph}</BodyParagraph>

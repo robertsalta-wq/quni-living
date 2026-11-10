@@ -89,7 +89,7 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('The resident pays Quni Living nothing')
     expect(text).not.toContain('one-off platform fee of $99')
     expect(text).not.toMatch(/deducted from amounts payable to the principal/i)
-    expect(text).toContain('does not act for the Principal')
+    expect(text).toContain('is not the Principal')
     expect(text).not.toContain('service fee')
     expect(text).not.toContain('payment facilitation')
     expect(text).not.toContain('conduit')

@@ -9,7 +9,7 @@ import {
 describe('ft6600LandlordSchedule', () => {
   it('hasManagingAgent follows service tier only', () => {
     expect(hasManagingAgentForFt6600('listing')).toBe(false)
-    expect(hasManagingAgentForFt6600('managed')).toBe(false)
+    expect(hasManagingAgentForFt6600('managed')).toBe(true)
   })
 
   it('listing requires full service address; managed does not', () => {
