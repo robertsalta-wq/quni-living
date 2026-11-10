@@ -6,14 +6,8 @@ import {
   isListYourRoomGatedPath,
   resolveListYourRoomEnabled,
 } from './src/lib/listYourRoomGateCore.js'
-import {
-  isListYourRoomBGatedPath,
-  resolveListYourRoomBEnabled,
-} from './src/lib/listYourRoomBGateCore.js'
-import {
-  isListYourRoomCGatedPath,
-  resolveListYourRoomCEnabled,
-} from './src/lib/listYourRoomCGateCore.js'
+import { isListYourRoomBGatedPath } from './src/lib/listYourRoomBGateCore.js'
+import { isListYourRoomCGatedPath } from './src/lib/listYourRoomCGateCore.js'
 import {
   isListYourRoomEGatedPath,
 } from './src/lib/listYourRoomEGateCore.js'
@@ -47,26 +41,6 @@ function isListYourRoomEnabledOnEdge(): boolean {
   const override =
     process.env.LIST_YOUR_ROOM_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_ENABLED ?? ''
   return resolveListYourRoomEnabled({
-    override,
-    vercelEnv: process.env.VERCEL_ENV,
-    treatUnknownAsEnabled: false,
-  })
-}
-
-function isListYourRoomBEnabledOnEdge(): boolean {
-  const override =
-    process.env.LIST_YOUR_ROOM_B_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_B_ENABLED ?? ''
-  return resolveListYourRoomBEnabled({
-    override,
-    vercelEnv: process.env.VERCEL_ENV,
-    treatUnknownAsEnabled: false,
-  })
-}
-
-function isListYourRoomCEnabledOnEdge(): boolean {
-  const override =
-    process.env.LIST_YOUR_ROOM_C_ENABLED ?? process.env.VITE_LIST_YOUR_ROOM_C_ENABLED ?? ''
-  return resolveListYourRoomCEnabled({
     override,
     vercelEnv: process.env.VERCEL_ENV,
     treatUnknownAsEnabled: false,
@@ -123,21 +97,10 @@ export default async function middleware(request: Request): Promise<Response> {
     })
   }
 
-  // Landlord invite A/B (`/list-your-room-b`): Preview ON / Production OFF.
-  if (isListYourRoomBGatedPath(pathname) && !isListYourRoomBEnabledOnEdge()) {
-    const dest = new URL('/services/landlord-partnerships', url.origin)
-    return new Response(null, {
-      status: 302,
-      headers: {
-        Location: dest.toString(),
-        'Cache-Control': 'private, no-store',
-      },
-    })
-  }
-
-  // Landlord invite C (`/list-your-room-c`): Preview ON / Production OFF.
-  if (isListYourRoomCGatedPath(pathname) && !isListYourRoomCEnabledOnEdge()) {
-    const dest = new URL('/services/landlord-partnerships', url.origin)
+  // Old invite variants. Nothing links them and they are not in the sitemap.
+  // 302 so a later reclaim is not cached as permanent.
+  if (isListYourRoomBGatedPath(pathname) || isListYourRoomCGatedPath(pathname)) {
+    const dest = new URL('/list-your-room', url.origin)
     return new Response(null, {
       status: 302,
       headers: {
