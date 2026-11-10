@@ -87,5 +87,8 @@ describe('VicLicenceToOccupyOnSite', () => {
     expect(text).not.toContain('powered by Stripe')
     expect(text).not.toContain('service fee')
     expect(text).not.toContain('will be provided by the owner')
+    expect(text).not.toContain('Draft for legal review')
+    expect(text).not.toContain('not for execution')
+    expect(text).not.toContain('Subject to final legal review')
   })
 })

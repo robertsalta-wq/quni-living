@@ -981,7 +981,7 @@ function LicenceOccupyDocument({
   );
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
-      !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
+      !headerWatermark && content.draftFooter ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
       /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),
@@ -1140,8 +1140,7 @@ function LicenceOccupyDocument({
 }
 
 // src/lib/documents/licenceOccupy/watermark.ts
-var LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF = "Subject to final legal review; terms may be updated with written notice";
-var LICENCE_OCCUPY_WATERMARK = LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF;
+var LICENCE_OCCUPY_WATERMARK = "";
 
 // src/lib/documents/nsw/occupancyContent.ts
 var NSW_LICENCE_OCCUPY_CONTENT = {
@@ -1258,7 +1257,6 @@ var NSW_OCCUPANCY_PDF_MARKERS = [
   "Residential Tenancies Act 2010",
   "not lodged with NSW Fair Trading",
   "The resident pays Quni Living nothing",
-  "Subject to final legal review",
   "Principal",
   "Term and termination",
   "Continuation after fixed period"

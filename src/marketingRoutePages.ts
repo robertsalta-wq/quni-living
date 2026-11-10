@@ -39,6 +39,10 @@ export const Pricing: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.pricing)
   : clientPage(routeImports.pricing)
 
+export const SampleLease: PageExport = import.meta.env.SSR
+  ? await ssrPage(routeImports.sampleLease)
+  : clientPage(routeImports.sampleLease)
+
 export const Faq: PageExport = import.meta.env.SSR
   ? await ssrPage(routeImports.faq)
   : clientPage(routeImports.faq)

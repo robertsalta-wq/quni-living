@@ -85,6 +85,8 @@ describe('QldLicenceToOccupyOnSite', () => {
     expect(text).toContain('The resident pays Quni Living nothing')
     expect(text).toContain('held by the RTA')
     expect(text).not.toContain('conduit')
+    expect(text).not.toContain('Subject to final legal review')
+    expect(text).not.toContain('Draft for legal review')
     expect(text).not.toContain('Quni Living Pty Ltd')
     expect(text).toContain('Jane Owner Trust')
     expect(text).toContain('123-456')

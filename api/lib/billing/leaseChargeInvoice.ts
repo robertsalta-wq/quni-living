@@ -17,6 +17,8 @@ export type LeaseTaxInvoiceInput = {
   exGstCents: number
   gstCents: number
   totalCents: number
+  /** Flexible lease, or a fixed lease that has rolled on. */
+  repeatsEveryThreeMonths?: boolean
 }
 
 function money(cents: number): string {
@@ -63,6 +65,9 @@ export async function buildLeaseTaxInvoicePdf(input: LeaseTaxInvoiceInput): Prom
   draw(`Total (incl. GST): ${money(input.totalCents)}`, 14, true)
   y -= 12
   draw('Renters pay Quni Living nothing. This invoice is for the landlord lease fee only.', 10)
+  if (input.repeatsEveryThreeMonths) {
+    draw('This charge repeats every 3 months until the tenancy ends.', 10)
+  }
   draw('Room credit is not a cash refund.', 10)
 
   return doc.save()

@@ -164,6 +164,7 @@ async function emailInvoice(args: {
   chargeId: string
   pdf: Uint8Array
   totalCents: number
+  repeatsEveryThreeMonths?: boolean
 }): Promise<void> {
   if (!args.booking.landlordEmail) return
   const path = `lease-invoices/${args.booking.id}/${args.chargeId}.pdf`
@@ -180,8 +181,12 @@ async function emailInvoice(args: {
       .eq('id', args.chargeId)
   }
 
+  const repeatLine = args.repeatsEveryThreeMonths
+    ? '<p>This charge repeats every 3 months until the tenancy ends.</p>'
+    : ''
   const html = `<h2 style="color:#1A1A2E;">Tax invoice</h2>
 <p>Your Quni Listing lease fee invoice is attached.</p>
+${repeatLine}
 <p><strong>Room:</strong> ${escapeHtml(args.booking.roomLine)}</p>
 <p><strong>Booking:</strong> ${escapeHtml(bookingRef(args.booking.id))}</p>
 <p><strong>Total (incl. GST):</strong> ${escapeHtml((args.totalCents / 100).toFixed(2))} AUD</p>
@@ -214,13 +219,19 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
+function chargeRepeatsEveryThreeMonths(kind: ChargeKind): boolean {
+  return kind === 'flexible_quarter' || kind === 'rollover_quarter'
+}
+
 async function issueInvoice(admin: Admin, booking: LoadedBooking, chargeId: string, row: {
   months: number
   credit_months: number
   ex_gst_cents: number
   gst_cents: number
   total_cents: number
+  kind: ChargeKind
 }): Promise<void> {
+  const repeatsEveryThreeMonths = chargeRepeatsEveryThreeMonths(row.kind)
   const pdf = await buildLeaseTaxInvoicePdf({
     invoiceDateIso: todayIso(),
     bookingReference: bookingRef(booking.id),
@@ -230,8 +241,9 @@ async function issueInvoice(admin: Admin, booking: LoadedBooking, chargeId: stri
     exGstCents: row.ex_gst_cents,
     gstCents: row.gst_cents,
     totalCents: row.total_cents,
+    repeatsEveryThreeMonths,
   })
-  await emailInvoice({ admin, booking, chargeId, pdf, totalCents: row.total_cents })
+  await emailInvoice({ admin, booking, chargeId, pdf, totalCents: row.total_cents, repeatsEveryThreeMonths })
 }
 
 async function collectStripe(args: {
@@ -475,7 +487,7 @@ export async function chargeListingLeaseOnSigned(admin: Admin, bookingId: string
 
     const { data: row } = await admin
       .from('listing_lease_charges')
-      .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, charged_cents')
+      .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, charged_cents, kind')
       .eq('id', chargeId)
       .single()
     if (!row) return
@@ -510,6 +522,7 @@ export async function chargeListingLeaseOnSigned(admin: Admin, bookingId: string
         ex_gst_cents: row.ex_gst_cents,
         gst_cents: row.gst_cents,
         total_cents: row.total_cents,
+        kind: row.kind,
       })
     }
   } catch (e) {
@@ -576,7 +589,7 @@ async function markChargeSucceeded(
     .eq('id', chargeId)
   const { data: fresh } = await admin
     .from('listing_lease_charges')
-    .select('months, credit_months, ex_gst_cents, gst_cents, total_cents')
+    .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, kind')
     .eq('id', chargeId)
     .single()
   if (fresh) await issueInvoice(admin, booking, chargeId, fresh)
@@ -656,7 +669,7 @@ export async function settleStuckPendingLeaseCharges(
     if (outcome === 'succeeded') {
       const { data: fresh } = await admin
         .from('listing_lease_charges')
-        .select('months, credit_months, ex_gst_cents, gst_cents, total_cents')
+        .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, kind')
         .eq('id', row.id)
         .single()
       if (fresh) await issueInvoice(admin, booking, row.id, fresh)
@@ -697,7 +710,7 @@ export async function retryDueLeaseCharges(admin: Admin, now = new Date()): Prom
     if (outcome === 'succeeded') {
       const { data: fresh } = await admin
         .from('listing_lease_charges')
-        .select('months, credit_months, ex_gst_cents, gst_cents, total_cents')
+        .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, kind')
         .eq('id', row.id)
         .single()
       if (fresh) await issueInvoice(admin, booking, row.id, fresh)
@@ -744,7 +757,7 @@ async function chargeQuarter(admin: Admin, booking: LoadedBooking, kind: ChargeK
   const stripe = stripeClient()
   const { data: row } = await admin
     .from('listing_lease_charges')
-    .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, charged_cents')
+    .select('months, credit_months, ex_gst_cents, gst_cents, total_cents, charged_cents, kind')
     .eq('id', chargeId)
     .single()
   if (!row) return false

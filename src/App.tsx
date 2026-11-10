@@ -269,6 +269,7 @@ function App() {
                 <Route path="/for-universities" element={<Marketing.ForUniversities />} />
                 <Route path="/listings" element={<Marketing.Listings />} />
                 <Route path="/pricing" element={<Marketing.Pricing />} />
+                <Route path="/sample-lease" element={<Marketing.SampleLease />} />
                 <Route path="/faq" element={<Marketing.Faq />} />
                 <Route path="/how-it-works" element={<Marketing.HowItWorks />} />
                 <Route path="/verification" element={<Marketing.Verification />} />

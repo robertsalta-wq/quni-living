@@ -981,7 +981,7 @@ function LicenceOccupyDocument({
   );
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
-      !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
+      !headerWatermark && content.draftFooter ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
       /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),
@@ -1143,7 +1143,7 @@ function LicenceOccupyDocument({
 var VIC_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
   docSubtitle: "Victoria - Licence to occupy (on-site accommodation)",
-  draftFooter: "Draft for legal review - not for execution",
+  draftFooter: "",
   natureParagraphs: [
     "This document is a common-law licence to occupy a specified room within residential premises in Victoria. It is not a residential tenancy agreement.",
     "The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
