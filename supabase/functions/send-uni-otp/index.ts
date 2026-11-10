@@ -4,7 +4,7 @@
  * Secrets: supabase secrets set RESEND_API_KEY=re_...
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-import { isAllowedUniEmailDomain, parseEmailDomain } from './allowedDomains.ts'
+import { uniEmailRejection } from '../_shared/uniEmailDomains.ts'
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -68,19 +68,9 @@ Deno.serve(async (req) => {
   }
 
   const uniEmail = (body.uni_email ?? '').trim().toLowerCase()
-  if (!uniEmail || !uniEmail.includes('@')) {
-    return json({ error: 'Enter a valid email address.' }, 400)
-  }
-
-  const domain = parseEmailDomain(uniEmail)
-  if (!domain || !isAllowedUniEmailDomain(domain)) {
-    return json(
-      {
-        error:
-          'Use an email address from your Australian university (e.g. yourname@student.unsw.edu.au).',
-      },
-      400,
-    )
+  const rejection = uniEmailRejection(uniEmail)
+  if (rejection) {
+    return json({ error: rejection.message }, 400)
   }
 
   const admin = createClient(supabaseUrl, serviceRole)
