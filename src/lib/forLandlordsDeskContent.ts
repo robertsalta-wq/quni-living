@@ -44,9 +44,19 @@ export const RELATED_LANDLORD_LINKS = [
 const PAGE_DESCRIPTION =
   'List a spare room in NSW or QLD on Quni: free to list, $99 once when you accept a tenant. Verified applicants, state-compliant agreements, rent paid to you directly. Quni never holds bond.'
 
-export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown>[] {
+const PAGE_DESCRIPTION_V2 =
+  'List a spare room in NSW or QLD on Quni. Listing is free. $5 plus GST for each rented month, paid once when the lease is signed. Rent is paid to you. Quni never holds bond.'
+
+export function buildForLandlordsJsonLd(
+  siteUrl: string,
+  opts?: { pricingV2?: boolean },
+): Record<string, unknown>[] {
+  const pricingV2 = opts?.pricingV2 === true
   const pageUrl = `${siteUrl}${FOR_LANDLORDS_PATH}`
-  const feeFacts = FEE_ROWS.map((r) => `${r.label}: ${r.figure}`).join('. ')
+  const description = pricingV2 ? PAGE_DESCRIPTION_V2 : PAGE_DESCRIPTION
+  const feeFacts = pricingV2
+    ? 'Listing is free. $5 plus GST ($5.50) for each rented month, paid once when the lease is signed. Rent is paid to you. Bond is never held by Quni.'
+    : FEE_ROWS.map((r) => `${r.label}: ${r.figure}`).join('. ')
   const aiFacts = LISTING_AI_DOES.join('. ')
 
   return [
@@ -56,7 +66,7 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
       '@id': `${pageUrl}#webpage`,
       url: pageUrl,
       name: 'List a room with Quni - for landlords',
-      description: PAGE_DESCRIPTION,
+      description,
       isPartOf: { '@type': 'WebSite', name: 'Quni Living', url: siteUrl },
       about: { '@id': `${pageUrl}#service` },
       mainEntity: { '@id': `${pageUrl}#service` },
@@ -67,7 +77,7 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
       '@id': `${pageUrl}#service`,
       name: 'Quni Listing',
       serviceType: 'Room listing and matching for landlords',
-      description: PAGE_DESCRIPTION,
+      description,
       provider: {
         '@type': 'Organization',
         name: 'Quni Living',
@@ -79,11 +89,12 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
       ],
       offers: {
         '@type': 'Offer',
-        name: 'Acceptance fee',
-        price: '99',
+        name: pricingV2 ? 'Lease fee' : 'Acceptance fee',
+        price: pricingV2 ? '5.50' : '99',
         priceCurrency: 'AUD',
-        description:
-          'Free to list. $99 charged once when you accept a tenant. Listing, matching, AI, renewals and re-lets are $0. Rent is paid renter to landlord directly. Bond is never held by Quni.',
+        description: pricingV2
+          ? 'Listing is free. $5 plus GST ($5.50) for each rented month, paid once when the lease is signed. Rent is paid renter to landlord directly. Bond is never held by Quni.'
+          : 'Free to list. $99 charged once when you accept a tenant. Listing, matching, AI, renewals and re-lets are $0. Rent is paid renter to landlord directly. Bond is never held by Quni.',
       },
       additionalProperty: [
         {
@@ -108,7 +119,9 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
           name: 'What does it cost to list a room on Quni?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: `Free to list. $99 once, only when you accept a tenant. ${feeFacts}.`,
+            text: pricingV2
+              ? 'Listing is free. $5 plus GST ($5.50) for each rented month, paid once when the lease is signed. Rent is paid to you. Quni never holds bond.'
+              : `Free to list. $99 once, only when you accept a tenant. ${feeFacts}.`,
           },
         },
         {
@@ -132,4 +145,4 @@ export function buildForLandlordsJsonLd(siteUrl: string): Record<string, unknown
   ]
 }
 
-export { PAGE_DESCRIPTION as FOR_LANDLORDS_DESCRIPTION }
+export { PAGE_DESCRIPTION as FOR_LANDLORDS_DESCRIPTION, PAGE_DESCRIPTION_V2 as FOR_LANDLORDS_DESCRIPTION_V2 }

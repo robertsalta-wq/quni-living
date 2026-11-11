@@ -116,6 +116,19 @@ function mockAdmin(opts: {
         }),
       }
     }
+    if (table === 'listing_lease_charges') {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              gte: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      }
+    }
     return {}
   })
 
@@ -153,7 +166,7 @@ describe('runListingConfirmBooking', () => {
     })
   })
 
-  it('happy path: preflight, cancel hold, charge $99, bond_pending, doc gen, ready status', async () => {
+  it('happy path: preflight, cancel hold, no charge at accept, bond_pending, doc gen, ready status', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
 
@@ -185,7 +198,7 @@ describe('runListingConfirmBooking', () => {
       null,
     )
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
-    expect(stripe.paymentIntents.create).toHaveBeenCalled()
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
     expect(admin.from).toHaveBeenCalledWith('booking_events')
   })
 
@@ -340,30 +353,7 @@ describe('runListingConfirmBooking', () => {
     )
   })
 
-  it('missing default payment method', async () => {
-    const stripe = stripeHappy()
-    stripe.customers.retrieve = vi.fn(async () => ({
-      deleted: false,
-      invoice_settings: { default_payment_method: null },
-    }))
-
-    const admin = mockAdmin({})
-    const result = await runListingConfirmBooking({
-      stripe: stripe as never,
-      admin: admin as never,
-      landlord,
-      bookingId: baseBooking.id,
-      origin: '*',
-    })
-
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.status).toBe(400)
-    expect(result.body.error).toBe('listing_billing_incomplete')
-    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
-  })
-
-  it('declined charge surfaces structured error without booking update', async () => {
+  it('accepts without charging when the saved card would have been declined', async () => {
     const stripe = stripeHappy()
     stripe.paymentIntents.create = vi.fn(async () => {
       throw Object.assign(new Error('Your card was declined.'), {
@@ -382,42 +372,8 @@ describe('runListingConfirmBooking', () => {
       origin: '*',
     })
 
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.status).toBe(402)
-    expect(result.body.error).toBe('charge_failed')
-    const insertCalls = admin.from.mock.calls.filter((c) => c[0] === 'booking_events')
-    expect(insertCalls.length).toBe(0)
-  })
-
-  it('requires_action (authentication_required)', async () => {
-    const stripe = stripeHappy()
-    stripe.paymentIntents.create = vi.fn(async () => {
-      throw Object.assign(new Error('Authentication required'), {
-        code: 'authentication_required',
-        type: 'StripeCardError',
-        payment_intent: {
-          id: 'pi_auth',
-          client_secret: 'cs_secret',
-          status: 'requires_action',
-        },
-      })
-    })
-
-    const admin = mockAdmin({})
-    const result = await runListingConfirmBooking({
-      stripe: stripe as never,
-      admin: admin as never,
-      landlord,
-      bookingId: baseBooking.id,
-      origin: '*',
-    })
-
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.status).toBe(402)
-    expect(result.body.requires_action).toBe(true)
-    expect(result.body.client_secret).toBe('cs_secret')
+    expect(result.ok).toBe(true)
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
   })
 
   it('when update matches no row but booking is already bond_pending, returns idempotent success', async () => {
@@ -480,6 +436,19 @@ describe('runListingConfirmBooking', () => {
                 maybeSingle: async () => ({
                   data: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432' },
                   error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'listing_lease_charges') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  gte: () => ({
+                    limit: async () => ({ data: [], error: null }),
+                  }),
                 }),
               }),
             }),

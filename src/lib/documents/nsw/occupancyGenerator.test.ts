@@ -93,8 +93,8 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).not.toContain('service fee')
     expect(text).not.toContain('payment facilitation')
     expect(text).not.toContain('conduit')
-    const watermarkMatches = text.match(/Subject to final legal review/g) ?? []
-    expect(watermarkMatches.length).toBe(6)
+    expect(text).not.toContain('Subject to final legal review')
+    expect(text).not.toContain('terms may be updated with written notice')
     expect(text).toContain('width=220;height=72')
     expect(text).toContain('width=120;height=28')
     expect(text).not.toContain('Quni Living Pty Ltd')

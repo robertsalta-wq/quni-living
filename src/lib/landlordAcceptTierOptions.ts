@@ -55,14 +55,12 @@ export function landlordAcceptTierUiModel(args: {
   )
   const showListing =
     propertyServiceTier === 'listing' && args.moduleEnabled === true && avail.listing !== 'unsupported'
-  const showManaged = avail.managed === 'available'
-  const depositReadyForManagedUpgrade = args.studentDepositAuthorized === true
-  // Proper fix: async student deposit re-authorization before Managed upgrade at accept (deferred).
-  const showManagedUpgrade =
-    propertyServiceTier === 'listing' && showManaged && depositReadyForManagedUpgrade
+  // New Managed accepts are blocked in the product, not only by the platform flag.
+  void args.studentDepositAuthorized
+  const showManaged = false
+  const showManagedUpgrade = false
 
-  const defaultTier: LandlordAcceptChoice =
-    propertyServiceTier === 'listing' && showListing ? 'listing' : showManaged ? 'managed' : 'listing'
+  const defaultTier: LandlordAcceptChoice = propertyServiceTier === 'managed' ? 'managed' : 'listing'
 
   return { showListing, showManaged, defaultTier, propertyTier, propertyServiceTier, showManagedUpgrade }
 }

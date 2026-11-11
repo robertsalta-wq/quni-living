@@ -140,6 +140,129 @@ export interface Database {
         }
         Relationships: []
       }
+      listing_lease_charges: {
+        Row: {
+          id: string
+          booking_id: string
+          property_id: string
+          landlord_id: string
+          kind: 'fixed_term' | 'flexible_quarter' | 'rollover_quarter'
+          period_start: string
+          period_end: string | null
+          months: number
+          ex_gst_cents: number
+          gst_cents: number
+          total_cents: number
+          credit_months: number
+          charged_cents: number
+          status: 'pending' | 'succeeded' | 'failed' | 'exempt'
+          stripe_payment_intent_id: string | null
+          failure_reason: string | null
+          attempt_count: number
+          next_retry_at: string | null
+          invoice_storage_path: string | null
+          created_at: string
+          charged_at: string | null
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          property_id: string
+          landlord_id: string
+          kind: 'fixed_term' | 'flexible_quarter' | 'rollover_quarter'
+          period_start: string
+          period_end?: string | null
+          months: number
+          ex_gst_cents: number
+          gst_cents: number
+          total_cents: number
+          credit_months?: number
+          charged_cents: number
+          status: 'pending' | 'succeeded' | 'failed' | 'exempt'
+          stripe_payment_intent_id?: string | null
+          failure_reason?: string | null
+          attempt_count?: number
+          next_retry_at?: string | null
+          invoice_storage_path?: string | null
+          created_at?: string
+          charged_at?: string | null
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          property_id?: string
+          landlord_id?: string
+          kind?: 'fixed_term' | 'flexible_quarter' | 'rollover_quarter'
+          period_start?: string
+          period_end?: string | null
+          months?: number
+          ex_gst_cents?: number
+          gst_cents?: number
+          total_cents?: number
+          credit_months?: number
+          charged_cents?: number
+          status?: 'pending' | 'succeeded' | 'failed' | 'exempt'
+          stripe_payment_intent_id?: string | null
+          failure_reason?: string | null
+          attempt_count?: number
+          next_retry_at?: string | null
+          invoice_storage_path?: string | null
+          created_at?: string
+          charged_at?: string | null
+        }
+        Relationships: []
+      }
+      property_lease_credits: {
+        Row: {
+          property_id: string
+          months_remaining: number
+          updated_at: string
+        }
+        Insert: {
+          property_id: string
+          months_remaining?: number
+          updated_at?: string
+        }
+        Update: {
+          property_id?: string
+          months_remaining?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_lease_credit_events: {
+        Row: {
+          id: string
+          property_id: string
+          booking_id: string | null
+          charge_id: string | null
+          months_delta: number
+          reason: 'early_end' | 'applied_to_charge'
+          early_end_date: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          booking_id?: string | null
+          charge_id?: string | null
+          months_delta: number
+          reason: 'early_end' | 'applied_to_charge'
+          early_end_date?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          booking_id?: string | null
+          charge_id?: string | null
+          months_delta?: number
+          reason?: 'early_end' | 'applied_to_charge'
+          early_end_date?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       document_access_log: {
         Row: {
           id: string
@@ -3060,6 +3183,19 @@ export interface Database {
           p_actor_label?: string | null
         }
         Returns: undefined
+      }
+      consume_property_lease_months: {
+        Args: { p_property_id: string; p_months: number }
+        Returns: number
+      }
+      grant_property_lease_months: {
+        Args: {
+          p_property_id: string
+          p_booking_id: string
+          p_months: number
+          p_early_end_date: string
+        }
+        Returns: number
       }
     }
     Enums: Record<string, never>

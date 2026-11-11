@@ -1,4 +1,4 @@
-const DEFAULT_LISTING_FEE_CENTS = 9900
+const DEFAULT_LISTING_FEE_CENTS = 0
 
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} admin

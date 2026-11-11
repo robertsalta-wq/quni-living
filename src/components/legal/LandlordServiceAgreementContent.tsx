@@ -11,6 +11,7 @@ import {
 } from '../../lib/landlordServiceAgreement'
 import { formatAustralianAbn } from '../../lib/platformIdentity'
 import { LegalH2, LegalH3, LegalP, LegalSummary, LegalUl, type LegalTocItem } from './LegalPageShell'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 
 export const LANDLORD_SERVICE_AGREEMENT_TOC: LegalTocItem[] = [
   { id: 'about', label: '1. About this agreement' },
@@ -35,6 +36,7 @@ const PARTY = formatContractingPartyName()
 const ABN = formatAustralianAbn(LEGAL_ENTITY_ABN)
 
 export function LandlordServiceAgreementContent() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   return (
     <>
       <LegalSummary titleId="lsa-summary-heading">
@@ -47,7 +49,9 @@ export function LandlordServiceAgreementContent() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-stone-800">
           <li>Quni is software, not your agent. You stay in control.</li>
           <li>
-            Free to list. $99 once, when you accept a resident. No commission on rent, ever, on Listing.
+            {pricingV2Enabled
+              ? 'Free to list. $5.50 including GST for each rented month, once, when the lease is signed. No commission on rent, ever, on Listing.'
+              : 'Free to list. $99 once, when you accept a resident. No commission on rent, ever, on Listing.'}
           </li>
           <li>Rent is paid straight to you. It never passes through us.</li>
           <li>You lodge your own bond where the law requires lodgement. We never hold bond money.</li>
@@ -180,7 +184,7 @@ export function LandlordServiceAgreementContent() {
       </LegalP>
       <LegalH3 id="account-card">3.3 Payment method for platform fees</LegalH3>
       <LegalP>
-        You must keep a valid payment card on file to pay the acceptance fee described in clause 7.
+        You must keep a valid payment card on file to pay the fee described in clause 7.
         Before you accept an applicant you must also give us the bank account details your resident will
         use to pay you. Those details are shown to the resident so they can pay you directly. They are not
         a connection that lets us receive rent on your behalf. Some prescribed forms require your account
@@ -290,7 +294,9 @@ export function LandlordServiceAgreementContent() {
       <LegalUl
         items={[
           'Listing is free. There is no fee to create an account, publish a listing, receive applications, or message applicants.',
-          'You pay $99 once, when you accept an applicant through the platform. That is the only fee.',
+          pricingV2Enabled
+            ? 'You pay $5 plus GST ($5.50) for each rented month, once, when everyone required has signed. A lease with no end date is $16.50 every 3 months. That is the only fee.'
+            : 'You pay $99 once, when you accept an applicant through the platform. That is the only fee.',
           'There is no commission on rent, no subscription, no monthly fee and no letting fee.',
           'If you never accept anyone, you never pay anything.',
         ]}
@@ -298,13 +304,21 @@ export function LandlordServiceAgreementContent() {
       <LegalH3 id="fees-found">7.2 Tenants you found yourself</LegalH3>
       <LegalP>
         If you found a tenant elsewhere and bring them through the platform to be verified and to sign
-        the agreement, the $99 applies on acceptance in the same way. The fee is for the acceptance and
-        the documents, not for introducing the tenant.
+        the agreement, the same fee applies. The fee is for the documents and the signed lease, not for
+        introducing the tenant.
       </LegalP>
       <LegalH3 id="fees-how">7.3 How it is charged</LegalH3>
       <LegalP>
-        The fee is $99, charged to the card you hold on file at the time you accept. We issue a tax
-        invoice.
+        {pricingV2Enabled ? (
+          <>
+            The fee is $5 plus GST ($5.50) for each rented month, charged to the card you hold on file once,
+            when everyone required has signed. Nothing is charged for accepting. If the renter leaves early,
+            unused whole months become credit on that room and are used on its next lease. Credit is not a
+            cash refund. We issue a tax invoice.
+          </>
+        ) : (
+          <>The fee is $99, charged to the card you hold on file at the time you accept. We issue a tax invoice.</>
+        )}
       </LegalP>
       <LegalH3 id="fees-refunds">7.4 Refunds</LegalH3>
       <LegalP>

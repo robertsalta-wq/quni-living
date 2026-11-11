@@ -20,9 +20,9 @@ globalThis.React = React
 
 const { renderToBuffer } = await import('@react-pdf/renderer')
 const { NswLicenceToOccupyOnSite } = await import('../src/lib/documents/nsw/occupancyGenerator.tsx')
-const { NswResidentialTenancyAgreement } = await import('../src/lib/documents/NswResidentialTenancyAgreement.tsx')
 const { QuniPlatformAddendum } = await import('../src/lib/documents/QuniPlatformAddendum.tsx')
 const { QldLicenceToOccupyOnSite } = await import('../src/lib/documents/qld/occupancyGenerator.tsx')
+const { fillOfficialNswFt6600Pdf } = await import('../api/lib/documents/officialNswFt6600Fill.ts')
 const { fillOfficialQldForm18aPdf } = await import('../api/lib/documents/officialQldForm18aFill.ts')
 const { fillOfficialQldFormR18Pdf } = await import('../api/lib/documents/officialQldFormR18Fill.ts')
 const { qldFormR18SampleFillProps } = await import('../api/lib/documents/qldFormR18SampleProps.ts')
@@ -32,8 +32,9 @@ const { VicResidentialRentalAgreementForm1 } = await import('../src/lib/document
 const { QuniPlatformAddendumVic } = await import('../src/lib/documents/vic/addendumGenerator.tsx')
 const { NswBoardingHouseOccupancyAgreement } = await import('../src/lib/documents/nsw/boardingHouse/generator.tsx')
 
-const SAMPLE_ROOT = join(process.cwd(), process.env.AGREEMENT_SAMPLE_DIR || join('public', 'agreement-samples'))
-const WATERMARK_TEXT = 'SAMPLE - not for execution'
+const SAMPLE_ROOT = join(process.cwd(), 'public', 'agreement-samples')
+const PUBLIC_LEASE_ROOT = join(process.cwd(), 'public', 'sample-lease')
+const WATERMARK_TEXT = 'SAMPLE: not a real agreement'
 
 function element(Component, props) {
   return React.createElement(Component, props)
@@ -41,6 +42,12 @@ function element(Component, props) {
 
 async function applyWatermark(pdfBuffer) {
   const doc = await PDFDocument.load(pdfBuffer)
+  try {
+    const form = doc.getForm()
+    if (form.getFields().length > 0) form.flatten()
+  } catch {
+    // React-pdf samples have no AcroForm. Official fills are already flat.
+  }
   const font = await doc.embedFont(StandardFonts.HelveticaBold)
   const pages = doc.getPages()
 
@@ -51,9 +58,9 @@ async function applyWatermark(pdfBuffer) {
       y: height * 0.46,
       size: 36,
       font,
-      color: rgb(0.82, 0.2, 0.2),
+      color: rgb(0.75, 0.15, 0.12),
       rotate: degrees(32),
-      opacity: 0.2,
+      opacity: 0.35,
     })
   }
 
@@ -76,7 +83,7 @@ const samples = [
     state: 'NSW',
     tier: 'T2',
     document: 'FT6600 tenancy agreement',
-    component: NswResidentialTenancyAgreement,
+    officialNswFt6600: true,
     props: nswT2AgreementSampleProps(),
   },
   {
@@ -162,15 +169,19 @@ if (!onlyKey) {
 mkdirSync(SAMPLE_ROOT, { recursive: true })
 
 const written = []
+const rawByKey = new Map()
 
 for (const sample of selected) {
   const fileName = `${sanitizeFileName(sample.state)}-${sanitizeFileName(sample.tier)}-${sanitizeFileName(sample.document)}.pdf`
   const outputPath = join(SAMPLE_ROOT, fileName)
-  const rawBuffer = sample.officialQldForm18a
-    ? Buffer.from((await fillOfficialQldForm18aPdf(sample.props)).pdfBytes)
-    : sample.officialQldFormR18
-      ? Buffer.from((await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())).pdfBytes)
-      : await renderToBuffer(element(sample.component, sample.props))
+  const rawBuffer = sample.officialNswFt6600
+    ? Buffer.from((await fillOfficialNswFt6600Pdf(sample.props)).pdfBytes)
+    : sample.officialQldForm18a
+      ? Buffer.from((await fillOfficialQldForm18aPdf(sample.props)).pdfBytes)
+      : sample.officialQldFormR18
+        ? Buffer.from((await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())).pdfBytes)
+        : await renderToBuffer(element(sample.component, sample.props))
+  rawByKey.set(`${sample.state}|${sample.tier}|${sample.document}`, rawBuffer)
   const watermarked = await applyWatermark(rawBuffer)
   writeFileSync(outputPath, watermarked)
   written.push({
@@ -220,3 +231,44 @@ const manifest = {
 
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 console.log('Written:', manifestPath)
+
+const publicPackages = [
+  {
+    fileName: 'nsw-room-on-its-own-lease.pdf',
+    keys: ['NSW|T2|FT6600 tenancy agreement', 'NSW|T2|Quni addendum'],
+  },
+  { fileName: 'nsw-room-in-your-home.pdf', keys: ['NSW|T1|Occupancy licence'] },
+  { fileName: 'nsw-boarding-house.pdf', keys: ['NSW|T3|Standard Occupancy Agreement'] },
+  {
+    fileName: 'qld-room-on-its-own-lease.pdf',
+    keys: ['QLD|T2|General tenancy agreement (Form 18a)', 'QLD|T2|Quni addendum'],
+  },
+  { fileName: 'qld-room-in-your-home.pdf', keys: ['QLD|T1|Occupancy agreement'] },
+  { fileName: 'qld-rooming-house.pdf', keys: ['QLD|T3|Rooming accommodation agreement (Form R18)'] },
+  {
+    fileName: 'vic-room-on-its-own-lease.pdf',
+    keys: ['VIC|T2|Form 1', 'VIC|T2|Quni addendum'],
+  },
+  { fileName: 'vic-room-in-your-home.pdf', keys: ['VIC|T1|Licence to occupy'] },
+]
+
+if (!onlyKey) {
+  mkdirSync(PUBLIC_LEASE_ROOT, { recursive: true })
+  for (const pack of publicPackages) {
+    const parts = pack.keys.map((key) => {
+      const buf = rawByKey.get(key)
+      if (!buf) throw new Error(`Missing sample for ${key}`)
+      return buf
+    })
+    const merged = await PDFDocument.create()
+    for (const part of parts) {
+      const src = await PDFDocument.load(part)
+      const pages = await merged.copyPages(src, src.getPageIndices())
+      for (const page of pages) merged.addPage(page)
+    }
+    const watermarked = await applyWatermark(Buffer.from(await merged.save()))
+    const outputPath = join(PUBLIC_LEASE_ROOT, pack.fileName)
+    writeFileSync(outputPath, watermarked)
+    console.log('Written:', outputPath)
+  }
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { Link } from 'react-router-dom'
 import { LANDLORD_SERVICE_AGREEMENT_PUBLIC_TITLE } from '../../lib/landlordServiceAgreementTitle'
 
@@ -135,11 +136,22 @@ export function VerificationWorkingTenantSection() {
 }
 
 export function VerificationLandlordSection() {
+  const { pricingV2Enabled } = usePlatformFeatures()
+  const rows = pricingV2Enabled
+    ? LANDLORD_STEPS.map((row) =>
+        row.step === 'Add a payment card'
+          ? {
+              ...row,
+              what: 'For the lease fee ($5.50 including GST per rented month). You are not charged for accepting. The charge is when everyone has signed.',
+            }
+          : row,
+      )
+    : LANDLORD_STEPS
   return (
     <div className="space-y-4">
       <p className="text-sm font-semibold text-gray-900">List for free. Get verified renters. Accept in a tap.</p>
       <p className="text-sm leading-relaxed text-gray-700">Here is what you set up once on Quni Listing.</p>
-      <VerificationTable rows={LANDLORD_STEPS} />
+      <VerificationTable rows={rows} />
       <p className="text-sm leading-relaxed text-gray-700">
         Once that&apos;s done you can publish listings, receive booking requests from verified renters, and accept with
         the tenancy agreement and e-signing handled inside Quni.
@@ -149,6 +161,7 @@ export function VerificationLandlordSection() {
 }
 
 export function VerificationOverviewSection() {
+  const { pricingV2Enabled } = usePlatformFeatures()
   return (
     <div className="space-y-8 text-sm leading-relaxed text-gray-700">
       <p>
@@ -171,7 +184,8 @@ export function VerificationOverviewSection() {
       <div>
         <h3 className="font-display text-base font-bold text-gray-900">Landlords</h3>
         <p className="mt-2">
-          Profile, terms, insurance confirmation, a saved card for the $99 acceptance fee, and identity verification
+          Profile, terms, insurance confirmation, a saved card
+          {pricingV2Enabled ? ' for the lease fee' : ' for the $99 acceptance fee'}, and identity verification
           before your first acceptance.
         </p>
       </div>

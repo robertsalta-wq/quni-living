@@ -1,5 +1,5 @@
 /**
- * NSW on-site licence to occupy - narrative copy (lawyer-review draft).
+ * NSW on-site licence to occupy.
  * Boarder/lodger; Principal-held security deposit (no NSW Fair Trading lodgement for T1).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
@@ -130,7 +130,6 @@ export const NSW_OCCUPANCY_PDF_MARKERS = [
   'Residential Tenancies Act 2010',
   'not lodged with NSW Fair Trading',
   'The resident pays Quni Living nothing',
-  'Subject to final legal review',
   'Principal',
   'Term and termination',
   'Continuation after fixed period',

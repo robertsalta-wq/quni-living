@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import {
+  LEASE_MONTH_EX_GST_CENTS,
+  LEASE_QUARTER_EX_GST_CENTS,
+  formatAudFromCents,
+  gstOnExCents,
+} from '../../lib/pricing/leaseCharge'
 import type {
   TierId,
   ServiceTierId,
@@ -771,6 +777,12 @@ export default function PricingPage() {
             </span>
           </div>
           <h1 className="m-0 text-[28px] font-bold tracking-tight text-admin-ink">Pricing</h1>
+          <p className="mt-2 max-w-3xl text-sm text-admin-ink-3">
+            Live listing charge, from the price module: {formatAudFromCents(LEASE_MONTH_EX_GST_CENTS)} ex GST per rented
+            month ({formatAudFromCents(LEASE_MONTH_EX_GST_CENTS + gstOnExCents(LEASE_MONTH_EX_GST_CENTS))} incl. GST),
+            and {formatAudFromCents(LEASE_QUARTER_EX_GST_CENTS)} ex GST per quarter. The matrix below does not set that
+            charge.
+          </p>
           <p className="m-0 mt-1 text-[14px] text-admin-ink-4">
             Service tier configuration · all changes are date / time stamped.
           </p>

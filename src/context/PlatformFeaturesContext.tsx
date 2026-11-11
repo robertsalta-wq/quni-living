@@ -6,13 +6,24 @@ import { isSupabaseConfigured } from '../lib/supabaseConfigured'
 export type PlatformFeatures = {
   managedTierEnabled: boolean
   listingModuleEnabled: boolean
+  pricingV2Enabled: boolean
   managedOverrides: ManagedOverridesMap
   loaded: boolean
 }
 
+/**
+ * Local preview only. `import.meta.env.DEV` is false in every production build,
+ * so this cannot turn the new price on at quni.com.au.
+ * Set VITE_PRICING_V2_ENABLED=true in .env.local, then restart `npm run dev`.
+ * Set it to false, or delete the line, and restart to see the old pages again.
+ */
+const localPricingV2Preview =
+  import.meta.env.DEV === true && import.meta.env.VITE_PRICING_V2_ENABLED === 'true'
+
 const DEFAULT_FEATURES: PlatformFeatures = {
   managedTierEnabled: false,
   listingModuleEnabled: false,
+  pricingV2Enabled: localPricingV2Preview,
   managedOverrides: {},
   loaded: false,
 }
@@ -24,6 +35,7 @@ const PlatformFeaturesContext = createContext<PlatformFeaturesContextValue | nul
 type PublicPlatformFeaturesRow = {
   managed_tier_enabled: boolean | null
   listing_module_enabled: boolean | null
+  pricing_v2_enabled?: boolean | null
 }
 
 type MatrixRow = {
@@ -80,6 +92,7 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
         setFeatures({
           managedTierEnabled: false,
           listingModuleEnabled: false,
+          pricingV2Enabled: localPricingV2Preview,
           managedOverrides,
           loaded: true,
         })
@@ -89,6 +102,7 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
       setFeatures({
         managedTierEnabled: false,
         listingModuleEnabled: featuresResult.data.listing_module_enabled === true,
+        pricingV2Enabled: localPricingV2Preview || featuresResult.data.pricing_v2_enabled === true,
         managedOverrides,
         loaded: true,
       })

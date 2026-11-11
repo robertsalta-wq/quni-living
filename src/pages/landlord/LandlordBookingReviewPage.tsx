@@ -31,6 +31,7 @@ import LandlordListingPaymentModal from '../../components/landlord/LandlordListi
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 import { useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
+import LandlordLeaseFeePanel from '../../components/landlord/LandlordLeaseFeePanel'
 import TenancyAgreementExplainer from '../../components/TenancyAgreementExplainer'
 import LandlordListingAcceptedSummary from '../../components/landlord/LandlordListingAcceptedSummary'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
@@ -931,7 +932,7 @@ export default function LandlordBookingReviewPage() {
     booking.service_tier_at_request === 'listing' ||
     booking.service_tier_final === 'listing'
 
-  const listingFeeDisplay = landlordFeeExempt ? '$0.00' : '$99.00'
+  const listingFeeDisplay = landlordFeeExempt ? '$0.00' : 'when everyone signs'
 
   const propertyAddressLine = property
     ? [property.address, property.suburb, property.state, property.postcode].filter(Boolean).join(', ') ||
@@ -1144,7 +1145,7 @@ export default function LandlordBookingReviewPage() {
                   >
                     <p className="font-medium">Verify your identity before confirming</p>
                     <p className="mt-1 text-admin-warning-fg/90">
-                      Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
+                      Renters can place booking requests, but you must complete Stripe identity
                       verification before you can accept. This also unlocks your Verified host badge when approved.
                     </p>
                     {stripeConnectError && (
@@ -1181,8 +1182,8 @@ export default function LandlordBookingReviewPage() {
                   >
                     <p className="font-medium">Add a payment method to confirm</p>
                     <p className="mt-1 text-admin-warning-fg/90">
-                      You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
-                      card on accept.
+                      You need a saved payment method to accept Quni Listing bookings. The lease fee is charged to your
+                      card once, when everyone required has signed. Nothing is charged for accepting.
                     </p>
                     <button
                       type="button"
@@ -1788,7 +1789,7 @@ export default function LandlordBookingReviewPage() {
                     >
                       <div className="text-sm font-bold text-admin-ink">Accept as Quni Listing</div>
                       <p className="mt-2 text-sm leading-relaxed text-admin-ink-4">
-                        You arrange bond and rent directly with the renter. The one-off Listing acceptance fee applies.
+                        You arrange bond and rent directly with the renter. The lease fee is charged when everyone has signed.
                       </p>
                     </button>
                     <button
@@ -1857,6 +1858,13 @@ export default function LandlordBookingReviewPage() {
                         sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
                         embedded
                       />
+                      {booking.property_id ? (
+                        <LandlordLeaseFeePanel
+                          bookingId={booking.id}
+                          propertyId={booking.property_id}
+                          status={booking.status}
+                        />
+                      ) : null}
                       <BookingLeasePanel
                         bookingId={booking.id}
                         refreshKey={leasePanelRefreshKey}

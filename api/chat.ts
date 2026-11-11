@@ -566,17 +566,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  let pricingV2 = false
+  try {
+    const { data: priceFlag } = await supabaseAdmin
+      .from('platform_config')
+      .select('config_value')
+      .eq('config_key', 'pricing_v2_enabled')
+      .maybeSingle()
+    pricingV2 = String(priceFlag?.config_value ?? '').trim().toLowerCase() === 'true'
+  } catch {
+    pricingV2 = false
+  }
+  const pricingLine = pricingV2
+    ? '\n\nPRICING: Listing is free. When the lease is signed the landlord pays $5 plus GST ($5.50) for each rented month, once. 3 months is $16.50, 6 months is $33, 12 months is $66, 2 years is $132. Flexible, and a fixed lease that continues after its end date, is $16.50 every 3 months. Renters pay nothing. Ignore any knowledge chunk that says a $99 fee at accept.'
+    : '\n\nPRICING: The public price is still a flat $99 when the landlord accepts a booking. Do not describe a $5.50 per rented month lease fee.'
+
   const systemPrompt = (() => {
     if (persona === 'student_renter') {
-      return SYSTEM_PROMPTS.student_renter
-        .replace('{{FIRST_NAME}}', studentFirstName)
-        .replace('{{LISTING_CONTEXT_BLOCK}}', listingContextBlock)
-        .replace('{{TENANT_PREFERENCE_BLOCK}}', tenantPreferenceBlock)
+      return (
+        SYSTEM_PROMPTS.student_renter
+          .replace('{{FIRST_NAME}}', studentFirstName)
+          .replace('{{LISTING_CONTEXT_BLOCK}}', listingContextBlock)
+          .replace('{{TENANT_PREFERENCE_BLOCK}}', tenantPreferenceBlock) + pricingLine
+      )
     }
     if (persona === 'landlord') {
-      return SYSTEM_PROMPTS.landlord.replace('{{FIRST_NAME}}', landlordFirstName || '')
+      return SYSTEM_PROMPTS.landlord.replace('{{FIRST_NAME}}', landlordFirstName || '') + pricingLine
     }
-    return SYSTEM_PROMPTS.visitor
+    return SYSTEM_PROMPTS.visitor + pricingLine
   })()
 
   let knowledgeContext = ''

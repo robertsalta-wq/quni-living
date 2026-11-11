@@ -112,7 +112,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     ).toThrow(/Bond amount must be resolved/)
   })
 
-  it('managed tier omits landlord service address and fills agent from platform', async () => {
+  it('managed tier does not name Quni as the landlord agent', async () => {
     const props = buildNswResidentialTenancyAgreementPropsFromBooking({
       ...QUINN_ROBERT_BOOKING_ROWS,
       serviceTier: 'managed',
@@ -128,10 +128,10 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
     const form = doc.getForm()
 
-    expect(form.getTextField(F.landlord_service_street).getText() ?? '').toBe('')
-    expect(form.getTextField(F.landlord_agent_name).getText()).toBe('Quinnvestments Pty Ltd')
-    expect(form.getTextField(F.landlord_agent_address).getText()).toContain('100 Agent Street')
-    expect(props.landlordAgent?.name).toBe('Quinnvestments Pty Ltd')
+    expect(form.getTextField(F.landlord_service_street).getText() ?? '').toBe('18 Malvina Street')
+    expect(form.getTextField(F.landlord_agent_name).getText() ?? '').toBe('')
+    expect(form.getTextField(F.landlord_agent_address).getText() ?? '').toBe('')
+    expect(props.landlordAgent).toBeNull()
   })
 
   it('applyOfficialNswFt6600ScheduleFill uses semantic field names only', () => {

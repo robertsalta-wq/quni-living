@@ -319,7 +319,7 @@ export function LicenceOccupyDocument({
   return (
     <Document>
       <PageShell {...pageShellProps}>
-        {!headerWatermark ? (
+        {!headerWatermark && content.draftFooter ? (
           <Text style={[occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }]}>{content.draftFooter}</Text>
         ) : null}
         <ScheduleSummary content={content} props={props} partyLabel={partyLabel} />

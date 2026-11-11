@@ -112,7 +112,7 @@ describe('runExpireListingBondPendingBooking', () => {
     mocks.fetchListingFeePaymentIntentId.mockResolvedValue('pi_fee')
     mocks.refundListingFeePaymentIntentFull.mockResolvedValue({
       refundId: 're_456',
-      refundAmountCents: 9900,
+      refundAmountCents: null,
     })
 
     let eventInsert: Record<string, unknown> | null = null
@@ -160,17 +160,15 @@ describe('runExpireListingBondPendingBooking', () => {
     })
 
     expect(result).toEqual({ ok: true, expired: true })
-    expect(mocks.refundListingFeePaymentIntentFull).toHaveBeenCalled()
+    expect(mocks.refundListingFeePaymentIntentFull).not.toHaveBeenCalled()
     expect(eventInsert?.metadata).toMatchObject({
       reason: 'bond_window_elapsed',
-      refund_id: 're_456',
-      refund_amount_cents: 9900,
-      stripe_payment_intent_id: 'pi_fee',
+      fee_exempt: true,
     })
-    expect(eventInsert?.metadata).not.toHaveProperty('fee_exempt')
+    expect(eventInsert?.metadata).not.toHaveProperty('refund_id')
   })
 
-  it('refund failure: retry on next cron run', async () => {
+  it('does not refund a listing fee before expiring the bond window', async () => {
     mocks.fetchListingFeePaymentIntentId.mockResolvedValue('pi_fee')
     mocks.refundListingFeePaymentIntentFull.mockRejectedValue(new Error('stripe down'))
 
@@ -205,10 +203,9 @@ describe('runExpireListingBondPendingBooking', () => {
       nowIso,
     })
 
-    expect(result).toEqual({ ok: false, retry: true })
-    // Guard reads (tenancies) are allowed; no booking mutation before the refund clears.
-    expect(updates).not.toContain('bookings')
-    expect(mocks.sendListingBondPendingExpiredEmails).not.toHaveBeenCalled()
+    expect(result).toEqual({ ok: true, expired: true })
+    expect(updates).toContain('bookings')
+    expect(mocks.refundListingFeePaymentIntentFull).not.toHaveBeenCalled()
   })
 
   it('blocks expiry when the lease is already fully signed (no refund, no email)', async () => {

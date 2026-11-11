@@ -12,7 +12,7 @@ export type BookingMoneyBlockInput = {
   status: string
   weeklyRentAud: number | null
   bondAud: number | null
-  /** Listing only: $99 landlord acceptance fee, waived when the landlord is fee-exempt. */
+  /** Listing only: lease fee is waived when the landlord is fee-exempt. The amount depends on the lease. */
   listingFeeExempt: boolean
   /** Managed only: one week's rent PaymentIntent, cents. Null on Listing bookings. */
   depositAmountCents: number | null
@@ -60,7 +60,7 @@ export function computeBookingMoneyBlockLines(input: BookingMoneyBlockInput): Bo
   const isRenter = viewer === 'renter'
 
   if (input.tier === 'listing') {
-    const listingFeeLabel = input.listingFeeExempt ? '$0.00' : '-$99.00'
+    const listingFeeLabel = input.listingFeeExempt ? '$0.00' : 'When everyone signs'
     const lines: BookingMoneyBlockLine[] = [
       {
         key: 'rent',

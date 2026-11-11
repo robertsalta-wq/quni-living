@@ -44,6 +44,7 @@ const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/how-it-works': [routeImports.howItWorks],
   '/refunds': [routeImports.refunds],
   '/pricing': [routeImports.pricing],
+  '/sample-lease': [routeImports.sampleLease],
   '/contact': [routeImports.contact],
   '/faq': [routeImports.faq],
   '/verification': [routeImports.verification],
