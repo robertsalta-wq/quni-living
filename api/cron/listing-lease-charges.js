@@ -2,6 +2,9 @@
  * Hourly: settle lease-fee rows stuck pending, retry a failed card once,
  * and open the next quarter for flexible leases and fixed leases past their end date.
  * Secure with Authorization: Bearer CRON_SECRET
+ *
+ * Node runtime. Vercel ignores a returned Web Response on this runtime and
+ * waits until the function times out, so the result is written on `res`.
  */
 import { createClient } from '@supabase/supabase-js'
 import { headerString } from '../lib/nodeHandler.js'
@@ -25,27 +28,38 @@ function authorizationHeader(request) {
   return headerString(headers || {}, 'authorization')
 }
 
-export default async function handler(request) {
+function finish(res, status, body, asJson) {
+  if (res && typeof res.status === 'function') {
+    const ready = res.status(status)
+    if (asJson && typeof ready.json === 'function') return ready.json(body)
+    if (typeof ready.end === 'function') return ready.end(body)
+    return
+  }
+  if (asJson) return Response.json(body, { status })
+  return new Response(body, { status })
+}
+
+export default async function handler(request, res) {
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 })
+    return finish(res, 405, 'Method not allowed', false)
   }
 
   const secret = process.env.CRON_SECRET
   const auth = authorizationHeader(request)
   const token = auth.replace(/^Bearer\s+/i, '').trim()
   if (!secret || token !== secret) {
-    return new Response('Unauthorized', { status: 401 })
+    return finish(res, 401, 'Unauthorized', false)
   }
 
   const supabaseUrl = process.env.SUPABASE_URL
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !serviceRole) {
-    return new Response('Server misconfigured', { status: 500 })
+    return finish(res, 500, 'Server misconfigured', false)
   }
 
   const admin = createClient(supabaseUrl, serviceRole)
   const settled = await settleStuckPendingLeaseCharges(admin)
   const retried = await retryDueLeaseCharges(admin)
   const quarters = await chargeDueLeaseQuarters(admin)
-  return Response.json({ ok: true, ...settled, ...retried, ...quarters })
+  return finish(res, 200, { ok: true, ...settled, ...retried, ...quarters }, true)
 }
