@@ -185,6 +185,7 @@ export default function LandlordBookingReviewPage() {
   const [actionBusy, setActionBusy] = useState(false)
   const [confirmPhase, setConfirmPhase] = useState<ConfirmPhase>('idle')
   const [actionError, setActionError] = useState<string | null>(null)
+  const [payBookingId, setPayBookingId] = useState<string | null>(null)
 
   const [declineOpen, setDeclineOpen] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
@@ -534,6 +535,7 @@ export default function LandlordBookingReviewPage() {
   const onConfirm = useCallback(async () => {
     if (!bookingId || qldRoomingAcceptBlocked) return
     setActionError(null)
+    setPayBookingId(null)
     setConfirmPhase('submitting')
     setActionBusy(true)
     try {
@@ -554,7 +556,10 @@ export default function LandlordBookingReviewPage() {
           },
         },
       )
-      if (!result.ok) throw new Error(result.error)
+      if (!result.ok) {
+        setPayBookingId(result.payBookingId ?? null)
+        throw new Error(result.error)
+      }
       if (selectedConfirmTier === 'listing') {
         await reload()
         setListingAcceptCelebration(true)
@@ -584,6 +589,7 @@ export default function LandlordBookingReviewPage() {
   const onDecline = useCallback(async () => {
     if (!bookingId) return
     setActionError(null)
+    setPayBookingId(null)
     setActionBusy(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -666,6 +672,7 @@ export default function LandlordBookingReviewPage() {
   const onRequestInfo = useCallback(async () => {
     if (!bookingId || !infoMessage.trim()) return
     setActionError(null)
+    setPayBookingId(null)
     setActionBusy(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -1098,6 +1105,12 @@ export default function LandlordBookingReviewPage() {
       ? `Received ${receivedAgo}`
       : null
 
+  const unpaidLeaseFeeLink = payBookingId ? (
+    <Link to={`/landlord/bookings/${payBookingId}/review#lease-fee`} className="font-semibold underline">
+      Pay now
+    </Link>
+  ) : null
+
   return (
     <div className="min-h-full bg-admin-surface-2">
       <div className="mx-auto max-w-[1180px] px-6 py-6 pb-20">
@@ -1111,7 +1124,7 @@ export default function LandlordBookingReviewPage() {
               <div className="space-y-3.5">
                 {actionError ? (
                   <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
-                    {actionError}
+                    {actionError} {unpaidLeaseFeeLink}
                   </div>
                 ) : null}
                 {bondReceivedError ? (
@@ -1753,7 +1766,11 @@ export default function LandlordBookingReviewPage() {
                           {actionBusy ? 'Sending…' : 'Send'}
                         </button>
                       </div>
-                      {actionError && <p className="mt-2 text-xs text-admin-danger-fg">{actionError}</p>}
+                      {actionError && (
+                        <p className="mt-2 text-xs text-admin-danger-fg">
+                          {actionError} {unpaidLeaseFeeLink}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <p className="text-xs leading-relaxed text-admin-ink-5">

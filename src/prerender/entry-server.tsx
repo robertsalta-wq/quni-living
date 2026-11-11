@@ -5,9 +5,11 @@ import { HelmetProvider } from 'react-helmet-async'
 import { MemoryRouter } from 'react-router-dom'
 import { AppTree } from '../AppTree'
 import {
+  fetchPricingV2Enabled,
   fetchPublishedListingDetails,
   listingPrerenderPaths,
 } from '../lib/publishedListings'
+import { setPrerenderPricingV2 } from '../context/PlatformFeaturesContext'
 import { writePropertyDetailCache } from '../lib/propertyDetailCache'
 import { hoistHeadTags, injectPrerender } from './headTags'
 import { listPrerenderPathnames, pathnameToDistDir } from './routes'
@@ -41,6 +43,10 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
   // Keep an empty SPA shell for client-routed paths (vercel rewrite → spa.html).
   writeFileSync(path.join(distDir, 'spa.html'), template, 'utf8')
 
+  const pricingV2 = await fetchPricingV2Enabled()
+  setPrerenderPricingV2(pricingV2)
+  console.log(`prerender-routes: pricing v2 ${pricingV2 ? 'on' : 'off'}`)
+
   const listings = await fetchPublishedListingDetails()
   for (const row of listings) {
     writePropertyDetailCache(row.slug.trim(), row)
@@ -61,7 +67,7 @@ export async function prerenderRoutes(distDir: string): Promise<void> {
     }
     const outDir = pathnameToDistDir(distDir, pathname)
     mkdirSync(outDir, { recursive: true })
-    writeFileSync(path.join(outDir, 'index.html'), injectPrerender(template, body, head), 'utf8')
+    writeFileSync(path.join(outDir, 'index.html'), injectPrerender(template, body, head, pricingV2), 'utf8')
     console.log(`prerender-routes: wrote ${pathname}`)
   }
 

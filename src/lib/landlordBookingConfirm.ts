@@ -44,7 +44,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
   accessToken: string,
   deps: Partial<ConfirmBookingDeps> = {},
   opts?: ConfirmBookingOptions,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true } | { ok: false; error: string; payBookingId?: string }> {
   const { fetch: fetchFn, loadStripeFn, getPublishableKey } = { ...defaultDeps, ...deps }
 
   async function postOnce(): Promise<Response> {
@@ -115,16 +115,21 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
       return { ok: true }
     }
 
-    const msg =
-      (typeof body.message === 'string' && body.message.trim()) ||
-      (typeof body.error === 'string' && body.error) ||
-      'Could not confirm booking after authentication.'
-    return { ok: false, error: msg }
+    return failConfirm(body, 'Could not confirm booking after authentication.')
   }
 
+  return failConfirm(body, 'Could not confirm booking.')
+}
+
+function failConfirm(
+  body: { error?: string } & Record<string, unknown>,
+  fallback: string,
+): { ok: false; error: string; payBookingId?: string } {
   const msg =
     (typeof body.message === 'string' && body.message.trim()) ||
     (typeof body.error === 'string' && body.error) ||
-    'Could not confirm booking.'
-  return { ok: false, error: msg }
+    fallback
+  const payBookingId =
+    typeof body.payBookingId === 'string' && body.payBookingId.trim() ? body.payBookingId.trim() : undefined
+  return payBookingId ? { ok: false, error: msg, payBookingId } : { ok: false, error: msg }
 }

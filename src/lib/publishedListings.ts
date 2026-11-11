@@ -63,6 +63,30 @@ export async function fetchPublishedListingDetails(): Promise<Property[]> {
   )
 }
 
+/** Public flag used so prerendered HTML matches the live pricing page. A failed read stays off. */
+export async function fetchPricingV2Enabled(): Promise<boolean> {
+  try {
+    const supabase = createAnonClient()
+    if (!supabase) {
+      console.error('[prerender] pricing flag skipped: no Supabase env')
+      return false
+    }
+    const { data, error } = await supabase
+      .from('public_platform_features')
+      .select('pricing_v2_enabled')
+      .maybeSingle()
+    if (error || !data) {
+      if (error) console.error('[prerender] pricing flag', error.message)
+      return false
+    }
+    const row = data as { pricing_v2_enabled?: boolean | null }
+    return row.pricing_v2_enabled === true
+  } catch (e) {
+    console.error('[prerender] pricing flag', e)
+    return false
+  }
+}
+
 export function listingPrerenderPaths(slugs: string[]): string[] {
   const paths: string[] = []
   for (const raw of slugs) {

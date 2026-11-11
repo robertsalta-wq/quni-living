@@ -70,8 +70,11 @@ export function injectHelmetHead(html: string, head: string): string {
 }
 
 /** Wire SSR body + Helmet head into the Vite SPA shell for a prerendered route. */
-export function injectPrerender(template: string, body: string, head: string): string {
+export function injectPrerender(template: string, body: string, head: string, pricingV2 = false): string {
   let page = template.replace('<div id="root"></div>', `<div id="root">${body}</div>`)
   page = stripDefaultSeoHead(page)
+  if (pricingV2) {
+    page = injectHelmetHead(page, '<script>window.__QUNI_PRICING_V2__=true</script>')
+  }
   return injectHelmetHead(page, head)
 }

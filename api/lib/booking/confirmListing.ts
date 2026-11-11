@@ -8,7 +8,7 @@ import {
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
-import { landlordHasUnpaidLeaseCharge } from '../billing/listingLeaseCharge.js'
+import { unpaidLeaseChargeBookingId } from '../billing/listingLeaseCharge.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
@@ -107,11 +107,13 @@ export async function runListingConfirmBooking(
     return jsonFail(403, { error: 'Forbidden' })
   }
 
-  if (await landlordHasUnpaidLeaseCharge(admin, landlord.id)) {
+  const unpaidBookingId = await unpaidLeaseChargeBookingId(admin, landlord.id)
+  if (unpaidBookingId) {
     return jsonFail(402, {
       error: 'listing_charge_unpaid',
       message:
-        'A lease fee is still unpaid. Pay that invoice before accepting another booking. The signed lease itself is not affected.',
+        'A Quni lease fee is still unpaid. The signed lease is still valid. Use Pay now on that booking before accepting another one.',
+      payBookingId: unpaidBookingId,
     })
   }
 
