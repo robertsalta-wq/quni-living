@@ -20,6 +20,9 @@ const input = {
 describe('corrected payee addendum', () => {
   it('states there is no platform fee and prints the landlord account', () => {
     const text = correctedAddendumLines(input).join('\n')
+    expect(text).toContain(
+      'Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or property management services.',
+    )
     expect(text).toContain('No platform fee applies to this agreement.')
     expect(text).toContain('Rent is paid only to the landlord')
     expect(text).toContain('Account name: Quinn Lee')
