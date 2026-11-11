@@ -789,14 +789,6 @@ export async function sendQldFormR18PackageForSigning(
 
 }
 
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
 /** DocuSeal webhook: store signed PDF and update tenancy_documents. */
 export async function handleSigningWebhook(payload: unknown): Promise<{ ok: boolean; message?: string }> {
   const submissionId = extractSubmissionIdFromWebhook(payload)
@@ -1007,38 +999,44 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   const signedDocLabel = isResidentialTenancyPackage
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
-  const signedSubject = isResidentialTenancyPackage
-    ? isVicResidentialPackage
-      ? 'Your VIC tenancy agreement is signed - Quni Living'
-      : isQldResidentialPackage
-        ? 'Your QLD tenancy agreement is signed - Quni Living'
-        : 'Your NSW tenancy agreement is signed - Quni Living'
-    : 'Your lease is signed - Quni Living'
-  const doneHtml = (name: string) => `
-    <p>Hi ${escapeHtml(name)},</p>
-    <p>Your residential tenancy agreement has been fully signed. You can download a copy here:</p>
-    <p><a href="${escapeHtml(link)}">${escapeHtml(signedDocLabel)}</a></p>
-    <p>- Quni Living</p>
-  `
+  const { fullySignedAgreementSubject, sendFullySignedAgreementEmails } = await import(
+    './booking/sendFullySignedAgreementEmail.js'
+  )
+  const signedSubject = fullySignedAgreementSubject({
+    isResidentialTenancyPackage,
+    isVicResidentialPackage,
+    isQldResidentialPackage,
+  })
 
-  if (le && link) await sendEmail({ to: le, subject: signedSubject, html: doneHtml(String(ln)) })
-  if (se && link) await sendEmail({ to: se, subject: signedSubject, html: doneHtml(String(sn)) })
-
-  const { data: tenancyRow } = await admin
-    .from('tenancies')
-    .select('booking_id')
-    .eq('id', docRow.tenancy_id)
-    .maybeSingle()
-  if (isResidentialTenancyPackage && tenancyRow?.booking_id) {
-    const coDone = await fetchCoTenantSignerForBooking(admin, tenancyRow.booking_id)
-    if (coDone?.email && link) {
-      await sendEmail({
-        to: coDone.email,
-        subject: signedSubject,
-        html: doneHtml(coDone.name),
-      })
-    }
+  const bookingId = tenancyForBooking?.booking_id
+  if (!link || !bookingId) {
+    console.error('[docuseal-webhook] fully signed copy not sent', {
+      submissionId,
+      hasLink: Boolean(link),
+      bookingId: bookingId ?? null,
+    })
+    return { ok: true, message: 'Fully signed; copy email not sent' }
   }
+
+  let coTenant: { email: string; name: string } | null = null
+  if (isResidentialTenancyPackage) {
+    const coDone = await fetchCoTenantSignerForBooking(admin, bookingId)
+    if (coDone?.email) coTenant = { email: coDone.email, name: coDone.name }
+  }
+
+  await sendFullySignedAgreementEmails(admin, {
+    bookingId,
+    submissionId: String(submissionId),
+    downloadUrl: link,
+    subject: signedSubject,
+    downloadLabel: signedDocLabel,
+    landlord: { email: le, name: String(ln) },
+    renter: { email: se, name: String(sn) },
+    coTenant,
+    landlordId: tny.landlord_profile_id,
+    studentId: tny.student_profile_id,
+    actorType: 'webhook',
+  })
 
   return { ok: true }
 }

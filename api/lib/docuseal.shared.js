@@ -85,7 +85,11 @@ async function readErrorBody(res) {
  * }} params
  * `*Fields` pre-fill and (when readonly) lock field values so the signer never has to enter them.
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
- * `sendEmail: true` forces DocuSeal email; otherwise uses DOCUSEAL_SEND_EMAIL (default false).
+ * `sendEmail: true` asks DocuSeal to email the signing request. Otherwise the submission and
+ * every submitter set `send_email: false` (`DOCUSEAL_SEND_EMAIL`, default false).
+ * The completed "Your document copy" email is sent to each submitter whose preference
+ * `send_email` is not false. The submission-level flag does not set that preference,
+ * so each submitter must carry the same value.
  * `order` defaults to `preserved` (DocuSeal default). Pass `random` so both parties can sign without waiting.
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
  */
@@ -113,10 +117,13 @@ export async function createDocusealSubmissionFromPdf(params) {
   }
 
   const signReasonOff = params.submitterSignReason === false
+  const sendEmail =
+    params.sendEmail === true ? true : params.sendEmail === false ? false : asBooleanEnv('DOCUSEAL_SEND_EMAIL', false)
   const submitterFields = (email, name, role, prefilledFields) => ({
     role,
     email,
     name,
+    send_email: sendEmail,
     ...(signReasonOff ? { sign_reason: false } : {}),
     ...(Array.isArray(prefilledFields) && prefilledFields.length ? { fields: prefilledFields } : {}),
   })
@@ -141,8 +148,7 @@ export async function createDocusealSubmissionFromPdf(params) {
   const body = {
     name: params.name,
     order,
-    send_email:
-      params.sendEmail === true ? true : params.sendEmail === false ? false : asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
+    send_email: sendEmail,
     ...(params.removeTags ? { remove_tags: true } : {}),
     documents,
     submitters,
