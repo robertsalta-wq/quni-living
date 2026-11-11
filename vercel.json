@@ -19,6 +19,10 @@
       "maxDuration": 60,
       "includeFiles": "api/documents/QldHouseRulesPdf.ts"
     },
+    "api/booking-finish-listing-acceptance.ts": {
+      "maxDuration": 60,
+      "includeFiles": "api/documents/QldHouseRulesPdf.ts"
+    },
     "api/booking-regenerate-listing-agreement.ts": {
       "maxDuration": 60,
       "includeFiles": "api/documents/QldHouseRulesPdf.ts"

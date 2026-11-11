@@ -1,8 +1,8 @@
 // @ts-nocheck - Landlord retry: generate listing tenancy PDF + DocuSeal when accept-time generation failed.
 import { createClient } from '@supabase/supabase-js'
-import { headerString, readJsonBody } from './lib/nodeHandler.js'
+import { headerString, readJsonBody, requestContextFromNodeRequest } from './lib/nodeHandler.js'
 import { bookingAllowsTenancyDocumentGeneration } from './lib/booking/listingDocumentGenerationEligibility.js'
-import { triggerListingDocumentGeneration } from './lib/booking/triggerListingDocumentGeneration.js'
+import { runFinishListingAcceptance } from './lib/booking/finishListingAcceptance.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -104,34 +104,16 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'Agreement cannot be prepared for this booking status' }, 409, origin)
     }
 
-    const gen = await triggerListingDocumentGeneration({
-      admin,
+    const finished = await runFinishListingAcceptance(admin, {
       bookingId,
-      deferSigning: false,
+      deviceCtx: requestContextFromNodeRequest(req),
     })
 
-    if (!gen.ok) {
-      return corsJson(
-        res,
-        { error: 'Could not prepare tenancy agreement', detail: gen.detail ?? gen.error },
-        gen.status >= 400 && gen.status < 600 ? gen.status : 500,
-        origin,
-      )
+    if (finished.outcome === 'failed') {
+      return corsJson(res, { error: 'Could not prepare tenancy agreement' }, 500, origin)
     }
 
-    if (gen.skipped) {
-      return corsJson(
-        res,
-        { error: 'Could not prepare tenancy agreement', detail: gen.reason ?? 'skipped' },
-        409,
-        origin,
-      )
-    }
-
-    const { setListingAgreementStatus } = await import('./lib/booking/listingAgreementStatus.js')
-    await setListingAgreementStatus(admin, bookingId, 'ready', null)
-
-    return corsJson(res, { ok: true }, 200, origin)
+    return corsJson(res, { ok: true, pending: finished.outcome === 'busy' }, 200, origin)
   } catch (e) {
     console.error('[booking-prepare-listing-agreement]', e)
     return corsJson(res, { error: 'Server error' }, 500, origin)

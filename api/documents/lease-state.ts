@@ -36,6 +36,12 @@ export const config = {
 
 const SIGNED_URL_EXPIRY_SEC = 60 * 60 * 24 * 7
 
+function publicListingAgreementError(value) {
+  if (typeof value !== 'string' || !value.trim()) return null
+  if (value.startsWith('accept-finish:')) return null
+  return value
+}
+
 function parseBearerFromHeader(authHeader) {
   const m = /^Bearer\s+(.+)$/i.exec(authHeader.trim())
   return (m?.[1] ?? '').trim()
@@ -139,8 +145,7 @@ export default async function handler(req, res) {
       counterparty_signed: false,
       any_party_signed: false,
       listing_agreement_status: agreementStatus,
-      listing_agreement_error:
-        typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
+      listing_agreement_error: publicListingAgreementError(booking.listing_agreement_error),
     })
   }
 
@@ -178,8 +183,7 @@ export default async function handler(req, res) {
       counterparty_signed: false,
       any_party_signed: false,
       listing_agreement_status: agreementStatus,
-      listing_agreement_error:
-        typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
+      listing_agreement_error: publicListingAgreementError(booking.listing_agreement_error),
     })
   }
 

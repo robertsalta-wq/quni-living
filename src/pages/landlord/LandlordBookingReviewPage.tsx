@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -27,6 +27,9 @@ import {
 } from '../../lib/landlordBookingConfirmGate'
 import { deriveLandlordPrimaryAction } from '../../lib/booking/landlordPrimaryAction'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
+import { acceptFailureOutcome } from '../../lib/booking/acceptBookingOutcome'
+import { isBrowserNetworkFailure } from '../../lib/supabaseErrorMessage'
+import { runSingleFlight } from '../../lib/singleFlight'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 import { useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
@@ -91,21 +94,6 @@ const SUGGESTED_QUESTIONS = [
   'What are your expectations around shared spaces?',
   'Can you confirm your preferred move-in date?',
 ]
-
-type ConfirmPhase = 'idle' | 'submitting' | 'payment' | 'finalizing'
-
-function confirmBookingBusyLabel(phase: ConfirmPhase, tier: 'listing' | 'managed'): string {
-  switch (phase) {
-    case 'payment':
-      return 'Confirm card payment…'
-    case 'finalizing':
-      return 'Finalising…'
-    case 'submitting':
-      return tier === 'listing' ? 'Charging listing fee & confirming…' : 'Confirming booking…'
-    default:
-      return 'Confirm booking'
-  }
-}
 
 function todayYmdLocal(): string {
   const d = new Date()
@@ -183,7 +171,7 @@ export default function LandlordBookingReviewPage() {
   const [aiError, setAiError] = useState(false)
 
   const [actionBusy, setActionBusy] = useState(false)
-  const [confirmPhase, setConfirmPhase] = useState<ConfirmPhase>('idle')
+  const confirmFlight = useRef(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [payBookingId, setPayBookingId] = useState<string | null>(null)
 
@@ -532,58 +520,67 @@ export default function LandlordBookingReviewPage() {
     [bookingId, reload],
   )
 
-  const onConfirm = useCallback(async () => {
-    if (!bookingId || qldRoomingAcceptBlocked) return
-    setActionError(null)
-    setPayBookingId(null)
-    setConfirmPhase('submitting')
-    setActionBusy(true)
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-      if (!token) throw new Error('Session expired. Please sign in again.')
-      const result = await confirmLandlordBookingWithOptionalThreeDS(
-        bookingId,
-        token,
-        {},
-        {
-          serviceTier: selectedConfirmTier,
-          qldHouseRulesAttested:
-            qldRoomingArrangement && (qldHouseRulesAlreadyAttested || qldHouseRulesAttested) ? true : undefined,
-          onProgress: (p) => {
-            if (p.stage === 'payment_auth') setConfirmPhase('payment')
-            if (p.stage === 'retry') setConfirmPhase('finalizing')
+  const presentAcceptedBooking = useCallback(async () => {
+    await reload()
+    setListingAcceptCelebration(true)
+    requestAnimationFrame(() => {
+      document.getElementById('listing-accepted-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [reload])
+
+  const onConfirm = useCallback(() => {
+    void runSingleFlight(confirmFlight, async () => {
+      if (!bookingId || qldRoomingAcceptBlocked) return
+      setActionError(null)
+      setPayBookingId(null)
+      setActionBusy(true)
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData.session?.access_token
+        if (!token) throw new Error('Session expired. Please sign in again.')
+        const result = await confirmLandlordBookingWithOptionalThreeDS(
+          bookingId,
+          token,
+          {},
+          {
+            serviceTier: 'listing',
+            qldHouseRulesAttested:
+              qldRoomingArrangement && (qldHouseRulesAlreadyAttested || qldHouseRulesAttested) ? true : undefined,
           },
-        },
-      )
-      if (!result.ok) {
-        setPayBookingId(result.payBookingId ?? null)
-        throw new Error(result.error)
+        )
+        if (!result.ok) {
+          setPayBookingId(result.payBookingId ?? null)
+          throw new Error(result.error)
+        }
+        await presentAcceptedBooking()
+      } catch (e) {
+        let refetchedStatus: string | null = null
+        let refetchFailed = false
+        if (isBrowserNetworkFailure(e) && bookingId) {
+          const { data, error } = await supabase.from('bookings').select('status').eq('id', bookingId).maybeSingle()
+          if (error || !data) {
+            refetchFailed = true
+          } else {
+            refetchedStatus = data.status
+          }
+        }
+        const outcome = acceptFailureOutcome({ error: e, refetchedStatus, refetchFailed })
+        if (outcome.kind === 'accepted') {
+          await presentAcceptedBooking()
+          return
+        }
+        setActionError(outcome.message)
+      } finally {
+        setActionBusy(false)
       }
-      if (selectedConfirmTier === 'listing') {
-        await reload()
-        setListingAcceptCelebration(true)
-        requestAnimationFrame(() => {
-          document.getElementById('listing-accepted-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
-        return
-      }
-      navigate('/landlord/dashboard?tab=bookings')
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'Could not confirm.')
-    } finally {
-      setConfirmPhase('idle')
-      setActionBusy(false)
-    }
+    })
   }, [
     bookingId,
-    navigate,
+    presentAcceptedBooking,
     qldHouseRulesAlreadyAttested,
     qldHouseRulesAttested,
     qldRoomingAcceptBlocked,
     qldRoomingArrangement,
-    reload,
-    selectedConfirmTier,
   ])
 
   const onDecline = useCallback(async () => {
@@ -1393,14 +1390,10 @@ export default function LandlordBookingReviewPage() {
                         {actionBusy ? (
                           <>
                             <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
+                            <span>Accepting…</span>
                           </>
-                        ) : selectedConfirmTier === 'listing' ? (
-                          'Accept as Quni Listing'
-                        ) : tierModel?.propertyServiceTier === 'listing' ? (
-                          'Upgrade and accept as Quni Managed'
                         ) : (
-                          'Accept as Quni Managed'
+                          'Accept booking'
                         )}
                       </button>
                       {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked ? (
@@ -1485,7 +1478,6 @@ export default function LandlordBookingReviewPage() {
                       )
                 }
                 bondDeadlineIso={booking.bond_window_expires_at}
-                listingFeeDisplay={listingFeeDisplay}
                 bondObligations={listingBondObligations}
                 agreementBondLine={listingBondWording?.bondLine ?? null}
                 confirmPhrase={listingBondWording?.confirmPhrase ?? null}
