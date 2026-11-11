@@ -16,6 +16,26 @@ vi.mock('@supabase/supabase-js', () => ({
 
 type NodeRequest = { method: string; headers: { authorization?: string } }
 
+function nodeResponse() {
+  const res = {
+    statusCode: 200,
+    body: undefined as unknown,
+    status(code: number) {
+      res.statusCode = code
+      return res
+    },
+    json(payload: unknown) {
+      res.body = payload
+      return res
+    },
+    end(payload?: unknown) {
+      res.body = payload
+      return res
+    },
+  }
+  return res
+}
+
 describe('listing lease charge cron', () => {
   beforeEach(() => {
     process.env.CRON_SECRET = 'cron-secret'
@@ -26,9 +46,11 @@ describe('listing lease charge cron', () => {
     quarters.mockClear()
   })
 
-  async function call(request: NodeRequest): Promise<Response> {
+  async function call(request: NodeRequest) {
     const { default: handler } = await import('./listing-lease-charges.js')
-    return handler(request)
+    const res = nodeResponse()
+    await handler(request, res)
+    return res
   }
 
   it('accepts a Node request when the cron secret matches', async () => {
@@ -38,8 +60,8 @@ describe('listing lease charge cron', () => {
     }
     expect('get' in request.headers).toBe(false)
     const res = await call(request)
-    expect(res.status).toBe(200)
-    await expect(res.json()).resolves.toMatchObject({ ok: true, settled: 1, retried: 0, opened: 0 })
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toMatchObject({ ok: true, settled: 1, retried: 0, opened: 0 })
     expect(settle).toHaveBeenCalledOnce()
     expect(retry).toHaveBeenCalledOnce()
     expect(quarters).toHaveBeenCalledOnce()
@@ -50,7 +72,8 @@ describe('listing lease charge cron', () => {
       method: 'GET',
       headers: { authorization: 'Bearer wrong-secret' },
     })
-    expect(res.status).toBe(401)
+    expect(res.statusCode).toBe(401)
+    expect(res.body).toBe('Unauthorized')
     expect(settle).not.toHaveBeenCalled()
   })
 })
