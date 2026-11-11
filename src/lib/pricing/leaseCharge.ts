@@ -3,6 +3,7 @@
  * $5 ex GST per rented month, $15 ex GST per quarter, GST 10%.
  * The charge, the tax invoice, the pricing page, and admin all read this module.
  */
+import { addCalendarMonths as addCalendarMonthsClamped } from '../../../api/lib/booking/leaseEndDate.js'
 
 export const LEASE_MONTH_EX_GST_CENTS = 500
 export const LEASE_QUARTER_EX_GST_CENTS = 1500
@@ -12,7 +13,7 @@ export const TAX_INVOICE_LEGAL_NAME = 'Quinnvestments Pty Ltd'
 export const TAX_INVOICE_TRADING_AS = 'Quni Living'
 export const TAX_INVOICE_ABN = '65 675 990 968'
 
-/** Menu strings already stored on bookings and listings. Weeks are the existing end-date map. */
+/** Menu strings already stored on bookings and listings. End dates use calendar months. */
 export const LEASE_LENGTH_MONTHS = {
   '3 months': 3,
   '6 months': 6,
@@ -124,10 +125,7 @@ export function formatLeaseTotal(cents: number): string {
 }
 
 export function addCalendarMonths(isoDate: string, months: number): string {
-  const [y, m, d] = isoDate.slice(0, 10).split('-').map(Number)
-  if (!y || !m || !d) return isoDate.slice(0, 10)
-  const dt = new Date(Date.UTC(y, m - 1 + months, d))
-  return dt.toISOString().slice(0, 10)
+  return addCalendarMonthsClamped(isoDate, months) ?? isoDate.slice(0, 10)
 }
 
 export const PRICING_V2_LEASE_OPTIONS = [

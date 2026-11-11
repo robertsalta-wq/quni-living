@@ -6,6 +6,7 @@
 import { sendEmail } from '../sendEmail.js'
 import { sendBookingEmail } from './sendBookingEmail.js'
 import { listingEmailAttemptExists } from './listingEmailAttempt.js'
+import { inclusiveLeaseLastDay } from './leaseEndDate.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
@@ -75,6 +76,7 @@ async function loadListingEmailContext(admin, bookingId) {
       bond_amount,
       move_in_date,
       start_date,
+      end_date,
       lease_length,
       bond_window_expires_at,
       properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, qld_bond_remittance_preference, bond, bond_weeks ),
@@ -187,6 +189,8 @@ async function loadListingEmailContext(admin, bookingId) {
     propertyTitle: title,
     moveInDate,
     leaseLength,
+    exclusiveEndDate: typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null,
+    landlordPhone: typeof lp.phone === 'string' ? lp.phone.trim() : '',
     bondWindowExpiresAt: booking.bond_window_expires_at,
     weeklyRent: booking.weekly_rent,
     bondAmountAud: resolvedBondAmountAud,
@@ -349,22 +353,91 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
  */
+function embedSrcForRole(metadata, role) {
+  const response =
+    metadata && typeof metadata === 'object' && metadata.docuseal_response && typeof metadata.docuseal_response === 'object'
+      ? metadata.docuseal_response
+      : null
+  const submitters = response && Array.isArray(response.submitters) ? response.submitters : []
+  const match = submitters.find((row) => {
+    const roleStr = typeof row?.role === 'string' ? row.role.toLowerCase() : ''
+    if (role === 'landlord') return roleStr.includes('landlord') || roleStr.includes('first party')
+    if (role === 'co-tenant') return roleStr.includes('co-tenant') || roleStr.includes('co tenant')
+    return (
+      (roleStr.includes('tenant') || roleStr.includes('second party') || roleStr.includes('renter')) &&
+      !roleStr.includes('co-tenant') &&
+      !roleStr.includes('co tenant')
+    )
+  })
+  const url = typeof match?.embed_src === 'string' ? match.embed_src.trim() : ''
+  const email = typeof match?.email === 'string' ? match.email.trim() : ''
+  return { url, email }
+}
+
+async function loadAgreementSigningLinks(admin, bookingId) {
+  const { data: tenancy } = await admin.from('tenancies').select('id').eq('booking_id', bookingId).maybeSingle()
+  if (!tenancy?.id) return { landlord: { url: '', email: '' }, renter: { url: '', email: '' }, coTenant: { url: '', email: '' } }
+  const { data: docs } = await admin
+    .from('tenancy_documents')
+    .select('metadata, document_type, created_at')
+    .eq('tenancy_id', tenancy.id)
+    .in('document_type', ['residential_tenancy', 'lease'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const doc = (docs ?? []).find((row) => embedSrcForRole(row.metadata, 'landlord').url || embedSrcForRole(row.metadata, 'renter').url)
+  return {
+    landlord: embedSrcForRole(doc?.metadata, 'landlord'),
+    renter: embedSrcForRole(doc?.metadata, 'renter'),
+    coTenant: embedSrcForRole(doc?.metadata, 'co-tenant'),
+  }
+}
+
+function formatSigningMoney(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '-'
+  return `$${n.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+function formatSigningDate(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '-'
+  const [y, m, d] = iso.slice(0, 10).split('-')
+  return `${d}/${m}/${y}`
+}
+
 export async function sendListingAgreementReadyEmails(admin, bookingId) {
   try {
     const ctx = await loadListingEmailContext(admin, bookingId)
     if (!ctx) return
 
+    const links = await loadAgreementSigningLinks(admin, bookingId)
+    if (!links.landlord.url || !links.renter.url) {
+      console.error('[listing-emails] signing links missing', bookingId)
+      return
+    }
+
     const base = siteBaseUrl()
     const studentDash = `${base}/student-dashboard?tab=bookings`
     const reviewUrl = `${base}/landlord/bookings/${bookingId}/review`
+    const lastDay = ctx.leaseLength === 'Flexible' ? 'open-ended' : formatSigningDate(inclusiveLeaseLastDay(ctx.exclusiveEndDate))
+    const landlordContact = [ctx.landlordName, ctx.landlordEmail, ctx.landlordPhone].filter(Boolean).join(', ')
+    const shared = {
+      landlord_name: ctx.landlordName,
+      student_name: ctx.studentName,
+      property_address: ctx.propertyAddress,
+      property_title: ctx.propertyTitle,
+      start_date: formatSigningDate(ctx.moveInDate),
+      lease_length: ctx.leaseLength,
+      last_day: lastDay,
+      weekly_rent: formatSigningMoney(ctx.weeklyRent),
+      bond: formatSigningMoney(ctx.bondAmountAud),
+      landlord_contact: landlordContact,
+    }
 
     const sendRenter = async () => {
       if (!ctx.studentEmail) return
       const t = listingAgreementReadyRenter({
-        student_name: ctx.studentName,
-        property_address: ctx.propertyAddress,
-        property_title: ctx.propertyTitle,
-        sign_agreement_url: studentDash,
+        ...shared,
+        sign_agreement_url: links.renter.url,
         student_dashboard_url: studentDash,
       })
       if (await listingEmailAttemptExists(admin, bookingId, 'listing_agreement_ready_renter')) return
@@ -374,6 +447,7 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
         to: ctx.studentEmail,
         subject: t.subject,
         html: t.html,
+        text: t.text,
         landlordId: ctx.landlordId,
         studentId: ctx.studentId,
         actorType: 'system',
@@ -383,9 +457,8 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
     const sendLl = async () => {
       if (!ctx.landlordEmail) return
       const t = listingAgreementReadyLandlord({
-        landlord_name: ctx.landlordName,
-        property_address: ctx.propertyAddress,
-        property_title: ctx.propertyTitle,
+        ...shared,
+        sign_agreement_url: links.landlord.url,
         review_url: reviewUrl,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
       })
@@ -396,13 +469,37 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
         to: ctx.landlordEmail,
         subject: t.subject,
         html: t.html,
+        text: t.text,
         landlordId: ctx.landlordId,
         studentId: ctx.studentId,
         actorType: 'system',
       })
     }
 
-    await Promise.all([sendRenter(), sendLl()])
+    const sendCo = async () => {
+      if (!links.coTenant.url || !links.coTenant.email) return
+      if (links.coTenant.email.toLowerCase() === ctx.studentEmail.toLowerCase()) return
+      const t = listingAgreementReadyRenter({
+        ...shared,
+        student_name: 'there',
+        sign_agreement_url: links.coTenant.url,
+        student_dashboard_url: studentDash,
+      })
+      if (await listingEmailAttemptExists(admin, bookingId, 'listing_agreement_ready_co_tenant')) return
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_agreement_ready_co_tenant',
+        to: links.coTenant.email,
+        subject: t.subject,
+        html: t.html,
+        text: t.text,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+      })
+    }
+
+    await Promise.all([sendRenter(), sendLl(), sendCo()])
   } catch (e) {
     console.error('[listing-emails] sendListingAgreementReadyEmails', bookingId, e)
   }

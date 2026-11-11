@@ -395,23 +395,53 @@ ${bondPaymentBlock}
   }
 }
 
-/** Listing tier - renter: agreement ready to sign (Quni/Resend + in-app signing link). */
-export function listingAgreementReadyRenter(data) {
-  const studentName = escapeHtml(data.student_name || 'there')
-  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
-  const signUrl = escapeHtml(data.sign_agreement_url || data.student_dashboard_url || '#')
-  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
+function agreementReadyFacts(data) {
+  const address = data.property_address || data.property_title || 'your tenancy'
+  const lines = [
+    `Property: ${address}`,
+    `Landlord: ${data.landlord_name || 'your landlord'}`,
+    `Renter: ${data.student_name || 'the renter'}`,
+    `Start date: ${data.start_date || '-'}`,
+    `Term: ${data.lease_length || '-'}`,
+    `Last day: ${data.last_day || 'open-ended'}`,
+    `Weekly rent: ${data.weekly_rent || '-'}`,
+    `Bond: ${data.bond || '-'}`,
+    'After both of you sign, the agreement is complete. The landlord confirms the bond separately. Quni does not hold the bond or the rent.',
+    `Contact the landlord: ${data.landlord_contact || 'use the details on your booking'}`,
+  ]
+  return { address, lines }
+}
 
-  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement is ready to sign</h2>
+/** Listing tier - one branded signing email. The button is that person's own /api/sign link. */
+export function listingAgreementReadyRenter(data) {
+  const facts = agreementReadyFacts(data)
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(facts.address)
+  const signUrl = escapeHtml(data.sign_agreement_url || '#')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
+  const factHtml = facts.lines.map((line) => `<p style="margin:4px 0;">${escapeHtml(line)}</p>`).join('')
+
+  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement for ${propertyAddress}</h2>
 <p>Hi ${studentName},</p>
-<p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
-<p>Use the button below, or open your student dashboard to sign.</p>
-<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>
-<a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
+${factHtml}
+<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign the agreement</a></p>
+<p style="margin-top:16px;"><a href="${dashboardUrl}" style="color:#FF6F61;font-weight:600;">Student dashboard</a></p>`
+
+  const text = [
+    `Your tenancy agreement for ${facts.address}`,
+    '',
+    `Hi ${data.student_name || 'there'},`,
+    '',
+    ...facts.lines,
+    '',
+    `Sign the agreement: ${data.sign_agreement_url || ''}`,
+    `Student dashboard: ${data.student_dashboard_url || 'https://quni.com.au/student-dashboard'}`,
+  ].join('\n')
 
   return {
-    subject: `Sign your agreement - ${data.property_address || data.property_title || 'your booking'}`,
+    subject: `Your tenancy agreement for ${facts.address}`,
     html: wrapContent(inner),
+    text,
   }
 }
 
@@ -505,21 +535,36 @@ ${reviewBlock}`
   }
 }
 
-/** Listing tier - landlord: agreement ready to sign (Quni/Resend + booking review). */
+/** Listing tier - landlord: one branded signing email. */
 export function listingAgreementReadyLandlord(data) {
+  const facts = agreementReadyFacts(data)
   const landlordName = escapeHtml(data.landlord_name || 'there')
-  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const propertyAddress = escapeHtml(facts.address)
+  const signUrl = escapeHtml(data.sign_agreement_url || '#')
   const reviewUrl = escapeHtml(data.review_url || data.dashboard_url || '#')
+  const factHtml = facts.lines.map((line) => `<p style="margin:4px 0;">${escapeHtml(line)}</p>`).join('')
 
-  const inner = `<h2 style="color: #1A1A2E;">Tenancy agreement ready to sign</h2>
+  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement for ${propertyAddress}</h2>
 <p>Hi ${landlordName},</p>
-<p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
-<p>Open the booking on Quni to sign, or use the signing link in the separate email we sent you.</p>
-<a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>`
+${factHtml}
+<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign the agreement</a></p>
+<p style="margin-top:16px;"><a href="${reviewUrl}" style="color:#FF6F61;font-weight:600;">Booking review</a></p>`
+
+  const text = [
+    `Your tenancy agreement for ${facts.address}`,
+    '',
+    `Hi ${data.landlord_name || 'there'},`,
+    '',
+    ...facts.lines,
+    '',
+    `Sign the agreement: ${data.sign_agreement_url || ''}`,
+    `Booking review: ${data.review_url || data.dashboard_url || ''}`,
+  ].join('\n')
 
   return {
-    subject: `Sign your agreement - ${data.property_address || data.property_title || 'your listing'}`,
+    subject: `Your tenancy agreement for ${facts.address}`,
     html: wrapContent(inner),
+    text,
   }
 }
 

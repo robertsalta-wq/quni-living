@@ -7,15 +7,12 @@ function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
 }
 
+const FALLBACK_EMPTY =
+  'Electricity is not included in the rent. Gas is not included in the rent. Water is not included in the rent. Internet is not included in the rent.'
+
 function descriptionLine(props: QuniPlatformAddendumProps): string {
   const desc = (props.utilitiesDescription || '').trim()
-  return desc || 'Utilities and services as described on the property listing.'
-}
-
-function disclosureParagraph(props: QuniPlatformAddendumProps): string | null {
-  const labels = props.listingDisclosureLabels?.map((l) => l.trim()).filter(Boolean) ?? []
-  if (labels.length === 0) return null
-  return `Disclosure summary: ${labels.join('; ')}.`
+  return desc || FALLBACK_EMPTY
 }
 
 function body(text: string, key: string): ReactNode {
@@ -40,7 +37,6 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
     Number.isFinite(props.utilitiesCap) &&
     props.utilitiesCap > 0
 
-  const disclosure = disclosureParagraph(props)
   const paragraphs: ReactNode[] = []
   let n = 0
   const nextKey = () => `s5-${n++}`
@@ -91,7 +87,6 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
     paragraphs.push(
       body(`Utilities for this Managed tenancy are charged as disclosed for the property: ${desc}`, nextKey()),
     )
-    if (disclosure) paragraphs.push(body(disclosure, nextKey()))
     paragraphs.push(
       body(
         'Rent is not calculated on an all-inclusive utilities basis for this tenancy. The tenant must pay utility charges they are responsible for as set out above (and on the prescribed agreement where applicable).',
@@ -107,7 +102,6 @@ export function AddendumSection5UtilitiesAndBills(props: QuniPlatformAddendumPro
         nextKey(),
       ),
     )
-    if (disclosure) paragraphs.push(body(disclosure, nextKey()))
   }
 
   paragraphs.push(

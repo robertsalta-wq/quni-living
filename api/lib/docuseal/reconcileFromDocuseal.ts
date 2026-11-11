@@ -15,6 +15,7 @@ import {
 } from '../booking/events/emitDocusealDocumentEvents.js'
 import { setListingAgreementStatus } from '../booking/listingAgreementStatus.js'
 import { getDocusealApiBase, getDocusealAuthHeaders } from '../docusealClient.js'
+import { prepareSignedPdfForStorage } from '../documents/repairPdfContents.js'
 import {
   downloadSignedResidentialTenancyPackagePartsFromDocuseal,
   downloadSignedSubmissionPdfFromDocuseal,
@@ -479,12 +480,20 @@ export async function syncFullySignedDocusealSubmission(args: {
     const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
 
     if (dual) {
+      const rtaBytes = await prepareSignedPdfForStorage(dual.rta, {
+        submissionId,
+        path: rtaPath,
+      })
+      const addendumBytes = await prepareSignedPdfForStorage(dual.addendum, {
+        submissionId,
+        path: addendumPath,
+      })
       const { error: upRta } = await admin.storage
         .from('tenancy-documents')
-        .upload(rtaPath, dual.rta, { contentType: 'application/pdf', upsert: true })
+        .upload(rtaPath, rtaBytes, { contentType: 'application/pdf', upsert: true })
       const { error: upAdd } = await admin.storage
         .from('tenancy-documents')
-        .upload(addendumPath, dual.addendum, { contentType: 'application/pdf', upsert: true })
+        .upload(addendumPath, addendumBytes, { contentType: 'application/pdf', upsert: true })
       if (upRta) throw upRta
       if (upAdd) throw upAdd
       signedPath = rtaPath
@@ -494,7 +503,10 @@ export async function syncFullySignedDocusealSubmission(args: {
         signed_addendum_file_path: addendumPath,
       }
     } else {
-      const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, true)
+      const pdfBuf = await prepareSignedPdfForStorage(
+        await downloadSignedSubmissionPdfFromDocuseal(submissionId, true),
+        { submissionId, path: `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf` },
+      )
       signedPath = `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
       const { error: upStorageErr } = await admin.storage
         .from('tenancy-documents')
@@ -502,15 +514,21 @@ export async function syncFullySignedDocusealSubmission(args: {
       if (upStorageErr) throw upStorageErr
     }
   } else if (docRow.document_type === 'mutual_termination') {
-    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
     signedPath = `${docRow.tenancy_id}/mutual_termination/mutual_termination_signed.pdf`
+    const pdfBuf = await prepareSignedPdfForStorage(
+      await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
+      { submissionId, path: signedPath },
+    )
     const { error: upStorageErr } = await admin.storage
       .from('tenancy-documents')
       .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
     if (upStorageErr) throw upStorageErr
   } else {
-    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
     signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
+    const pdfBuf = await prepareSignedPdfForStorage(
+      await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
+      { submissionId, path: signedPath },
+    )
     const { error: upStorageErr } = await admin.storage
       .from('tenancy-documents')
       .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })

@@ -20,7 +20,7 @@ import type { PlatformBusinessIdentity } from '../../platformConfig.js'
 import { licencePlatformBrandShort } from './occupancyPlatformProse.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
-import { leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
+import { inclusiveLeaseLastDay, leaseDatesForBooking } from '../../booking/leaseEndDate.js'
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
 function propertyAddressLine(p: Record<string, unknown>): string {
@@ -195,8 +195,14 @@ async function loadNswOccupancyContext(
   }
 
   const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
-  const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
-  const periodic = leaseLen === 'Flexible' || endDate == null
+  const bookingEndRaw = typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null
+  const dates = leaseDatesForBooking({
+    moveInIso: moveIn,
+    leaseLength: leaseLen,
+    storedExclusiveEnd: bookingEndRaw,
+  })
+  const endDate = dates.exclusiveEnd
+  const periodic = dates.periodic
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
@@ -287,7 +293,7 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
     },
     term: {
       startDate: ctx.moveIn,
-      endDate: ctx.periodic ? null : ctx.endDate,
+      endDate: ctx.periodic ? null : inclusiveLeaseLastDay(ctx.endDate),
       periodic: ctx.periodic,
       leaseLengthDescription: ctx.leaseLen || 'As agreed',
     },

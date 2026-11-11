@@ -14,6 +14,8 @@ type Props = {
   confirmPhrase?: 'confirm once lodged' | 'confirm once received' | null
   justAccepted?: boolean
   onDismissCelebration?: () => void
+  signAgreementUrl?: string | null
+  landlordHasSigned?: boolean
 }
 
 function formatBondDeadline(iso: string | null): string {
@@ -33,6 +35,8 @@ export default function LandlordListingAcceptedSummary({
   confirmPhrase = null,
   justAccepted = false,
   onDismissCelebration,
+  signAgreementUrl = null,
+  landlordHasSigned = false,
 }: Props) {
   const locationLine = propertyAddress.trim() || propertyTitle.trim() || 'your listing'
   const bondLine =
@@ -78,6 +82,22 @@ export default function LandlordListingAcceptedSummary({
       </div>
 
       <ul className="text-sm text-admin-ink-2 space-y-3 list-none m-0 p-0">
+        {signAgreementUrl && !landlordHasSigned ? (
+          <li className="flex gap-2">
+            <span className="text-admin-success font-bold shrink-0" aria-hidden>
+              1
+            </span>
+            <span>
+              <span className="font-semibold">Next step: Sign the agreement.</span>{' '}
+              <a
+                href={signAgreementUrl}
+                className="inline-flex mt-2 min-h-[2.5rem] items-center justify-center rounded-admin-md bg-admin-coral px-4 py-2 text-sm font-semibold text-white"
+              >
+                Sign the agreement
+              </a>
+            </span>
+          </li>
+        ) : null}
         <li className="flex gap-2">
           <span className="text-admin-success font-bold shrink-0" aria-hidden>
             ✓

@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { PDFDocument } from 'pdf-lib'
+
+async function onePagePdf(): Promise<Uint8Array> {
+  const doc = await PDFDocument.create()
+  doc.addPage()
+  return doc.save()
+}
 
 const mocks = vi.hoisted(() => ({
   sendEmail: vi.fn(),
@@ -307,11 +314,7 @@ describe('nsw-occupancy signing (licence: landlord + residents)', () => {
     const submissionArg = mocks.createDocusealSubmissionFromPdf.mock.calls[0][0]
     expect(submissionArg.coTenant).toBeNull()
 
-    expect(mocks.sendEmail).toHaveBeenCalledTimes(2)
-    const emailTos = mocks.sendEmail.mock.calls.map((c) => c[0].to)
-    expect(emailTos).toContain('pat@example.com')
-    expect(emailTos).toContain('alex@example.com')
-    expect(emailTos).not.toContain('sam@example.com')
+    expect(mocks.sendEmail).not.toHaveBeenCalled()
   })
 
   it('sendForSigning includes co-resident submitter and email when skipCoTenantSigner is off', async () => {
@@ -342,9 +345,7 @@ describe('nsw-occupancy signing (licence: landlord + residents)', () => {
         tenant: { name: 'Alex Renter', email: 'alex@example.com' },
       }),
     )
-    expect(mocks.sendEmail).toHaveBeenCalledTimes(3)
-    const emailTos = mocks.sendEmail.mock.calls.map((c) => c[0].to)
-    expect(emailTos).toContain('sam@example.com')
+    expect(mocks.sendEmail).not.toHaveBeenCalled()
   })
 
   it('handleSigningWebhook waits for co-resident after landlord + resident have signed', async () => {
@@ -359,7 +360,7 @@ describe('nsw-occupancy signing (licence: landlord + residents)', () => {
       email: 'sam@example.com',
     })
 
-    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46])
+    const pdfBytes = await onePagePdf()
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -415,7 +416,7 @@ describe('nsw-occupancy signing (licence: landlord + residents)', () => {
       email: 'sam@example.com',
     })
 
-    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46])
+    const pdfBytes = await onePagePdf()
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {

@@ -21,6 +21,7 @@ import {
   formatDate,
   studentDisplayName,
 } from './adminUi'
+import { inclusiveLeaseLastDay } from '../../../api/lib/booking/leaseEndDate.js'
 import { landlordDisplayName as resolveLandlordDisplayName } from '../../lib/nameResolution'
 import { AdminPageHeader } from '../../components/admin/primitives'
 
@@ -882,7 +883,7 @@ function SubscriptionsTab() {
                       <td className={adminTdClass}>
                         {nextMs ? formatDate(new Date(nextMs).toISOString()) : '-'}
                       </td>
-                      <td className={adminTdClass}>{formatDate(b.end_date)}</td>
+                      <td className={adminTdClass}>{formatDate(inclusiveLeaseLastDay(b.end_date) ?? b.end_date)}</td>
                       <td className={adminTdClass}>
                         <span className="capitalize">{b.stripe_subscription_status || '-'}</span>
                       </td>

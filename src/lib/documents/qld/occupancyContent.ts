@@ -35,7 +35,7 @@ export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'The resident must not represent that they have sole or exclusive occupation of the premises or exclude the Principal from the allocated room or shared areas.',
   ],
   utilitiesDefault:
-    'Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water, internet and waste services for the premises are as described on the property listing or in move-in information. Shared utilities are allocated fairly between occupants as the Principal directs.',
+    'Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water and internet for the premises are set out in this agreement. Shared utilities are allocated fairly between occupants as the Principal directs.',
   bond: {
     scheduleLabel: 'Bond',
     sectionTitle: 'Bond (RTA lodgement)',

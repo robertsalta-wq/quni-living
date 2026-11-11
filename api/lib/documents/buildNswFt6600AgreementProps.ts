@@ -6,6 +6,7 @@ import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTyp
 import { occupancyLeaseFieldsFromBooking } from '../booking/occupancyLeaseContext.js'
 import { resolveBookingBondAmountAud } from '../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../booking/tenantLegalNameForDocuments.js'
+import { inclusiveLeaseLastDay, leaseEndDateFromMoveIn } from '../booking/leaseEndDate.js'
 import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
 import {
@@ -43,21 +44,6 @@ export type BuildNswFt6600AgreementPropsInput = {
     phone: string
     email: string
   } | null
-}
-
-function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
-  const raw = moveInIso.slice(0, 10)
-  const [y, m, d] = raw.split('-').map(Number)
-  if (!y || !m || !d) return null
-  const start = new Date(Date.UTC(y, m - 1, d))
-  let weeks = 52
-  if (leaseLength === '3 months') weeks = 13
-  else if (leaseLength === '6 months') weeks = 26
-  else if (leaseLength === '12 months') weeks = 52
-  else if (leaseLength === '2 years') weeks = 104
-  else if (leaseLength === 'Flexible') weeks = 104
-  const end = new Date(start.getTime() + weeks * 7 * 86400000)
-  return end.toISOString().slice(0, 10)
 }
 
 function propertyAddressLine(p: Record<string, unknown>): string {
@@ -187,7 +173,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
     maxOccupantsPermitted,
     term: {
       startDate: moveIn,
-      endDate: periodic ? null : endDate,
+      endDate: periodic ? null : inclusiveLeaseLastDay(endDate),
       periodic,
       leaseLengthDescription: leaseLen || 'As agreed',
     },

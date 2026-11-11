@@ -438,51 +438,8 @@ export async function sendForSigning(
     console.error('[docuseal] document.sent_for_signing', documentId, evErr)
   }
 
-  const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
-  const landlordLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
-    submitters[0]?.embed_src ||
-    ''
-  const tenantLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('tenant'))?.embed_src ||
-    submitters[1]?.embed_src ||
-    ''
-
-  const signHtml = (who: string, link: string) => `
-    <p>Hi ${escapeHtml(who)},</p>
-    <p>Your Quni Living residential tenancy agreement is ready to sign.</p>
-    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
-    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>- Quni Living (quni.com.au)</p>
-  `
-
-  const coTenantLink =
-    coTenantSigner &&
-    submitters.find((s) => (s.role || '').toLowerCase().includes('co-tenant'))?.embed_src
-
-  await Promise.all([
-    landlordLink
-      ? sendEmail({
-          to: landlordEmail,
-          subject: 'Your Quni Living lease is ready to sign',
-          html: signHtml(landlordName, landlordLink),
-        })
-      : Promise.resolve(),
-    tenantLink
-      ? sendEmail({
-          to: tenantEmail,
-          subject: 'Your Quni Living lease is ready to sign',
-          html: signHtml(tenantSalutationName, tenantLink),
-        })
-      : Promise.resolve(),
-    coTenantSigner && coTenantLink
-      ? sendEmail({
-          to: coTenantSigner.email,
-          subject: 'Your Quni Living lease is ready to sign (co-tenant)',
-          html: signHtml(coTenantSigner.name, coTenantLink),
-        })
-      : Promise.resolve(),
-  ])
+  // Signing mail is the branded sendBookingEmail from sendListingAgreementReadyEmails.
+  void coTenantSigner
 }
 
 async function resolveCoTenantSignerForSubmission(
@@ -687,78 +644,9 @@ export async function sendResidentialTenancyPackageForSigning(
     console.error('[docuseal] document.sent_for_signing (package)', documentId, evErr)
   }
 
-  const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
-  const landlordLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
-    submitters[0]?.embed_src ||
-    ''
-  const tenantLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('tenant'))?.embed_src ||
-    submitters[1]?.embed_src ||
-    ''
-
-  const signHtml = (who: string, link: string) =>
-    isVicResidential
-      ? `
-    <p>Hi ${escapeHtml(who)},</p>
-    <p>Your Victoria Form 1 residential rental agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
-    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
-    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>- Quni Living (quni.com.au)</p>
-  `
-      : isQldResidential
-        ? `
-    <p>Hi ${escapeHtml(who)},</p>
-    <p>Your Queensland Form 18a general tenancy agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
-    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
-    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>- Quni Living (quni.com.au)</p>
-  `
-        : `
-    <p>Hi ${escapeHtml(who)},</p>
-    <p>Your NSW residential tenancy agreement package is ready to sign (standard form plus Quni platform addendum).</p>
-    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
-    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>- Quni Living (quni.com.au)</p>
-  `
-
-  const readySubject = isVicResidential
-    ? 'Your VIC Form 1 tenancy agreement is ready to sign'
-    : isQldResidential
-      ? 'Your QLD Form 18a tenancy agreement is ready to sign'
-      : 'Your NSW residential tenancy agreement is ready to sign'
-
-  const coTenantLink =
-    coTenantSigner &&
-    submitters.find((s) => (s.role || '').toLowerCase().includes('co-tenant'))?.embed_src
-
-  await Promise.all([
-    landlordLink
-      ? sendEmail({
-          to: landlordEmail,
-          subject: readySubject,
-          html: signHtml(landlordName, landlordLink),
-        })
-      : Promise.resolve(),
-    tenantLink
-      ? sendEmail({
-          to: tenantEmail,
-          subject: readySubject,
-          html: signHtml(tenantSalutationName, tenantLink),
-        })
-      : Promise.resolve(),
-    coTenantSigner && coTenantLink
-      ? sendEmail({
-          to: coTenantSigner.email,
-          subject: isVicResidential
-            ? 'Your VIC tenancy agreement is ready to sign (co-tenant)'
-            : isQldResidential
-              ? 'Your QLD tenancy agreement is ready to sign (co-tenant)'
-              : 'Your NSW tenancy agreement is ready to sign (co-tenant)',
-          html: signHtml(coTenantSigner.name, coTenantLink),
-        })
-      : Promise.resolve(),
-  ])
+  void coTenantSigner
+  void isVicResidential
+  void isQldResidential
 }
 
 /** QLD Form R18 + resident house-rules PDF. Do not use the Form 18a addendum send path. */
@@ -899,48 +787,6 @@ export async function sendQldFormR18PackageForSigning(
     console.error('[docuseal] document.sent_for_signing (qld-form-r18)', documentId, evErr)
   }
 
-  const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
-  const landlordLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
-    submitters[0]?.embed_src ||
-    ''
-  const residentLink =
-    submitters.find((s) => (s.role || '').toLowerCase().includes('tenant'))?.embed_src ||
-    submitters[1]?.embed_src ||
-    ''
-
-  const signHtml = (who: string, link: string) => `
-    <p>Hi ${escapeHtml(who)},</p>
-    <p>Your Queensland Form R18 rooming accommodation agreement is ready to sign (Form R18 plus the resident house-rules copy). There is no Form 18a addendum for this listing.</p>
-    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
-    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>- Quni Living (quni.com.au)</p>
-  `
-
-  await Promise.all([
-    landlordLink
-      ? sendEmail({
-          to: landlordEmail,
-          subject: 'Your QLD Form R18 rooming agreement is ready to sign',
-          html: signHtml(landlordName, landlordLink),
-        })
-      : Promise.resolve(),
-    residentLink
-      ? sendEmail({
-          to: residentEmail,
-          subject: 'Your QLD Form R18 rooming agreement is ready to sign',
-          html: signHtml(residentSalutationName, residentLink),
-        })
-      : Promise.resolve(),
-  ])
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 /** DocuSeal webhook: store signed PDF and update tenancy_documents. */
@@ -1153,38 +999,44 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   const signedDocLabel = isResidentialTenancyPackage
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
-  const signedSubject = isResidentialTenancyPackage
-    ? isVicResidentialPackage
-      ? 'Your VIC tenancy agreement is signed - Quni Living'
-      : isQldResidentialPackage
-        ? 'Your QLD tenancy agreement is signed - Quni Living'
-        : 'Your NSW tenancy agreement is signed - Quni Living'
-    : 'Your lease is signed - Quni Living'
-  const doneHtml = (name: string) => `
-    <p>Hi ${escapeHtml(name)},</p>
-    <p>Your residential tenancy agreement has been fully signed. You can download a copy here:</p>
-    <p><a href="${escapeHtml(link)}">${escapeHtml(signedDocLabel)}</a></p>
-    <p>- Quni Living</p>
-  `
+  const { fullySignedAgreementSubject, sendFullySignedAgreementEmails } = await import(
+    './booking/sendFullySignedAgreementEmail.js'
+  )
+  const signedSubject = fullySignedAgreementSubject({
+    isResidentialTenancyPackage,
+    isVicResidentialPackage,
+    isQldResidentialPackage,
+  })
 
-  if (le && link) await sendEmail({ to: le, subject: signedSubject, html: doneHtml(String(ln)) })
-  if (se && link) await sendEmail({ to: se, subject: signedSubject, html: doneHtml(String(sn)) })
-
-  const { data: tenancyRow } = await admin
-    .from('tenancies')
-    .select('booking_id')
-    .eq('id', docRow.tenancy_id)
-    .maybeSingle()
-  if (isResidentialTenancyPackage && tenancyRow?.booking_id) {
-    const coDone = await fetchCoTenantSignerForBooking(admin, tenancyRow.booking_id)
-    if (coDone?.email && link) {
-      await sendEmail({
-        to: coDone.email,
-        subject: signedSubject,
-        html: doneHtml(coDone.name),
-      })
-    }
+  const bookingId = tenancyForBooking?.booking_id
+  if (!link || !bookingId) {
+    console.error('[docuseal-webhook] fully signed copy not sent', {
+      submissionId,
+      hasLink: Boolean(link),
+      bookingId: bookingId ?? null,
+    })
+    return { ok: true, message: 'Fully signed; copy email not sent' }
   }
+
+  let coTenant: { email: string; name: string } | null = null
+  if (isResidentialTenancyPackage) {
+    const coDone = await fetchCoTenantSignerForBooking(admin, bookingId)
+    if (coDone?.email) coTenant = { email: coDone.email, name: coDone.name }
+  }
+
+  await sendFullySignedAgreementEmails(admin, {
+    bookingId,
+    submissionId: String(submissionId),
+    downloadUrl: link,
+    subject: signedSubject,
+    downloadLabel: signedDocLabel,
+    landlord: { email: le, name: String(ln) },
+    renter: { email: se, name: String(sn) },
+    coTenant,
+    landlordId: tny.landlord_profile_id,
+    studentId: tny.student_profile_id,
+    actorType: 'webhook',
+  })
 
   return { ok: true }
 }

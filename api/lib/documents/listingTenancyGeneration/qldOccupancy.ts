@@ -26,22 +26,9 @@ import {
 } from '../../../../src/lib/tenancy/qldBoarderLodger.js'
 import { QLD_ROOMS_RENTED_UNANSWERED_REASON } from '../../tenancy/qldClassification.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
+import { inclusiveLeaseLastDay, leaseDatesForBooking } from '../../booking/leaseEndDate.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
-
-function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
-  const raw = moveInIso.slice(0, 10)
-  const [y, m, d] = raw.split('-').map(Number)
-  if (!y || !m || !d) return null
-  const start = new Date(Date.UTC(y, m - 1, d))
-  let weeks = 52
-  if (leaseLength === '3 months') weeks = 13
-  else if (leaseLength === '6 months') weeks = 26
-  else if (leaseLength === '12 months') weeks = 52
-  else if (leaseLength === 'Flexible') weeks = 104
-  const end = new Date(start.getTime() + weeks * 7 * 86400000)
-  return end.toISOString().slice(0, 10)
-}
 
 function propertyAddressLine(p: Record<string, unknown>): string {
   const parts = [
@@ -223,8 +210,14 @@ async function loadQldOccupancyContext(
   }
 
   const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
-  const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
-  const periodic = leaseLen === 'Flexible' || endDate == null
+  const bookingEndRaw = typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null
+  const dates = leaseDatesForBooking({
+    moveInIso: moveIn,
+    leaseLength: leaseLen,
+    storedExclusiveEnd: bookingEndRaw,
+  })
+  const endDate = dates.exclusiveEnd
+  const periodic = dates.periodic
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
@@ -334,7 +327,7 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
     },
     term: {
       startDate: ctx.moveIn,
-      endDate: ctx.periodic ? null : ctx.endDate,
+      endDate: ctx.periodic ? null : inclusiveLeaseLastDay(ctx.endDate),
       periodic: ctx.periodic,
       leaseLengthDescription: ctx.leaseLen || 'As agreed',
     },

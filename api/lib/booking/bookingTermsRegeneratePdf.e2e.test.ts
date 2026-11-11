@@ -10,7 +10,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { NswLicenceToOccupyOnSite } from '../../../src/lib/documents/nsw/occupancyGenerator.tsx'
 import type { OccupancyAgreementProps } from '../../documents/rtaTypes.js'
 import { buildBookingTermsPatch } from './bookingTermsUpdate.js'
-import { isPeriodicLeaseLength } from './leaseEndDate.js'
+import { inclusiveLeaseLastDay, isPeriodicLeaseLength } from './leaseEndDate.js'
 
 const property = {
   id: 'p1',
@@ -39,7 +39,8 @@ const baseBooking = {
 function occupancyPropsFromBooking(booking: Record<string, unknown>): OccupancyAgreementProps {
   const moveIn = String(booking.move_in_date || booking.start_date || '').slice(0, 10)
   const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
-  const endDate = typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null
+  const storedEnd = typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null
+  const endDate = storedEnd ? inclusiveLeaseLastDay(storedEnd) : null
   const periodic = isPeriodicLeaseLength(leaseLen) || !endDate
   const notesRaw = typeof booking.notes === 'string' ? booking.notes.trim() : ''
 
@@ -133,7 +134,7 @@ describe('booking terms → regenerate PDF (integration)', () => {
     )
 
     expect(built.errors).toEqual([])
-    expect(built.patch.end_date).toBe('2027-06-30')
+    expect(built.patch.end_date).toBe('2027-07-01')
 
     const regeneratedBooking = { ...baseBooking, ...built.patch }
 
@@ -147,5 +148,6 @@ describe('booking terms → regenerate PDF (integration)', () => {
     expect(afterText).toContain('12 months')
     expect(afterText).toContain(formatAuDate('2026-07-01'))
     expect(afterText).toContain(formatAuDate('2027-06-30'))
+    expect(afterText).not.toContain(formatAuDate('2027-07-01'))
   })
 })

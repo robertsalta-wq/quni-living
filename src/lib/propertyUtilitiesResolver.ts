@@ -139,36 +139,51 @@ function buildListingDisclosureLabels(resolution: PropertyUtilitiesResolution): 
       const line = serviceDisclosureLabel(resolution.services[id])
       if (line) labels.push(line)
     }
-  } else if (resolution.electricityEmbeddedNetwork === true) {
-    labels.push('Electricity via embedded network')
-  } else if (resolution.gasEmbeddedNetwork === true) {
-    labels.push('Gas via embedded network')
+  } else {
+    if (resolution.electricityEmbeddedNetwork === true) labels.push('Electricity via embedded network')
+    if (resolution.gasEmbeddedNetwork === true) labels.push('Gas via embedded network')
   }
 
   return labels
 }
 
-function buildUtilitiesDescription(resolution: PropertyUtilitiesResolution): string {
-  if (resolution.allInclusive) {
-    return 'Electricity, gas and water usage are included in the rent. Internet and waste services as described on the property listing.'
-  }
+function utilitySentence(name: string, included: boolean, embedded: boolean): string {
+  const base = included ? `${name} is included in the rent` : `${name} is not included in the rent`
+  return embedded ? `${base} and is supplied through an embedded network.` : `${base}.`
+}
 
-  const parts: string[] = []
-  if (resolution.billsIncluded) {
-    parts.push('Electricity and gas are included in the rent')
-  } else {
-    for (const id of CAPTURABLE_UTILITY_SERVICE_IDS) {
-      const line = serviceDisclosureLabel(resolution.services[id])
-      if (line) parts.push(line)
-    }
+function internetIncluded(featureNames: string[]): boolean {
+  return featureNames.some((name) => /wi-?fi|internet|\bnbn\b/i.test(name))
+}
+
+function wasteStored(input: PropertyUtilitiesInput): string | null {
+  const raw = input.utilitiesServices as { waste?: unknown } | null
+  const waste = raw && typeof raw === 'object' ? raw.waste : null
+  if (waste && typeof waste === 'object') {
+    const text = JSON.stringify(waste)
+    if (text && text !== '{}' && text !== 'null') return 'Waste services are as stored for this listing.'
   }
-  if (resolution.waterChargedSeparately) {
-    parts.push('water usage is charged separately to the tenant on a metered basis')
+  if (input.featureNames.some((name) => /\bwaste\b/i.test(name))) {
+    return 'Waste services are included in the rent.'
   }
-  if (parts.length === 0) {
-    return 'Utilities and services as described on the property listing.'
-  }
-  return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts.length > 1 ? `. ${parts.slice(1).join('. ')}` : ''}.`
+  return null
+}
+
+function buildUtilitiesDescription(resolution: PropertyUtilitiesResolution, input: PropertyUtilitiesInput): string {
+  const bills = resolution.billsIncluded
+  const electricityIncluded = bills || resolution.services.electricity.tenantMustPay === false
+  const gasIncluded = bills || resolution.services.gas.tenantMustPay === false
+  const lines = [
+    utilitySentence('Electricity', electricityIncluded, resolution.electricityEmbeddedNetwork === true),
+    utilitySentence('Gas', gasIncluded, resolution.gasEmbeddedNetwork === true),
+    resolution.waterChargedSeparately
+      ? 'Water is not included in the rent. Usage is charged separately.'
+      : utilitySentence('Water', bills, false),
+    utilitySentence('Internet', internetIncluded(input.featureNames), false),
+  ]
+  const waste = wasteStored(input)
+  if (waste) lines.push(waste)
+  return lines.join(' ')
 }
 
 /**
@@ -219,7 +234,7 @@ export function resolvePropertyUtilities(input: PropertyUtilitiesInput): Propert
     listingDisclosureLabels: [],
   }
 
-  resolution.utilitiesDescription = buildUtilitiesDescription(resolution)
+  resolution.utilitiesDescription = buildUtilitiesDescription(resolution, input)
   resolution.listingDisclosureLabels = buildListingDisclosureLabels(resolution)
   return resolution
 }

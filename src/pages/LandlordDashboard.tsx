@@ -85,6 +85,8 @@ import {
 import type { LandlordListingForGroup } from '../lib/landlordListingsGrouped'
 import { isFullyExecutedTenancyDocument } from '../lib/booking/executedTenancyDocument'
 import { shouldOfferLandlordAgreementListAction } from '../lib/booking/signedAgreementAvailability'
+import { agreementSignaturePrompt, embedSrcForRole, pickSigningAgreementDoc, type AgreementSignaturePrompt } from '../lib/booking/agreementSignaturePrompt'
+import { inclusiveLeaseLastDay } from '../../api/lib/booking/leaseEndDate.js'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -134,6 +136,7 @@ type BookingWithRelations = BookingRow & {
   landlord_agreement_signed_paths: LandlordAgreementSignedPaths | null
   /** Signed mutual-termination PDF path in Storage (light select; no DocuSeal metadata). */
   landlord_termination_signed_path: string | null
+  agreement_signature_prompt?: AgreementSignaturePrompt
 }
 
 /** DocuSeal stores per-submitter signing links on the submission; email uses landlord `embed_src`. */
@@ -182,6 +185,32 @@ type TenancyDocRow = {
 type TenancyWithDocsForSigning = {
   booking_id: string | null
   tenancy_documents: unknown
+}
+
+function buildAgreementSignaturePromptByBookingId(
+  rows: TenancyWithDocsForSigning[] | null | undefined,
+): Map<string, AgreementSignaturePrompt> {
+  const out = new Map<string, AgreementSignaturePrompt>()
+  for (const row of rows ?? []) {
+    const bid = row.booking_id
+    if (!bid || out.has(bid)) continue
+    const raw = row.tenancy_documents
+    const docs = Array.isArray(raw) ? raw : raw ? [raw] : []
+    const doc = pickSigningAgreementDoc(
+      docs.filter((item): item is TenancyDocRow => Boolean(item && typeof item === 'object')),
+    )
+    if (!doc) continue
+    out.set(
+      bid,
+      agreementSignaturePrompt({
+        viewer: 'landlord',
+        landlordSignedAt: doc.landlord_signed_at,
+        studentSignedAt: doc.student_signed_at,
+        signingUrl: embedSrcForRole(doc.metadata, 'landlord'),
+      }),
+    )
+  }
+  return out
 }
 
 function buildLandlordSigningUrlByBookingId(rows: TenancyWithDocsForSigning[] | null | undefined): Map<string, string> {
@@ -934,6 +963,9 @@ export default function LandlordDashboard() {
       const signingUrlByBookingId = tenancyRes.error
         ? new Map<string, string>()
         : buildLandlordSigningUrlByBookingId(tenancyRows)
+      const signaturePromptByBookingId = tenancyRes.error
+        ? new Map<string, AgreementSignaturePrompt>()
+        : buildAgreementSignaturePromptByBookingId(tenancyRows)
       const signedPathsByBookingId = tenancyRes.error
         ? new Map<string, LandlordAgreementSignedPaths>()
         : buildSignedAgreementPathsByBookingId(tenancyRows)
@@ -972,6 +1004,11 @@ export default function LandlordDashboard() {
             : null,
           student_profiles: sp ? { ...sp } : null,
           landlord_agreement_signing_url: signingUrlByBookingId.get(b.id) ?? null,
+          agreement_signature_prompt: signaturePromptByBookingId.get(b.id) ?? {
+            kind: 'none',
+            title: '',
+            href: null,
+          },
           landlord_agreement_signed_paths: signedPathsByBookingId.get(b.id) ?? null,
           landlord_termination_signed_path: terminationPathByBookingId.get(b.id) ?? null,
         }
@@ -1879,6 +1916,14 @@ export default function LandlordDashboard() {
                         href?: string
                         disabled?: boolean
                       }[] = []
+                      const signaturePrompt = b.agreement_signature_prompt
+                      if (signaturePrompt?.kind === 'sign' && signaturePrompt.href) {
+                        actions.push({
+                          label: signaturePrompt.title,
+                          variant: 'primary',
+                          href: signaturePrompt.href,
+                        })
+                      }
                       if (offerAgreement) {
                         actions.push({
                           label: isAgreementBusy
@@ -1946,11 +1991,17 @@ export default function LandlordDashboard() {
                           propertySuburb={b.properties?.suburb}
                           serviceLabel={landlordServiceTierShortLabel(bookingServiceTier(b))}
                           moveInLabel={formatDate(b.move_in_date || b.start_date)}
-                          endLabel={formatDate(b.end_date)}
+                          endLabel={formatDate(inclusiveLeaseLastDay(b.end_date) || b.end_date)}
                           weeklyRent={b.weekly_rent != null ? Number(b.weekly_rent) : null}
                           status={b.status}
                           actions={actions}
-                          footnote={showAgreementFootnote ? footnoteText : null}
+                          footnote={
+                            signaturePrompt?.kind === 'waiting'
+                              ? signaturePrompt.title
+                              : showAgreementFootnote
+                                ? footnoteText
+                                : null
+                          }
                         />
                       )
                     })}
@@ -2005,7 +2056,7 @@ export default function LandlordDashboard() {
                           <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                             {formatDate(b.move_in_date || b.start_date)}
                             <span className="text-gray-400 mx-1">→</span>
-                            {formatDate(b.end_date)}
+                            {formatDate(inclusiveLeaseLastDay(b.end_date) || b.end_date)}
                           </td>
                           <td className="px-4 py-3 text-gray-800">
                             {b.weekly_rent != null
@@ -2026,6 +2077,16 @@ export default function LandlordDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col items-start gap-1">
+                              {b.agreement_signature_prompt?.kind === 'sign' && b.agreement_signature_prompt.href ? (
+                                <a
+                                  href={b.agreement_signature_prompt.href}
+                                  className="m-0 block w-full text-left text-xs font-semibold text-[var(--quni-coral)] underline underline-offset-2"
+                                >
+                                  Agreement waiting for your signature
+                                </a>
+                              ) : b.agreement_signature_prompt?.kind === 'waiting' ? (
+                                <p className="text-[11px] leading-snug text-gray-600">Waiting for the other party to sign</p>
+                              ) : null}
                               {shouldOfferLandlordAgreementAction(b) ? (
                                 <button
                                   type="button"

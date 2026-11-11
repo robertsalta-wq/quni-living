@@ -24,26 +24,12 @@ import {
 import { loadLandlordPayoutBankForDocument } from './landlordPayoutBank.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
+import { inclusiveLeaseLastDay, leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
 import { type PricingCell, formatFeeForDisplay } from '../../pricing/index.js'
 import { RETIRED_MANAGED_PRICING_CELL } from './retiredManagedPricing.js'
 import { buildAddendumUtilitiesFields } from '../../../../src/lib/documents/addendumUtilitiesFields.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
-
-function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
-  const raw = moveInIso.slice(0, 10)
-  const [y, m, d] = raw.split('-').map(Number)
-  if (!y || !m || !d) return null
-  const start = new Date(Date.UTC(y, m - 1, d))
-  let weeks = 52
-  if (leaseLength === '3 months') weeks = 13
-  else if (leaseLength === '6 months') weeks = 26
-  else if (leaseLength === '12 months') weeks = 52
-  else if (leaseLength === '2 years') weeks = 104
-  else if (leaseLength === 'Flexible') weeks = 104
-  const end = new Date(start.getTime() + weeks * 7 * 86400000)
-  return end.toISOString().slice(0, 10)
-}
 
 function propertyAddressLine(p: Record<string, unknown>): string {
   const parts = [
@@ -261,18 +247,11 @@ async function loadVicForm1Context(
   const platformFee = 0
   const totalWeekly = weeklyRent
 
-  let rentEnquiriesEmail = ''
+  const rentEnquiriesEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
   let generalEnquiriesEmail = ''
-  let platformDefaultHouseRules = ''
   try {
-    const commMap = await fetchPlatformConfigValueMap(admin, [
-      'docs.sender_email',
-      'contact.email',
-      'house_rules.default',
-    ])
-    rentEnquiriesEmail = (commMap['docs.sender_email'] ?? '').trim()
+    const commMap = await fetchPlatformConfigValueMap(admin, ['contact.email'])
     generalEnquiriesEmail = (commMap['contact.email'] ?? '').trim()
-    platformDefaultHouseRules = (commMap['house_rules.default'] ?? '').trim()
   } catch (e) {
     console.error('[vic-form1] platform_config communication emails', e)
     await captureSentryMessageEdge('VIC Form 1: failed to load platform_config for addendum emails', {
@@ -325,7 +304,7 @@ async function loadVicForm1Context(
       totalWeekly,
       rentEnquiriesEmail,
       generalEnquiriesEmail,
-      platformDefaultHouseRules,
+      platformDefaultHouseRules: '',
       platformIdentity,
       occupancyLease,
       rentPaymentPreference,
@@ -399,7 +378,7 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
 
   const sharedTerm = {
     startDate: ctx.moveIn,
-    endDate: ctx.periodic ? null : ctx.endDate,
+    endDate: ctx.periodic ? null : inclusiveLeaseLastDay(ctx.endDate),
     periodic: ctx.periodic,
     leaseLengthDescription: ctx.leaseLen || 'As agreed',
   }
@@ -470,7 +449,7 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
 
   const houseRulesFromProperty =
     typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''
-  const houseRules = houseRulesFromProperty || ctx.platformDefaultHouseRules
+  const houseRules = houseRulesFromProperty
 
   const addendumProps = {
     documentId,
@@ -493,7 +472,7 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
     emergencyContact,
     rentEnquiriesEmail: ctx.rentEnquiriesEmail,
     generalEnquiriesEmail: ctx.generalEnquiriesEmail,
-    houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
+    houseCommunicationsChannel: '',
     houseRules,
     landlordServiceFeeText: ctx.managedPricingDisplay.landlordFeeDisplay,
     cardSurchargeDomesticText: ctx.managedPricingDisplay.cardSurchargeDomestic,

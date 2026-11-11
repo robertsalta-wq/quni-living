@@ -57,7 +57,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getTextField(F.tenant_contact).getText()).toContain('rob@3thingsatonce.com.au')
 
     expect(form.getTextField(F.term_start_date).getText()).toBe('10/06/2026')
-    expect(form.getTextField(F.term_end_date).getText()).toBe('10/12/2026')
+    expect(form.getTextField(F.term_end_date).getText()).toBe('09/12/2026')
     expect(form.getTextField(F.premises_address).getText()).toContain('Hume Highway')
 
     expect(form.getTextField(F.rent_amount).getText()).toBe('400.00')

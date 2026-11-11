@@ -164,6 +164,34 @@ export default function LandlordBookingReviewPage() {
   const { data, loading, error, reload, receivedAgo } = useLandlordBookingReview(bookingId, user?.id)
 
   const [listingAcceptCelebration, setListingAcceptCelebration] = useState(false)
+  const [landlordSignUrl, setLandlordSignUrl] = useState<string | null>(null)
+  const [landlordSignedAgreement, setLandlordSignedAgreement] = useState(false)
+
+  useEffect(() => {
+    if (!bookingId) return
+    let cancelled = false
+    void (async () => {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token || cancelled) return
+      const res = await fetch(apiUrl('/api/documents/lease-state'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+      if (!res.ok || cancelled) return
+      const body = (await res.json()) as { viewer_signed?: boolean; signing_url?: string }
+      if (cancelled) return
+      setLandlordSignedAgreement(Boolean(body.viewer_signed))
+      setLandlordSignUrl(typeof body.signing_url === 'string' ? body.signing_url : null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [bookingId])
 
   const [aiAssessment, setAiAssessment] = useState<string | null>(null)
   const [aiAssessmentAt, setAiAssessmentAt] = useState<string | null>(null)
@@ -1075,6 +1103,7 @@ export default function LandlordBookingReviewPage() {
     askedAtLabel: awaitingInfoQuestion?.askedAtLabel ?? null,
     bondDeadlineLabel,
     hasActionRequired: booking.status === 'pending_confirmation',
+    preferSignAgreement: Boolean(landlordSignUrl) && !landlordSignedAgreement,
   })
   const actionDeadlineLabel = primaryAction.suppressDeadlinePill ? null : actionCopy.deadlineLabel
 
@@ -1267,6 +1296,14 @@ export default function LandlordBookingReviewPage() {
                 if (primaryActionKind === 'bond-received') {
                   primaryBlock = (
                     <div className="space-y-2">
+                      {landlordSignUrl && !landlordSignedAgreement ? (
+                        <a
+                          href={landlordSignUrl}
+                          className="inline-flex min-h-[3rem] w-full items-center justify-center rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover"
+                        >
+                          Sign the agreement
+                        </a>
+                      ) : null}
                       <button
                         type="button"
                         disabled={bondReceivedBusy}
@@ -1466,6 +1503,8 @@ export default function LandlordBookingReviewPage() {
             {/* Info siblings - below ActionCard (never nested inside it) */}
             {isListingBondPending ? (
               <LandlordListingAcceptedSummary
+                signAgreementUrl={landlordSignUrl}
+                landlordHasSigned={landlordSignedAgreement}
                 bookingReference={bookingReferenceLabel(booking.id)}
                 propertyTitle={property?.title?.trim() ?? ''}
                 propertyAddress={propertyAddressLine}

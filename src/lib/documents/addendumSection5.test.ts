@@ -111,7 +111,7 @@ describe('addendum Section 5 matrix', () => {
           billsIncluded: true,
           utilitiesCap: null,
           utilitiesDescription:
-            'Electricity, gas and water usage are included in the rent. Internet and waste services as described on the property listing.',
+            'Electricity is included in the rent. Gas is included in the rent. Water is included in the rent. Internet is not included in the rent.',
           listingDisclosureLabels: ['Bills included', 'Water included in rent'],
         }),
       )
@@ -119,7 +119,8 @@ describe('addendum Section 5 matrix', () => {
       expect(text).not.toContain('all-inclusive basis')
       expect(text).not.toContain('utilities allowance')
       expect(text).not.toContain('quarterly allowance')
-      expect(text).toContain('Disclosure summary')
+      expect(text).toContain('Electricity is included in the rent')
+      expect(text).not.toContain('Disclosure summary')
     },
     30_000,
   )
