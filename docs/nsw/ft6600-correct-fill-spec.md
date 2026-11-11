@@ -8,7 +8,7 @@ Booking used for this audit (single tenant; co-tenant booking still needs a sepa
 - Landlord (host): Quinn Lee - +61410025719 - 18 Malvina Street, Ryde NSW 2112 - quinniele90@gmail.com
 - Tenant: Robert Saltalamacchia - +61425775308 - rob@3thingsatonce.com.au
 - Premises: Unit 406/311 Hume Highway, Liverpool NSW 2170
-- Term: 10/06/2026 → 10/12/2026 (6 months)
+- Term: starts 10/06/2026, exclusive end 10/12/2026, last day 09/12/2026 (6 months)
 - Rent: $400.00 / week, due Wednesday, first payment 10/06/2026, direct deposit (QUINNVESTMENTS PTY LTD, BSB 939-200, Acct 823175945)
 - Bond: $800.00, lodged via Rental Bond Online
 - Max occupants: 2
@@ -74,7 +74,7 @@ Pattern: landlord block shifted **up one slot**; address sub-block (street/subur
 | Term checkbox | ☑ **6 months** only | ❌ `2 years` + `Other` + `Periodic` all ticked |
 | Other (please specify) | *(empty)* | ❌ shows `400.00` |
 | starting on | `10/06/2026` | ❌ empty |
-| and ending on | `10/12/2026` | ❌ empty |
+| and ending on | `09/12/2026` | ❌ empty |
 | Residential premises are (address) | `Unit 406/311 Hume Highway, Liverpool, NSW, 2170` | ❌ shows the direct-deposit payment string |
 | Residential premises include (inclusions) | ⚠️ listing inclusions, else empty | ❌ empty |
 | The rent is $ | `400.00` | ❌ shows `Day due: Wednesday` |

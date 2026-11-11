@@ -74,6 +74,8 @@ export type LandlordBookingReviewActionCopyInput = {
   hasActionRequired: boolean
   /** Agreement for this booking. Required for bond_pending copy. */
   bondWording?: BookingBondWording | null
+  /** Landlord has not signed yet. The sign step is shown before confirming the bond. */
+  preferSignAgreement?: boolean
 }
 
 /**
@@ -107,6 +109,16 @@ export function resolveLandlordBookingReviewActionCopy(
         deadlineTone: 'info',
       }
     case 'bond_pending':
+      if (input.preferSignAgreement) {
+        return {
+          eyebrow: 'What you need to do',
+          eyebrowTone: 'action',
+          title: 'Sign the agreement',
+          sub: 'Sign the agreement first. Confirm the bond after that.',
+          deadlineLabel: null,
+          deadlineTone: 'info',
+        }
+      }
       return {
         eyebrow: 'What you need to do',
         eyebrowTone: 'action',

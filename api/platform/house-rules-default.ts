@@ -82,7 +82,7 @@ export default async function handler(request: Request) {
 
     const admin = createClient<Database>(supabaseUrl, serviceRole)
     const map = await fetchPlatformConfigValueMap(admin, [CONFIG_KEY])
-    const value = map[CONFIG_KEY] ?? ''
+    const value = (map[CONFIG_KEY] ?? '').replaceAll('via the Quni platform', 'in writing')
 
     return json({ default: value }, 200, origin)
   } catch (e) {

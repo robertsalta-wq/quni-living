@@ -90,7 +90,7 @@ const CASES = [
       billsIncluded: true,
       utilitiesCap: 300,
       utilitiesDescription:
-        'Electricity, gas and water usage are included in the rent. Internet and waste services as described on the property listing.',
+        'Electricity is included in the rent. Gas is included in the rent. Water is included in the rent. Internet is not included in the rent.',
       listingDisclosureLabels: ['Bills included', 'Water included in rent'],
     },
   },
@@ -102,7 +102,7 @@ const CASES = [
       billsIncluded: true,
       utilitiesCap: null,
       utilitiesDescription:
-        'Electricity, gas and water usage are included in the rent. Internet and waste services as described on the property listing.',
+        'Electricity is included in the rent. Gas is included in the rent. Water is included in the rent. Internet is not included in the rent.',
       listingDisclosureLabels: ['Bills included', 'Water included in rent'],
     },
   },

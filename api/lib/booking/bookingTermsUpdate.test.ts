@@ -58,7 +58,7 @@ describe('buildBookingTermsPatch', () => {
     )
     expect(result.errors).toEqual([])
     expect(result.patch.lease_length).toBe('12 months')
-    expect(result.patch.end_date).toBe('2027-06-30')
+    expect(result.patch.end_date).toBe('2027-07-01')
     expect(result.changes.end_date?.from).toBe('2026-12-28')
   })
 

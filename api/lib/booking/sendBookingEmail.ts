@@ -10,6 +10,7 @@ export type SendBookingEmailArgs = {
   to: string | string[]
   subject: string
   html: string
+  text?: string
   replyTo?: string
   cc?: string | string[]
   landlordId?: string | null
@@ -104,6 +105,7 @@ export async function sendBookingEmail(
       to: args.to,
       subject: args.subject,
       html: args.html,
+      text: args.text,
       replyTo: args.replyTo,
       cc: args.cc,
       tags: [

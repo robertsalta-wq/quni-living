@@ -34,7 +34,6 @@ export const QLD_PLATFORM_ADDENDUM_PDF_MARKERS = [
   'reletting costs',
 ] as const
 
-const QUNI_MAINTENANCE_PORTAL_URL = 'https://quni.com.au/maintenance'
 function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
 }
@@ -138,16 +137,24 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
 }
 
 /** Section 3 - Communication channels. */
+function landlordMaintenanceContact(props: QuniPlatformAddendumProps): string {
+  const email = props.landlord?.email?.trim() || props.rentEnquiriesEmail.trim()
+  const phone = props.landlord?.phone?.trim() || ''
+  return [email, phone].filter(Boolean).join(', ') || props.emergencyContact.trim() || '-'
+}
+
 function Section3CommunicationChannels(props: QuniPlatformAddendumProps) {
   const { emergencyContact, rentEnquiriesEmail, generalEnquiriesEmail, houseCommunicationsChannel } = props
 
   const rows: { label: string; value: string }[] = [
-    { label: 'Maintenance portal (non-urgent requests):', value: QUNI_MAINTENANCE_PORTAL_URL },
+    { label: 'Non-urgent maintenance:', value: landlordMaintenanceContact(props) },
     { label: 'Emergency contact (urgent repairs):', value: emergencyContact.trim() || '-' },
     { label: 'Rent account enquiries:', value: rentEnquiriesEmail.trim() || '-' },
-    { label: 'General enquiries:', value: generalEnquiriesEmail.trim() || '-' },
-    { label: 'House communications:', value: houseCommunicationsChannel.trim() || '-' },
+    { label: 'Quni platform support:', value: generalEnquiriesEmail.trim() || '-' },
   ]
+  if (houseCommunicationsChannel.trim()) {
+    rows.push({ label: 'House communications:', value: houseCommunicationsChannel.trim() })
+  }
 
   return (
     <View style={{ marginBottom: 10 }}>
@@ -169,7 +176,7 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
         Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning
-        issues) must be lodged through the maintenance portal listed in Section 3. The tenant should include a
+        issues) must be sent to the landlord using the contact in Section 3. The tenant should include a
         clear description, photos where helpful, and safe access notes.
       </Text>
 
@@ -183,7 +190,7 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
       <Text style={occupancyMatchPdf.bodyParagraph}>
         The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items
         without undue delay. Response times for non-urgent items depend on severity, parts availability, and access;
-        the parties agree to communicate promptly through the portal where additional information is required.
+        the parties agree to communicate promptly with the landlord where additional information is required.
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
@@ -252,8 +259,8 @@ function Section7MouldPrevention(_props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported through
-        the maintenance portal without delay. Early reporting helps limit damage and repair cost.
+        Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported to the
+        landlord without delay. Early reporting helps limit damage and repair cost.
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
@@ -304,14 +311,6 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   const dailyRent = props.rent.weeklyRent / 7
   void props.moveOutLateCheckoutFeeText
   const feeRows: { label: string; value: string }[] = [
-    {
-      label: 'Cleaning (if not to standard)',
-      value: '$150 per hour, minimum charge $150',
-    },
-    {
-      label: 'Removal of personal items / rubbish left behind',
-      value: '$250 per hour, minimum charge $250',
-    },
     {
       label: 'Late checkout (still occupying after midnight on vacate date)',
       value: `Full day rent (${formatMoney(dailyRent)} - one-seventh of the agreed weekly rent)`,

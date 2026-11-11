@@ -11,6 +11,7 @@ import { isRenterRole } from '../lib/authProfile'
 import type { Property } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { bookingBondWordingFromPackage } from '../../api/lib/tenancy/bookingBondWording'
+import { inclusiveLeaseLastDay } from '../../api/lib/booking/leaseEndDate.js'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import QldRtaLodgementGuidance from '../components/bond/QldRtaLodgementGuidance'
 import {
@@ -175,7 +176,7 @@ function DateOverlapConflictActions(opts: {
   onChooseDifferentDates?: () => void
 }) {
   const startDisp = formatAuShortDate(opts.conflict.start_date)
-  const endDisp = formatAuShortDate(opts.conflict.end_date)
+  const endDisp = formatAuShortDate(inclusiveLeaseLastDay(opts.conflict.end_date) || opts.conflict.end_date)
   return (
     <>
       <p

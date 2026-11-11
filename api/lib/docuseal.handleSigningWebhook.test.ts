@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { PDFDocument } from 'pdf-lib'
+
+async function onePagePdf(): Promise<Uint8Array> {
+  const doc = await PDFDocument.create()
+  doc.addPage()
+  return doc.save()
+}
 
 const mocks = vi.hoisted(() => ({
   sendEmail: vi.fn(),
@@ -163,7 +170,7 @@ describe('handleSigningWebhook terminal booking guard', () => {
     const admin = buildAdmin({ bookingStatus: 'bond_pending' })
     mocks.createClient.mockReturnValue(admin)
 
-    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46])
+    const pdfBytes = await onePagePdf()
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {

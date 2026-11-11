@@ -24,6 +24,7 @@ import { mergeDeviceContextMetadata, requestContextFromRequest } from './lib/jou
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import { moveInFloorError } from './lib/booking/moveInFloor.js'
+import { leaseEndDateFromMoveIn } from './lib/booking/leaseEndDate.js'
 import {
   assertRenterEmailConfirmed,
   markTenantInviteAccepted,
@@ -82,43 +83,28 @@ function json(body, status = 200, origin) {
   })
 }
 
-function addDaysIso(isoDate, days) {
-  const [y, m, d] = isoDate.split('-').map(Number)
-  const t = Date.UTC(y, m - 1, d) + days * 86400000
-  const x = new Date(t)
-  return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${String(x.getUTCDate()).padStart(2, '0')}`
-}
-
 function todayUtcIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function leaseEndDateIso(moveIn, leaseLength) {
-  if (leaseLength === 'Flexible') return null
-  const days =
-    leaseLength === '3 months' ? 92 : leaseLength === '6 months' ? 183 : leaseLength === '12 months' ? 365 : null
-  if (days == null) return null
-  return addDaysIso(moveIn, days)
-}
-
 /**
- * Exclusive end date for half-open tenancy window [start, end).
- * Prefer stored end_date; otherwise leaseEndDateIso(start, lease_length) with Flexible / null / unknown → '12 months'.
- * Cross-property overlap has no DB-level guard (unlike same-property which has a unique index). API-only enforcement
- * is acceptable for MVP. If a second booking insert path is ever added, add a DB constraint or trigger at that point.
+ * Exclusive end of the half-open window [start, end).
+ * Stored end_date wins. Otherwise the shared calendar-month helper.
+ * Flexible and unknown lengths stay open (null). 2 years is 24 calendar months.
+ * Cross-property overlap has no DB-level guard. API-only enforcement is acceptable for MVP.
  */
 function bookingTenancyExclusiveEndIso(storedEndDate, startIso, leaseLengthRaw) {
-  const trimmedEnd = typeof storedEndDate === 'string' ? storedEndDate.trim() : ''
-  if (trimmedEnd) return trimmedEnd
+  const trimmedEnd = typeof storedEndDate === 'string' ? storedEndDate.trim().slice(0, 10) : ''
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedEnd)) return trimmedEnd
   const ll = typeof leaseLengthRaw === 'string' ? leaseLengthRaw.trim() : ''
-  const effectiveLease =
-    ll === '3 months' || ll === '6 months' || ll === '12 months' ? ll : '12 months'
-  return leaseEndDateIso(startIso, effectiveLease)
+  return leaseEndDateFromMoveIn(startIso, ll)
 }
 
-/** Half-open [start, end): overlap iff newStart < existingEnd && newEnd > existingStart. end_date is the exclusive end. */
+/** Half-open [start, end). A null end is open-ended and overlaps any later start. */
 function halfOpenDateRangesOverlap(newStart, newEnd, existingStart, existingEnd) {
-  return newStart < existingEnd && newEnd > existingStart
+  const newEndEff = newEnd || '9999-12-31'
+  const existingEndEff = existingEnd || '9999-12-31'
+  return newStart < existingEndEff && newEndEff > existingStart
 }
 
 function conflictPropertyAddress(propertiesRow) {
@@ -267,10 +253,6 @@ async function assertNoCrossPropertyDateOverlap(
   if (!newStart) return null
 
   const newEnd = bookingTenancyExclusiveEndIso(null, newStart, newLeaseLength)
-  if (!newEnd) {
-    console.error('assertNoCrossPropertyDateOverlap: could not compute new booking end')
-    return json({ error: 'Server error' }, 500, origin)
-  }
 
   const { data: rows, error } = await admin
     .from('bookings')
@@ -300,7 +282,6 @@ async function assertNoCrossPropertyDateOverlap(
     if (!exStart) continue
 
     const exEnd = bookingTenancyExclusiveEndIso(row.end_date, exStart, row.lease_length)
-    if (!exEnd) continue
 
     if (halfOpenDateRangesOverlap(newStart, newEnd, exStart, exEnd)) {
       const props = row.properties
@@ -551,7 +532,7 @@ async function handleListingBookingCommit(request, origin, body) {
   })
 
   const expiresAt = landlordResponseExpiresAtIso('listing')
-  const endDate = leaseEndDateIso(moveInDate, leaseLength)
+  const endDate = leaseEndDateFromMoveIn(moveInDate, leaseLength)
 
   let listingAcknowledgment
   try {

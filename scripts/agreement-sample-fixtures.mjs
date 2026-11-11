@@ -286,7 +286,7 @@ function addendumFromAgreement(base, signingPackage) {
     rent: base.rent,
     bond: base.bond,
     utilitiesDescription:
-      'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
+      'Electricity is not included in the rent. Gas is not included in the rent. Water is not included in the rent. Internet is not included in the rent.',
     signingPackage,
     serviceTier: 'listing',
     allInclusive: false,

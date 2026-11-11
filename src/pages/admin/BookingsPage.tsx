@@ -7,6 +7,7 @@ import { Button, Card, Eyebrow, EmptyState, ErrorState, LoadingState, Pill, type
 import { Icon, type IconName } from '../../components/admin/Icon'
 import { ChipFilter, DetailDrawer, type ChipFilterOption } from '../../components/admin/patterns'
 import { formatDate, formatMoney, studentDisplayName } from './adminUi'
+import { inclusiveLeaseLastDay } from '../../../api/lib/booking/leaseEndDate.js'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
@@ -624,7 +625,7 @@ function DrawerBody({ booking, onBookingUpdated }: { booking: BookingRow; onBook
           ['Property', booking.properties ? `${booking.properties.title}${booking.properties.suburb ? `, ${booking.properties.suburb}` : ''}` : '-'],
           ['Tier', <TierBadge key="t" tier={tier} />],
           ['Move-in date', formatDate(booking.start_date)],
-          ['Lease ends', formatDate(booking.end_date)],
+          ['Lease ends', formatDate(inclusiveLeaseLastDay(booking.end_date) ?? booking.end_date)],
           ['Weekly rent', booking.weekly_rent ? `${formatMoney(booking.weekly_rent)} AUD` : '-'],
           ['Rent via', booking.rent_payment_method === 'quni_platform' ? 'Quni platform' : booking.rent_payment_method === 'bank_transfer' ? 'Bank transfer' : '-'],
         ]}

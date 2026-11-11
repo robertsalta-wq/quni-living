@@ -248,7 +248,7 @@ export function LicenceOccupyDocument({
 
   const houseRulesLines = houseRules?.trim()
     ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean)
-    : [...content.defaultHouseRules]
+    : []
 
   const extraLines = [
     ...specialConditions.filter((c) => c.trim()),
@@ -394,14 +394,18 @@ export function LicenceOccupyDocument({
         )}
         <OccupancyMatchSectionHeading num={7} title="Australian Consumer Law" />
         <BodyParagraph>{content.aclParagraph}</BodyParagraph>
-        <OccupancyMatchSectionHeading num={8} title="House rules" />
-        <BodyParagraph>{houseRulesIntro}</BodyParagraph>
-        {content.houseRulesPrecedenceParagraph ? (
-          <BodyParagraph>{content.houseRulesPrecedenceParagraph}</BodyParagraph>
+        {houseRulesLines.length > 0 ? (
+          <>
+            <OccupancyMatchSectionHeading num={8} title="House rules" />
+            <BodyParagraph>{houseRulesIntro}</BodyParagraph>
+            {content.houseRulesPrecedenceParagraph ? (
+              <BodyParagraph>{content.houseRulesPrecedenceParagraph}</BodyParagraph>
+            ) : null}
+            {houseRulesLines.map((r, i) => (
+              <Bullet key={`h-${i}`}>{r}</Bullet>
+            ))}
+          </>
         ) : null}
-        {houseRulesLines.map((r, i) => (
-          <Bullet key={`h-${i}`}>{r}</Bullet>
-        ))}
         <OccupancyMatchSectionHeading num={9} title="Care of room and shared areas" />
         {content.careBullets.map((b, i) => (
           <Bullet key={`c-${i}`}>{b}</Bullet>

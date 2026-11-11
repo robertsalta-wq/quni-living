@@ -20,6 +20,7 @@ import {
 import { propertyPayoutDetailsQldRoomingComplete } from '../../../../src/lib/propertyPayoutDetails.js'
 import { sendQldFormR18PackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import { inclusiveLeaseLastDay } from '../../booking/leaseEndDate.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 
 export const QLD_FORM_R18_GENERATOR_ID = 'qld-form-r18'
@@ -426,7 +427,10 @@ async function loadQldFormR18ListingContext(
     studentAccommodation: prop.qld_student_accommodation === true,
     termFixed: Boolean(booking.end_date),
     startDateIso: String(moveIn).slice(0, 10),
-    endDateIso: typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null,
+    endDateIso:
+      typeof booking.end_date === 'string'
+        ? inclusiveLeaseLastDay(booking.end_date.slice(0, 10))
+        : null,
     weeklyRent,
     bondAmount: typeof prop.bond === 'number' ? prop.bond : null,
     rentDueWeekday: weekdayFromIso(String(moveIn)),

@@ -130,30 +130,19 @@ type TermCheckbox = (typeof TERM_CHECKBOXES)[number]
 function resolveTermCheckbox(
   periodic: boolean,
   leaseLengthDescription: string,
-  startDate: string,
-  endDate: string | null,
-): TermCheckbox {
-  if (periodic) return F.term_periodic_cb
+): { checkbox: TermCheckbox; specify: string | null } {
+  if (periodic) return { checkbox: F.term_periodic_cb, specify: null }
   const d = leaseLengthDescription.trim().toLowerCase()
-  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d) || /\bflexible\b/i.test(d)) {
-    return F.term_periodic_cb
+  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d) || /\bflexible\b/.test(d)) {
+    return { checkbox: F.term_periodic_cb, specify: null }
   }
-  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return F.term_5_years_cb
-  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return F.term_3_years_cb
-  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return F.term_2_years_cb
-  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return F.term_12_months_cb
-  if (/\b6\s*months?\b/.test(d)) return F.term_6_months_cb
-  if (endDate && startDate) {
-    const start = new Date(startDate.slice(0, 10))
-    const end = new Date(endDate.slice(0, 10))
-    const months = Math.round((end.getTime() - start.getTime()) / (30.44 * 86400000))
-    if (months <= 8) return F.term_6_months_cb
-    if (months <= 15) return F.term_12_months_cb
-    if (months <= 27) return F.term_2_years_cb
-    if (months <= 39) return F.term_3_years_cb
-    return F.term_5_years_cb
-  }
-  return F.term_other_cb
+  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return { checkbox: F.term_5_years_cb, specify: null }
+  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return { checkbox: F.term_3_years_cb, specify: null }
+  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return { checkbox: F.term_2_years_cb, specify: null }
+  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return { checkbox: F.term_12_months_cb, specify: null }
+  if (/\b6\s*months?\b/.test(d)) return { checkbox: F.term_6_months_cb, specify: null }
+  const specify = leaseLengthDescription.trim() || null
+  return { checkbox: F.term_other_cb, specify }
 }
 
 function setCheck(form: PDFForm, name: string, checked: boolean) {
@@ -230,13 +219,15 @@ export function applyOfficialNswFt6600ScheduleFill(
   const state = buildFillAssignments(props)
 
   uncheckAll(form, TERM_CHECKBOXES)
-  const termCb = resolveTermCheckbox(
-    props.term.periodic,
-    props.term.leaseLengthDescription,
-    props.term.startDate,
-    props.term.endDate,
-  )
-  setCheck(form, termCb, true)
+  const termChoice = resolveTermCheckbox(props.term.periodic, props.term.leaseLengthDescription)
+  setCheck(form, termChoice.checkbox, true)
+  if (termChoice.specify) {
+    try {
+      form.getTextField(F.term_other_specify_text).setText(termChoice.specify)
+    } catch {
+      // Template without the specify field still records the Other box.
+    }
+  }
 
   uncheckAll(form, RENT_FREQ_CHECKBOXES)
   uncheckAll(form, RENT_METHOD_CHECKBOXES)

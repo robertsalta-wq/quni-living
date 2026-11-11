@@ -15,7 +15,7 @@ export type AddendumUtilitiesFields = {
 }
 
 const FALLBACK_UTILITIES_DESCRIPTION =
-  'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.'
+  'Electricity is not included in the rent. Gas is not included in the rent. Water is not included in the rent. Internet is not included in the rent.'
 
 /**
  * Resolve addendum Section 5 inputs from property utilities + booking tier.

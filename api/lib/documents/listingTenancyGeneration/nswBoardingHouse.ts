@@ -18,7 +18,7 @@ import {
 } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
 import { sendForSigning } from '../../docuseal.js'
-import { leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
+import { inclusiveLeaseLastDay, leaseDatesForBooking } from '../../booking/leaseEndDate.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { nswBoardingHouseLeaseMetadata, NSW_BOARDING_HOUSE_GENERATOR_ID } from './nswBoardingHouseMetadata.js'
 import {
@@ -227,8 +227,14 @@ async function loadNswBoardingHouseContext(
   }
 
   const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
-  const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
-  const periodic = leaseLen === 'Flexible' || endDate == null
+  const bookingEndRaw = typeof booking.end_date === 'string' ? booking.end_date.slice(0, 10) : null
+  const dates = leaseDatesForBooking({
+    moveInIso: moveIn,
+    leaseLength: leaseLen,
+    storedExclusiveEnd: bookingEndRaw,
+  })
+  const endDate = dates.exclusiveEnd
+  const periodic = dates.periodic
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
   const particularsErr = t3ParticularsError(prop, weeklyRent, bondNum)
@@ -303,7 +309,7 @@ async function loadNswBoardingHouseContext(
     },
     term: {
       startDate: moveIn,
-      endDate: periodic ? null : endDate,
+      endDate: periodic ? null : inclusiveLeaseLastDay(endDate),
       periodic,
       leaseLengthDescription: leaseLen || 'As agreed',
     },

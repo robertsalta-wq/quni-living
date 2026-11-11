@@ -15,6 +15,8 @@ import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { studentDisplayName } from '../lib/nameResolution'
 import { formatDate } from './admin/adminUi'
+import { agreementSignaturePrompt, embedSrcForRole, pickSigningAgreementDoc, type AgreementSignaturePrompt } from '../lib/booking/agreementSignaturePrompt'
+import { inclusiveLeaseLastDay } from '../../api/lib/booking/leaseEndDate.js'
 import { apiUrl } from '../lib/apiUrl'
 import {
   PROFILE_INCOMPLETE_NUDGE_CARD_CLASS,
@@ -99,6 +101,7 @@ type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
   /** Derived client-side from tenancy_documents lookup - not a PostgREST embed. */
   hasBondReceipt?: boolean
+  agreement_signature_prompt?: AgreementSignaturePrompt
 }
 
 type TabId = 'overview' | 'bookings' | 'saved'
@@ -294,22 +297,38 @@ export default function StudentDashboard() {
       const rows = (bookRes.data ?? []) as BookingWithProperty[]
       const bookingIds = rows.map((b) => b.id).filter(Boolean)
       const receiptByBookingId = new Set<string>()
+      const promptByBookingId = new Map<string, AgreementSignaturePrompt>()
       if (bookingIds.length > 0) {
         const { data: tenancyRows } = await supabase
           .from('tenancies')
-          .select('booking_id, tenancy_documents ( document_type )')
+          .select(
+            'booking_id, tenancy_documents ( document_type, status, metadata, landlord_signed_at, student_signed_at )',
+          )
           .in('booking_id', bookingIds)
         for (const t of tenancyRows ?? []) {
           const bid = typeof t.booking_id === 'string' ? t.booking_id : ''
           if (!bid) continue
           const docs = Array.isArray(t.tenancy_documents) ? t.tenancy_documents : []
           if (bookingHasBondReceiptDocument(docs)) receiptByBookingId.add(bid)
+          const agreement = pickSigningAgreementDoc(docs)
+          if (agreement && !promptByBookingId.has(bid)) {
+            promptByBookingId.set(
+              bid,
+              agreementSignaturePrompt({
+                viewer: 'student',
+                landlordSignedAt: agreement.landlord_signed_at,
+                studentSignedAt: agreement.student_signed_at,
+                signingUrl: embedSrcForRole(agreement.metadata, 'student'),
+              }),
+            )
+          }
         }
       }
 
       const nextBookings = rows.map((b) => ({
         ...b,
         hasBondReceipt: receiptByBookingId.has(b.id),
+        agreement_signature_prompt: promptByBookingId.get(b.id),
       }))
       setBookings(nextBookings)
       studentDashboardBookingsCacheByUserId.set(user.id, nextBookings)
@@ -685,12 +704,22 @@ export default function StudentDashboard() {
                           propertySuburb={prop?.suburb}
                           serviceLabel={landlordServiceTierShortLabel(serviceTier)}
                           moveInLabel={formatDate(b.start_date)}
-                          endLabel={b.end_date ? formatDate(b.end_date) : '-'}
+                          endLabel={b.end_date ? formatDate(inclusiveLeaseLastDay(b.end_date) || b.end_date) : '-'}
                           weeklyRent={rent}
                           status={b.status}
                           propertySlug={slug}
                         />
                       </div>
+                      {b.agreement_signature_prompt?.kind === 'sign' && b.agreement_signature_prompt.href ? (
+                        <a
+                          href={b.agreement_signature_prompt.href}
+                          className="mx-4 mb-2 inline-flex text-sm font-semibold text-admin-coral underline underline-offset-2 sm:mx-5"
+                        >
+                          Agreement waiting for your signature
+                        </a>
+                      ) : b.agreement_signature_prompt?.kind === 'waiting' ? (
+                        <p className="mx-4 mb-2 text-sm text-admin-ink-3 sm:mx-5">Waiting for the other party to sign</p>
+                      ) : null}
 
                       <div className="hidden sm:flex flex-row gap-4 p-5">
                         <div className="shrink-0 w-40 aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
@@ -722,7 +751,7 @@ export default function StudentDashboard() {
                           <p className="text-sm text-admin-ink-3 mt-2">
                             <span className="text-admin-ink-5">Stay:</span>{' '}
                             {formatDate(b.start_date)}
-                            {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
+                            {b.end_date ? ` → ${formatDate(inclusiveLeaseLastDay(b.end_date) || b.end_date)}` : ''}
                           </p>
                           <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
                         </div>

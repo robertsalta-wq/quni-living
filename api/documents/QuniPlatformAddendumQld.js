@@ -621,14 +621,10 @@ import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 function formatMoney(n) {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
 }
+var FALLBACK_EMPTY = "Electricity is not included in the rent. Gas is not included in the rent. Water is not included in the rent. Internet is not included in the rent.";
 function descriptionLine(props) {
   const desc = (props.utilitiesDescription || "").trim();
-  return desc || "Utilities and services as described on the property listing.";
-}
-function disclosureParagraph(props) {
-  const labels = props.listingDisclosureLabels?.map((l) => l.trim()).filter(Boolean) ?? [];
-  if (labels.length === 0) return null;
-  return `Disclosure summary: ${labels.join("; ")}.`;
+  return desc || FALLBACK_EMPTY;
 }
 function body(text, key) {
   return /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: text }, key);
@@ -637,7 +633,6 @@ function AddendumSection5UtilitiesAndBills(props) {
   const tier = props.serviceTier === "managed" ? "managed" : "listing";
   const desc = descriptionLine(props);
   const showManagedCap = tier === "managed" && props.allInclusive === true && props.utilitiesCap != null && Number.isFinite(props.utilitiesCap) && props.utilitiesCap > 0;
-  const disclosure = disclosureParagraph(props);
   const paragraphs = [];
   let n = 0;
   const nextKey = () => `s5-${n++}`;
@@ -683,7 +678,6 @@ function AddendumSection5UtilitiesAndBills(props) {
     paragraphs.push(
       body(`Utilities for this Managed tenancy are charged as disclosed for the property: ${desc}`, nextKey())
     );
-    if (disclosure) paragraphs.push(body(disclosure, nextKey()));
     paragraphs.push(
       body(
         "Rent is not calculated on an all-inclusive utilities basis for this tenancy. The tenant must pay utility charges they are responsible for as set out above (and on the prescribed agreement where applicable).",
@@ -697,7 +691,6 @@ function AddendumSection5UtilitiesAndBills(props) {
         nextKey()
       )
     );
-    if (disclosure) paragraphs.push(body(disclosure, nextKey()));
   }
   paragraphs.push(
     body(
@@ -727,7 +720,6 @@ var QLD_PLATFORM_ADDENDUM_PDF_MARKERS = [
   "may only be enforced to the extent permitted by law",
   "reletting costs"
 ];
-var QUNI_MAINTENANCE_PORTAL_URL = "https://quni.com.au/maintenance";
 function formatMoney2(n) {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
 }
@@ -801,15 +793,22 @@ function Section2QuniPlatformAndFee(props) {
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Quni Living is a technology platform. It is not a real estate agent and it does not provide agency, letting or property management services. It does not act on the landlord's behalf, it does not conduct a letting, and it is not a party to this agreement. Rent is paid to the landlord at the account named in this agreement. The tenant pays Quni Living nothing." })
   ] });
 }
+function landlordMaintenanceContact(props) {
+  const email = props.landlord?.email?.trim() || props.rentEnquiriesEmail.trim();
+  const phone = props.landlord?.phone?.trim() || "";
+  return [email, phone].filter(Boolean).join(", ") || props.emergencyContact.trim() || "-";
+}
 function Section3CommunicationChannels(props) {
   const { emergencyContact, rentEnquiriesEmail, generalEnquiriesEmail, houseCommunicationsChannel } = props;
   const rows = [
-    { label: "Maintenance portal (non-urgent requests):", value: QUNI_MAINTENANCE_PORTAL_URL },
+    { label: "Non-urgent maintenance:", value: landlordMaintenanceContact(props) },
     { label: "Emergency contact (urgent repairs):", value: emergencyContact.trim() || "-" },
     { label: "Rent account enquiries:", value: rentEnquiriesEmail.trim() || "-" },
-    { label: "General enquiries:", value: generalEnquiriesEmail.trim() || "-" },
-    { label: "House communications:", value: houseCommunicationsChannel.trim() || "-" }
+    { label: "Quni platform support:", value: generalEnquiriesEmail.trim() || "-" }
   ];
+  if (houseCommunicationsChannel.trim()) {
+    rows.push({ label: "House communications:", value: houseCommunicationsChannel.trim() });
+  }
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 3, title: "Communication channels" }),
     /* @__PURE__ */ jsx4(Text4, { style: [occupancyMatchPdf.bodyParagraph, { marginBottom: 6 }], children: "The tenant should use the channels below for requests, notices and day-to-day communication. Urgent safety issues should be directed to the emergency contact immediately." }),
@@ -819,9 +818,9 @@ function Section3CommunicationChannels(props) {
 function Section4MaintenanceAndRepairs(_props) {
   return /* @__PURE__ */ jsxs4(View4, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 4, title: "Maintenance & repairs" }),
-    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning issues) must be lodged through the maintenance portal listed in Section 3. The tenant should include a clear description, photos where helpful, and safe access notes." }),
+    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning issues) must be sent to the landlord using the contact in Section 3. The tenant should include a clear description, photos where helpful, and safe access notes." }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Urgent repairs that affect health, safety, or security - including burst pipes, electrical hazards, gas smells, serious leaks, or a failure of essential services - must be reported immediately using the emergency contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons or property, the tenant should also follow any emergency services guidance (including 000 where appropriate)." }),
-    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items without undue delay. Response times for non-urgent items depend on severity, parts availability, and access; the parties agree to communicate promptly through the portal where additional information is required." }),
+    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items without undue delay. Response times for non-urgent items depend on severity, parts availability, and access; the parties agree to communicate promptly with the landlord where additional information is required." }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for damage caused by the tenant, their guests, or invitees (including through misuse, negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant caused, the landlord may seek reimbursement in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a), including via bond claim processes where applicable." })
   ] });
 }
@@ -848,7 +847,7 @@ function Section7MouldPrevention(_props) {
     /* @__PURE__ */ jsx4(OccupancyMatchSectionHeading, { num: 7, title: "Mould prevention" }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must keep the premises reasonably ventilated, including by using exhaust fans or opening windows when cooking, showering, or drying laundry indoors, where safe and consistent with security." }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Condensation on windows or walls should be wiped dry promptly. The tenant must not block fixed ventilation grilles, subfloor vents, or weep holes, and must not store belongings or materials in a way that traps moisture against walls, floors, or joinery." }),
-    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported through the maintenance portal without delay. Early reporting helps limit damage and repair cost." }),
+    /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported to the landlord without delay. Early reporting helps limit damage and repair cost." }),
     /* @__PURE__ */ jsx4(Text4, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for day-to-day cleaning of surfaces they use (including bathrooms and kitchen areas) in line with ordinary household standards. Where mould arises from lack of ventilation or cleaning that a reasonable tenant would undertake, the tenant may be responsible for remediation costs acting reasonably and in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld)." })
   ] });
 }
@@ -876,14 +875,6 @@ function Section9MoveOutProcedures(props) {
   const dailyRent = props.rent.weeklyRent / 7;
   void props.moveOutLateCheckoutFeeText;
   const feeRows = [
-    {
-      label: "Cleaning (if not to standard)",
-      value: "$150 per hour, minimum charge $150"
-    },
-    {
-      label: "Removal of personal items / rubbish left behind",
-      value: "$250 per hour, minimum charge $250"
-    },
     {
       label: "Late checkout (still occupying after midnight on vacate date)",
       value: `Full day rent (${formatMoney2(dailyRent)} - one-seventh of the agreed weekly rent)`

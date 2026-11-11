@@ -920,7 +920,7 @@ function LicenceOccupyDocument({
   const footerText = headerWatermark ? "" : content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
-  const houseRulesLines = houseRules?.trim() ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean) : [...content.defaultHouseRules];
+  const houseRulesLines = houseRules?.trim() ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean) : [];
   const extraLines = [
     ...specialConditions.filter((c) => c.trim()),
     ...bookingNotes?.trim() ? [bookingNotes.trim()] : []
@@ -1028,10 +1028,12 @@ function LicenceOccupyDocument({
       ] }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 7, title: "Australian Consumer Law" }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.aclParagraph }),
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 8, title: "House rules" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: houseRulesIntro }),
-      content.houseRulesPrecedenceParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.houseRulesPrecedenceParagraph }) : null,
-      houseRulesLines.map((r, i) => /* @__PURE__ */ jsx2(Bullet, { children: r }, `h-${i}`)),
+      houseRulesLines.length > 0 ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 8, title: "House rules" }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: houseRulesIntro }),
+        content.houseRulesPrecedenceParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.houseRulesPrecedenceParagraph }) : null,
+        houseRulesLines.map((r, i) => /* @__PURE__ */ jsx2(Bullet, { children: r }, `h-${i}`))
+      ] }) : null,
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 9, title: "Care of room and shared areas" }),
       content.careBullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `c-${i}`))
     ] }),
@@ -1167,7 +1169,7 @@ var NSW_LICENCE_OCCUPY_CONTENT = {
     "The Principal retains keys or other means of access to the allocated room. The resident must not change locks or security devices without the Principal's prior written consent.",
     "The resident must not represent that they have sole or exclusive occupation of the premises or exclude the Principal from the allocated room or shared areas."
   ],
-  utilitiesDefault: "Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water, internet and waste services for the premises are as described on the property listing or in move-in information. Shared utilities are allocated fairly between occupants as the Principal directs.",
+  utilitiesDefault: "Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water and internet for the premises are set out in this agreement. Shared utilities are allocated fairly between occupants as the Principal directs.",
   bond: {
     scheduleLabel: "Security deposit",
     sectionTitle: "Security deposit",
