@@ -166,7 +166,7 @@ describe('runListingConfirmBooking', () => {
     })
   })
 
-  it('happy path: preflight, cancel hold, no charge at accept, bond_pending, doc gen, ready status', async () => {
+  it('happy path: preflight and deposit cancel, then returns bond_pending before document generation', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
 
@@ -181,22 +181,13 @@ describe('runListingConfirmBooking', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.status).toBe('bond_pending')
-    expect(result.listing_agreement_status).toBe('ready')
+    expect(result.listing_agreement_status).toBe('pending')
+    expect(result.scheduleFinish).toBe(true)
     expect(preflightListingTenancyDocument).toHaveBeenCalled()
-    expect(sendListingAgreementReadyEmails).toHaveBeenCalledWith(expect.anything(), baseBooking.id)
-    expect(sendListingBookingAcceptedEmails).toHaveBeenCalledWith(
-      expect.anything(),
-      baseBooking.id,
-      expect.objectContaining({
-        bond_window_expires_at: expect.any(String),
-      }),
-    )
-    expect(setListingAgreementStatus).toHaveBeenCalledWith(
-      expect.anything(),
-      baseBooking.id,
-      'ready',
-      null,
-    )
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
+    expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
+    expect(sendListingBookingAcceptedEmails).not.toHaveBeenCalled()
+    expect(setListingAgreementStatus).not.toHaveBeenCalled()
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
     expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
     expect(admin.from).toHaveBeenCalledWith('booking_events')
@@ -228,7 +219,7 @@ describe('runListingConfirmBooking', () => {
     expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
   })
 
-  it('doc-gen ok:false sets failed status, no agreement-ready email', async () => {
+  it('returns before document generation even when generation would fail', async () => {
     vi.mocked(triggerListingDocumentGeneration).mockResolvedValueOnce({
       ok: false,
       status: 0,
@@ -248,15 +239,12 @@ describe('runListingConfirmBooking', () => {
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.listing_agreement_status).toBe('failed')
-    expect(setListingAgreementStatus).toHaveBeenCalledWith(
-      expect.anything(),
-      baseBooking.id,
-      'failed',
-      expect.stringContaining('fetch failed'),
-    )
+    expect(result.listing_agreement_status).toBe('pending')
+    expect(result.scheduleFinish).toBe(true)
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
+    expect(setListingAgreementStatus).not.toHaveBeenCalled()
     expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
-    expect(sendListingBookingAcceptedEmails).toHaveBeenCalled()
+    expect(sendListingBookingAcceptedEmails).not.toHaveBeenCalled()
   })
 
   it('fee-exempt landlord: skips listing fee charge', async () => {
@@ -333,11 +321,11 @@ describe('runListingConfirmBooking', () => {
     expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
   })
 
-  it('confirm Listing triggers document generation with signing at accept (defer_signing=false)', async () => {
+  it('accept responds before document generation and emails', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
 
-    await runListingConfirmBooking({
+    const result = await runListingConfirmBooking({
       stripe: stripe as never,
       admin: admin as never,
       landlord,
@@ -345,12 +333,12 @@ describe('runListingConfirmBooking', () => {
       origin: '*',
     })
 
-    expect(triggerListingDocumentGeneration).toHaveBeenCalledWith(
-      expect.objectContaining({
-        bookingId: baseBooking.id,
-        deferSigning: false,
-      }),
-    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.scheduleFinish).toBe(true)
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
+    expect(sendListingBookingAcceptedEmails).not.toHaveBeenCalled()
+    expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
   })
 
   it('accepts without charging when the saved card would have been declined', async () => {
@@ -469,6 +457,8 @@ describe('runListingConfirmBooking', () => {
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.idempotent).toBe(true)
+    expect(r.scheduleFinish).toBe(false)
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
   })
 
   const qldRoomingBooking = {

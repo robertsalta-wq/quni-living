@@ -9,7 +9,6 @@ type Props = {
   propertyAddress: string
   bondAmountAud: number | null
   bondDeadlineIso: string | null
-  listingFeeDisplay: string
   bondObligations?: ListingBondPaymentLandlordObligations | null
   agreementBondLine?: string | null
   confirmPhrase?: 'confirm once lodged' | 'confirm once received' | null
@@ -29,7 +28,6 @@ export default function LandlordListingAcceptedSummary({
   propertyAddress,
   bondAmountAud,
   bondDeadlineIso,
-  listingFeeDisplay,
   bondObligations = null,
   agreementBondLine = null,
   confirmPhrase = null,
@@ -64,7 +62,7 @@ export default function LandlordListingAcceptedSummary({
           </p>
           {justAccepted && (
             <p className="mt-2 text-sm text-admin-success-fg leading-relaxed">
-              We&apos;ve emailed you and the renter with the same summary below.
+              The agreement is on its way to both of you to sign.
             </p>
           )}
         </div>
@@ -85,10 +83,8 @@ export default function LandlordListingAcceptedSummary({
             ✓
           </span>
           <span>
-            <span className="font-semibold">Listing fee ({listingFeeDisplay}):</span> Charged to your saved card. This
-            includes your state-appropriate{' '}
-            <span className="font-semibold">tenancy agreement</span> - both parties should receive a Quni signing
-            email now (or use the signing link on this page).
+            <span className="font-semibold">Booking accepted.</span> The agreement is on its way to both of you to
+            sign. You can also sign from this page once it is ready.
           </span>
         </li>
         <li className="flex gap-2">
@@ -96,34 +92,26 @@ export default function LandlordListingAcceptedSummary({
             ✓
           </span>
           <span>
-            <span className="font-semibold">Bond ({bondLine}):</span>{' '}
+            <span className="font-semibold">Quni lease fee:</span> Charged only once everyone has signed. Nothing is
+            charged for accepting.
+          </span>
+        </li>
+        <li className="flex gap-2">
+          <span className="text-admin-success font-bold shrink-0" aria-hidden>
+            ✓
+          </span>
+          <span>
+            <span className="font-semibold">Next step is the bond ({bondLine}).</span>{' '}
             {agreementBondLine
-              ? `${agreementBondLine}${confirmPhrase ? ` ${confirmPhrase[0].toUpperCase()}${confirmPhrase.slice(1)} on Quni before the deadline.` : ''}`
+              ? agreementBondLine
               : bondObligations
-                ? `Offer the renter the state bond authority route first, or accept payment to you - see obligations below. Quni does not hold bond.`
-                : 'Bond follows the agreement for this booking.'}
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span className="text-admin-success font-bold shrink-0" aria-hidden>
-            ✓
-          </span>
-          <span>
-            <span className="font-semibold">Deadline:</span>{' '}
+                ? 'Offer the renter the state bond authority route first, or accept payment to you. See the obligations below. Quni does not hold bond.'
+                : 'Bond follows the agreement for this booking.'}{' '}
             {confirmPhrase
               ? `${confirmPhrase[0].toUpperCase()}${confirmPhrase.slice(1)}`
               : 'Confirm'}{' '}
-            on Quni before{' '}
-            <span className="font-semibold">{formatBondDeadline(bondDeadlineIso)}</span> so the booking stays active.
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span className="text-admin-success font-bold shrink-0" aria-hidden>
-            ✓
-          </span>
-          <span>
-            <span className="font-semibold">Renter deposit:</span> The holding deposit on Quni has been released back to
-            the renter.
+            on Quni before <span className="font-semibold">{formatBondDeadline(bondDeadlineIso)}</span> so the booking
+            stays active.
           </span>
         </li>
       </ul>

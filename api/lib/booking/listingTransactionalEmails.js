@@ -5,6 +5,7 @@
  */
 import { sendEmail } from '../sendEmail.js'
 import { sendBookingEmail } from './sendBookingEmail.js'
+import { listingEmailAttemptExists } from './listingEmailAttempt.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
@@ -293,6 +294,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
           bookingReference: bookingRef,
         }),
       )
+      if (await listingEmailAttemptExists(admin, bookingId, 'listing_booking_accepted_renter')) return
       await sendBookingEmail(admin, {
         bookingId,
         templateKey: 'listing_booking_accepted_renter',
@@ -322,7 +324,18 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         property_state: ctx.propertyState,
         review_url: markBond,
       })
-      await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })
+      if (await listingEmailAttemptExists(admin, bookingId, 'listing_booking_accepted_landlord')) return
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_booking_accepted_landlord',
+        to: ctx.landlordEmail,
+        subject: t.subject,
+        html: t.html,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+        deviceCtx,
+      })
     }
 
     await Promise.all([sendRenter(), sendLl()])
@@ -354,7 +367,17 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
         sign_agreement_url: studentDash,
         student_dashboard_url: studentDash,
       })
-      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+      if (await listingEmailAttemptExists(admin, bookingId, 'listing_agreement_ready_renter')) return
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_agreement_ready_renter',
+        to: ctx.studentEmail,
+        subject: t.subject,
+        html: t.html,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+      })
     }
 
     const sendLl = async () => {
@@ -366,7 +389,17 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
         review_url: reviewUrl,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
       })
-      await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })
+      if (await listingEmailAttemptExists(admin, bookingId, 'listing_agreement_ready_landlord')) return
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_agreement_ready_landlord',
+        to: ctx.landlordEmail,
+        subject: t.subject,
+        html: t.html,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+      })
     }
 
     await Promise.all([sendRenter(), sendLl()])

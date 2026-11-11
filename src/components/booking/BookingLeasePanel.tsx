@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { type LeaseDocState } from '../../lib/leaseState'
@@ -77,10 +77,11 @@ export default function BookingLeasePanel({
   const [prepareError, setPrepareError] = useState<string | null>(null)
   const [regenerateBusy, setRegenerateBusy] = useState(false)
   const [regenerateError, setRegenerateError] = useState<string | null>(null)
+  const finishRequested = useRef(false)
 
-  const fetchState = useCallback(async () => {
+  const fetchState = useCallback(async (opts?: { silent?: boolean }) => {
     if (!bookingId) return
-    setLoading(true)
+    if (!opts?.silent) setLoading(true)
     setError(null)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -113,6 +114,51 @@ export default function BookingLeasePanel({
   useEffect(() => {
     void fetchState()
   }, [fetchState, refreshKey])
+
+  useEffect(() => {
+    finishRequested.current = false
+  }, [bookingId])
+
+  useEffect(() => {
+    if (data?.state !== 'agreement_preparing' || !bookingId) return
+    let cancelled = false
+
+    if (!finishRequested.current) {
+      finishRequested.current = true
+      void (async () => {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession()
+          const token = sessionData.session?.access_token
+          if (!token || cancelled) return
+          await fetch(apiUrl('/api/booking-finish-listing-acceptance'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ bookingId }),
+          })
+        } catch {
+          finishRequested.current = false
+        }
+        if (!cancelled) await fetchState({ silent: true })
+      })()
+    }
+
+    const started = Date.now()
+    const timer = window.setInterval(() => {
+      if (Date.now() - started > 60_000) {
+        window.clearInterval(timer)
+        return
+      }
+      void fetchState({ silent: true })
+    }, 8000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [bookingId, data?.state, fetchState])
 
   const prepareAgreement = useCallback(async () => {
     if (!bookingId || !allowPrepareRetry) return

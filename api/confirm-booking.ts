@@ -3,6 +3,11 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody, requestContextFromNodeRequest } from './lib/nodeHandler.js'
 import { runListingConfirmBooking } from './lib/booking/confirmListing.js'
+import {
+  listingAgreementFinishPending,
+  runFinishListingAcceptance,
+  scheduleListingAcceptanceFinish,
+} from './lib/booking/finishListingAcceptance.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import {
   resolveEffectiveConfirmTier,
@@ -114,7 +119,8 @@ export default async function handler(req, res) {
         stripe_subscription_id,
         stripe_subscription_status,
         bond_window_expires_at,
-        confirmed_at
+        confirmed_at,
+        listing_agreement_status
       `,
       )
       .eq('id', bookingId)
@@ -128,7 +134,20 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'Forbidden' }, 403, origin)
     }
 
+    const scheduleListingFinish = () => {
+      const tier = bookingLite.service_tier_final
+      if (tier && tier !== 'listing') return
+      if (!listingAgreementFinishPending(bookingLite.listing_agreement_status)) return
+      scheduleListingAcceptanceFinish(() =>
+        runFinishListingAcceptance(admin, {
+          bookingId,
+          deviceCtx: requestContextFromNodeRequest(req),
+        }),
+      )
+    }
+
     if (bookingLite.status === 'bond_pending') {
+      scheduleListingFinish()
       return corsJson(
         res,
         {
@@ -146,6 +165,7 @@ export default async function handler(req, res) {
     }
 
     if (bookingLite.status === 'confirmed' || bookingLite.status === 'active') {
+      scheduleListingFinish()
       return corsJson(
         res,
         {
@@ -288,6 +308,15 @@ export default async function handler(req, res) {
 
       if (!listingResult.ok) {
         return corsJson(res, listingResult.body, listingResult.status, origin)
+      }
+
+      if (listingResult.scheduleFinish) {
+        scheduleListingAcceptanceFinish(() =>
+          runFinishListingAcceptance(admin, {
+            bookingId,
+            deviceCtx: requestContextFromNodeRequest(req),
+          }),
+        )
       }
 
       return corsJson(

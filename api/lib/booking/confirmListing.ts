@@ -1,17 +1,12 @@
 import type Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../src/lib/database.types.js'
-import {
-  sendListingAgreementReadyEmails,
-  sendListingBookingAcceptedEmails,
-} from './listingTransactionalEmails.js'
-import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
+import { listingAgreementFinishPending } from './finishListingAcceptance.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 import { unpaidLeaseChargeBookingId } from '../billing/listingLeaseCharge.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
-import { setListingAgreementStatus } from './listingAgreementStatus.js'
 import { propertyPayoutDetailsComplete, propertyPayoutDetailsQldRoomingComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import {
   isQldRoomingArrangement,
@@ -28,6 +23,8 @@ type ConfirmOk = {
   service_tier_final: 'listing'
   listing_fee_payment_intent_id?: string | null
   listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
+  /** PDF, DocuSeal and emails run after the HTTP response. */
+  scheduleFinish: boolean
 }
 
 function jsonFail(status: number, body: Record<string, unknown>): ConfirmFail {
@@ -47,13 +44,6 @@ function cancellationTolerated(err: unknown): boolean {
     msg.includes('has succeeded') ||
     msg.includes('cannot be canceled')
   )
-}
-
-function docGenSucceededForSigning(
-  gen: Awaited<ReturnType<typeof triggerListingDocumentGeneration>>,
-): boolean {
-  if (!gen.ok || gen.skipped) return false
-  return Boolean(gen.docusealSubmissionId) || Boolean(gen.documentId)
 }
 
 export type RunListingConfirmBookingParams = {
@@ -267,13 +257,15 @@ export async function runListingConfirmBooking(
       } catch (e) {
         console.error('[confirm-listing] conversation unlock (idempotent)', e)
       }
+      const agreementStatus = again.listing_agreement_status ?? null
       return {
         ok: true,
         idempotent: true,
         status: 'bond_pending',
         bond_window_expires_at: again.bond_window_expires_at ?? bondWindow,
         service_tier_final: 'listing',
-        listing_agreement_status: again.listing_agreement_status ?? null,
+        listing_agreement_status: agreementStatus,
+        scheduleFinish: listingAgreementFinishPending(agreementStatus),
       }
     }
     return jsonFail(409, {
@@ -304,56 +296,6 @@ export async function runListingConfirmBooking(
     console.error('[confirm-listing] booking.confirmed event', evErr)
   }
 
-  let listingAgreementStatus: 'pending' | 'ready' | 'failed' = 'pending'
-
-  const gen = await triggerListingDocumentGeneration({
-    admin,
-    bookingId: booking.id,
-    deferSigning: false,
-  })
-
-  if (!gen.ok) {
-    listingAgreementStatus = 'failed'
-    const errMsg = [gen.error, gen.detail].filter(Boolean).join(': ')
-    await setListingAgreementStatus(admin, booking.id, 'failed', errMsg)
-    console.error('[confirm-listing] document generation failed', gen)
-  } else if (gen.skipped) {
-    listingAgreementStatus = 'failed'
-    await setListingAgreementStatus(
-      admin,
-      booking.id,
-      'failed',
-      `Skipped: ${gen.reason ?? 'unknown'}`,
-    )
-    console.error('[confirm-listing] document generation skipped unexpectedly', gen)
-  } else if (docGenSucceededForSigning(gen)) {
-    listingAgreementStatus = 'ready'
-    await setListingAgreementStatus(admin, booking.id, 'ready', null)
-    try {
-      await sendListingAgreementReadyEmails(admin, booking.id)
-    } catch (e) {
-      console.error('[confirm-listing] agreement-ready emails', e)
-    }
-  } else {
-    listingAgreementStatus = 'failed'
-    await setListingAgreementStatus(
-      admin,
-      booking.id,
-      'failed',
-      'Agreement PDF created but signing was not dispatched',
-    )
-    console.error('[confirm-listing] document generation incomplete (no signing)', gen)
-  }
-
-  try {
-    await sendListingBookingAcceptedEmails(admin, booking.id, {
-      bond_window_expires_at: bondWindow,
-      deviceCtx,
-    })
-  } catch (e) {
-    console.error('[confirm-listing] acceptance emails', e)
-  }
-
   try {
     await unlockConversationOnBookingConfirmed(admin, booking.id, { landlordUserId })
   } catch (e) {
@@ -367,6 +309,7 @@ export async function runListingConfirmBooking(
     bond_window_expires_at: bondWindow,
     service_tier_final: 'listing',
     listing_fee_payment_intent_id: null,
-    listing_agreement_status: listingAgreementStatus,
+    listing_agreement_status: 'pending',
+    scheduleFinish: true,
   }
 }
