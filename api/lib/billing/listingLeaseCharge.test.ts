@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { sendEmail } from '../sendEmail.js'
 
 const retrieve = vi.fn()
 const search = vi.fn()
@@ -115,6 +116,7 @@ describe('settleStuckPendingLeaseCharges', () => {
       deleted: false,
       invoice_settings: { default_payment_method: 'pm_test' },
     })
+    vi.mocked(sendEmail).mockClear()
   })
 
   it('settles a stuck pending row from the existing PaymentIntent and does not charge again', async () => {
@@ -179,5 +181,130 @@ describe('settleStuckPendingLeaseCharges', () => {
 
     expect(result.settled).toBe(0)
     expect(create).not.toHaveBeenCalled()
+  })
+})
+
+function retryAdmin(rows: Record<string, unknown>[]) {
+  const updates: Record<string, unknown>[] = []
+  const admin = {
+    from(table: string) {
+      if (table === 'listing_lease_charges') {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  lt() {
+                    return {
+                      lte() {
+                        return { limit: async () => ({ data: rows, error: null }) }
+                      },
+                    }
+                  },
+                  single: async () => ({ data: null, error: null }),
+                }
+              },
+            }
+          },
+          update(patch: Record<string, unknown>) {
+            updates.push(patch)
+            return { eq: async () => ({ error: null }) }
+          },
+        }
+      }
+      if (table === 'bookings') {
+        return {
+          select() {
+            return { eq: () => ({ maybeSingle: async () => ({ data: bookingRow(), error: null }) }) }
+          },
+        }
+      }
+      return {
+        select() {
+          return {
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { email: 'landlord@example.com', stripe_customer_id: 'cus_test', fee_exempt: false },
+                error: null,
+              }),
+            }),
+          }
+        },
+      }
+    },
+    storage: {
+      from() {
+        return { upload: async () => ({ error: null }) }
+      },
+    },
+  }
+  return { admin, updates }
+}
+
+describe('retryDueLeaseCharges', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_lease'
+    retrieve.mockReset()
+    search.mockReset()
+    create.mockReset()
+    customersRetrieve.mockReset()
+    vi.mocked(sendEmail).mockClear()
+    customersRetrieve.mockResolvedValue({
+      deleted: false,
+      invoice_settings: { default_payment_method: 'pm_test' },
+    })
+  })
+
+  it('emails the landlord and keeps the PaymentIntent when the bank asks for authentication', async () => {
+    const { retryDueLeaseCharges } = await import('./listingLeaseCharge.js')
+    search.mockResolvedValue({ data: [] })
+    create.mockRejectedValue(
+      Object.assign(new Error('authentication_required'), {
+        payment_intent: { id: 'pi_auth', status: 'requires_action', amount: 3300, currency: 'aud' },
+      }),
+    )
+    const { admin, updates } = retryAdmin([
+      {
+        id: CHARGE_ID,
+        booking_id: BOOKING_ID,
+        charged_cents: 3300,
+        attempt_count: 1,
+        stripe_payment_intent_id: null,
+      },
+    ])
+
+    await retryDueLeaseCharges(admin as never, new Date('2026-11-10T05:00:00.000Z'))
+
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(updates.some((patch) => patch.status === 'failed' && patch.stripe_payment_intent_id === 'pi_auth')).toBe(true)
+    expect(sendEmail).toHaveBeenCalled()
+    const html = String(vi.mocked(sendEmail).mock.calls[0]?.[0]?.html)
+    expect(html).toContain('Pay now')
+    expect(html).toContain('The lease is still signed and valid')
+    expect(html).toContain('$33.00')
+    expect(html).toContain('Room, 1 Test St, Ryde, NSW')
+    expect(html.toLowerCase()).not.toContain('collects rent')
+  })
+
+  it('does not create a second PaymentIntent when one already needs authentication', async () => {
+    const { retryDueLeaseCharges } = await import('./listingLeaseCharge.js')
+    search.mockResolvedValue({
+      data: [{ id: 'pi_open', status: 'requires_action', amount: 3300, currency: 'aud' }],
+    })
+    const { admin, updates } = retryAdmin([
+      {
+        id: CHARGE_ID,
+        booking_id: BOOKING_ID,
+        charged_cents: 3300,
+        attempt_count: 1,
+        stripe_payment_intent_id: null,
+      },
+    ])
+
+    await retryDueLeaseCharges(admin as never, new Date('2026-11-10T05:00:00.000Z'))
+
+    expect(create).not.toHaveBeenCalled()
+    expect(updates.some((patch) => patch.stripe_payment_intent_id === 'pi_open' && patch.status === 'failed')).toBe(true)
+    expect(String(vi.mocked(sendEmail).mock.calls[0]?.[0]?.html)).toContain('Pay now')
   })
 })

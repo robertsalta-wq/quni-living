@@ -4,6 +4,7 @@ import type { Database } from '../../../src/lib/database.types.js'
 import {
   addCalendarMonths,
   amountsAfterCredit,
+  formatAudFromCents,
   quoteForLeaseLength,
   quoteForMonths,
   unusedWholeMonths,
@@ -37,12 +38,13 @@ function bookingRef(id: string): string {
 }
 
 /**
- * True when a lease fee has failed its retry. A missing table does not block accepts.
+ * Booking whose lease fee has failed its retry. A missing table does not block accepts.
+ * Null means the landlord can accept another booking.
  */
-export async function landlordHasUnpaidLeaseCharge(admin: Admin, landlordId: string): Promise<boolean> {
+export async function unpaidLeaseChargeBookingId(admin: Admin, landlordId: string): Promise<string | null> {
   const { data, error } = await admin
     .from('listing_lease_charges')
-    .select('id')
+    .select('booking_id')
     .eq('landlord_id', landlordId)
     .eq('status', 'failed')
     .gte('attempt_count', 2)
@@ -50,9 +52,15 @@ export async function landlordHasUnpaidLeaseCharge(admin: Admin, landlordId: str
 
   if (error) {
     console.error('[lease-charge] unpaid lookup', error)
-    return false
+    return null
   }
-  return (data ?? []).length > 0
+  const bookingId = data?.[0]?.booking_id
+  return typeof bookingId === 'string' && bookingId ? bookingId : null
+}
+
+/** True when a lease fee has failed its retry. A missing table does not block accepts. */
+export async function landlordHasUnpaidLeaseCharge(admin: Admin, landlordId: string): Promise<boolean> {
+  return (await unpaidLeaseChargeBookingId(admin, landlordId)) != null
 }
 
 type LoadedBooking = {
@@ -246,6 +254,103 @@ async function issueInvoice(admin: Admin, booking: LoadedBooking, chargeId: stri
   await emailInvoice({ admin, booking, chargeId, pdf, totalCents: row.total_cents, repeatsEveryThreeMonths })
 }
 
+function publicSiteOrigin(): string {
+  const raw = (process.env.SITE_URL || process.env.PUBLIC_SITE_URL || process.env.VITE_SITE_URL || 'https://quni.com.au')
+    .trim()
+    .replace(/\/$/, '')
+  return raw || 'https://quni.com.au'
+}
+
+function payNowHref(bookingId: string): string {
+  return `${publicSiteOrigin()}/landlord/bookings/${encodeURIComponent(bookingId)}/review#lease-fee`
+}
+
+function paymentIntentFromStripeError(error: unknown): Stripe.PaymentIntent | null {
+  if (!error || typeof error !== 'object') return null
+  const record = error as { payment_intent?: unknown; raw?: { payment_intent?: unknown } }
+  const candidate = record.payment_intent ?? record.raw?.payment_intent
+  if (!candidate || typeof candidate !== 'object') return null
+  const pi = candidate as Stripe.PaymentIntent
+  return typeof pi.id === 'string' ? pi : null
+}
+
+/** Landlord-facing failure. A missing mailbox or email provider must not undo the charge update. */
+async function emailLeaseChargeFailed(booking: LoadedBooking, chargedCents: number): Promise<void> {
+  const to = booking.landlordEmail.trim()
+  if (!to.includes('@')) return
+  const amount = formatAudFromCents(chargedCents)
+  const href = payNowHref(booking.id)
+  const room = escapeHtml(booking.roomLine.slice(0, 180))
+  const ref = escapeHtml(bookingRef(booking.id))
+  const html = `
+    <h2>Pay the Quni lease fee</h2>
+    <p>The lease fee for <strong>${room}</strong> (booking ${ref}) did not go through.</p>
+    <p><strong>Amount (incl. GST):</strong> ${escapeHtml(amount)}</p>
+    <p>The lease is still signed and valid. This charge is only the Quni lease fee. Rent is paid to you, not to Quni.</p>
+    <p><a href="${escapeHtml(href)}">Pay now</a></p>
+  `
+  try {
+    await sendEmail({
+      to,
+      subject: 'Pay the Quni lease fee',
+      html,
+    })
+  } catch (e) {
+    console.error('[lease-charge] failure email', booking.id, e)
+  }
+}
+
+async function markLeaseChargeFailed(args: {
+  admin: Admin
+  booking: LoadedBooking
+  chargeId: string
+  chargedCents: number
+  attempt: number
+  reason: string
+  paymentIntentId?: string | null
+  email: boolean
+}): Promise<'failed'> {
+  await args.admin
+    .from('listing_lease_charges')
+    .update({
+      status: 'failed',
+      ...(args.paymentIntentId ? { stripe_payment_intent_id: args.paymentIntentId } : {}),
+      failure_reason: args.reason.slice(0, 500),
+      attempt_count: args.attempt,
+      next_retry_at: args.attempt >= 2 ? null : plusRetry(),
+    })
+    .eq('id', args.chargeId)
+  if (args.email) await emailLeaseChargeFailed(args.booking, args.chargedCents)
+  return 'failed'
+}
+
+async function markLeaseChargePaid(args: {
+  admin: Admin
+  chargeId: string
+  attempt: number
+  paymentIntentId: string | null
+}): Promise<void> {
+  await args.admin
+    .from('listing_lease_charges')
+    .update({
+      status: 'succeeded',
+      stripe_payment_intent_id: args.paymentIntentId,
+      charged_at: new Date().toISOString(),
+      attempt_count: args.attempt,
+      next_retry_at: null,
+      failure_reason: null,
+    })
+    .eq('id', args.chargeId)
+}
+
+const OPEN_PAYMENT_STATUSES = new Set<Stripe.PaymentIntent.Status>([
+  'requires_payment_method',
+  'requires_confirmation',
+  'requires_action',
+  'processing',
+  'requires_capture',
+])
+
 async function collectStripe(args: {
   admin: Admin
   stripe: Stripe | null
@@ -253,32 +358,126 @@ async function collectStripe(args: {
   chargeId: string
   chargedCents: number
   attempt: number
+  stripePaymentIntentId?: string | null
 }): Promise<'succeeded' | 'failed'> {
   if (args.chargedCents <= 0) {
-    await args.admin
-      .from('listing_lease_charges')
-      .update({
-        status: 'succeeded',
-        charged_at: new Date().toISOString(),
-        attempt_count: args.attempt,
-        next_retry_at: null,
-        failure_reason: null,
-      })
-      .eq('id', args.chargeId)
+    await markLeaseChargePaid({
+      admin: args.admin,
+      chargeId: args.chargeId,
+      attempt: args.attempt,
+      paymentIntentId: null,
+    })
     return 'succeeded'
   }
 
   if (!args.stripe) {
+    await markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: 'stripe_not_configured',
+      email: false,
+    })
+    return 'failed'
+  }
+
+  const existing = await findExistingLeasePaymentIntent(args.stripe, {
+    id: args.chargeId,
+    booking_id: args.booking.id,
+    charged_cents: args.chargedCents,
+    attempt_count: args.attempt,
+    stripe_payment_intent_id: args.stripePaymentIntentId ?? null,
+  })
+  if (existing === 'unknown') return 'failed'
+
+  const sameAmount =
+    existing != null && existing.currency === 'aud' && existing.amount === args.chargedCents
+
+  if (existing && sameAmount && existing.status === 'succeeded') {
+    await markLeaseChargePaid({
+      admin: args.admin,
+      chargeId: args.chargeId,
+      attempt: args.attempt,
+      paymentIntentId: existing.id,
+    })
+    return 'succeeded'
+  }
+
+  if (existing && (existing.status === 'processing' || existing.status === 'requires_capture')) {
     await args.admin
       .from('listing_lease_charges')
-      .update({
-        status: 'failed',
-        failure_reason: 'stripe_not_configured',
-        attempt_count: args.attempt,
-        next_retry_at: args.attempt >= 2 ? null : plusRetry(),
-      })
+      .update({ stripe_payment_intent_id: existing.id })
       .eq('id', args.chargeId)
     return 'failed'
+  }
+
+  const reusable = Boolean(existing && sameAmount && OPEN_PAYMENT_STATUSES.has(existing.status))
+
+  async function finishCreated(pi: Stripe.PaymentIntent): Promise<'succeeded' | 'failed'> {
+    if (pi.status === 'succeeded') {
+      await markLeaseChargePaid({
+        admin: args.admin,
+        chargeId: args.chargeId,
+        attempt: args.attempt,
+        paymentIntentId: pi.id,
+      })
+      return 'succeeded'
+    }
+    return markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: `status:${pi.status}`,
+      paymentIntentId: pi.id,
+      email: true,
+    })
+  }
+
+  if (reusable && existing && existing.status === 'requires_payment_method') {
+    const pmId = args.booking.stripeCustomerId
+      ? await defaultPaymentMethodId(args.stripe, args.booking.stripeCustomerId)
+      : null
+    if (pmId) {
+      try {
+        const confirmed = await args.stripe.paymentIntents.confirm(
+          existing.id,
+          { payment_method: pmId, off_session: true },
+          { idempotencyKey: `lease-charge-${args.chargeId}-confirm-a${args.attempt}` },
+        )
+        return finishCreated(confirmed)
+      } catch (e) {
+        console.error('[lease-charge] confirm existing', args.chargeId, e)
+        const fromError = paymentIntentFromStripeError(e)
+        const message = e instanceof Error ? e.message.slice(0, 500) : 'charge_failed'
+        return markLeaseChargeFailed({
+          admin: args.admin,
+          booking: args.booking,
+          chargeId: args.chargeId,
+          chargedCents: args.chargedCents,
+          attempt: args.attempt,
+          reason: message,
+          paymentIntentId: fromError?.id || existing.id,
+          email: true,
+        })
+      }
+    }
+  }
+
+  if (reusable && existing) {
+    return markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: `status:${existing.status}`,
+      paymentIntentId: existing.id,
+      email: true,
+    })
   }
 
   const pmId = args.booking.stripeCustomerId
@@ -286,16 +485,28 @@ async function collectStripe(args: {
     : null
 
   if (!args.booking.stripeCustomerId || !pmId) {
-    await args.admin
-      .from('listing_lease_charges')
-      .update({
-        status: 'failed',
-        failure_reason: 'no_payment_method',
-        attempt_count: args.attempt,
-        next_retry_at: args.attempt >= 2 ? null : plusRetry(),
-      })
-      .eq('id', args.chargeId)
-    return 'failed'
+    return markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: 'no_payment_method',
+      email: true,
+    })
+  }
+
+  if (existing && existing.status !== 'canceled' && OPEN_PAYMENT_STATUSES.has(existing.status)) {
+    return markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: `status:${existing.status}`,
+      paymentIntentId: existing.id,
+      email: true,
+    })
   }
 
   try {
@@ -316,44 +527,21 @@ async function collectStripe(args: {
       },
       { idempotencyKey: `lease-charge-${args.chargeId}-a${args.attempt}` },
     )
-    if (pi.status !== 'succeeded') {
-      await args.admin
-        .from('listing_lease_charges')
-        .update({
-          status: 'failed',
-          stripe_payment_intent_id: pi.id,
-          failure_reason: `status:${pi.status}`,
-          attempt_count: args.attempt,
-          next_retry_at: args.attempt >= 2 ? null : plusRetry(),
-        })
-        .eq('id', args.chargeId)
-      return 'failed'
-    }
-    await args.admin
-      .from('listing_lease_charges')
-      .update({
-        status: 'succeeded',
-        stripe_payment_intent_id: pi.id,
-        charged_at: new Date().toISOString(),
-        attempt_count: args.attempt,
-        next_retry_at: null,
-        failure_reason: null,
-      })
-      .eq('id', args.chargeId)
-    return 'succeeded'
+    return finishCreated(pi)
   } catch (e) {
+    const fromError = paymentIntentFromStripeError(e)
     const message = e instanceof Error ? e.message.slice(0, 500) : 'charge_failed'
     console.error('[lease-charge] stripe', args.chargeId, e)
-    await args.admin
-      .from('listing_lease_charges')
-      .update({
-        status: 'failed',
-        failure_reason: message,
-        attempt_count: args.attempt,
-        next_retry_at: args.attempt >= 2 ? null : plusRetry(),
-      })
-      .eq('id', args.chargeId)
-    return 'failed'
+    return markLeaseChargeFailed({
+      admin: args.admin,
+      booking: args.booking,
+      chargeId: args.chargeId,
+      chargedCents: args.chargedCents,
+      attempt: args.attempt,
+      reason: message,
+      paymentIntentId: fromError?.id,
+      email: true,
+    })
   }
 }
 
@@ -653,6 +841,7 @@ export async function settleStuckPendingLeaseCharges(
           next_retry_at: null,
         })
         .eq('id', row.id)
+      await emailLeaseChargeFailed(booking, row.charged_cents)
       settled += 1
       continue
     }
@@ -665,6 +854,7 @@ export async function settleStuckPendingLeaseCharges(
       chargeId: row.id,
       chargedCents: row.charged_cents,
       attempt,
+      stripePaymentIntentId: existing?.id ?? row.stripe_payment_intent_id,
     })
     if (outcome === 'succeeded') {
       const { data: fresh } = await admin
@@ -684,7 +874,7 @@ export async function retryDueLeaseCharges(admin: Admin, now = new Date()): Prom
   if (!stripe) return { retried: 0 }
   const { data, error } = await admin
     .from('listing_lease_charges')
-    .select('id, booking_id, charged_cents, attempt_count')
+    .select('id, booking_id, charged_cents, attempt_count, stripe_payment_intent_id')
     .eq('status', 'failed')
     .lt('attempt_count', 2)
     .lte('next_retry_at', now.toISOString())
@@ -706,6 +896,7 @@ export async function retryDueLeaseCharges(admin: Admin, now = new Date()): Prom
       chargeId: row.id,
       chargedCents: row.charged_cents,
       attempt: Math.max(2, row.attempt_count + 1),
+      stripePaymentIntentId: row.stripe_payment_intent_id,
     })
     if (outcome === 'succeeded') {
       const { data: fresh } = await admin
@@ -717,6 +908,212 @@ export async function retryDueLeaseCharges(admin: Admin, now = new Date()): Prom
     }
   }
   return { retried }
+}
+
+export type LeaseChargePayResult =
+  | { ok: true; alreadyPaid: true }
+  | { ok: true; processing: true }
+  | { ok: true; clientSecret: string; paymentIntentId: string; paymentIntentStatus: Stripe.PaymentIntent.Status }
+  | { ok: false; status: number; error: string }
+
+type ChargePayRow = {
+  id: string
+  booking_id: string
+  landlord_id: string
+  charged_cents: number
+  status: Database['public']['Tables']['listing_lease_charges']['Row']['status']
+  attempt_count: number
+  stripe_payment_intent_id: string | null
+}
+
+function payError(status: number, error: string): LeaseChargePayResult {
+  return { ok: false, status, error }
+}
+
+async function loadChargeForLandlord(
+  admin: Admin,
+  args: { landlordId: string; bookingId: string; chargeId: string },
+): Promise<ChargePayRow | 'missing'> {
+  const { data, error } = await admin
+    .from('listing_lease_charges')
+    .select('id, booking_id, landlord_id, charged_cents, status, attempt_count, stripe_payment_intent_id')
+    .eq('id', args.chargeId)
+    .maybeSingle()
+  if (error || !data) return 'missing'
+  if (data.booking_id !== args.bookingId || data.landlord_id !== args.landlordId) return 'missing'
+  return data
+}
+
+function paymentIntentIsPayable(pi: Stripe.PaymentIntent, chargedCents: number): boolean {
+  return (
+    pi.currency === 'aud' &&
+    pi.amount === chargedCents &&
+    (pi.status === 'requires_payment_method' ||
+      pi.status === 'requires_confirmation' ||
+      pi.status === 'requires_action') &&
+    Boolean(pi.client_secret)
+  )
+}
+
+async function rememberPaymentIntent(admin: Admin, chargeId: string, paymentIntentId: string): Promise<void> {
+  await admin.from('listing_lease_charges').update({ stripe_payment_intent_id: paymentIntentId }).eq('id', chargeId)
+}
+
+async function createOnSessionLeasePayment(args: {
+  admin: Admin
+  stripe: Stripe
+  booking: LoadedBooking
+  row: ChargePayRow
+  idempotencyKey: string
+}): Promise<LeaseChargePayResult> {
+  const customer = args.booking.stripeCustomerId || undefined
+  const pi = await args.stripe.paymentIntents.create(
+    {
+      amount: args.row.charged_cents,
+      currency: 'aud',
+      ...(customer ? { customer, setup_future_usage: 'off_session' as const } : {}),
+      automatic_payment_methods: { enabled: true },
+      description: `Quni Listing lease fee - booking ${bookingRef(args.booking.id)}`,
+      metadata: {
+        booking_id: args.booking.id,
+        charge_id: args.row.id,
+        landlord_id: args.booking.landlord_id,
+      },
+    },
+    { idempotencyKey: args.idempotencyKey },
+  )
+  await rememberPaymentIntent(args.admin, args.row.id, pi.id)
+  if (!pi.client_secret) return payError(502, 'The payment could not be started.')
+  return {
+    ok: true,
+    clientSecret: pi.client_secret,
+    paymentIntentId: pi.id,
+    paymentIntentStatus: pi.status,
+  }
+}
+
+/**
+ * Start an on-session payment for an unpaid lease fee. Reuses an open PaymentIntent
+ * for this charge row. A new PaymentIntent is created only when none is open.
+ */
+export async function prepareLandlordLeaseChargePayment(
+  admin: Admin,
+  args: { landlordId: string; bookingId: string; chargeId: string; replaceCard?: boolean },
+): Promise<LeaseChargePayResult> {
+  const row = await loadChargeForLandlord(admin, args)
+  if (row === 'missing') return payError(404, 'Charge not found')
+  if (row.status === 'succeeded' || row.status === 'exempt') return { ok: true, alreadyPaid: true }
+
+  const booking = await loadBookingForCharge(admin, row.booking_id)
+  if (!booking || booking.landlord_id !== args.landlordId) return payError(404, 'Charge not found')
+
+  if (row.charged_cents <= 0) {
+    await markChargeSucceeded(admin, booking, row.id, row.stripe_payment_intent_id, Math.max(1, row.attempt_count || 1))
+    return { ok: true, alreadyPaid: true }
+  }
+
+  const stripe = stripeClient()
+  if (!stripe) return payError(500, 'Card payments are not configured.')
+
+  const existing = await findExistingLeasePaymentIntent(stripe, row)
+  if (existing === 'unknown') {
+    return payError(503, 'We could not check the existing payment. Try again in a moment.')
+  }
+
+  if (existing && existing.status === 'succeeded' && existing.amount === row.charged_cents && existing.currency === 'aud') {
+    await markChargeSucceeded(admin, booking, row.id, existing.id, Math.max(1, row.attempt_count || 1))
+    return { ok: true, alreadyPaid: true }
+  }
+
+  if (existing && (existing.status === 'processing' || existing.status === 'requires_capture')) {
+    await rememberPaymentIntent(admin, row.id, existing.id)
+    return { ok: true, processing: true }
+  }
+
+  let canceledId: string | null = null
+  let open = existing
+  if (
+    args.replaceCard &&
+    open &&
+    open.status !== 'canceled' &&
+    open.status !== 'succeeded' &&
+    open.status !== 'processing' &&
+    open.status !== 'requires_capture'
+  ) {
+    try {
+      await stripe.paymentIntents.cancel(open.id)
+    } catch (e) {
+      console.error('[lease-charge] cancel for new card', row.id, e)
+      return payError(409, 'The current payment could not be replaced. Try again in a moment.')
+    }
+    canceledId = open.id
+    open = null
+  }
+
+  if (open && paymentIntentIsPayable(open, row.charged_cents) && open.client_secret) {
+    await rememberPaymentIntent(admin, row.id, open.id)
+    return {
+      ok: true,
+      clientSecret: open.client_secret,
+      paymentIntentId: open.id,
+      paymentIntentStatus: open.status,
+    }
+  }
+
+  if (open && open.status !== 'canceled') {
+    return payError(409, 'A payment for this lease fee is already open. It cannot be charged again.')
+  }
+
+  const idempotencyKey = canceledId
+    ? `lease-charge-${row.id}-pay-after-${canceledId}`
+    : `lease-charge-${row.id}-pay`
+  try {
+    return await createOnSessionLeasePayment({ admin, stripe, booking, row, idempotencyKey })
+  } catch (e) {
+    console.error('[lease-charge] pay now', row.id, e)
+    return payError(502, 'The payment could not be started.')
+  }
+}
+
+/** Mark the same charge row paid after the landlord confirms the PaymentIntent. Sends the tax invoice once. */
+export async function completeLandlordLeaseChargePayment(
+  admin: Admin,
+  args: { landlordId: string; bookingId: string; chargeId: string; paymentIntentId: string },
+): Promise<LeaseChargePayResult> {
+  const row = await loadChargeForLandlord(admin, args)
+  if (row === 'missing') return payError(404, 'Charge not found')
+  if (row.status === 'succeeded' || row.status === 'exempt') return { ok: true, alreadyPaid: true }
+
+  const booking = await loadBookingForCharge(admin, row.booking_id)
+  if (!booking || booking.landlord_id !== args.landlordId) return payError(404, 'Charge not found')
+
+  const stripe = stripeClient()
+  if (!stripe) return payError(500, 'Card payments are not configured.')
+
+  let pi: Stripe.PaymentIntent
+  try {
+    pi = await stripe.paymentIntents.retrieve(args.paymentIntentId)
+  } catch (e) {
+    console.error('[lease-charge] pay now retrieve', row.id, e)
+    return payError(404, 'Payment not found')
+  }
+
+  if (
+    pi.metadata?.charge_id !== row.id ||
+    pi.metadata?.booking_id !== row.booking_id ||
+    pi.metadata?.landlord_id !== row.landlord_id
+  ) {
+    return payError(400, 'That payment does not belong to this lease fee.')
+  }
+  if (pi.amount !== row.charged_cents || pi.currency !== 'aud') {
+    return payError(409, 'That payment does not match this lease fee.')
+  }
+  if (pi.status !== 'succeeded') {
+    return payError(409, 'The payment has not completed yet.')
+  }
+
+  await markChargeSucceeded(admin, booking, row.id, pi.id, Math.max(1, row.attempt_count || 1))
+  return { ok: true, alreadyPaid: true }
 }
 
 async function chargeQuarter(admin: Admin, booking: LoadedBooking, kind: ChargeKind, periodStart: string): Promise<boolean> {

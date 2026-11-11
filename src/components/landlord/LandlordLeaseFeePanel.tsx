@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { formatAudFromCents } from '../../lib/pricing/leaseCharge'
+import LandlordLeaseFeePay, { completeLeaseFeePayment } from './LandlordLeaseFeePay'
 
 type ChargeRow = {
   id: string
@@ -9,6 +11,7 @@ type ChargeRow = {
   months: number
   credit_months: number
   total_cents: number
+  charged_cents: number
   status: string
   invoice_storage_path: string | null
   period_start: string
@@ -26,7 +29,12 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
   const [endedOn, setEndedOn] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const finishedReturn = useRef<string | null>(null)
   const showEarlyEnd = status === 'active' || status === 'confirmed' || status === 'bond_pending'
+  const paying = charges.find((charge) => charge.id === payingId) ?? null
 
   useEffect(() => {
     let cancelled = false
@@ -34,7 +42,9 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
       const [{ data: chargeRows }, { data: credit }] = await Promise.all([
         supabase
           .from('listing_lease_charges')
-          .select('id, kind, months, credit_months, total_cents, status, invoice_storage_path, period_start')
+          .select(
+            'id, kind, months, credit_months, total_cents, charged_cents, status, invoice_storage_path, period_start',
+          )
           .eq('booking_id', bookingId)
           .order('period_start', { ascending: true }),
         supabase.from('property_lease_credits').select('months_remaining').eq('property_id', propertyId).maybeSingle(),
@@ -46,7 +56,32 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
     return () => {
       cancelled = true
     }
-  }, [bookingId, propertyId])
+  }, [bookingId, propertyId, reloadKey])
+
+  useEffect(() => {
+    const paymentIntentId = searchParams.get('payment_intent')
+    const redirectStatus = searchParams.get('redirect_status')
+    const chargeId = searchParams.get('leaseCharge')
+    if (!paymentIntentId || redirectStatus !== 'succeeded' || !chargeId) return
+    if (finishedReturn.current === paymentIntentId) return
+    finishedReturn.current = paymentIntentId
+    void (async () => {
+      try {
+        await completeLeaseFeePayment({ bookingId, chargeId, paymentIntentId })
+        setMessage('Lease fee paid. The tax invoice is on its way.')
+        setReloadKey((n) => n + 1)
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : 'The payment could not be confirmed.')
+      } finally {
+        const next = new URLSearchParams(searchParams)
+        next.delete('payment_intent')
+        next.delete('payment_intent_client_secret')
+        next.delete('redirect_status')
+        next.delete('leaseCharge')
+        setSearchParams(next, { replace: true })
+      }
+    })()
+  }, [bookingId, searchParams, setSearchParams])
 
   async function downloadInvoice(chargeId: string) {
     const { data: sessionData } = await supabase.auth.getSession()
@@ -98,7 +133,7 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
   if (charges.length === 0 && !showEarlyEnd) return null
 
   return (
-    <section className="rounded-admin-md border border-admin-line bg-white px-4 py-4 text-sm">
+    <section id="lease-fee" className="scroll-mt-24 rounded-admin-md border border-admin-line bg-white px-4 py-4 text-sm">
       <h3 className="text-[15px] font-semibold text-admin-ink">Lease fee</h3>
       {creditMonths != null && creditMonths > 0 ? (
         <p className="mt-1 text-admin-ink-3">{creditMonths} months of credit on this room, used before the next charge.</p>
@@ -111,6 +146,15 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
               {charge.credit_months > 0 ? ` (${charge.credit_months} months credit)` : ''} ·{' '}
               {formatAudFromCents(charge.total_cents)} · {charge.status}
             </span>
+            {charge.status === 'failed' ? (
+              <button
+                type="button"
+                className="rounded-full bg-admin-coral px-4 py-2 text-sm font-semibold text-white"
+                onClick={() => setPayingId(charge.id)}
+              >
+                Pay now
+              </button>
+            ) : null}
             {charge.invoice_storage_path ? (
               <button
                 type="button"
@@ -151,6 +195,19 @@ export default function LandlordLeaseFeePanel({ bookingId, propertyId, status }:
         </form>
       ) : null}
       {message ? <p className="mt-2 text-admin-ink-3">{message}</p> : null}
+      {paying ? (
+        <LandlordLeaseFeePay
+          bookingId={bookingId}
+          chargeId={paying.id}
+          amountLabel={formatAudFromCents(paying.charged_cents || paying.total_cents)}
+          onClose={() => setPayingId(null)}
+          onPaid={() => {
+            setPayingId(null)
+            setMessage('Lease fee paid. The tax invoice is on its way.')
+            setReloadKey((n) => n + 1)
+          }}
+        />
+      ) : null}
     </section>
   )
 }

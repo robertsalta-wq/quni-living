@@ -4,6 +4,7 @@
  * Secure with Authorization: Bearer CRON_SECRET
  */
 import { createClient } from '@supabase/supabase-js'
+import { headerString } from '../lib/nodeHandler.js'
 import {
   chargeDueLeaseQuarters,
   retryDueLeaseCharges,
@@ -12,13 +13,25 @@ import {
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
+/**
+ * Vercel Node passes IncomingMessage headers (`authorization` string).
+ * A Fetch Request has headers.get. Accept both so the job is not tied to one shape.
+ */
+function authorizationHeader(request) {
+  const headers = request && request.headers
+  if (headers && typeof headers.get === 'function') {
+    return headers.get('authorization') || ''
+  }
+  return headerString(headers || {}, 'authorization')
+}
+
 export default async function handler(request) {
   if (request.method !== 'GET' && request.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
 
   const secret = process.env.CRON_SECRET
-  const auth = request.headers.get('authorization') || ''
+  const auth = authorizationHeader(request)
   const token = auth.replace(/^Bearer\s+/i, '').trim()
   if (!secret || token !== secret) {
     return new Response('Unauthorized', { status: 401 })

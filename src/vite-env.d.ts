@@ -5,6 +5,11 @@ declare module '*.md?raw' {
   export default content
 }
 
+interface Window {
+  /** Set in prerendered HTML so the first client render matches the static pricing copy. */
+  __QUNI_PRICING_V2__?: boolean
+}
+
 interface ImportMetaEnv {
   /** Canonical site URL (https, no trailing slash) - used for SEO meta, JSON-LD, and Open Graph. */
   readonly VITE_SITE_URL?: string

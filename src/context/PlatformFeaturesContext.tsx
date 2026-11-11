@@ -20,12 +20,34 @@ export type PlatformFeatures = {
 const localPricingV2Preview =
   import.meta.env.DEV === true && import.meta.env.VITE_PRICING_V2_ENABLED === 'true'
 
+/** Set by the prerender before renderToString. The client reads window.__QUNI_PRICING_V2__ instead. */
+let prerenderPricingV2 = false
+
+export function setPrerenderPricingV2(enabled: boolean): void {
+  prerenderPricingV2 = enabled
+}
+
+function pricingV2FromShell(): boolean {
+  if (localPricingV2Preview) return true
+  if (typeof window !== 'undefined' && window.__QUNI_PRICING_V2__ === true) return true
+  return prerenderPricingV2
+}
+
 const DEFAULT_FEATURES: PlatformFeatures = {
   managedTierEnabled: false,
   listingModuleEnabled: false,
-  pricingV2Enabled: localPricingV2Preview,
+  pricingV2Enabled: false,
   managedOverrides: {},
   loaded: false,
+}
+
+function initialFeatures(): PlatformFeatures {
+  const pricingV2Enabled = pricingV2FromShell()
+  return {
+    ...DEFAULT_FEATURES,
+    pricingV2Enabled,
+    loaded: pricingV2Enabled,
+  }
 }
 
 type PlatformFeaturesContextValue = PlatformFeatures
@@ -46,7 +68,7 @@ type MatrixRow = {
 }
 
 function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
-  const [features, setFeatures] = useState<PlatformFeatures>(DEFAULT_FEATURES)
+  const [features, setFeatures] = useState<PlatformFeatures>(initialFeatures)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -88,11 +110,12 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
           ? {}
           : buildManagedOverridesMap(matrixResult.data)
 
+      const shellPricing = pricingV2FromShell()
       if (featuresResult.error || !featuresResult.data) {
         setFeatures({
           managedTierEnabled: false,
           listingModuleEnabled: false,
-          pricingV2Enabled: localPricingV2Preview,
+          pricingV2Enabled: shellPricing,
           managedOverrides,
           loaded: true,
         })
@@ -102,7 +125,7 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
       setFeatures({
         managedTierEnabled: false,
         listingModuleEnabled: featuresResult.data.listing_module_enabled === true,
-        pricingV2Enabled: localPricingV2Preview || featuresResult.data.pricing_v2_enabled === true,
+        pricingV2Enabled: shellPricing || featuresResult.data.pricing_v2_enabled === true,
         managedOverrides,
         loaded: true,
       })
