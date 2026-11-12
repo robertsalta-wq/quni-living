@@ -154,6 +154,12 @@ function templateLabel(templateKey: unknown): string {
     agreement_fully_signed_landlord: 'Signed agreement email (landlord)',
     agreement_fully_signed_renter: 'Signed agreement email (renter)',
     agreement_fully_signed_co_tenant: 'Signed agreement email (co-tenant)',
+    corrected_addendum_sign_landlord: 'Addendum signing email (landlord)',
+    corrected_addendum_sign_renter: 'Addendum signing email (renter)',
+    corrected_addendum_sign_co_tenant: 'Addendum signing email (co-tenant)',
+    corrected_addendum_signed_landlord: 'Signed addendum email (landlord)',
+    corrected_addendum_signed_renter: 'Signed addendum email (renter)',
+    corrected_addendum_signed_co_tenant: 'Signed addendum email (co-tenant)',
   }
   if (map[key]) return map[key]
   if (!key) return 'Email'

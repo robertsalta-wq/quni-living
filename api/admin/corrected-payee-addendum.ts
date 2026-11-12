@@ -8,8 +8,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAdminUser } from '../lib/adminAuth.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
-import { createDocusealSubmissionFromPdf } from '../lib/docuseal.shared.js'
 import { loadLandlordPayoutBankForDocument } from '../lib/documents/listingTenancyGeneration/landlordPayoutBank.js'
+import { sendCorrectedPayeeAddendum } from '../lib/documents/sendCorrectedPayeeAddendum.js'
 import {
   buildCorrectedPayeeAddendumPdf,
   coTenantFromBooking,
@@ -138,40 +138,26 @@ export default async function handler(req, res) {
     return corsJson(res, { error: 'Could not store the addendum.' }, 503, origin)
   }
 
-  let submission
+  let submissionId
   try {
-    submission = await createDocusealSubmissionFromPdf({
-      name: `Corrected addendum ${input.bookingReference}`,
-      documentPdfName: 'Corrected addendum.pdf',
+    const sent = await sendCorrectedPayeeAddendum(admin, {
+      bookingId,
+      tenancyId: tenancy.id,
+      unsignedPath: path,
       pdfBase64: bytesToBase64(pdf),
-      sendEmail: true,
-      order: 'random',
-      landlordRole: 'First Party',
-      tenantRole: 'Second Party',
-      coTenantRole: 'Co-tenant',
-      landlord: { name: input.landlordName, email: landlordEmail },
-      tenant: { name: input.renterName, email: renterEmail },
+      bookingReference: input.bookingReference,
+      generatedBy: authResult.user?.id ?? null,
+      propertyAddress: propertyLine || 'the property',
+      landlord: { id: booking.landlord_id, name: input.landlordName, email: landlordEmail },
+      renter: { id: booking.student_id, name: input.renterName, email: renterEmail },
       coTenant: co ? { name: co.fullName, email: co.email } : null,
     })
+    submissionId = sent.submissionId
   } catch (e) {
     console.error('[corrected-addendum] docuseal', e)
-    return corsJson(res, { error: 'Could not send the addendum for signature.' }, 502, origin)
+    const message = e instanceof Error ? e.message : 'Could not send the addendum for signature.'
+    return corsJson(res, { error: message }, 502, origin)
   }
-
-  const submissionId = submission?.id != null ? String(submission.id) : null
-  const { error: docErr } = await admin.from('tenancy_documents').insert({
-    tenancy_id: tenancy.id,
-    document_type: 'other',
-    status: 'sent_for_signing',
-    file_path: path,
-    docuseal_submission_id: submissionId,
-    generated_by: authResult.user?.id ?? null,
-    metadata: {
-      document_kind: 'corrected_payee_addendum',
-      booking_id: bookingId,
-    },
-  })
-  if (docErr) console.error('[corrected-addendum] document row', docErr)
 
   return corsJson(res, { ok: true, sent: true, hasPayee, submissionId }, 200, origin)
 }
