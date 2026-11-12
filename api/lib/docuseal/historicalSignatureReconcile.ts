@@ -40,7 +40,7 @@ export async function findTenancyDocumentBySubmissionId(
   const { data: doc, error } = await admin
     .from('tenancy_documents')
     .select(
-      'id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path',
+      'id, tenancy_id, document_type, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path',
     )
     .eq('docuseal_submission_id', submissionId)
     .maybeSingle()

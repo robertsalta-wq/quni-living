@@ -21,6 +21,17 @@ import {
   downloadSignedSubmissionPdfFromDocuseal,
   extractCompletedAt,
 } from '../docuseal.js'
+import {
+  assertNonLeaseStoragePath,
+  combinedResidentialPackageSignedPath,
+  completionDisposition,
+  correctedPayeeAddendumSignedPath,
+  mutualTerminationSignedPath,
+  nonLeaseSignedPath,
+  platformAddendumSignedPath,
+  primaryLeaseSignedPath,
+  residentialAgreementSignedPath,
+} from './signedSubmissionDisposition.js'
 
 export const LISTING_BOND_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -469,15 +480,36 @@ export async function syncFullySignedDocusealSubmission(args: {
   }
 
   let signedPath: string
+  const disposition = completionDisposition(docRow)
+  const signingPackage =
+    typeof rowMeta.signing_package === 'string' ? rowMeta.signing_package : null
 
-  if (isResidentialTenancyPackage) {
+  if (disposition.kind === 'corrected_payee_addendum') {
+    signedPath = correctedPayeeAddendumSignedPath(docRow.tenancy_id, submissionId)
+    assertNonLeaseStoragePath(signedPath)
+    const pdfBuf = await prepareSignedPdfForStorage(
+      await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
+      { submissionId, path: signedPath },
+    )
+    const { error: upStorageErr } = await admin.storage
+      .from('tenancy-documents')
+      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+    if (upStorageErr) throw upStorageErr
+  } else if (disposition.kind === 'mutual_termination') {
+    signedPath = mutualTerminationSignedPath(docRow.tenancy_id)
+    assertNonLeaseStoragePath(signedPath)
+    const pdfBuf = await prepareSignedPdfForStorage(
+      await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
+      { submissionId, path: signedPath },
+    )
+    const { error: upStorageErr } = await admin.storage
+      .from('tenancy-documents')
+      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+    if (upStorageErr) throw upStorageErr
+  } else if (isResidentialTenancyPackage) {
     const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
-    const rtaPath = isVicResidentialPackage
-      ? `${docRow.tenancy_id}/residential_tenancy/vic_residential_rental_agreement_signed.pdf`
-      : isQldResidentialPackage
-        ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
-        : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
-    const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
+    const rtaPath = residentialAgreementSignedPath(docRow.tenancy_id, signingPackage)
+    const addendumPath = platformAddendumSignedPath(docRow.tenancy_id)
 
     if (dual) {
       const rtaBytes = await prepareSignedPdfForStorage(dual.rta, {
@@ -503,18 +535,18 @@ export async function syncFullySignedDocusealSubmission(args: {
         signed_addendum_file_path: addendumPath,
       }
     } else {
+      signedPath = combinedResidentialPackageSignedPath(docRow.tenancy_id)
       const pdfBuf = await prepareSignedPdfForStorage(
         await downloadSignedSubmissionPdfFromDocuseal(submissionId, true),
-        { submissionId, path: `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf` },
+        { submissionId, path: signedPath },
       )
-      signedPath = `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
       const { error: upStorageErr } = await admin.storage
         .from('tenancy-documents')
         .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
       if (upStorageErr) throw upStorageErr
     }
-  } else if (docRow.document_type === 'mutual_termination') {
-    signedPath = `${docRow.tenancy_id}/mutual_termination/mutual_termination_signed.pdf`
+  } else if (disposition.runsLeaseCharge) {
+    signedPath = primaryLeaseSignedPath(docRow.tenancy_id)
     const pdfBuf = await prepareSignedPdfForStorage(
       await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
       { submissionId, path: signedPath },
@@ -524,7 +556,8 @@ export async function syncFullySignedDocusealSubmission(args: {
       .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
     if (upStorageErr) throw upStorageErr
   } else {
-    signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
+    signedPath = nonLeaseSignedPath(docRow.tenancy_id, docRow.document_type, submissionId)
+    assertNonLeaseStoragePath(signedPath)
     const pdfBuf = await prepareSignedPdfForStorage(
       await downloadSignedSubmissionPdfFromDocuseal(submissionId, false),
       { submissionId, path: signedPath },
@@ -555,10 +588,10 @@ export async function syncFullySignedDocusealSubmission(args: {
 
   await emitSyncEvents(signedPath)
 
-  // Listing: confirmed → active when bond + signature both done (order-independent).
-  // Soft-fail - do not break webhook / reconcile if advance fails.
-  // Skip for mutual_termination (ending an agreement, not advancing into active).
-  if (docRow.document_type !== 'mutual_termination') {
+  // Listing: confirmed to active when bond + the primary agreement are both done.
+  // Soft-fail. Addenda, mutual termination, and any other non-lease document
+  // must not advance the booking or create a lease charge.
+  if (disposition.runsLeaseCharge) {
     try {
       if (docRow.tenancy_id) {
         const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
@@ -694,7 +727,7 @@ export async function loadLatestLeaseDocForBooking(
   const { data: docs, error: docErr } = await admin
     .from('tenancy_documents')
     .select(
-      'id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path, created_at',
+      'id, tenancy_id, document_type, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path, created_at',
     )
     .eq('tenancy_id', tenancy.id)
     .in('document_type', [...LEASE_DOC_TYPES])

@@ -17,6 +17,7 @@ import {
   signingPackageNeedsDateRefresh,
   wrapSubmissionSubmitters,
 } from './docuseal/signLinkWrap.js'
+import { completionDisposition } from './docuseal/signedSubmissionDisposition.js'
 import { getActivePricingSnapshotForProperty } from './pricing/index.js'
 import {
   isLandlordFeeExempt,
@@ -880,7 +881,9 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     return { ok: true, message: 'Webhook stored; awaiting remaining signatures' }
   }
 
-  if (docRow.document_type === 'mutual_termination' && tenancyForBooking?.booking_id) {
+  const disposition = completionDisposition(docRow)
+
+  if (disposition.email === 'mutual_termination' && tenancyForBooking?.booking_id) {
     const bookingId = tenancyForBooking.booking_id
     try {
       const { markMutualSurrenderAcknowledged } = await import(
@@ -965,6 +968,10 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     return { ok: true, message: 'Mutual termination fully signed' }
   }
 
+  if (disposition.email === 'none') {
+    return { ok: true, message: 'Fully signed; copy email not sent' }
+  }
+
   const { data: tny } = await admin
     .from('tenancies')
     .select('landlord_profile_id, student_profile_id')
@@ -996,6 +1003,48 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     [sp?.first_name, sp?.last_name].filter(Boolean).join(' ').trim() ||
     (typeof sp?.full_name === 'string' ? sp.full_name : 'Tenant')
 
+  const bookingId = tenancyForBooking?.booking_id
+  if (!link || !bookingId) {
+    console.error('[docuseal-webhook] fully signed copy not sent', {
+      submissionId,
+      hasLink: Boolean(link),
+      bookingId: bookingId ?? null,
+    })
+    return { ok: true, message: 'Fully signed; copy email not sent' }
+  }
+
+  if (disposition.email === 'corrected_payee_addendum') {
+    const { data: bookingAddr } = await admin
+      .from('bookings')
+      .select('properties ( address, suburb, state )')
+      .eq('id', bookingId)
+      .maybeSingle()
+    const prop = bookingAddr?.properties as
+      | { address?: string | null; suburb?: string | null; state?: string | null }
+      | { address?: string | null; suburb?: string | null; state?: string | null }[]
+      | null
+      | undefined
+    const propRow = Array.isArray(prop) ? prop[0] : prop
+    const propertyAddress = [propRow?.address, propRow?.suburb, propRow?.state].filter(Boolean).join(', ')
+    let coTenant: { email: string; name: string } | null = null
+    const coDone = await fetchCoTenantSignerForBooking(admin, bookingId)
+    if (coDone?.email) coTenant = { email: coDone.email, name: coDone.name }
+    const { sendCorrectedAddendumSignedEmails } = await import('./booking/sendCorrectedAddendumEmails.js')
+    await sendCorrectedAddendumSignedEmails(admin, {
+      bookingId,
+      submissionId: String(submissionId),
+      propertyAddress,
+      downloadUrl: link,
+      landlord: { email: le, name: String(ln) },
+      renter: { email: se, name: String(sn) },
+      coTenant,
+      landlordId: tny.landlord_profile_id,
+      studentId: tny.student_profile_id,
+      actorType: 'webhook',
+    })
+    return { ok: true, message: 'Corrected addendum fully signed' }
+  }
+
   const signedDocLabel = isResidentialTenancyPackage
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
@@ -1007,16 +1056,6 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     isVicResidentialPackage,
     isQldResidentialPackage,
   })
-
-  const bookingId = tenancyForBooking?.booking_id
-  if (!link || !bookingId) {
-    console.error('[docuseal-webhook] fully signed copy not sent', {
-      submissionId,
-      hasLink: Boolean(link),
-      bookingId: bookingId ?? null,
-    })
-    return { ok: true, message: 'Fully signed; copy email not sent' }
-  }
 
   let coTenant: { email: string; name: string } | null = null
   if (isResidentialTenancyPackage) {
