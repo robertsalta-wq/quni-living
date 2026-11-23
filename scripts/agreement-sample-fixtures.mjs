@@ -1,9 +1,11 @@
+import { inclusiveLeaseLastDay } from '../api/lib/booking/leaseEndDate.js'
+
 export const SAMPLE_GENERATED_AT = '02/06/2026, 10:00:00 am'
 
 const LANDLORD = {
   fullName: 'Sam Sample',
   companyName: null,
-  addressLine: '1 Sample Street, Exampletown NSW 2000',
+  addressLine: '1 Sample Street, Exampletown, NSW, 2000',
   email: 'sam.sample@example.com',
   phone: '0400000000',
 }
@@ -15,12 +17,12 @@ const TENANT = {
   dateOfBirth: '2002-03-15',
   emergencyContactName: 'Riley Example',
   emergencyContactPhone: '0400000002',
-  addressForServiceLine: '2 Example Lane, Sampletown VIC 3000',
+  addressForServiceLine: '2 Example Lane, Sampletown, VIC, 3000',
 }
 
 const SHARED_TERM = {
   startDate: '2025-07-15',
-  endDate: '2026-01-15',
+  endDate: inclusiveLeaseLastDay('2026-01-15'),
   periodic: false,
   leaseLengthDescription: '6 months',
 }
@@ -74,7 +76,7 @@ export function nswOccupancySampleProps() {
     platformLegalName: 'Quinnvestments Pty Ltd',
     platformAcn: '675 990 968',
     platformTradingName: 'Quni Living',
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown NSW 2000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, NSW, 2000' },
     tenant: { ...TENANT },
     premises: premisesFor('NSW', 'Exampletown', '2000', 'private_room_landlord_on_site', 'Front bedroom'),
     term: { ...SHARED_TERM },
@@ -105,7 +107,7 @@ export function nswT3BoardingHouseSampleProps() {
       fullName: 'Sam Sample',
       companyName: null,
       abn: null,
-      addressLine: '1 Sample Street, Exampletown NSW 2000',
+      addressLine: '1 Sample Street, Exampletown, NSW, 2000',
       email: 'sam.sample@example.com',
       phone: '0400000000',
     },
@@ -157,7 +159,7 @@ export function qldOccupancySampleProps() {
     platformLegalName: 'Quinnvestments Pty Ltd',
     platformAcn: '675 990 968',
     platformTradingName: 'Quni Living',
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown QLD 4000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, QLD, 4000' },
     tenant: { ...TENANT },
     premises: premisesFor('QLD', 'Exampletown', '4000', 'private_room_landlord_on_site', 'Rear bedroom'),
     term: { ...SHARED_TERM },
@@ -188,7 +190,7 @@ export function vicOccupancySampleProps() {
     platformLegalName: 'Quinnvestments Pty Ltd',
     platformAcn: '675 990 968',
     platformTradingName: 'Quni Living',
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown VIC 3000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, VIC, 3000' },
     tenant: { ...TENANT },
     premises: premisesFor('VIC', 'Exampletown', '3000', 'private_room_landlord_on_site', 'Bedroom 2 (rear)'),
     term: { ...SHARED_TERM },
@@ -215,7 +217,7 @@ export function nswT2AgreementSampleProps() {
   return {
     documentId: 'nsw-ft6600-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown NSW 2000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, NSW, 2000' },
     tenant: { ...TENANT },
     additionalTenantNames: ['Casey Example'],
     premises: premisesFor('NSW', 'Exampletown', '2000', 'private_room_landlord_off_site', 'Private room'),
@@ -255,7 +257,7 @@ export function qldT2AgreementSampleProps() {
   return {
     ...nswT2AgreementSampleProps(),
     documentId: 'qld-form18a-review-001',
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown QLD 4000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, QLD, 4000' },
     tenant: { ...TENANT },
     premises: premisesFor('QLD', 'Exampletown', '4000', 'private_room_landlord_off_site', 'Private room'),
     landlordPostcode: '4000',
@@ -267,7 +269,7 @@ export function vicT2AgreementSampleProps() {
   return {
     ...nswT2AgreementSampleProps(),
     documentId: 'vic-form1-review-001',
-    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown VIC 3000' },
+    landlord: { ...LANDLORD, addressLine: '1 Sample Street, Exampletown, VIC, 3000' },
     tenant: { ...TENANT },
     premises: premisesFor('VIC', 'Exampletown', '3000', 'private_room_landlord_off_site', 'Private room'),
     landlordPostcode: '3000',

@@ -119,10 +119,15 @@ describe('officialQldFormR18Fill', () => {
     })
   })
 
-  it('ticks Item 15 Level 1 and does not invent an agent', async () => {
+  it('ticks Item 6 Level 1 and leaves Item 15 blank', async () => {
     const doc = await loadOfficialQldFormR18Template()
+    await applyOfficialQldFormR18Fill(doc, qldFormR18SampleFillProps())
     const form = doc.getForm()
+    expect(form.getCheckBox(C.level_1).isChecked()).toBe(true)
     expect(form.getCheckBox(C.item15_level_1).getName()).toBe('Level 1a')
+    expect(form.getCheckBox(C.item15_level_1).isChecked()).toBe(false)
+    expect(form.getCheckBox(C.item15_level_2).isChecked()).toBe(false)
+    expect(form.getCheckBox(C.item15_level_3).isChecked()).toBe(false)
     const { pdfBytes } = await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())
     const text = await allPageText(pdfBytes)
     expect(text).toMatch(/Direct credit/)

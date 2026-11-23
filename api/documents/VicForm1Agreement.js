@@ -5,7 +5,8 @@ import { Document, Image, Page, StyleSheet, Text as Text2, View as View2 } from 
 
 // src/lib/documents/vic/form1Content.ts
 var FORM1_FORM_REFERENCE = "Form 1 - Residential rental agreement (CAV prescribed form; in-force 25 Nov 2025, Residential Tenancies Regulations 2021 (Vic) Reg 10(1))";
-var FORM1_INTRO = "Residential rental agreement   \nno more than 5 years\n\nResidential Tenancies Act 1997 Section 26(1)  \n*Residential Tenancies Regulations 2021* Regulation 10(1)\n\n[EXTRACTION_FLAG: CAV logo/image omitted from prescribed text embed]\n\n- This is your residential rental agreement. It is a binding contract under the *Residential Tenancies Act 1997* (the Act).\n- Parts A, B, C and E are the terms of your agreement. Part D is a summary of your rights and obligations.\n- Do not sign this agreement if there is anything in it that you do not understand. \n- Please refer to *Renters Guide* for details about your rights and responsibility. \n- For further information, visit the renting section of the Consumer Affairs Victoria (CAV) website at www.consumer.vic.gov.au/renting or call 1300 558 181.";
+var FORM1_INTRO = "Residential rental agreement   \nno more than 5 years\n\nResidential Tenancies Act 1997 Section 26(1)  \n*Residential Tenancies Regulations 2021* Regulation 10(1)\n\n- This is your residential rental agreement. It is a binding contract under the *Residential Tenancies Act 1997* (the Act).\n- Parts A, B, C and E are the terms of your agreement. Part D is a summary of your rights and obligations.\n- Do not sign this agreement if there is anything in it that you do not understand. \n- Please refer to *Renters Guide* for details about your rights and responsibility. \n- For further information, visit the renting section of the Consumer Affairs Victoria (CAV) website at www.consumer.vic.gov.au/renting or call 1300 558 181.";
+var FORM1_PART_A_STATIC = "Part A \u2013 Basic terms\n\nThis agreement is between the residential rental provider (rental provider) and the renter(s) listed on this form. \n\n1	Date of agreement\n\nThis is the date the agreement is signed. \n\n \n\nIf the agreement is signed by the parties on different days, the date of the agreement is the date the last person signs the agreement. \n\n2	Premises let by the rental provider \n\nAddress of premises\n\nPostcode\n\n3	Rental provider details\n\nFull name(s) or\n\nCompany name\n\n	ACN (if applicable) \n\n	(Please fill out details below where no agent is acting for the rental provider)\n\nAddress \n\nPostcode\n\n Phone number   \n\n  \n\n  \n\nEmail address\n\n	Rental provider\u2019s agent\u2019s details (if applicable)\n\nFull name\n\nAddress\n\nPostcode\n\nPhone number\n\nACN (if applicable)\n\nEmail address\n\nNote: The rental provider must notify the renter within 7 days if any of this information changes.\n\n4	Renter details\n\n	Each renter that is a party to the agreement must provide their details here.\n\nFull name of renter 1\n\nCurrent address\n\nPostcode\n\nPhone number\n\n \n\nEmail address\n\nFull name of renter 2\n\nCurrent address\n\nPostcode\n\nPhone number\n\nEmail address\n\nFull name of renter 3\n\nCurrent address\n\nPostcode\n\nPhone number\n\n\\\n\nEmail address\n\nFull name of renter 4\n\nCurrent address\n\nPostcode\n\nPhone number\n\nEmail address\n\nNote: If there are more than four renters, include details on an extra page.\n\n5	Length of the agreement\n\n Fixed term agreement\n\nStart date \n\n(this is the date the agreement starts and you may move in)\nEnd date\n\n Periodic agreement (monthly)\n\nStart date\n\nNote: A periodic (e.g. month by month) rental agreement will be formed at the end of the fixed term agreement if the renter and rental provider do not sign a new fixed term agreement and the renter stays in the property.\n\n6	Rent\n\nRent amount ($)\n\n(payable in advance)\n\nTo be paid per\n\n week\n\n fortnight\n\n calendar month \n\n  \n\n Day rent is to be paid	(e.g. each Thursday or the 11th of each month)\n\nDate first rent payment due\n\n  \n\n7	Bond\n\n- The renter has been asked to pay the bond specified below.\n- The maximum bond is 1 months\u2019 rent (unless the rent is more than $900 per week). In some cases, the rental provider may ask the Victorian Civil and Administrative Tribunal (VCAT) to increase this limit.\n- The rental provider or their agent must lodge the bond with the Residential Tenancies Bond Authority (RTBA) within 10 business days after receiving payment. The RTBA will send the renter a receipt for the bond.\n- If the renter does not receive a receipt within 15 business days of paying the bond, they can email the RTBA at rtba@dgs.vic.gov.au, or call the RTBA at 1300 13 71 64.\n\nBond amount ($)\n\nDate bond payment due";
 var FORM1_PART_B_THROUGH_E = "Part B \u2013 Standard terms\n\n8	Rental provider\u2019s preferred method of rent payment\n\n- The rental provider must permit a fee-free method (other than the renter\u2019s own bank fees) payment and must allow the renter to use Centrepay or another form of electronic funds transfer.\n- The renter is entitled to receive a receipt from the rental provider confirming payment of rent.\n\n(Rental provider to tick available methods of rent payment)\n\n direct debit	\n\n bank deposit	\n\n cash\n\n cheque or money order\n\n     BPAY \n\n other electronic form of payment, including Centrepay\n\n \n\nPayment details (if applicable)\n\n9	Service of notices and other documents by electronic methods\n\n- Electronic service of documents must be in accordance with the requirements of the *Electronic Transactions (Victoria) Act 2000.*\n- Just because someone responds to an email or other electronic communications, does not mean they have consented to the service of notices and other documents by electronic methods.\n- The renter and rental provider must notify the other party in writing if they no longer wish to receive notices or other documents by electronic methods.\n- The renter and the rental provider must immediately notify the other party in writing if their contact details change.\n\n	9.1	Does the rental provider agree to the service of notices and other documents by electronic methods, such as email?\n\nThe rental provider must complete this section before giving the agreement to the renter.\n\n 	(Rental provider to tick as appropriate)\n\nYes - insert email address, mobile phone number or other electronic contact details\n\nNo\n\n	9.2	Does the renter agree to the service of notices and other documents by electronic methods, such as email?\n\n 	(Renter to tick as appropriate)\n\nRenter 1\n\nYes - insert email address, mobile phone number or other electronic contact details\n\nNo\n\nRenter 2\n\nYes - insert email address, mobile phone number or other electronic contact details\n\nNo\n\nRenter 3\n\nYes - insert email address, mobile phone number or other electronic contact details\n\nNo\n\nRenter 4\n\nYes - insert email address, mobile phone number or other electronic contact details\n\nNo\n\nNote: If there are more than four renters, include details on an extra page.\n\n	\n\n10	Urgent repairs\n\n- The rental provider must ensure that the rental property is provided and maintained in good repair. \n- If there is a need for an urgent repair, the renter should notify the rental provider in writing. \n- For further information on seeking repairs, see Part D below.\n\nDetails of person the renter should contact for an urgent repair (rental provider to insert details).\n\nEmergency contact name\n\nEmergency phone number\n\nEmergency email address\n\n11	Professional cleaning\n\nThe rental provider must not require the renter to arrange professional cleaning or cleaning to a professional standard at the end of the tenancy, unless:\n\n- Professional cleaning or cleaning to a professional standard was carried out to the rented premises immediately before the start of the tenancy and the renter was advised that professional cleaning or cleaning to a professional standard had been carried out to those premises immediately before the start of the tenancy; or\n- Professional cleaning or cleaning to a professional standard is required to restore the rented premises to the same condition they were in immediately before the start of the tenancy, having regard to the condition report and taking into account fair wear and tear.\n\nThe renter must have all or part of the rented premises professionally cleaned or pay the cost of having all or part of the rented premises professionally cleaned, if professional cleaning becomes required to restore the premises to the condition they were in immediately before the start of the tenancy, having regard to the condition report and taking into account fair wear and tear.\n\n12	Owners corporation (formerly body corporate)\n\nDo owners corporation rules apply to the premises? (Rental provider to tick as appropriate)\n\n No\n\n Yes\n\nIf yes, the rental provider must attach a copy of the rules to this agreement.\n\n13	Condition report\n\nThe renter must be given two copies of the condition report (or one emailed copy) on or before the date the renter moves into the rented premises. \n\n(Rental provider to tick as appropriate)\n\n	 The condition report has been provided\n\n The condition report will be provided to the renter on or before the date the agreement starts \n\nPart C \u2013 Safety-related activities\n\n1. Electrical safety activities\n\n- The rental provider must ensure an electrical safety check is conducted every two years by a licensed or registered electrician of all electrical installations, appliances and fittings provided by a rental provider in the rented premises, and must provide the renter with the date of the most recent safety check, in writing, on request of the renter.\n- If an electrical safety check of the rented premises has not been conducted within the last two years at the time the renter occupies the premises, the rental provider must arrange an electrical safety check as soon as practicable.\n\n15	Gas safety activities\n\nThis safety-related activity only applies if the rented premises contains any appliances, fixtures or fittings which use or supply gas.\n\n1. The rental provider must ensure a gas safety check is conducted every two years by a licensed or registered gasfitter of all gas installations and fittings in the rented premises and must provide the renter with the date of the most recent safety check, in writing, on request of the renter.\n2. If a gas safety check has not been conducted within the last two years at the time the renter occupies the premises, the rental provider must arrange a gas safety check as soon as practicable.\n\n16	[Clause revoked by law] \n\n17	Swimming pool barrier safety activities\n\nThese safety-related activities only apply if the rented premises contains a swimming pool.\n\n1. The rental provider must ensure that the pool barrier is maintained in good repair.\n2. The renter must give written notice to the rental provider as soon as practicable after becoming aware that the swimming pool barrier is not in working order. \n3. The rental provider must arrange for a swimming pool barrier to be immediately repaired or replaced as an urgent repair if they are notified by the renter that it is not in working order.\n4. The rental provider must provide the renter with a copy of the most recent certificate of swimming pool barrier compliance issued under the *Building Act 1993* on the request of the renter.\n\n18	Relocatable swimming pool safety activities\n\nThese safety-related activities only apply if a relocatable swimming pool is erected, or is intended to be erected, at the rented premises.  \n\n1. The renter must not put up a relocatable swimming pool without giving written notice to the rental provider before erecting the pool. \n2. The renter must obtain any necessary approvals before erecting a relocatable swimming pool.\n\nNote: Regulations made under *Building Act 1993* apply to any person erecting a relocatable swimming pool.   \n\nThis safety-related activity only applies to swimming pools or spas that can hold water deeper than 300 mm. \n\n19	Bushfire prone area activities\n\nThis safety-related activity only applies if the rented premises is in a bushfire prone area and is required to have a water tank for bushfire safety.\n\n1. If the rented premises is in a designated bushfire-prone area under section 192A of the *Building Act 1993* and a water tank is required for firefighting purposes, the rental provider must ensure the water tank and any connected infrastructure is maintained in good repair as required.\n2. The water tank must be full and clean at the commencement of the agreement.  \n\nPart D \u2013 Rights and obligations\n\nThis is a summary of selected rights and obligations of renters and rental providers under the *Residential Tenancies Act 1997** *(the Act). Any reference to VCAT refers to the Victorian Civil and Administrative Tribunal.\n\nFor more information, visit www.consumer.vic.gov.au/renting. \n\nUse of the premises\n\nThe renter:\n\n- is entitled to quiet enjoyment of the premises. The rental provider may only enter the premises in accordance with the Act.\n- must not use the premises for illegal purposes. \n- must not cause a nuisance or interfere with the reasonable peace, comfort or privacy of neighbours. \n- must avoid damaging the premises and common areas. Common areas include hallways, driveways, gardens and stairwells. Where damage occurs, the renter must notify the rental provider in writing. \n- must keep the premises reasonably clean. \n\nCondition* *of the premises\n\nThe rental provider:\n\n- must ensure that the premises comply with the rental minimum standards, and is vacant and reasonably clean when the renter moves in. \n- must maintain the premises in good repair and in a fit condition for occupation. \n- agrees to do all the safety-related maintenance and repair activities set out in Part C of the agreement.\n\nThe renter: \n\n- must follow all safety-related activities set out in   \nPart C of the agreement and not remove, deactivate or interfere with safety devices on the premises. \n\nModifications \n\nThe renter: \n\n- may make some modifications without seeking consent. These modifications are listed on the Consumer Affairs website. \n- must seek the rental provider\u2019s consent before installing any other fixtures or additions. \n- may apply to VCAT if they believe that the rental provider has unreasonably refused consent for a modification mentioned in the Act.\n- at the end of the agreement, must restore the premises to the condition it was in before they moved in (excluding fair wear and tear). This includes removing all modifications, unless the parties agree they do not need to be removed.\n\nThe rental provider:\n\n- must not unreasonably refuse consent for certain modifications. \n\nA list of the modifications that the rental provider cannot unreasonably refuse consent for is available on the Consumer Affairs Victoria website at www.consumer.vic.gov.au/renting.\n\nLocks \n\n- The rental provider must ensure the premises:\n- has locks to secure all windows capable of having a lock, and\n- has deadlocks (a deadlock is a deadlatch with at least one cylinder) for external doors that are able to be secured with a functioning deadlock, and\n- meets the rental minimum standards for locks and window locks.\n- External doors which are not able to be secured with a functioning deadlock must at least be fitted with a locking device that:\n- is operated by a key from the outside; and\n- may be unlocked from the inside with or without a key. \n- The renter must obtain consent from the rental provider to change a lock in the master key system. \n- The rental provider must not unreasonably refuse consent for a renter seeking to change a lock in the master key system.\n- The rental provider must not give a key to a person excluded from the premises under a:\n- family violence intervention order; or\n- family violence safety notice; or\n- recognised non-local DVO; or\n- personal safety intervention order.\n\nRepairs\n\n- Only a suitably qualified person must do repairs \u2013 both urgent and non-urgent.\n\nUrgent repairs\n\nSection 3(1) of the Act defines *urgent repairs*. Refer to the Consumer Affairs Victoria website for the full list of urgent repairs and for more information, visit www.consumer.vic.gov.au/urgentrepairs. \n\nUrgent repairs include failure or breakdown of any essential service or appliance provided for hot water, cooking, heating or laundering supplied by the rental provider. \n\nThe rental provider must carry out urgent repairs after being notified.\n\nA renter may arrange for urgent repairs to be done if they have taken reasonable steps to arrange for the rental provider to immediately do the repairs and the rental provider has not carried out the repairs.\n\nIf the renter has arranged for urgent repairs, the renter may be reimbursed directly by the rental provider for the reasonable cost of repairs up to $2,500.\n\nThe renter may apply to VCAT for an order requiring the rental provider to carry out urgent repairs if: \n\n- the renter cannot meet the cost of the repairs; or \n- the cost of repairs is more than $2,500; or\n- the rental provider refuses to pay the cost of repairs if it is carried out by the renter.\n\nNon-urgent repairs\n\n- The renter must notify the rental provider, in writing, as soon as practicable of: \n- damage to the premises.\n- breakdown of facilities, fixtures, furniture or equipment supplied by the rental provider.\n- The rental provider must carry out non-urgent repairs in reasonable time.  \n- The renter can apply to VCAT for an order requiring the rental provider to do the repairs if the rental provider has not carried out the repairs within 14 days of receiving notice of the need for repair.\n\nAssignment or sub-letting\n\nThe renter:\n\n- must not assign (transfer to another person) or sub-let the whole or any part of the premises without the written consent of the rental provider.\n\nThe rental provider may give the renter notice to vacate if the renter assigns or sublets the premises without consent.\n\nThe rental provider:\n\n- cannot unreasonably withhold consent to assign or sub-let the premises. \n- must not demand or receive a fee or payment for consent, other than reasonable expenses incurred by the assignment. \n\nRent\n\n- The rental provider must give the renter at least 90 days\u2019 written notice of a proposed rent increase. \n- Rent cannot be increased more than once every   \n12 months. \n- If the rental provider or agent does not provide a receipt for rent, the renter may request a receipt. \n- The rental provider must not increase the rent under a fixed term agreement unless the agreement provides for an increase.\n\nAccess and entry\n\n- The rental provider may enter the premises: \n- at any time, if the renter has agreed within the last 7 days.\n- to do an inspection but not more than once every 6 months. \n- to comply with the rental provider\u2019s duties under the Act.\n- to show the premises or conduct an open inspection to sell, rent or value the premises.\n- to take images or video for advertising a property that is for sale or rent.\n- if they believe the renter has failed to follow their duties under the Act.\n- to do a pre-termination inspection where the renter has applied to have the agreement terminated because of family violence or personal violence. \n- The renter must allow entry to the premises where the rental provider has followed proper procedure.\n- The renter is entitled to a set amount of compensation for each sales inspection.\n\nPets \n\n- The renter must seek consent from the rental provider before keeping a pet on the premises.\n- The rental provider must not unreasonably refuse a request to keep a pet.\n\nSmoke Alarms\n\n- The rental provider must ensure that any smoke alarm installed in the rented premises is:\n- correctly installed and in working condition; and\n- fitted with batteries or replacement batteries; and\n- tested at least once every 12 months in accordance with any instructions by the manufacturer of the smoke alarm. \n- If a smoke alarm installed in the rented premises does not meet the requirements set out above, the renter may issue a request to the rental provider for urgent repairs to the smoke alarm in accordance with section 72AA of the Act.\n- On receiving notice from the renter under the clause above, the rental provider or the provider\u2019s agent must immediately arrange for the repairs to be carried out.\n- Any testing, repair or replacement of a smoke alarm that is powered by a mains electricity supply must be undertaken by a suitably qualified person.\n\nPart E \u2013 Additional terms\n\n21	Further details (if any)\n\nList any additional terms to this agreement. The terms listed must not exclude, restrict or modify any of the rights and duties included in the Act.\n\nAdditional terms must also comply with the Australian Consumer Law (Victoria). For example, they cannot be unfair terms, which will have no effect. Contact Consumer Affairs Victoria on 1300 55 81 81 for further information or visit unfair contract terms at the Consumer Affairs Victoria website.\n\nNote: If you need extra space, attach a separate sheet. Both the rental provider and renter should sign and date all attachments.\n\n22	Signatures\n\nThis agreement is made under the *Residential Tenancies Act 1997*.\n\nBefore signing you must read Part D \u2013 Rights and obligations in this form.\n\n	Rental provider\n\nSignature of    \nrental provider 1\n\nDate\n\nSignature of   \nrental provider 2\n\nDate\n\n	Renter(s)\n\nAll renters listed must sign this residential rental agreement.\n\nSignature of renter 1\n\nDate\n\nSignature of renter 2\n\nDate\n\nSignature of renter 3\n\nDate\n\nSignature of renter 4\n\nDate\n\nNote: Each renter who is a party to the agreement must sign and date here. If there are more than four renters, include details on an extra page.";
 
 // src/lib/documents/vic/vicForm1ClauseRender.tsx
@@ -113,6 +114,64 @@ function item8RentPaymentDetails(preference, bank) {
   const bankLine = acct && bsb && name ? `Direct deposit - Account name: ${name}; BSB: ${bsb}; Account number: ${acct}.` : "Direct deposit (bank deposit) - account details to be provided by the rental provider.";
   void preference;
   return bankLine;
+}
+var FORM1_DOCUSEAL_TAG_HIDDEN = {
+  fontSize: 1,
+  color: "#ffffff"
+};
+function form1DocusealTag(fieldName, role, type) {
+  const size = type === "signature" ? { width: 220, height: 72 } : { width: 120, height: 28 };
+  return `{{${fieldName};role=${role};type=${type};width=${size.width};height=${size.height}}}`;
+}
+function form1IntroLines() {
+  return FORM1_INTRO.split("\n").filter((line) => !line.includes("[EXTRACTION_FLAG:"));
+}
+function form1Item7BondLines() {
+  const start = FORM1_PART_A_STATIC.indexOf("- The renter has been asked to pay the bond");
+  const end = FORM1_PART_A_STATIC.indexOf("Bond amount ($)");
+  if (start < 0 || end < 0) return [];
+  return FORM1_PART_A_STATIC.slice(start, end).split("\n").map((line) => line.trim()).filter(Boolean);
+}
+function form1PrescribedWithSchedule(prescribed, args) {
+  const providerService = args.landlordConsents ? `Rental provider electronic service: Yes - ${args.landlordEmail}` : "Rental provider electronic service: No";
+  const renterService = args.tenantConsents ? `Renter 1 electronic service: Yes - ${args.tenantEmail}` : "Renter 1 electronic service: No";
+  return prescribed.replace(
+    "Payment details (if applicable)",
+    [
+      "Payment details (if applicable)",
+      "",
+      "Bank deposit: yes. This is a fee-free electronic method. No fee is charged to the renter.",
+      "The renter may instead use Centrepay or another electronic funds transfer. No fee is charged to the renter.",
+      args.paymentDetails
+    ].join("\n")
+  ).replace(
+    "The rental provider must complete this section before giving the agreement to the renter.",
+    `The rental provider must complete this section before giving the agreement to the renter.
+
+${providerService}`
+  ).replace(
+    "Renter 1\n\nYes - insert email address",
+    `${renterService}
+
+Renter 1
+
+Yes - insert email address`
+  ).replace(
+    "Emergency email address",
+    [
+      "Emergency email address",
+      "",
+      `Emergency contact name: ${args.urgentName}`,
+      `Emergency phone number: ${args.urgentPhone}`,
+      `Emergency email address: ${args.urgentEmail}`
+    ].join("\n")
+  ).replace(
+    "If yes, the rental provider must attach a copy of the rules to this agreement.",
+    "Completed: No\n\nIf yes, the rental provider must attach a copy of the rules to this agreement."
+  ).replace(
+    "The condition report will be provided to the renter on or before the date the agreement starts",
+    "The condition report will be provided to the renter on or before the date the agreement starts\n\nCompleted: the condition report will be provided to the renter on or before the date the agreement starts."
+  );
 }
 var styles = StyleSheet.create({
   page: {
@@ -324,27 +383,33 @@ function SignaturesBlock(props) {
     /* @__PURE__ */ jsx2(Field, { label: "Name:", children: landlord.fullName }),
     /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
       /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Signature " }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Rental Provider Signature;role=First Party;type=signature}}" })
+      /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Rental Provider Signature", "First Party", "signature") })
     ] }) }),
     /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
       /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Dated " }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Rental Provider Sign Date;role=First Party;type=date}}" })
+      /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Rental Provider Sign Date", "First Party", "date") })
     ] }) }),
     /* @__PURE__ */ jsx2(Text2, { style: { ...styles.subHeading, marginTop: 8 }, children: "Renter" }),
     /* @__PURE__ */ jsx2(Field, { label: "Name:", children: tenant.fullName }),
     /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
       /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Signature " }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Renter Signature;role=Second Party;type=signature}}" })
+      /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Renter Signature", "Second Party", "signature") })
     ] }) }),
     /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
       /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Dated " }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Renter Sign Date;role=Second Party;type=date}}" })
+      /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Renter Sign Date", "Second Party", "date") })
     ] }) }),
     tenant2 ? /* @__PURE__ */ jsxs2(Fragment, { children: [
       /* @__PURE__ */ jsx2(Text2, { style: { ...styles.subHeading, marginTop: 8 }, children: "Renter (2)" }),
       /* @__PURE__ */ jsx2(Field, { label: "Name:", children: tenant2 }),
-      /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Renter 2 Signature;role=Co-tenant;type=signature}}" }) }),
-      /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Renter 2 Sign Date;role=Co-tenant;type=date}}" }) })
+      /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Signature " }),
+        /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Renter 2 Signature", "Co-tenant", "signature") })
+      ] }) }),
+      /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "Dated " }),
+        /* @__PURE__ */ jsx2(Text2, { style: FORM1_DOCUSEAL_TAG_HIDDEN, children: form1DocusealTag("Renter 2 Sign Date", "Co-tenant", "date") })
+      ] }) })
     ] }) : null
   ] });
 }
@@ -374,7 +439,18 @@ function VicResidentialRentalAgreementForm1(props) {
   const endDateText = term.periodic || !term.endDate ? null : formatAuDate(term.endDate);
   const paymentDetails = item8RentPaymentDetails(rentPaymentPreference, rentPaymentBankDetails);
   const freq = rent.rentFrequency;
-  const clauseChunks = chunkText(FORM1_PART_B_THROUGH_E, 2600);
+  const urgentName = urgentRepairsTradespeople.electrician?.split("-")[0]?.trim() || landlord.fullName;
+  const prescribed = form1PrescribedWithSchedule(FORM1_PART_B_THROUGH_E, {
+    paymentDetails,
+    landlordConsents: electronicService.landlordConsentsToEmailService,
+    landlordEmail: electronicService.landlordEmail,
+    tenantConsents: electronicService.tenantConsentsToEmailService,
+    tenantEmail: electronicService.tenantEmail,
+    urgentName,
+    urgentPhone: landlord.phone,
+    urgentEmail: landlord.email
+  });
+  const clauseChunks = chunkText(prescribed, 2600);
   let pageNum = 0;
   const nextPage = () => {
     pageNum += 1;
@@ -385,7 +461,7 @@ function VicResidentialRentalAgreementForm1(props) {
     /* @__PURE__ */ jsxs2(Page, { size: "A4", style: styles.page, children: [
       /* @__PURE__ */ jsx2(QuniTopHeader, { documentId, generatedAt, logoPath }),
       /* @__PURE__ */ jsx2(Text2, { style: styles.formRefLine, children: FORM1_FORM_REFERENCE }),
-      FORM1_INTRO.split("\n").slice(0, 12).map((line, i) => /* @__PURE__ */ jsx2(Text2, { style: [styles.body, { marginBottom: i < 11 ? 3 : 8 }], children: line.trim() || " " }, `intro-${i}`)),
+      form1IntroLines().map((line, i, lines) => /* @__PURE__ */ jsx2(Text2, { style: [styles.body, { marginBottom: i < lines.length - 1 ? 3 : 8 }], children: line.trim() || " " }, `intro-${i}`)),
       /* @__PURE__ */ jsx2(Text2, { style: styles.sectionHeading, children: "Part A \u2013 Basic terms" }),
       /* @__PURE__ */ jsx2(Field, { label: "1. Date of agreement:", children: madeOn }),
       /* @__PURE__ */ jsx2(Text2, { style: [styles.body, { marginBottom: 6 }], children: "If the agreement is signed by the parties on different days, the date of the agreement is the date the last person signs the agreement." }),
@@ -434,29 +510,12 @@ function VicResidentialRentalAgreementForm1(props) {
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: freq === "monthly", label: "calendar month" }),
       /* @__PURE__ */ jsx2(Field, { label: "Day rent is to be paid:", children: rentWeekday }),
       /* @__PURE__ */ jsx2(Field, { label: "Date first rent payment due:", children: formatAuDate(term.startDate) }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "7. Bond" }),
+      form1Item7BondLines().map((line, i) => /* @__PURE__ */ jsx2(Text2, { style: [styles.body, { marginBottom: 3 }], children: line }, `bond-${i}`)),
       bondDisplay ? /* @__PURE__ */ jsxs2(Fragment, { children: [
-        /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "7. Bond" }),
         /* @__PURE__ */ jsx2(Field, { label: "Bond amount ($):", children: bondDisplay }),
         /* @__PURE__ */ jsx2(Field, { label: "Date bond payment due:", children: formatAuDate(term.startDate) })
-      ] }) : null,
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Part B - Standard terms (schedule highlights)" }),
-      /* @__PURE__ */ jsx2(Text2, { style: { ...styles.body, marginBottom: 4 }, children: "8. Rental provider's preferred methods of payment" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: true, label: "bank deposit" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: false, label: "other electronic form of payment, including Centrepay" }),
-      /* @__PURE__ */ jsx2(Field, { label: "Payment details:", children: paymentDetails }),
-      /* @__PURE__ */ jsx2(Text2, { style: { ...styles.body, marginTop: 6, fontFamily: "Helvetica-Bold" }, children: "9. Electronic service of notices" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: electronicService.landlordConsentsToEmailService, label: `Rental provider - yes (${electronicService.landlordEmail})` }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: !electronicService.landlordConsentsToEmailService, label: "Rental provider - no" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: electronicService.tenantConsentsToEmailService, label: `Renter - yes (${electronicService.tenantEmail})` }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: !electronicService.tenantConsentsToEmailService, label: "Renter - no" }),
-      /* @__PURE__ */ jsx2(Text2, { style: { ...styles.body, marginTop: 6, fontFamily: "Helvetica-Bold" }, children: "10. Urgent repairs contact" }),
-      /* @__PURE__ */ jsx2(Field, { label: "Emergency contact name:", children: urgentRepairsTradespeople.electrician?.split("-")[0]?.trim() ?? landlord.fullName }),
-      /* @__PURE__ */ jsx2(Field, { label: "Emergency contact phone:", children: landlord.phone }),
-      /* @__PURE__ */ jsx2(Field, { label: "Emergency contact email:", children: landlord.email }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: false, label: "12. Owners corporation rules apply - yes" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: true, label: "12. Owners corporation rules apply - no" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: false, label: "13. Condition report has been provided" }),
-      /* @__PURE__ */ jsx2(CheckboxLine, { checked: true, label: "13. Condition report will be provided on or before the agreement start date" }),
+      ] }) : /* @__PURE__ */ jsx2(Field, { label: "Bond amount ($):", children: "No bond" }),
       /* @__PURE__ */ jsx2(PageFooter, { documentId, pageNumber: nextPage() })
     ] }, "p2")
   );

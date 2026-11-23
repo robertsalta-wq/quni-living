@@ -1149,7 +1149,7 @@ var LICENCE_OCCUPY_WATERMARK = "";
 
 // src/lib/tenancy/qldBoarderLodger.ts
 var QLD_RTRA_ACT_SHORT = "Residential Tenancies and Rooming Accommodation Act 2008 (Qld)";
-var QLD_RTA_BOARDERS_LODGERS_URL = "https://www.rta.qld.gov.au/renting/boarders-and-lodgers";
+var QLD_RTA_BOARDERS_LODGERS_URL = "https://www.rta.qld.gov.au/before-renting/types-of-tenancy-agreements/boarderslodgers";
 
 // src/lib/documents/qld/occupancyContent.ts
 var QLD_LICENCE_OCCUPY_CONTENT = {

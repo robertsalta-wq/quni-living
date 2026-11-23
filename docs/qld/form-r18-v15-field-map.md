@@ -31,7 +31,7 @@ Action buttons `Reset form` and `Print form` are dropped before flatten.
 | 13.1 Can the rent be increased? | No. There is no increase mechanism on the listing. Item 13.2 is a past fact, not a future mechanism. | `No12` checked, `Yes12` unchecked |
 | 13.2 Last increase | `qld_rent_last_increased_on`. Blank means never increased. | `The day the rent was last increased for the room (dd/mm/yyyy)` |
 | 14 Bond | Listing bond amount | `Rental bond amount` |
-| 15 Service | Level 1 hardcoded. No food. | `Level 1a` |
+| 15 Service | Left blank. Item 15 is for supported accommodation only. | `Level 1a` / `Level 2a` / `Level 3a` |
 | 16 Persons | Occupant count and `qld_persons_at_premises` | person-count fields |
 | 17 House rules | Yes only with `bookings.qld_house_rules_attested_at`. Sample uses a fixture. | `Yes13` / `No13` |
 | 18 Pets | Left blank | pet fields |

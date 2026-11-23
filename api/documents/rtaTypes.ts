@@ -57,6 +57,11 @@ export type RtaRentPdf = {
 
 export type RtaBondPdf = {
   amount: number | null
+  /**
+   * Dollars each tenant contributes, index 0 = tenant 1.
+   * Not stored on bookings. Absent entries are an equal split of the bond.
+   */
+  tenantContributions?: Array<number | null> | null
 }
 
 export type OccupancyPayeePdf = {

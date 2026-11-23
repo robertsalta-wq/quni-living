@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PDFDict, PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
 import type { NswFt6600PropertyCompliance, NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
+import { ATTACHED_QUNI_PLATFORM_ADDENDUM_TERMS } from './attachedAddendumSpecialTerms.js'
+import { ft6600BondTenantCount, splitFt6600BondContributionsAud } from './ft6600BondContributions.js'
 import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
 import { hasManagingAgentForFt6600 } from './ft6600LandlordSchedule.js'
 import { resolveWaterUsageChargedSeparately } from './propertyFt6600Compliance.js'
@@ -444,7 +446,29 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
   if (bond.amount != null && Number.isFinite(bond.amount)) {
     pushText(text, F.bond_amount, formatPlainMoney(bond.amount))
     checks.add(F.bond_paid_to_rbo_cb)
+    const bondNames = [tenant.fullName, ...coTenants].filter(Boolean).slice(0, 3)
+    const contributions = splitFt6600BondContributionsAud(
+      bond.amount,
+      ft6600BondTenantCount(coTenants),
+      bond.tenantContributions,
+    )
+    const nameFields = [F.bond_tenant_1_name, F.bond_tenant_2_name, F.bond_tenant_3_name] as const
+    const amountFields = [
+      F.bond_tenant_1_contribution,
+      F.bond_tenant_2_contribution,
+      F.bond_tenant_3_contribution,
+    ] as const
+    contributions.forEach((amount, index) => {
+      const nameField = nameFields[index]
+      const amountField = amountFields[index]
+      if (!nameField || !amountField) return
+      if (bondNames[index]) pushText(text, nameField, bondNames[index])
+      pushText(text, amountField, formatPlainMoney(amount))
+    })
   }
+
+  const extraTerms = props.specialConditions.map((s) => sanitizeDisplayText(s)).filter(Boolean)
+  pushText(text, F.additional_terms_text, [ATTACHED_QUNI_PLATFORM_ADDENDUM_TERMS, ...extraTerms].join('\n'))
 
   applyPropertyComplianceFill(text, checks, props.propertyCompliance, props.billsIncluded)
 

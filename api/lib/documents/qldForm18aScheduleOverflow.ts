@@ -7,6 +7,7 @@ import type { PropertyUtilitiesResolution } from '../../../src/lib/propertyUtili
 import type { CapturableUtilityServiceId } from '../../../src/lib/propertyUtilitiesServices.js'
 import { UTILITY_SERVICE_DISPLAY_LABELS } from '../../../src/lib/propertyUtilitiesServices.js'
 import { singleLineFitsInFieldWithoutTruncation } from './officialNswFt6600BurnIn.js'
+import { ATTACHED_QUNI_PLATFORM_ADDENDUM_TERMS } from './attachedAddendumSpecialTerms.js'
 import { QLD_FORM18A_RENAMED_FIELDS as F } from './qldForm18aRenamedFields.js'
 
 export const QLD_FORM18A_SPECIAL_TERMS_POINTER = 'See special terms (page 12)'
@@ -118,8 +119,6 @@ export function composeQldForm18aSpecialTermsText(args: {
   if (args.bookingNotes?.trim()) {
     lines.push(`Booking notes: ${args.bookingNotes.trim()}`)
   }
-  if (lines.length === 0) {
-    return 'Nil additional special terms at execution.'
-  }
-  return lines.join('\n')
+  if (lines.length === 0) return ATTACHED_QUNI_PLATFORM_ADDENDUM_TERMS
+  return [ATTACHED_QUNI_PLATFORM_ADDENDUM_TERMS, ...lines].join('\n')
 }

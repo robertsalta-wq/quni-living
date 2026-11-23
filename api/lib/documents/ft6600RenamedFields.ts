@@ -1,6 +1,7 @@
 /**
  * Unique semantic AcroForm /T names on docs/nsw/ft6600-renamed.pdf.
- * Generated from docs/nsw/ft6600-corrected-field-map.json (131 fields, rect/page authority).
+ * Source: NSW Fair Trading FT6600 standard form from 21 September 2026 (FT6600_300726).
+ * Regenerate: node scripts/rename-ft6600-2026-09-fields.mjs
  */
 export const FT6600_RENAMED_FIELDS = {
   additional_terms_text: 'additional_terms_text',
@@ -10,6 +11,12 @@ export const FT6600_RENAMED_FIELDS = {
   bond_paid_to_agent_cb: 'bond_paid_to_agent_cb',
   bond_paid_to_landlord_cb: 'bond_paid_to_landlord_cb',
   bond_paid_to_rbo_cb: 'bond_paid_to_rbo_cb',
+  bond_tenant_1_contribution: 'bond_tenant_1_contribution',
+  bond_tenant_1_name: 'bond_tenant_1_name',
+  bond_tenant_2_contribution: 'bond_tenant_2_contribution',
+  bond_tenant_2_name: 'bond_tenant_2_name',
+  bond_tenant_3_contribution: 'bond_tenant_3_contribution',
+  bond_tenant_3_name: 'bond_tenant_3_name',
   corp_address: 'corp_address',
   corp_name: 'corp_name',
   corp_postcode: 'corp_postcode',

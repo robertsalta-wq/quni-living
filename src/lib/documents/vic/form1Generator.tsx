@@ -11,7 +11,12 @@ import { join } from 'node:path'
 import type { ReactNode } from 'react'
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { QldGeneralTenancyAgreementProps } from '../../../../api/documents/rtaTypes.js'
-import { FORM1_FORM_REFERENCE, FORM1_INTRO, FORM1_PART_B_THROUGH_E } from './form1Content.js'
+import {
+  FORM1_FORM_REFERENCE,
+  FORM1_INTRO,
+  FORM1_PART_A_STATIC,
+  FORM1_PART_B_THROUGH_E,
+} from './form1Content.js'
 import {
   chunkText,
   VicForm1ClauseChunkBody,
@@ -50,6 +55,93 @@ export function item8RentPaymentDetails(
 
   void preference
   return bankLine
+}
+
+/** 1pt text in the page background, same pattern as licenceOccupy/docusealTags.ts. */
+const FORM1_DOCUSEAL_TAG_HIDDEN = {
+  fontSize: 1,
+  color: '#ffffff',
+} as const
+
+function form1DocusealTag(
+  fieldName: string,
+  role: 'First Party' | 'Second Party' | 'Co-tenant',
+  type: 'signature' | 'date',
+): string {
+  const size = type === 'signature' ? { width: 220, height: 72 } : { width: 120, height: 28 }
+  return `{{${fieldName};role=${role};type=${type};width=${size.width};height=${size.height}}}`
+}
+
+function form1IntroLines(): string[] {
+  return FORM1_INTRO.split('\n').filter((line) => !line.includes('[EXTRACTION_FLAG:'))
+}
+
+function form1Item7BondLines(): string[] {
+  const start = FORM1_PART_A_STATIC.indexOf('- The renter has been asked to pay the bond')
+  const end = FORM1_PART_A_STATIC.indexOf('Bond amount ($)')
+  if (start < 0 || end < 0) return []
+  return FORM1_PART_A_STATIC.slice(start, end)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
+function form1PrescribedWithSchedule(
+  prescribed: string,
+  args: {
+    paymentDetails: string
+    landlordConsents: boolean
+    landlordEmail: string
+    tenantConsents: boolean
+    tenantEmail: string
+    urgentName: string
+    urgentPhone: string
+    urgentEmail: string
+  },
+): string {
+  const providerService = args.landlordConsents
+    ? `Rental provider electronic service: Yes - ${args.landlordEmail}`
+    : 'Rental provider electronic service: No'
+  const renterService = args.tenantConsents
+    ? `Renter 1 electronic service: Yes - ${args.tenantEmail}`
+    : 'Renter 1 electronic service: No'
+  return prescribed
+    .replace(
+      'Payment details (if applicable)',
+      [
+        'Payment details (if applicable)',
+        '',
+        'Bank deposit: yes. This is a fee-free electronic method. No fee is charged to the renter.',
+        'The renter may instead use Centrepay or another electronic funds transfer. No fee is charged to the renter.',
+        args.paymentDetails,
+      ].join('\n'),
+    )
+    .replace(
+      'The rental provider must complete this section before giving the agreement to the renter.',
+      `The rental provider must complete this section before giving the agreement to the renter.\n\n${providerService}`,
+    )
+    .replace(
+      'Renter 1\n\nYes - insert email address',
+      `${renterService}\n\nRenter 1\n\nYes - insert email address`,
+    )
+    .replace(
+      'Emergency email address',
+      [
+        'Emergency email address',
+        '',
+        `Emergency contact name: ${args.urgentName}`,
+        `Emergency phone number: ${args.urgentPhone}`,
+        `Emergency email address: ${args.urgentEmail}`,
+      ].join('\n'),
+    )
+    .replace(
+      'If yes, the rental provider must attach a copy of the rules to this agreement.',
+      'Completed: No\n\nIf yes, the rental provider must attach a copy of the rules to this agreement.',
+    )
+    .replace(
+      'The condition report will be provided to the renter on or before the date the agreement starts',
+      'The condition report will be provided to the renter on or before the date the agreement starts\n\nCompleted: the condition report will be provided to the renter on or before the date the agreement starts.',
+    )
 }
 
 const styles = StyleSheet.create({
@@ -289,13 +381,17 @@ function SignaturesBlock(props: QldGeneralTenancyAgreementProps) {
       <View style={styles.sigBox}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.sigHint}>Signature </Text>
-          <Text style={styles.sigHint}>{'{{Rental Provider Signature;role=First Party;type=signature}}'}</Text>
+          <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+            {form1DocusealTag('Rental Provider Signature', 'First Party', 'signature')}
+          </Text>
         </View>
       </View>
       <View style={{ ...styles.sigBox, minHeight: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.sigHint}>Dated </Text>
-          <Text style={styles.sigHint}>{'{{Rental Provider Sign Date;role=First Party;type=date}}'}</Text>
+          <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+            {form1DocusealTag('Rental Provider Sign Date', 'First Party', 'date')}
+          </Text>
         </View>
       </View>
 
@@ -304,13 +400,17 @@ function SignaturesBlock(props: QldGeneralTenancyAgreementProps) {
       <View style={styles.sigBox}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.sigHint}>Signature </Text>
-          <Text style={styles.sigHint}>{'{{Renter Signature;role=Second Party;type=signature}}'}</Text>
+          <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+            {form1DocusealTag('Renter Signature', 'Second Party', 'signature')}
+          </Text>
         </View>
       </View>
       <View style={{ ...styles.sigBox, minHeight: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.sigHint}>Dated </Text>
-          <Text style={styles.sigHint}>{'{{Renter Sign Date;role=Second Party;type=date}}'}</Text>
+          <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+            {form1DocusealTag('Renter Sign Date', 'Second Party', 'date')}
+          </Text>
         </View>
       </View>
 
@@ -319,10 +419,20 @@ function SignaturesBlock(props: QldGeneralTenancyAgreementProps) {
           <Text style={{ ...styles.subHeading, marginTop: 8 }}>Renter (2)</Text>
           <Field label="Name:" children={tenant2} />
           <View style={styles.sigBox}>
-            <Text style={styles.sigHint}>{'{{Renter 2 Signature;role=Co-tenant;type=signature}}'}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.sigHint}>Signature </Text>
+              <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+                {form1DocusealTag('Renter 2 Signature', 'Co-tenant', 'signature')}
+              </Text>
+            </View>
           </View>
           <View style={{ ...styles.sigBox, minHeight: 28 }}>
-            <Text style={styles.sigHint}>{'{{Renter 2 Sign Date;role=Co-tenant;type=date}}'}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.sigHint}>Dated </Text>
+              <Text style={FORM1_DOCUSEAL_TAG_HIDDEN}>
+                {form1DocusealTag('Renter 2 Sign Date', 'Co-tenant', 'date')}
+              </Text>
+            </View>
           </View>
         </>
       ) : null}
@@ -358,7 +468,19 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
   const paymentDetails = item8RentPaymentDetails(rentPaymentPreference, rentPaymentBankDetails)
   const freq = rent.rentFrequency
 
-  const clauseChunks = chunkText(FORM1_PART_B_THROUGH_E, 2600)
+  const urgentName =
+    urgentRepairsTradespeople.electrician?.split('-')[0]?.trim() || landlord.fullName
+  const prescribed = form1PrescribedWithSchedule(FORM1_PART_B_THROUGH_E, {
+    paymentDetails,
+    landlordConsents: electronicService.landlordConsentsToEmailService,
+    landlordEmail: electronicService.landlordEmail,
+    tenantConsents: electronicService.tenantConsentsToEmailService,
+    tenantEmail: electronicService.tenantEmail,
+    urgentName,
+    urgentPhone: landlord.phone,
+    urgentEmail: landlord.email,
+  })
+  const clauseChunks = chunkText(prescribed, 2600)
 
   let pageNum = 0
   const nextPage = () => {
@@ -372,8 +494,8 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
     <Page key="p1" size="A4" style={styles.page}>
       <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
       <Text style={styles.formRefLine}>{FORM1_FORM_REFERENCE}</Text>
-      {FORM1_INTRO.split('\n').slice(0, 12).map((line, i) => (
-        <Text key={`intro-${i}`} style={[styles.body, { marginBottom: i < 11 ? 3 : 8 }]}>
+      {form1IntroLines().map((line, i, lines) => (
+        <Text key={`intro-${i}`} style={[styles.body, { marginBottom: i < lines.length - 1 ? 3 : 8 }]}>
           {line.trim() || ' '}
         </Text>
       ))}
@@ -440,36 +562,20 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
       <Field label="Day rent is to be paid:" children={rentWeekday} />
       <Field label="Date first rent payment due:" children={formatAuDate(term.startDate)} />
 
+      <Text style={styles.subHeading}>7. Bond</Text>
+      {form1Item7BondLines().map((line, i) => (
+        <Text key={`bond-${i}`} style={[styles.body, { marginBottom: 3 }]}>
+          {line}
+        </Text>
+      ))}
       {bondDisplay ? (
         <>
-          <Text style={styles.subHeading}>7. Bond</Text>
           <Field label="Bond amount ($):" children={bondDisplay} />
           <Field label="Date bond payment due:" children={formatAuDate(term.startDate)} />
         </>
-      ) : null}
-
-      <Text style={styles.subHeading}>Part B - Standard terms (schedule highlights)</Text>
-      <Text style={{ ...styles.body, marginBottom: 4 }}>8. Rental provider&apos;s preferred methods of payment</Text>
-      <CheckboxLine checked label="bank deposit" />
-      <CheckboxLine checked={false} label="other electronic form of payment, including Centrepay" />
-      <Field label="Payment details:" children={paymentDetails} />
-
-      <Text style={{ ...styles.body, marginTop: 6, fontFamily: 'Helvetica-Bold' }}>9. Electronic service of notices</Text>
-      <CheckboxLine checked={electronicService.landlordConsentsToEmailService} label={`Rental provider - yes (${electronicService.landlordEmail})`} />
-      <CheckboxLine checked={!electronicService.landlordConsentsToEmailService} label="Rental provider - no" />
-      <CheckboxLine checked={electronicService.tenantConsentsToEmailService} label={`Renter - yes (${electronicService.tenantEmail})`} />
-      <CheckboxLine checked={!electronicService.tenantConsentsToEmailService} label="Renter - no" />
-
-      <Text style={{ ...styles.body, marginTop: 6, fontFamily: 'Helvetica-Bold' }}>10. Urgent repairs contact</Text>
-      <Field label="Emergency contact name:" children={urgentRepairsTradespeople.electrician?.split('-')[0]?.trim() ?? landlord.fullName} />
-      <Field label="Emergency contact phone:" children={landlord.phone} />
-      <Field label="Emergency contact email:" children={landlord.email} />
-
-      <CheckboxLine checked={false} label="12. Owners corporation rules apply - yes" />
-      <CheckboxLine checked label="12. Owners corporation rules apply - no" />
-
-      <CheckboxLine checked={false} label="13. Condition report has been provided" />
-      <CheckboxLine checked label="13. Condition report will be provided on or before the agreement start date" />
+      ) : (
+        <Field label="Bond amount ($):" children="No bond" />
+      )}
 
       <PageFooter documentId={documentId} pageNumber={nextPage()} />
     </Page>,

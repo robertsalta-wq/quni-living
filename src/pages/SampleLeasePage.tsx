@@ -27,13 +27,13 @@ const STATES: SampleState[] = [
       },
       {
         name: 'Room in your home',
-        when: 'Occupancy agreement. A room in the home you live in.',
+        when: 'Licence to occupy. A room in the home you live in.',
         href: '/sample-lease/nsw-room-in-your-home.pdf',
         fileName: 'nsw-room-in-your-home.pdf',
       },
       {
         name: 'Boarding house',
-        when: "Quni's occupancy agreement for a registered boarding house.",
+        when: 'Standard occupancy agreement for a registered boarding house.',
         href: '/sample-lease/nsw-boarding-house.pdf',
         fileName: 'nsw-boarding-house.pdf',
       },
@@ -50,7 +50,7 @@ const STATES: SampleState[] = [
       },
       {
         name: 'Room in your home',
-        when: 'Occupancy agreement. A room in the home you live in, where the rooming house rules do not apply.',
+        when: 'Licence to occupy. A room in the home you live in, where the rooming house rules do not apply.',
         href: '/sample-lease/qld-room-in-your-home.pdf',
         fileName: 'qld-room-in-your-home.pdf',
       },

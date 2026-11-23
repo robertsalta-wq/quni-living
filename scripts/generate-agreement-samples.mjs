@@ -252,23 +252,25 @@ const publicPackages = [
   { fileName: 'vic-room-in-your-home.pdf', keys: ['VIC|T1|Licence to occupy'] },
 ]
 
-if (!onlyKey) {
-  mkdirSync(PUBLIC_LEASE_ROOT, { recursive: true })
-  for (const pack of publicPackages) {
-    const parts = pack.keys.map((key) => {
-      const buf = rawByKey.get(key)
-      if (!buf) throw new Error(`Missing sample for ${key}`)
-      return buf
-    })
-    const merged = await PDFDocument.create()
-    for (const part of parts) {
-      const src = await PDFDocument.load(part)
-      const pages = await merged.copyPages(src, src.getPageIndices())
-      for (const page of pages) merged.addPage(page)
-    }
-    const watermarked = await applyWatermark(Buffer.from(await merged.save()))
-    const outputPath = join(PUBLIC_LEASE_ROOT, pack.fileName)
-    writeFileSync(outputPath, watermarked)
-    console.log('Written:', outputPath)
+mkdirSync(PUBLIC_LEASE_ROOT, { recursive: true })
+for (const pack of publicPackages) {
+  if (pack.keys.some((key) => !rawByKey.has(key))) {
+    if (!onlyKey) throw new Error(`Missing sample for ${pack.fileName}`)
+    continue
   }
+  const parts = pack.keys.map((key) => {
+    const buf = rawByKey.get(key)
+    if (!buf) throw new Error(`Missing sample for ${key}`)
+    return buf
+  })
+  const merged = await PDFDocument.create()
+  for (const part of parts) {
+    const src = await PDFDocument.load(part)
+    const pages = await merged.copyPages(src, src.getPageIndices())
+    for (const page of pages) merged.addPage(page)
+  }
+  const watermarked = await applyWatermark(Buffer.from(await merged.save()))
+  const outputPath = join(PUBLIC_LEASE_ROOT, pack.fileName)
+  writeFileSync(outputPath, watermarked)
+  console.log('Written:', outputPath)
 }

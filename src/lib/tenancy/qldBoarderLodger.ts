@@ -11,7 +11,8 @@ export { QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS, QLD_ROOMS_RENTED_UNANSWERED_REA
 
 export const QLD_RTRA_ACT_SHORT = 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)'
 
-export const QLD_RTA_BOARDERS_LODGERS_URL = 'https://www.rta.qld.gov.au/renting/boarders-and-lodgers'
+export const QLD_RTA_BOARDERS_LODGERS_URL =
+  'https://www.rta.qld.gov.au/before-renting/types-of-tenancy-agreements/boarderslodgers'
 
 export function isQldOnSiteBoarderLodgerListing(
   state: string | null | undefined,
