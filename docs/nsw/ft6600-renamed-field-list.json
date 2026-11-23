@@ -1,5 +1,5 @@
 {
-  "count": 131,
+  "count": 137,
   "fields": [
     {
       "name": "additional_terms_text"
@@ -21,6 +21,24 @@
     },
     {
       "name": "bond_paid_to_rbo_cb"
+    },
+    {
+      "name": "bond_tenant_1_contribution"
+    },
+    {
+      "name": "bond_tenant_1_name"
+    },
+    {
+      "name": "bond_tenant_2_contribution"
+    },
+    {
+      "name": "bond_tenant_2_name"
+    },
+    {
+      "name": "bond_tenant_3_contribution"
+    },
+    {
+      "name": "bond_tenant_3_name"
     },
     {
       "name": "corp_address"

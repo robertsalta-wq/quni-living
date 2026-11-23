@@ -25,7 +25,13 @@ const extractionFlags = []
 /** Markdown → plain text for PDF clause bodies (preserve prescribed wording). */
 function markdownToPlain(md) {
   let t = md
-  t = t.replace(/!\[[^\]]*]\([^)]+\)/g, '[EXTRACTION_FLAG: CAV logo/image omitted from prescribed text embed]')
+  t = t.replace(/!\[[^\]]*]\([^)]+\)/g, () => {
+    extractionFlags.push({
+      section: 'Cover',
+      issue: 'CAV logo/image omitted from prescribed text embed',
+    })
+    return ''
+  })
   t = t.replace(/\[([^\]]+)]\((?:https?:\/\/|mailto:)[^)]+\)/g, '$1')
   t = t.replace(/<a id="[^"]*"><\/a>/g, '')
   t = t.replace(/^#{1,6}\s+/gm, '')

@@ -85,6 +85,6 @@ describe('qldForm18aScheduleOverflow', () => {
         specialConditions: [],
         bookingNotes: null,
       }),
-    ).toBe('Nil additional special terms at execution.')
+    ).toBe('Additional terms are in the attached Quni platform addendum.')
   })
 })

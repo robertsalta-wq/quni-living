@@ -25,7 +25,7 @@ export const OFFICIAL_FT6600_WIDGET_TAG_STYLE = {
   color: rgb(0.42, 0.45, 0.5),
 } as const
 
-/** Five signature widgets on pages 17–18 (sig_tenant_3 / sig_tenant_4 out of scope). */
+/** Five signature widgets on pages 19–20 (sig_tenant_3 / sig_tenant_4 out of scope). */
 export const OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST = [
   'sig_landlord',
   'sig_landlord_lis',
@@ -34,11 +34,11 @@ export const OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST = [
   'sig_tenant_tis',
 ] as const
 
-/** Human page 18 (0-based index 17) - TIS signature row. */
-export const OFFICIAL_FT6600_TIS_PAGE_INDEX = 17
+/** Human page 20 (0-based index 19) - TIS signature row on the 21 September 2026 form. */
+export const OFFICIAL_FT6600_TIS_PAGE_INDEX = 19
 
-/** Human page 17 (0-based index 16) - landlord/tenant signature spread. */
-export const OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX = 16
+/** Human page 19 (0-based index 18) - landlord/tenant signature spread. */
+export const OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX = 18
 
 /** @deprecated Spanning dates removed - use OFFICIAL_FT6600_DATE_COMPONENT_DEFS. */
 export const OFFICIAL_FT6600_DATE_FORMAT = 'DD/MM/YYYY' as const

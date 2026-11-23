@@ -23,6 +23,11 @@ import {
   QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS,
 } from './officialQldForm18aBurnIn.js'
 import {
+  fitQldForm18aPaymentReference,
+  formatQldForm18aPaymentReference,
+  QLD_FORM_18A_PAYMENT_REFERENCE_FONT_SIZE,
+} from './qldForm18aPaymentReference.js'
+import {
   composeQldForm18aSpecialTermsText,
   resolveUtilitiesScheduleOverflow,
 } from './qldForm18aScheduleOverflow.js'
@@ -366,7 +371,7 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
     pushText(
       text,
       F.Payment_reference,
-      `Booking ${props.documentId.slice(0, 8)}`,
+      formatQldForm18aPaymentReference(tenant.fullName, premises.addressLine),
     )
   }
 
@@ -507,6 +512,17 @@ export async function applyOfficialQldForm18aScheduleFill(
     for (const [name, value] of overflow.scheduleAssignments) {
       state.text.set(name, value)
     }
+  }
+
+  const paymentReference = state.text.get(F.Payment_reference)
+  if (paymentReference) {
+    const field = form.getTextField(F.Payment_reference)
+    const rect = field.acroField.getWidgets()[0]?.getRectangle()
+    const fitted = rect
+      ? fitQldForm18aPaymentReference(paymentReference, font, rect.width)
+      : paymentReference
+    state.text.set(F.Payment_reference, fitted)
+    field.setFontSize(QLD_FORM_18A_PAYMENT_REFERENCE_FONT_SIZE)
   }
 
   const specialTermsText = composeQldForm18aSpecialTermsText({

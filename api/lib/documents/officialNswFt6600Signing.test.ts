@@ -32,13 +32,17 @@ import { QUINN_ROBERT_FT6600_LISTING_INPUT } from './quinnRobertFt6600Fixture.js
 import { buildOfficialNswFt6600PdfWithSigning } from './officialNswFt6600Signing.js'
 
 describe('collectOfficialNswFt6600SignatureWidgets', () => {
-  it('reads legacy AcroForm rects for the five sig_* fields on pages 16–17', async () => {
+  it('reads AcroForm rects for the five sig_* fields on pages 19–20', async () => {
     const doc = await loadOfficialNswFt6600Template()
     const widgets = collectOfficialNswFt6600SignatureWidgets(doc)
     expect(widgets.map((w) => w.fieldName).sort()).toEqual([...OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST].sort())
     expect(widgets.find((w) => w.fieldName === 'sig_landlord')?.y).toBeGreaterThan(560)
     expect(widgets.find((w) => w.fieldName === 'sig_tenant_tis')?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
-    expect(widgets.filter((w) => w.fieldName !== 'sig_tenant_tis').every((w) => w.pageIndex === 16)).toBe(true)
+    expect(
+      widgets
+        .filter((w) => w.fieldName !== 'sig_tenant_tis')
+        .every((w) => w.pageIndex === 18),
+    ).toBe(true)
   })
 })
 

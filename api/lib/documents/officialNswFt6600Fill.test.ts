@@ -81,12 +81,12 @@ const SAMPLE_PROPS = {
 }
 
 describe('FT6600 renamed field map (full regression)', () => {
-  it('matches committed ft6600-renamed-field-list.json (131 unique semantic names)', () => {
+  it('matches committed ft6600-renamed-field-list.json', () => {
     const listPath = join(process.cwd(), 'docs', 'nsw', 'ft6600-renamed-field-list.json')
     const list = JSON.parse(readFileSync(listPath, 'utf8')) as { count: number; fields: Array<{ name: string }> }
     const semanticFromFile = list.fields.map((r) => r.name).sort()
     const semanticFromCode = Object.values(F).sort()
-    expect(list.count).toBe(131)
+    expect(list.count).toBe(semanticFromCode.length)
     expect(semanticFromFile).toEqual(semanticFromCode)
   })
 })
@@ -105,6 +105,14 @@ describe('applyOfficialNswFt6600ScheduleFill (renamed template)', () => {
     expect(byField[F.tenant_1_printed_name]).toBe('Jordan Tenant')
     expect(byField[F.tenant_2_printed_name]).toBe('Casey Co Renter')
     expect(byField[F.bond_amount]).toBe('1,680.00')
+    expect(byField[F.bond_tenant_1_name]).toBe('Jordan Tenant')
+    expect(byField[F.bond_tenant_1_contribution]).toBe('840.00')
+    expect(byField[F.bond_tenant_2_name]).toBe('Casey Co Renter')
+    expect(byField[F.bond_tenant_2_contribution]).toBe('840.00')
+    expect(byField[F.additional_terms_text]).toBe(
+      'Additional terms are in the attached Quni platform addendum.',
+    )
+    expect(byField[F.rent_payment_details]).toBe('Direct deposit to owner account.')
 
     const form = doc.getForm()
     expect(form.getCheckBox(F.term_6_months_cb).isChecked()).toBe(true)

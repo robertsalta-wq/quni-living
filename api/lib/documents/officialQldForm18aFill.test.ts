@@ -120,6 +120,11 @@ describe('officialQldForm18aFill', () => {
     expect(assignmentMap.has(F.Day_of_last_rent_increase_dd_mm_yyyy)).toBe(false)
     expect(assignmentMap.has(F.Type_of_services_the_tenant_must_pay_for)).toBe(false)
     expect(assignmentMap.get(F.Type_of_pets_approved1)).toBe(PETS_TYPE_LINE)
+    expect(assignmentMap.get(F.Payment_reference)).toBe('R Tenant 22 Rental St')
+    expect(assignmentMap.get(F.Payment_reference)).not.toContain('qld-form18a')
+    expect(assignmentMap.get(F.Special_terms)).toBe(
+      'Additional terms are in the attached Quni platform addendum.',
+    )
   })
 
   it('leaves rental bond amount blank when bond is null (no-bond listing)', async () => {
@@ -204,7 +209,9 @@ describe('officialQldForm18aFill', () => {
     expect(assignmentMap.get(F.How_gas_must_be_paid_for)).toBe(
       'Paid direct to gas retailer on individual account',
     )
-    expect(assignmentMap.get(F.Special_terms)).toBe('Nil additional special terms at execution.')
+    expect(assignmentMap.get(F.Special_terms)).toBe(
+      'Additional terms are in the attached Quni platform addendum.',
+    )
 
     expect(form.getCheckBox(F.services_electricity_yes).isChecked()).toBe(true)
     expect(form.getCheckBox(F.services_electricity_no).isChecked()).toBe(false)

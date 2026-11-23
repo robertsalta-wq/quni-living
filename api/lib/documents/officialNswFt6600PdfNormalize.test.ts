@@ -32,16 +32,16 @@ describe('officialNswFt6600PdfNormalize', () => {
   it('sets checkbox /V before flatten and removes all widget annots after flatten+normalize', async () => {
     const props = buildNswResidentialTenancyAgreementPropsFromBooking(QUINN_ROWS)
     const doc = await loadOfficialNswFt6600Template()
-    expect(countWidgetAnnotations(doc)).toBe(131)
+    expect(countWidgetAnnotations(doc)).toBe(137)
 
     await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
     const widgetsBeforeFlatten = countWidgetAnnotations(doc)
-    expect(widgetsBeforeFlatten).toBe(131)
+    expect(widgetsBeforeFlatten).toBe(137)
 
-    expect(readCheckboxV(doc, F.term_6_months_cb)).toBe('Yes')
-    expect(readCheckboxV(doc, F.rent_paid_week_cb)).toBe('Yes')
-    expect(readCheckboxV(doc, F.rent_paid_bank_cb)).toBe('Yes')
-    expect(readCheckboxV(doc, F.bond_paid_to_rbo_cb)).toBe('Yes')
+    expect(readCheckboxV(doc, F.term_6_months_cb)).toBe('6 months')
+    expect(readCheckboxV(doc, F.rent_paid_week_cb)).toBe('Weekly')
+    expect(readCheckboxV(doc, F.rent_paid_bank_cb)).toBe('Paid by approved electronic bank transfer')
+    expect(readCheckboxV(doc, F.bond_paid_to_rbo_cb)).toBe('NSW Fair Trading through Rental Bond Online')
     expect(readCheckboxV(doc, F.water_usage_no_cb)).toBe('No')
     expect(readCheckboxV(doc, F.electricity_embedded_no_cb)).toBe('No')
     expect(readCheckboxV(doc, F.gas_embedded_no_cb)).toBe('No')

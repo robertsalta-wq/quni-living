@@ -20,6 +20,7 @@ const { QUINN_ROBERT_FT6600_LISTING_INPUT } = await import(
 )
 const {
   buildOfficialNswFt6600PdfWithSigning,
+  OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX,
   OFFICIAL_FT6600_TIS_PAGE_INDEX,
   OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR,
   OFFICIAL_FT6600_TIS_DATE_ANCHOR,
@@ -80,7 +81,7 @@ const tagScan = await scanTags(built.pdfBytes)
 const tisPlacements = built.widgetTagPlacements.filter((p) =>
   /tis/i.test(p.fieldName) || /TIS/.test(p.tag),
 )
-const p17Tis = tisPlacements.filter((p) => p.pageIndex === 16)
+const p17Tis = tisPlacements.filter((p) => p.pageIndex === OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX)
 const p18Tis = tisPlacements.filter((p) => p.pageIndex === OFFICIAL_FT6600_TIS_PAGE_INDEX)
 
 const report = {
