@@ -233,7 +233,8 @@ export async function applyOfficialQldFormR18Fill(
   setCheck(form, C.level_2, false)
   setCheck(form, C.level_3, false)
   setCheck(form, C.student_accommodation, props.studentAccommodation)
-  setCheck(form, C.item15_level_1, true)
+  // Item 15 is only for supported accommodation. Leave it blank.
+  setCheck(form, C.item15_level_1, false)
   setCheck(form, C.item15_level_2, false)
   setCheck(form, C.item15_level_3, false)
   setCheck(form, C.breakfast, false)
