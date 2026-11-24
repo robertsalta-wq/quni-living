@@ -25,6 +25,7 @@ const { QldLicenceToOccupyOnSite } = await import('../src/lib/documents/qld/occu
 const { fillOfficialNswFt6600Pdf } = await import('../api/lib/documents/officialNswFt6600Fill.ts')
 const { fillOfficialQldForm18aPdf } = await import('../api/lib/documents/officialQldForm18aFill.ts')
 const { fillOfficialQldFormR18Pdf } = await import('../api/lib/documents/officialQldFormR18Fill.ts')
+const { fillOfficialVicRoomingHousePdf } = await import('../api/lib/documents/officialVicRoomingHouseFill.ts')
 const { qldFormR18SampleFillProps } = await import('../api/lib/documents/qldFormR18SampleProps.ts')
 const { QuniPlatformAddendumQld } = await import('../src/lib/documents/QuniPlatformAddendumQld.tsx')
 const { VicLicenceToOccupyOnSite } = await import('../src/lib/documents/vic/occupancyGenerator.tsx')
@@ -130,6 +131,60 @@ const samples = [
   },
   {
     state: 'VIC',
+    tier: 'T3',
+    document: 'Rooming house agreement',
+    officialVicRooming: true,
+    props: {
+      agreementDateLabel: '',
+      roomNumber: '4',
+      streetAddress: '9 Sample Street',
+      suburb: 'Melbourne',
+      postcode: '3000',
+      itemsLetWithRoom: 'Desk and lamp',
+      operatorName: 'Sample Operator',
+      operatorAddress: '1 Sample Lane, Melbourne VIC',
+      operatorPostcode: '3000',
+      operatorPhone: '0400 000 000',
+      operatorAbn: '',
+      operatorEmail: 'operator@example.com',
+      resident1Name: 'Sample Resident',
+      resident1Address: '',
+      resident1Postcode: '',
+      resident1Phone: '0400 111 111',
+      resident1Email: 'resident@example.com',
+      resident2Name: '',
+      resident2Address: '',
+      resident2Postcode: '',
+      resident2Phone: '',
+      resident2Email: '',
+      startDateLabel: '01/12/2026',
+      endDateLabel: '31/05/2027',
+      weeklyRent: '400.00',
+      rentDueDay: 'Tuesday',
+      firstRentDueLabel: '01/12/2026',
+      bondAmount: '1600.00',
+      bondDueLabel: '01/12/2026',
+      pay: {
+        directDebit: false,
+        bankDeposit: true,
+        cash: false,
+        cheque: false,
+        bpay: true,
+        otherEft: false,
+      },
+      bankAccountName: 'Sample Operator',
+      bankBsb: '123-456',
+      bankAccountNumber: '99887766',
+      operatorAcceptsElectronicService: true,
+      residentAcceptsElectronicService: null,
+      urgentContactName: 'Sample Operator',
+      urgentContactPhone: '0400 000 000',
+      urgentContactEmail: 'operator@example.com',
+      conditionReport: 'will_be_provided',
+    },
+  },
+  {
+    state: 'VIC',
     tier: 'T1',
     document: 'Licence to occupy',
     component: VicLicenceToOccupyOnSite,
@@ -178,9 +233,11 @@ for (const sample of selected) {
     ? Buffer.from((await fillOfficialNswFt6600Pdf(sample.props)).pdfBytes)
     : sample.officialQldForm18a
       ? Buffer.from((await fillOfficialQldForm18aPdf(sample.props)).pdfBytes)
-      : sample.officialQldFormR18
+        : sample.officialQldFormR18
         ? Buffer.from((await fillOfficialQldFormR18Pdf(qldFormR18SampleFillProps())).pdfBytes)
-        : await renderToBuffer(element(sample.component, sample.props))
+        : sample.officialVicRooming
+          ? Buffer.from((await fillOfficialVicRoomingHousePdf(sample.props)).pdfBytes)
+          : await renderToBuffer(element(sample.component, sample.props))
   rawByKey.set(`${sample.state}|${sample.tier}|${sample.document}`, rawBuffer)
   const watermarked = await applyWatermark(rawBuffer)
   writeFileSync(outputPath, watermarked)
@@ -250,6 +307,7 @@ const publicPackages = [
     keys: ['VIC|T2|Form 1', 'VIC|T2|Quni addendum'],
   },
   { fileName: 'vic-room-in-your-home.pdf', keys: ['VIC|T1|Licence to occupy'] },
+  { fileName: 'vic-rooming-house.pdf', keys: ['VIC|T3|Rooming house agreement'] },
 ]
 
 mkdirSync(PUBLIC_LEASE_ROOT, { recursive: true })

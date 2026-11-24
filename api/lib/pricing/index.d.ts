@@ -51,4 +51,5 @@ export function resolvePropertyTierFromListing(input: {
   isRegisteredRoomingHouse?: boolean | null
   roomsRentedToResidents?: unknown
   sharesKitchenOrBathroom?: unknown
+  premisesOccupantCapacity?: unknown
 }): 't1' | 't2' | 't3'

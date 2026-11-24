@@ -1531,6 +1531,17 @@ export interface Database {
           is_registered_rooming_house: boolean
           rooming_house_registration_number: string | null
           room_description: string | null
+          vic_rooming_house_operator_licence_number: string | null
+          vic_rooming_house_rules: string | null
+          vic_rooming_items_let_with_room: string | null
+          vic_rooming_operator_accepts_electronic_service: boolean | null
+          vic_rooming_pay_direct_debit: boolean
+          vic_rooming_pay_bank_deposit: boolean
+          vic_rooming_pay_cash: boolean
+          vic_rooming_pay_cheque: boolean
+          vic_rooming_pay_bpay: boolean
+          vic_rooming_pay_other_eft: boolean
+          vic_premises_occupant_capacity: number | null
           shared_areas: Json
           additional_charges: Json
           house_rules: string | null
@@ -1606,6 +1617,17 @@ export interface Database {
           is_registered_rooming_house?: boolean
           rooming_house_registration_number?: string | null
           room_description?: string | null
+          vic_rooming_house_operator_licence_number?: string | null
+          vic_rooming_house_rules?: string | null
+          vic_rooming_items_let_with_room?: string | null
+          vic_rooming_operator_accepts_electronic_service?: boolean | null
+          vic_rooming_pay_direct_debit?: boolean
+          vic_rooming_pay_bank_deposit?: boolean
+          vic_rooming_pay_cash?: boolean
+          vic_rooming_pay_cheque?: boolean
+          vic_rooming_pay_bpay?: boolean
+          vic_rooming_pay_other_eft?: boolean
+          vic_premises_occupant_capacity?: number | null
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null
@@ -1680,6 +1702,17 @@ export interface Database {
           is_registered_rooming_house?: boolean
           rooming_house_registration_number?: string | null
           room_description?: string | null
+          vic_rooming_house_operator_licence_number?: string | null
+          vic_rooming_house_rules?: string | null
+          vic_rooming_items_let_with_room?: string | null
+          vic_rooming_operator_accepts_electronic_service?: boolean | null
+          vic_rooming_pay_direct_debit?: boolean
+          vic_rooming_pay_bank_deposit?: boolean
+          vic_rooming_pay_cash?: boolean
+          vic_rooming_pay_cheque?: boolean
+          vic_rooming_pay_bpay?: boolean
+          vic_rooming_pay_other_eft?: boolean
+          vic_premises_occupant_capacity?: number | null
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null
@@ -1960,6 +1993,9 @@ export interface Database {
           listing_snapshot: Json | null
           listing_snapshot_hash: string | null
           qld_house_rules_attested_at: string | null
+          vic_rooming_house_rules_attested_at: string | null
+          vic_rooming_resident_accepts_electronic_service: boolean | null
+          vic_rooming_condition_report: string | null
           property_type: string | null
           rent_payment_method: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id: string | null
@@ -2055,6 +2091,9 @@ export interface Database {
           listing_snapshot?: Json | null
           listing_snapshot_hash?: string | null
           qld_house_rules_attested_at?: string | null
+          vic_rooming_house_rules_attested_at?: string | null
+          vic_rooming_resident_accepts_electronic_service?: boolean | null
+          vic_rooming_condition_report?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
@@ -2149,6 +2188,9 @@ export interface Database {
           listing_snapshot?: Json | null
           listing_snapshot_hash?: string | null
           qld_house_rules_attested_at?: string | null
+          vic_rooming_house_rules_attested_at?: string | null
+          vic_rooming_resident_accepts_electronic_service?: boolean | null
+          vic_rooming_condition_report?: string | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
@@ -3060,6 +3102,17 @@ export interface Database {
       }
       duplicate_property_listing: {
         Args: { p_source_id: string }
+        Returns: string
+      }
+      record_property_vic_rooming_operator_attestation: {
+        Args: {
+          p_property_id: string
+          p_registration_number: string
+          p_operator_licence_number: string
+          p_registration_current_declared: boolean
+          p_licence_current_declared: boolean
+          p_warranty_version: string
+        }
         Returns: string
       }
       record_property_t3_attestation: {

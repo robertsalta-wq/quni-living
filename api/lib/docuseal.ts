@@ -790,6 +790,105 @@ export async function sendQldFormR18PackageForSigning(
 
 }
 
+/** Victorian rooming house agreement plus the house-rules PDF. No Quni addendum. */
+export async function sendVicRoomingHousePackageForSigning(documentId: string): Promise<void> {
+  const admin = adminClient()
+  const { data: row, error: rowErr } = await admin
+    .from('tenancy_documents')
+    .select('id, tenancy_id, status, file_path, metadata')
+    .eq('id', documentId)
+    .maybeSingle()
+  if (rowErr) throw rowErr
+  if (!row?.file_path || !row.tenancy_id) throw new Error('Tenancy document not found or missing file_path')
+  const meta =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : {}
+  const houseRulesPath = typeof meta.house_rules_file_path === 'string' ? meta.house_rules_file_path.trim() : ''
+  if (!houseRulesPath) throw new Error('Victorian rooming package missing metadata.house_rules_file_path')
+  if (meta.signing_package !== 'rooming_house_vic') {
+    throw new Error('Tenancy document is not a Victorian rooming house signing package')
+  }
+  const { data: tenancy, error: tErr } = await admin
+    .from('tenancies')
+    .select('landlord_profile_id, student_profile_id')
+    .eq('id', row.tenancy_id)
+    .maybeSingle()
+  if (tErr) throw tErr
+  if (!tenancy?.landlord_profile_id || !tenancy.student_profile_id) throw new Error('Tenancy missing profile ids')
+  const { data: lpRow, error: lpErr } = await admin
+    .from('landlord_profiles')
+    .select('full_name, first_name, last_name, email, company_name')
+    .eq('id', tenancy.landlord_profile_id)
+    .maybeSingle()
+  const { data: spRow, error: spErr } = await admin
+    .from('student_profiles')
+    .select('full_name, first_name, last_name, email, verification_type, legal_name_locked_at')
+    .eq('id', tenancy.student_profile_id)
+    .maybeSingle()
+  if (lpErr) throw lpErr
+  if (spErr) throw spErr
+  if (!lpRow || !spRow) throw new Error('Could not load landlord or student profile')
+  await assertStudentLegalNameForSigning(admin, spRow)
+  const landlordName =
+    [lpRow.first_name, lpRow.last_name].filter(Boolean).join(' ').trim() ||
+    (typeof lpRow.full_name === 'string' ? lpRow.full_name.trim() : '') ||
+    'Operator'
+  const residentSalutationName = legacyStudentNameFromProfile(spRow, 'Resident')
+  const residentSubmitterName = tenantLegalNameForDocuments(spRow, 'Resident')
+  const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
+  const residentEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
+  if (!landlordEmail || !residentEmail) throw new Error('Operator or resident email missing for DocuSeal')
+  const { data: agreementBlob, error: agreementErr } = await admin.storage.from('tenancy-documents').download(row.file_path)
+  const { data: rulesBlob, error: rulesErr } = await admin.storage.from('tenancy-documents').download(houseRulesPath)
+  if (agreementErr || !agreementBlob) throw new Error(agreementErr?.message || 'Could not download the rooming house agreement')
+  if (rulesErr || !rulesBlob) throw new Error(rulesErr?.message || 'Could not download the house rules')
+  const submissionRaw = await createDocusealSubmissionFromPdf({
+    name: `VIC rooming house agreement - ${landlordName} / ${residentSalutationName}`,
+    documents: [
+      { name: 'Rooming house agreement.pdf', file: Buffer.from(await agreementBlob.arrayBuffer()).toString('base64') },
+      { name: 'Rooming house rules.pdf', file: Buffer.from(await rulesBlob.arrayBuffer()).toString('base64') },
+    ],
+    landlord: { name: landlordName, email: landlordEmail },
+    tenant: { name: residentSubmitterName, email: residentEmail },
+    submitterSignReason: false,
+  })
+  const submission = wrapSubmissionSubmitters(submissionRaw, false)
+  const submissionId = submission.id != null ? String(submission.id) : null
+  if (!submissionId) throw new Error('DocuSeal response missing submission id')
+  const { error: upErr } = await admin
+    .from('tenancy_documents')
+    .update({
+      docuseal_submission_id: submissionId,
+      status: 'sent_for_signing',
+      metadata: {
+        ...meta,
+        signing_package: 'rooming_house_vic',
+        house_rules_file_path: houseRulesPath,
+        docuseal_response: submission as unknown as Json,
+      } as Json,
+    })
+    .eq('id', documentId)
+  if (upErr) throw upErr
+  try {
+    const { emitDocumentSentForSigning, loadBookingIdsForTenancy } = await import(
+      './booking/events/emitDocusealDocumentEvents.js'
+    )
+    const bookingIds = await loadBookingIdsForTenancy(admin, row.tenancy_id)
+    if (bookingIds) {
+      await emitDocumentSentForSigning(admin, {
+        ...bookingIds,
+        documentId,
+        submissionId,
+        actorType: 'system',
+        source: 'send',
+      })
+    }
+  } catch (evErr) {
+    console.error('[docuseal] document.sent_for_signing (vic-rooming-house)', documentId, evErr)
+  }
+}
+
 /** DocuSeal webhook: store signed PDF and update tenancy_documents. */
 export async function handleSigningWebhook(payload: unknown): Promise<{ ok: boolean; message?: string }> {
   const submissionId = extractSubmissionIdFromWebhook(payload)

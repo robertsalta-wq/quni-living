@@ -8,5 +8,8 @@ export function vicServiceTierAvailability(propertyTier: PropertyTier): ServiceT
   if (propertyTier === 't1' || propertyTier === 't2') {
     return { listing: 'available', managed: 'gated', notes: VIC_MANAGED_GATED_NOTES }
   }
+  if (propertyTier === 't3') {
+    return { listing: 'available', managed: 'unsupported', notes: 'Managed is not available for a Victorian rooming house.' }
+  }
   return { listing: 'unsupported', managed: 'unsupported' }
 }

@@ -2,11 +2,17 @@
 -- supabase/migrations/20261124143000_vic_rooming_house_listing.sql
 --
 -- Agents must not run this. Rob runs it in the Supabase SQL Editor on
--- cqakltqzqrxnmxfbqatx. It raises on the first failure and prints VERIFY OK.
+-- cqakltqzqrxnmxfbqatx.
+--
+-- Run this whole file once. It opens a transaction and rolls it back.
+-- There is no COMMIT. Inserts, fee snapshots, and attestation rows are
+-- undone whether the checks pass or fail. Do not run it statement by
+-- statement. If a check fails, the error aborts the transaction. Run
+-- rollback; once if the editor stops before the final rollback.
 --
 -- SETUP: paste a real landlord auth.users.id into v_landlord_user below.
--- The script inserts throwaway drafts, checks the fee-snapshot seed and the
--- Victorian attestation stamp, then deletes those rows.
+
+begin;
 
 do $$
 declare
@@ -101,35 +107,35 @@ begin
     lister_role, address, suburb, postcode, bond_weeks
   ) values
   (
-    v_nsw, 'VIC rooming verify NSW t2 (delete me)',
+    v_nsw, 'VIC rooming verify NSW t2 (rollback test)',
     'vic-rooming-verify-nsw-' || substr(replace(v_nsw::text, '-', ''), 1, 12),
     v_landlord_id, 'draft', false, 400, 'NSW',
     'private_room_landlord_off_site', false, 'owner',
     '1 Verify St', 'Sydney', '2000', 0
   ),
   (
-    v_qld, 'VIC rooming verify QLD t2 (delete me)',
+    v_qld, 'VIC rooming verify QLD t2 (rollback test)',
     'vic-rooming-verify-qld-' || substr(replace(v_qld::text, '-', ''), 1, 12),
     v_landlord_id, 'draft', false, 400, 'QLD',
     'private_room_landlord_off_site', false, 'owner',
     '2 Verify St', 'Brisbane', '4000', 0
   ),
   (
-    v_nsw_t3, 'VIC rooming verify NSW t3 (delete me)',
+    v_nsw_t3, 'VIC rooming verify NSW t3 (rollback test)',
     'vic-rooming-verify-nsw3-' || substr(replace(v_nsw_t3::text, '-', ''), 1, 12),
     v_landlord_id, 'draft', false, 400, 'NSW',
     'private_room_landlord_off_site', true, 'owner',
     '3 Verify St', 'Sydney', '2000', 0
   ),
   (
-    v_qld_t1, 'VIC rooming verify QLD t1 (delete me)',
+    v_qld_t1, 'VIC rooming verify QLD t1 (rollback test)',
     'vic-rooming-verify-qld1-' || substr(replace(v_qld_t1::text, '-', ''), 1, 12),
     v_landlord_id, 'draft', false, 400, 'QLD',
     'private_room_landlord_on_site', false, 'owner',
     '4 Verify St', 'Brisbane', '4000', 0
   ),
   (
-    v_vic, 'VIC rooming verify VIC (delete me)',
+    v_vic, 'VIC rooming verify VIC (rollback test)',
     'vic-rooming-verify-vic-' || substr(replace(v_vic::text, '-', ''), 1, 12),
     v_landlord_id, 'draft', false, 400, 'VIC',
     'private_room_landlord_off_site', false, 'owner',
@@ -235,16 +241,8 @@ begin
       v_row.premises_address, v_row.premises_suburb, v_row.premises_state, v_row.premises_postcode;
   end if;
 
-  delete from public.properties
-  where id in (v_nsw, v_qld, v_vic, v_nsw_t3, v_qld_t1);
-
-  alter table public.property_vic_rooming_operator_attestations
-    disable trigger property_vic_rooming_operator_attestations_append_only;
-  delete from public.property_vic_rooming_operator_attestations
-  where id = v_attestation;
-  alter table public.property_vic_rooming_operator_attestations
-    enable trigger property_vic_rooming_operator_attestations_append_only;
-
   raise notice 'VERIFY OK';
 end;
 $$;
+
+rollback;

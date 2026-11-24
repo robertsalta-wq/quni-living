@@ -969,6 +969,8 @@ export default function Booking() {
           isRegisteredRoomingHouse: property.is_registered_rooming_house,
           roomsRentedToResidents: property.rooms_rented_to_residents,
           sharesKitchenOrBathroom: property.qld_shares_kitchen_or_bathroom,
+          premisesOccupantCapacity: (property as { vic_premises_occupant_capacity?: number | null })
+            .vic_premises_occupant_capacity,
         }) as 't1' | 't2' | 't3'
         const cell = await fetchPricingForPropertyTier(propertyTier, 'managed')
         if (!cancelled) setManagedPricingCell(cell)

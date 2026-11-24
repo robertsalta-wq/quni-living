@@ -27,6 +27,7 @@ export type ConfirmBookingProgress =
 export type ConfirmBookingOptions = {
   serviceTier?: 'listing' | 'managed'
   qldHouseRulesAttested?: boolean
+  vicRoomingConditionReport?: 'provided' | 'will_be_provided'
   onProgress?: (p: ConfirmBookingProgress) => void
 }
 
@@ -56,6 +57,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
         bookingId,
         ...(opts?.serviceTier ? { serviceTier: opts.serviceTier } : {}),
         ...(opts?.qldHouseRulesAttested === true ? { qldHouseRulesAttested: true } : {}),
+        ...(opts?.vicRoomingConditionReport ? { vicRoomingConditionReport: opts.vicRoomingConditionReport } : {}),
       }),
     })
   }

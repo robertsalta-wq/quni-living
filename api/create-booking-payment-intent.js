@@ -26,6 +26,11 @@ import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import { moveInFloorError } from './lib/booking/moveInFloor.js'
 import { leaseEndDateFromMoveIn } from './lib/booking/leaseEndDate.js'
 import {
+  isVicRoomingPropertyType,
+  vicRoomingApplyBlock,
+  vicRoomingRouting,
+} from './lib/tenancy/vicRoomingHouse.js'
+import {
   assertRenterEmailConfirmed,
   markTenantInviteAccepted,
   readTenantInviteTokenFromBody,
@@ -533,6 +538,36 @@ async function handleListingBookingCommit(request, origin, body) {
 
   const expiresAt = landlordResponseExpiresAtIso('listing')
   const endDate = leaseEndDateFromMoveIn(moveInDate, leaseLength)
+
+  if (String(property.state || '').trim().toUpperCase() === 'VIC') {
+    const { data: vicRow, error: vicErr } = await admin
+      .from('properties')
+      .select('vic_premises_occupant_capacity')
+      .eq('id', propertyId)
+      .maybeSingle()
+    if (vicErr) {
+      return json(
+        {
+          error: 'vic_rooming_migration_required',
+          message: 'Apply the Victorian rooming house migration before requesting a Victorian booking.',
+        },
+        503,
+        origin,
+      )
+    }
+    const route = vicRoomingRouting({
+      propertyType: property.property_type,
+      isRegisteredRoomingHouse: property.is_registered_rooming_house,
+      premisesOccupantCapacity: vicRow?.vic_premises_occupant_capacity,
+    })
+    if (route.kind === 'unsupported' && isVicRoomingPropertyType(property.property_type)) {
+      return json({ error: 'vic_rooming_capacity_required', message: route.reason }, 400, origin)
+    }
+    if (route.kind === 'rooming') {
+      const block = vicRoomingApplyBlock({ leaseLength, endDate, occupantCount })
+      if (!block.ok) return json({ error: 'vic_rooming_booking', message: block.message }, 400, origin)
+    }
+  }
 
   let listingAcknowledgment
   try {

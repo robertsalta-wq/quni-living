@@ -33,6 +33,10 @@ import {
   preflightQldFormR18ListingTenancy,
   runQldFormR18ListingTenancy,
 } from './qldFormR18.js'
+import {
+  preflightVicRoomingHouseListingTenancy,
+  runVicRoomingHouseListingTenancy,
+} from './vicRoomingHouse.js'
 
 export type ListingTenancyGeneratorModule = {
   preflight: (
@@ -78,6 +82,10 @@ const REGISTRY: Record<string, ListingTenancyGeneratorModule> = {
   'qld-form-r18': {
     preflight: preflightQldFormR18ListingTenancy,
     run: runQldFormR18ListingTenancy,
+  },
+  'vic-rooming-house': {
+    preflight: preflightVicRoomingHouseListingTenancy,
+    run: runVicRoomingHouseListingTenancy,
   },
 }
 

@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
+import {
+  VicRoomingHouseFields,
+  type VicRoomingHouseFieldValues,
+} from '../../components/landlord/VicRoomingHouseFields'
+import {
+  parseVicPremisesOccupantCapacity,
+  vicRoomingPayMethodsFromRow,
+  vicRoomingPublishErrors,
+  vicRoomingRouting,
+} from '../../../api/lib/tenancy/vicRoomingHouse'
+import { recordVicRoomingOperatorAttestation } from '../../lib/tenancy/recordVicRoomingOperatorAttestation'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { requestSiteRebuild } from '../../lib/triggerSiteRebuild'
 import { useAuthContext } from '../../context/AuthContext'
@@ -883,6 +894,24 @@ export default function LandlordPropertyFormPage() {
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
+  const [vicRoomingFields, setVicRoomingFields] = useState<VicRoomingHouseFieldValues>({
+    capacity: '',
+    roomNumber: '',
+    itemsLet: '',
+    houseRules: '',
+    licenceNumber: '',
+    registrationNumber: '',
+    operatorAcceptsElectronicService: null,
+    attestationCurrent: false,
+    pay: {
+      directDebit: false,
+      bankDeposit: false,
+      cash: false,
+      cheque: false,
+      bpay: false,
+      otherEft: false,
+    },
+  })
 
   const accommodationChoice = useMemo(
     () => accommodationChoiceFromFields(propertyListingType, roomType, isRegisteredRoomingHouse),
@@ -1136,8 +1165,9 @@ export default function LandlordPropertyFormPage() {
         isRegisteredRoomingHouse,
         roomsRentedToResidents: parseRoomsRentedToResidents(roomsRentedToResidents),
         sharesKitchenOrBathroom: parseQldSharesKitchenOrBathroom(qldRoomingForm.sharesKitchenOrBathroom),
+        premisesOccupantCapacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
       }),
-    [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom],
+    [state, propertyListingType, isRegisteredRoomingHouse, roomsRentedToResidents, qldRoomingForm.sharesKitchenOrBathroom, vicRoomingFields.capacity],
   )
   const isNswT3Listing = useMemo(
     () =>
@@ -1145,6 +1175,17 @@ export default function LandlordPropertyFormPage() {
       propertyListingType === 'private_room_landlord_off_site' &&
       isRegisteredRoomingHouse,
     [state, propertyListingType, isRegisteredRoomingHouse],
+  )
+  const vicRoomingRoute = useMemo(
+    () =>
+      (state.trim() || '').toUpperCase() === 'VIC'
+        ? vicRoomingRouting({
+            propertyType: propertyListingType,
+            isRegisteredRoomingHouse,
+            premisesOccupantCapacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
+          })
+        : { kind: 'form1' as const },
+    [state, propertyListingType, isRegisteredRoomingHouse, vicRoomingFields.capacity],
   )
 
   useEffect(() => {
@@ -1725,6 +1766,18 @@ export default function LandlordPropertyFormPage() {
           typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
         )
         setRoomDescription(typeof prop.room_description === 'string' ? prop.room_description : '')
+        setVicRoomingFields({
+          capacity: prop.vic_premises_occupant_capacity != null ? String(prop.vic_premises_occupant_capacity) : '',
+          roomNumber: typeof prop.room_description === 'string' ? prop.room_description : '',
+          itemsLet: prop.vic_rooming_items_let_with_room ?? '',
+          houseRules: prop.vic_rooming_house_rules ?? '',
+          licenceNumber: prop.vic_rooming_house_operator_licence_number ?? '',
+          registrationNumber:
+            typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
+          operatorAcceptsElectronicService: prop.vic_rooming_operator_accepts_electronic_service,
+          attestationCurrent: false,
+          pay: vicRoomingPayMethodsFromRow(prop),
+        })
         setSharedAreas(parseNswT3SharedAreas(prop.shared_areas))
         setAdditionalCharges(parseNswT3AdditionalCharges(prop.additional_charges))
         setFurnished(Boolean(prop.furnished))
@@ -2854,6 +2907,33 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (isPublishingListing && (state.trim() || '').toUpperCase() === 'VIC') {
+      if (!parseVicPremisesOccupantCapacity(vicRoomingFields.capacity)) {
+        reportSubmitError('Enter how many people the building can hold before publishing.')
+        return
+      }
+      if (vicRoomingRoute.kind === 'unsupported') {
+        reportSubmitError('reason' in vicRoomingRoute ? vicRoomingRoute.reason : 'This Victorian listing cannot be published yet.')
+        return
+      }
+      if (vicRoomingRoute.kind === 'rooming') {
+        const vicErr = vicRoomingPublishErrors({
+          capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
+          registrationNumber: vicRoomingFields.registrationNumber,
+          operatorLicenceNumber: vicRoomingFields.licenceNumber,
+          operatorAcceptsElectronicService: vicRoomingFields.operatorAcceptsElectronicService,
+          houseRules: vicRoomingFields.houseRules,
+          roomNumber: vicRoomingFields.roomNumber,
+          pay: vicRoomingFields.pay,
+          attestationCurrent: vicRoomingFields.attestationCurrent,
+        })
+        if (vicErr) {
+          reportSubmitError(vicErr)
+          return
+        }
+      }
+    }
+
     if (!skipAttestations && isNswT3Listing && (isPublishingListing || existingListingStatus === 'active')) {
       const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
       if (t3FormErr) {
@@ -3063,7 +3143,10 @@ export default function LandlordPropertyFormPage() {
         isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
           ? roomingHouseRegistrationNumber.trim()
           : null,
-      room_description: isNswT3Listing || qldRoomCard ? roomDescription.trim() || null : null,
+      room_description:
+        isNswT3Listing || qldRoomCard || vicRoomingRoute.kind === 'rooming'
+          ? (vicRoomingRoute.kind === 'rooming' ? vicRoomingFields.roomNumber : roomDescription).trim() || null
+          : null,
       shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
       additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
       rent_per_week: rent,
@@ -3092,6 +3175,27 @@ export default function LandlordPropertyFormPage() {
             gas_embedded_network: null,
             strata_bylaws_applicable: null,
           }),
+      ...(state.trim().toUpperCase() === 'VIC'
+        ? {
+            vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
+            ...(vicRoomingRoute.kind === 'rooming'
+              ? {
+                  vic_rooming_house_operator_licence_number: vicRoomingFields.licenceNumber.trim() || null,
+                  vic_rooming_house_rules: vicRoomingFields.houseRules.trim() || null,
+                  vic_rooming_items_let_with_room: vicRoomingFields.itemsLet.trim() || null,
+                  vic_rooming_operator_accepts_electronic_service: vicRoomingFields.operatorAcceptsElectronicService,
+                  vic_rooming_pay_direct_debit: vicRoomingFields.pay.directDebit,
+                  vic_rooming_pay_bank_deposit: vicRoomingFields.pay.bankDeposit,
+                  vic_rooming_pay_cash: vicRoomingFields.pay.cash,
+                  vic_rooming_pay_cheque: vicRoomingFields.pay.cheque,
+                  vic_rooming_pay_bpay: vicRoomingFields.pay.bpay,
+                  vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
+                  rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
+                  is_registered_rooming_house: true,
+                }
+              : {}),
+          }
+        : {}),
       ...attestationPatch,
       ...consentPatch,
       ...waterAttestationPatch,
@@ -3203,6 +3307,14 @@ export default function LandlordPropertyFormPage() {
         }
         if (existingListingStatus === 'active') {
           requestSiteRebuild()
+        }
+        if (publishDraft && vicRoomingRoute.kind === 'rooming' && propertyId) {
+          const recorded = await recordVicRoomingOperatorAttestation({
+            propertyId,
+            registrationNumber: vicRoomingFields.registrationNumber,
+            operatorLicenceNumber: vicRoomingFields.licenceNumber,
+          })
+          if (!recorded.ok) throw new Error(recorded.message)
         }
         if (publishDraft) {
           const { error: activateErr } = await supabase
@@ -3360,7 +3472,32 @@ export default function LandlordPropertyFormPage() {
                 isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
                   ? roomingHouseRegistrationNumber.trim()
                   : null,
-              room_description: isNswT3Listing || qldRoomCard ? roomDescription.trim() || null : null,
+              room_description:
+                isNswT3Listing || qldRoomCard || vicRoomingRoute.kind === 'rooming'
+                  ? (vicRoomingRoute.kind === 'rooming' ? vicRoomingFields.roomNumber : roomDescription).trim() || null
+                  : null,
+              ...(state.trim().toUpperCase() === 'VIC'
+                ? {
+                    vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
+                    ...(vicRoomingRoute.kind === 'rooming'
+                      ? {
+                          vic_rooming_house_operator_licence_number: vicRoomingFields.licenceNumber.trim() || null,
+                          vic_rooming_house_rules: vicRoomingFields.houseRules.trim() || null,
+                          vic_rooming_items_let_with_room: vicRoomingFields.itemsLet.trim() || null,
+                          vic_rooming_operator_accepts_electronic_service:
+                            vicRoomingFields.operatorAcceptsElectronicService,
+                          vic_rooming_pay_direct_debit: vicRoomingFields.pay.directDebit,
+                          vic_rooming_pay_bank_deposit: vicRoomingFields.pay.bankDeposit,
+                          vic_rooming_pay_cash: vicRoomingFields.pay.cash,
+                          vic_rooming_pay_cheque: vicRoomingFields.pay.cheque,
+                          vic_rooming_pay_bpay: vicRoomingFields.pay.bpay,
+                          vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
+                          rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
+                          is_registered_rooming_house: true,
+                        }
+                      : {}),
+                  }
+                : {}),
               shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
               additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
               rent_per_week: rent,
@@ -4111,6 +4248,13 @@ export default function LandlordPropertyFormPage() {
                     </p>
                   ) : null}
                 </div>
+              ) : null}
+              {(state.trim() || '').toUpperCase() === 'VIC' ? (
+                <VicRoomingHouseFields
+                  showRoomingFields={vicRoomingRoute.kind === 'rooming'}
+                  values={vicRoomingFields}
+                  onChange={setVicRoomingFields}
+                />
               ) : null}
               {isNswT3Listing ? (
                 <div id="section-nsw-t3-particulars" className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4">

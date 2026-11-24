@@ -214,7 +214,7 @@ Marketplace role is **`renter`** (URLs still use `student-*` in many places). Pr
 - Reply when status is `awaiting_info`
 - Bond receipt download where supported (state / rooming-house rules)
 - **Booking reinstatement** request / confirm / decline where eligible (`/api/booking/reinstatement/*`)
-- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); NSW T3 Standard Occupancy Agreement (registered boarding house); QLD Form R18 rooming on Listing. Managed is not offered. VIC T3 is not available.
+- Tenancy packages: NSW / QLD / VIC occupancy (T1) and residential (T2); NSW T3 Standard Occupancy Agreement (registered boarding house); QLD Form R18 rooming on Listing. Managed is not offered. VIC rooming house agreement is on Listing when the building can hold four or more people. Managed is not available.
 
 ### Payments - Live
 

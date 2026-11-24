@@ -89,6 +89,9 @@ export function residentialAgreementSignedPath(
   if (signingPackage === 'residential_tenancy_qld') {
     return `${tenancyId}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
   }
+  if (signingPackage === 'rooming_house_vic') {
+    return `${tenancyId}/rooming/vic_rooming_house_agreement_signed.pdf`
+  }
   return `${tenancyId}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
 }
 
@@ -116,7 +119,7 @@ export function nonLeaseSignedPath(
 
 /** Lease file and every signed residential-agreement file, including the platform addendum. */
 export function isLeaseOrSignedAgreementPath(path: string): boolean {
-  return path.includes('/lease/') || path.includes('/residential_tenancy/')
+  return path.includes('/lease/') || path.includes('/residential_tenancy/') || path.includes('/rooming/')
 }
 
 export function assertNonLeaseStoragePath(path: string): void {
