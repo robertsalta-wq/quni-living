@@ -27,6 +27,7 @@ import {
 } from '../../lib/landlordBookingConfirmGate'
 import { deriveLandlordPrimaryAction } from '../../lib/booking/landlordPrimaryAction'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
+import { vicRoomingRouting } from '../../../api/lib/tenancy/vicRoomingHouse'
 import { acceptFailureOutcome } from '../../lib/booking/acceptBookingOutcome'
 import { isBrowserNetworkFailure } from '../../lib/supabaseErrorMessage'
 import { runSingleFlight } from '../../lib/singleFlight'
@@ -244,6 +245,7 @@ export default function LandlordBookingReviewPage() {
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
   const [qldHouseRulesAttested, setQldHouseRulesAttested] = useState(false)
+  const [vicConditionReport, setVicConditionReport] = useState<'provided' | 'will_be_provided' | ''>('')
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
@@ -320,6 +322,8 @@ export default function LandlordBookingReviewPage() {
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
       roomsRentedToResidents: data.property.rooms_rented_to_residents,
       sharesKitchenOrBathroom: data.property.qld_shares_kitchen_or_bathroom,
+      premisesOccupantCapacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
       managedGloballyEnabled: serviceTierResolverOptions.managedGloballyEnabled,
       managedOverrides: serviceTierResolverOptions.managedOverrides,
@@ -377,6 +381,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? 'NSW',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -409,6 +415,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? '',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -435,6 +443,8 @@ export default function LandlordBookingReviewPage() {
         state: data.property.state ?? '',
         property_type: data.property.property_type ?? '',
         is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
         rooms_rented_to_residents: data.property.rooms_rented_to_residents,
         shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
         date: moveIn,
@@ -456,6 +466,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? '',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -471,6 +483,18 @@ export default function LandlordBookingReviewPage() {
     data?.property?.qld_shares_kitchen_or_bathroom,
   ])
 
+  const vicRoomingAccept = useMemo(() => {
+    if (!data?.property || (data.property.state || '').trim().toUpperCase() !== 'VIC') return false
+    const capacity = (data.property as { vic_premises_occupant_capacity?: number | null }).vic_premises_occupant_capacity
+    return (
+      vicRoomingRouting({
+        propertyType: data.property.property_type ?? '',
+        isRegisteredRoomingHouse: Boolean(data.property.is_registered_rooming_house),
+        premisesOccupantCapacity: capacity,
+      }).kind === 'rooming'
+    )
+  }, [data?.property])
+
   const qldHouseRulesAlreadyAttested = Boolean(
     typeof data?.booking?.qld_house_rules_attested_at === 'string' && data.booking.qld_house_rules_attested_at.trim(),
   )
@@ -480,6 +504,7 @@ export default function LandlordBookingReviewPage() {
     !!tierModel &&
     !qldRoomingAcceptBlocked &&
     (!qldRoomingArrangement || qldHouseRulesAlreadyAttested || qldHouseRulesAttested) &&
+    (!vicRoomingAccept || vicConditionReport !== '') &&
     (tierModel.showListing || tierModel.showManaged) &&
     landlordBookingConfirmAllowed({
       bookingStatus: data.booking.status,
@@ -574,6 +599,7 @@ export default function LandlordBookingReviewPage() {
             serviceTier: 'listing',
             qldHouseRulesAttested:
               qldRoomingArrangement && (qldHouseRulesAlreadyAttested || qldHouseRulesAttested) ? true : undefined,
+            vicRoomingConditionReport: vicRoomingAccept && vicConditionReport ? vicConditionReport : undefined,
           },
         )
         if (!result.ok) {
@@ -609,6 +635,8 @@ export default function LandlordBookingReviewPage() {
     qldHouseRulesAttested,
     qldRoomingAcceptBlocked,
     qldRoomingArrangement,
+    vicConditionReport,
+    vicRoomingAccept,
   ])
 
   const onDecline = useCallback(async () => {
@@ -1405,6 +1433,24 @@ export default function LandlordBookingReviewPage() {
                           <p className="mt-2 leading-relaxed">{qldRoomingItem17OffenceCopy()}</p>
                           <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
                         </div>
+                      ) : null}
+                      {vicRoomingAccept ? (
+                        <label className="block text-sm text-admin-ink-2">
+                          <span className="font-semibold">Condition report</span>
+                          <select
+                            className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
+                            value={vicConditionReport}
+                            onChange={(e) =>
+                              setVicConditionReport(
+                                e.target.value === 'provided' || e.target.value === 'will_be_provided' ? e.target.value : '',
+                              )
+                            }
+                          >
+                            <option value="">Choose one</option>
+                            <option value="provided">A condition report has been provided</option>
+                            <option value="will_be_provided">A condition report will be provided</option>
+                          </select>
+                        </label>
                       ) : null}
                       <button
                         type="button"
