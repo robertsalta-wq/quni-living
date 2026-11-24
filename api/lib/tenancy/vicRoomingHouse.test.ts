@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   vicRoomingApplyBlock,
+  vicRoomingStatementAcceptBlock,
+  VIC_ROOMING_S124_ACCEPT_MESSAGE,
   vicRoomingPayMethodsPublishError,
   vicRoomingPaymentDetailsLine,
   vicRoomingPublishErrors,
@@ -79,6 +81,12 @@ describe('vic rooming publish and booking gates', () => {
     expect(vicRoomingPaymentDetailsLine({ ...pay, bpay: true }, bank)).toBe('')
     expect(vicRoomingPaymentDetailsLine({ ...pay, otherEft: true }, bank)).toBe('')
     expect(vicRoomingPaymentDetailsLine({ ...pay, bankDeposit: true }, bank)).toContain('998877')
+  })
+
+  it('lets a rooming house listing publish while section 124 is still missing, and blocks accept', () => {
+    expect(vicRoomingStatementAcceptBlock()).toEqual({ ok: false, message: VIC_ROOMING_S124_ACCEPT_MESSAGE })
+    expect(VIC_ROOMING_S124_ACCEPT_MESSAGE).toMatch(/stay published/)
+    expect(VIC_ROOMING_S124_ACCEPT_MESSAGE).toMatch(/section 124/)
   })
 
   it('blocks a flexible term and more than two residents', () => {

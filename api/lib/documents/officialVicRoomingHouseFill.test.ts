@@ -94,7 +94,39 @@ describe('official Victorian rooming house agreement', () => {
     expect(text).toContain('99887766')
     expect(text).toContain('Desk and lamp')
     expect(text).toContain('Resident Signature')
+    expect(text).toContain('type=signature;width=')
+    expect(text).toContain('type=date;width=')
     expect(text).not.toContain('Resident 2 Signature')
+    expect(text).toContain('OFFICIAL')
+  })
+
+  it('places dates, the week tick, and urgent contact inside the boxes, and can omit signing tags', async () => {
+    const { pdfBytes } = await fillOfficialVicRoomingHousePdf(sample({ signingTags: false }))
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const pdf = await pdfjs.getDocument({ data: pdfBytes, useSystemFonts: true }).promise
+    const located: { str: string; x: number; y: number; page: number }[] = []
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i)
+      const content = await page.getTextContent()
+      for (const item of content.items) {
+        if (!('str' in item) || !item.str.trim()) continue
+        located.push({ str: item.str, x: item.transform[4], y: item.transform[5], page: i })
+      }
+    }
+    const start = located.find((item) => item.page === 2 && item.str === '01/12/2026' && item.y > 330 && item.y < 370)
+    const end = located.find((item) => item.page === 2 && item.str === '31/05/2027')
+    const week = located.find((item) => item.page === 2 && item.str === 'X')
+    const phone = located.find((item) => item.page === 4 && item.str === '0400000000')
+    const email = located.find((item) => item.page === 4 && item.str === 'ada@example.com')
+    expect(start && start.x).toBeGreaterThan(255)
+    expect(start && start.y).toBeGreaterThan(349)
+    expect(end && end.x).toBeGreaterThan(419)
+    expect(end && end.y).toBeGreaterThan(349)
+    expect(week && week.x).toBeGreaterThan(172)
+    expect(week && week.x).toBeLessThan(182)
+    expect(phone && phone.x).toBeGreaterThan(170)
+    expect(email && email.x).toBeGreaterThan(170)
+    expect(located.some((item) => item.str.includes('{{'))).toBe(false)
   })
 
   it('leaves payment details blank when only BPAY is ticked', async () => {

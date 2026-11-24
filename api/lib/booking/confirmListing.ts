@@ -17,6 +17,7 @@ import {
   VIC_ROOMING_CONDITION_REPORT_REQUIRED,
   parseVicRoomingConditionReport,
   vicRoomingRouting,
+  vicRoomingStatementAcceptBlock,
 } from '../tenancy/vicRoomingHouse.js'
 
 type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
@@ -155,6 +156,13 @@ export async function runListingConfirmBooking(
       premisesOccupantCapacity: vicRow?.vic_premises_occupant_capacity,
     })
     if (route.kind === 'rooming') {
+      const statement = vicRoomingStatementAcceptBlock()
+      if (!statement.ok) {
+        return jsonFail(409, {
+          error: 'vic_rooming_s124_statement_required',
+          message: statement.message,
+        })
+      }
       const choice = parseVicRoomingConditionReport(vicRoomingConditionReport)
       if (!choice) {
         return jsonFail(400, {

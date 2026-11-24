@@ -26,6 +26,15 @@ export const VIC_ROOMING_CONDITION_REPORT_REQUIRED =
 export const VIC_ROOMING_CAPACITY_REQUIRED =
   'Enter how many people can live in this building, including you if you live there, before this Victorian listing can be published.'
 
+/**
+ * The Director-approved statement of rights and duties (Residential Tenancies Act 1997 s124)
+ * is not attached yet. Publishing stays open. Accepting a booking stays closed until this is true.
+ */
+export const VIC_ROOMING_S124_STATEMENT_PLACED = false
+
+export const VIC_ROOMING_S124_ACCEPT_MESSAGE =
+  'This listing can stay published. Accepting a booking is blocked until the section 124 statement of rights and duties is included with the agreement.'
+
 export const VIC_ROOMING_PAYMENT_METHODS_MESSAGE =
   'Tick at least one fee-free method (bank deposit, BPAY, or other electronic payment including Centrepay) and allow Centrepay or another electronic transfer. Cash only, cheque only, or direct debit only cannot be published. BPAY and other electronic payment do not print account details. Only bank deposit prints the account name, BSB, and account number.'
 
@@ -151,6 +160,11 @@ export function vicRoomingPublishErrors(args: {
   if (!String(args.houseRules || '').trim()) return 'Enter the rooming house rules before publishing.'
   if (!String(args.roomNumber || '').trim()) return 'Enter the room number printed on the agreement.'
   return null
+}
+
+export function vicRoomingStatementAcceptBlock(): { ok: true } | { ok: false; message: string } {
+  if (VIC_ROOMING_S124_STATEMENT_PLACED) return { ok: true }
+  return { ok: false, message: VIC_ROOMING_S124_ACCEPT_MESSAGE }
 }
 
 export function vicRoomingApplyBlock(args: {
