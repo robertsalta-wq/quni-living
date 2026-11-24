@@ -86,8 +86,10 @@ const BOX = {
   otherEft: { x: 55.2, y: 575.5, w: 9.6, h: 8.8 },
   operatorServiceYes: { x: 66.4, y: 257.1, w: 10.4, h: 9.6 },
   operatorServiceNo: { x: 71.2, y: 230.7, w: 10.4, h: 9.6 },
+  operatorServiceEmail: { x: 298.8, y: 244.8, w: 230.4, h: 31.4 },
   residentServiceYes: { x: 66.4, y: 152.3, w: 10.4, h: 8.8 },
   residentServiceNo: { x: 71.2, y: 125.9, w: 10.4, h: 8.8 },
+  residentServiceEmail: { x: 298.8, y: 139.4, w: 230.4, h: 31.9 },
   urgentPhone: { x: 170.4, y: 744.3, w: 131.2, h: 16.8 },
   urgentEmail: { x: 170.4, y: 721.9, w: 392, h: 17.6 },
   conditionProvided: { x: 40.8, y: 532.3, w: 10.4, h: 8.8 },
@@ -214,13 +216,13 @@ export async function fillOfficialVicRoomingHousePdf(
   )
   if (props.operatorAcceptsElectronicService) {
     tickBox(p3, font, BOX.operatorServiceYes)
-    draw(p3, font, props.operatorEmail, 280, 256, 8)
+    drawInBox(p3, font, props.operatorEmail, BOX.operatorServiceEmail, 8)
   } else {
     tickBox(p3, font, BOX.operatorServiceNo)
   }
   if (props.residentAcceptsElectronicService === true) {
     tickBox(p3, font, BOX.residentServiceYes)
-    draw(p3, font, props.resident1Email, 280, 151, 8)
+    drawInBox(p3, font, props.resident1Email, BOX.residentServiceEmail, 8)
   } else if (props.residentAcceptsElectronicService === false) {
     tickBox(p3, font, BOX.residentServiceNo)
   }

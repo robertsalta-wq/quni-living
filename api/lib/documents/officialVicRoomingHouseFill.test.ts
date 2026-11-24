@@ -126,7 +126,25 @@ describe('official Victorian rooming house agreement', () => {
     expect(week && week.x).toBeLessThan(182)
     expect(phone && phone.x).toBeGreaterThan(170)
     expect(email && email.x).toBeGreaterThan(170)
+    expect(email && email.y).toBeGreaterThan(722)
+    const serviceEmail = located.find((item) => item.page === 3 && item.str === 'ada@example.com')
+    expect(serviceEmail && serviceEmail.x).toBeGreaterThan(298)
+    expect(serviceEmail && serviceEmail.y).toBeGreaterThan(245)
+    expect(serviceEmail && serviceEmail.y).toBeLessThan(276)
     expect(located.some((item) => item.str.includes('{{'))).toBe(false)
+
+    const resident = await fillOfficialVicRoomingHousePdf(
+      sample({ signingTags: false, residentAcceptsElectronicService: true }),
+    )
+    const residentPdf = await pdfjs.getDocument({ data: resident.pdfBytes, useSystemFonts: true }).promise
+    const residentPage = await residentPdf.getPage(3)
+    const residentContent = await residentPage.getTextContent()
+    const residentEmail = residentContent.items.find(
+      (item) => 'str' in item && item.str === 'sam@example.com',
+    )
+    expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[4]).toBeGreaterThan(298)
+    expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[5]).toBeGreaterThan(139)
+    expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[5]).toBeLessThan(171)
   })
 
   it('leaves payment details blank when only BPAY is ticked', async () => {
