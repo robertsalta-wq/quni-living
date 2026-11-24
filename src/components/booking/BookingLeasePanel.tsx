@@ -49,6 +49,8 @@ export type BookingLeasePanelProps = {
   className?: string
   /** Strip bordered/tinted card chrome when nested inside Section. */
   embedded?: boolean
+  /** Victorian on-site licence. Other packages keep the tenancy wording. */
+  agreementKind?: 'tenancy' | 'vic-licence'
 }
 
 function counterpartyLabel(viewer: 'landlord' | 'tenant'): string {
@@ -69,6 +71,7 @@ export default function BookingLeasePanel({
   allowRegenerateAgreement = false,
   className,
   embedded = false,
+  agreementKind = 'tenancy',
 }: BookingLeasePanelProps) {
   const [data, setData] = useState<LeaseStateApiResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -288,6 +291,8 @@ export default function BookingLeasePanel({
     return null
   }
 
+  const licence = agreementKind === 'vic-licence'
+
   if (data.state === 'agreement_preparing') {
     return (
       <div
@@ -298,7 +303,7 @@ export default function BookingLeasePanel({
         )}
         role="status"
       >
-        <p className="font-semibold leading-snug">Tenancy agreement</p>
+        <p className="font-semibold leading-snug">{licence ? 'Licence to occupy' : 'Tenancy agreement'}</p>
         <p className="text-xs leading-relaxed mt-1">
           {data.viewer_role === 'tenant'
             ? 'Your agreement is being prepared. We&apos;ll email you when it&apos;s ready to sign.'
@@ -322,7 +327,9 @@ export default function BookingLeasePanel({
         )}
         role="status"
       >
-        <p className="font-semibold leading-snug">Tenancy agreement needs attention</p>
+        <p className="font-semibold leading-snug">
+          {licence ? 'Licence to occupy needs attention' : 'Tenancy agreement needs attention'}
+        </p>
         <p className="text-xs leading-relaxed">
           {data.viewer_role === 'tenant'
             ? 'We couldn&apos;t finish preparing your agreement. Your host has been notified and can retry from their booking review page.'
@@ -372,9 +379,9 @@ export default function BookingLeasePanel({
     >
       {state === 'preview' && (
         <>
-          <p className="font-semibold leading-snug">Lease preview (draft)</p>
+          <p className="font-semibold leading-snug">{licence ? 'Licence preview (draft)' : 'Lease preview (draft)'}</p>
           <p className="text-xs leading-relaxed text-admin-ink">
-            Your residential tenancy agreement has been drafted.{' '}
+            {licence ? 'Your licence to occupy has been drafted.' : 'Your residential tenancy agreement has been drafted.'}{' '}
             {viewer_role === 'tenant'
               ? 'Check your email for a signing link, or use the button below when ready. Bond payment is separate - see bond guidance on your dashboard.'
               : 'Check your email for a signing link, or use the button below. Record bond receipt on Quni when the renter has paid (this does not block signing).'}
@@ -394,9 +401,12 @@ export default function BookingLeasePanel({
 
       {state === 'ready_to_sign' && (
         <>
-          <p className="font-semibold leading-snug">Sign your tenancy agreement</p>
+          <p className="font-semibold leading-snug">
+            {licence ? 'Sign your licence to occupy' : 'Sign your tenancy agreement'}
+          </p>
           <p className="text-xs leading-relaxed text-admin-ink">
-            Your tenancy agreement is ready to sign. {signingPartyNote}
+            {licence ? 'Your licence to occupy is ready to sign.' : 'Your tenancy agreement is ready to sign.'}{' '}
+            {signingPartyNote}
           </p>
           {signing_url ? (
             <a
@@ -435,7 +445,7 @@ export default function BookingLeasePanel({
                 : `Awaiting ${counterpartyLabel(viewer_role)} signature`}
           </p>
           <p className="text-xs leading-relaxed text-admin-ink">
-            You&apos;ve signed your tenancy agreement.{' '}
+            {licence ? "You've signed your licence to occupy." : "You've signed your tenancy agreement."}{' '}
             {co_tenant_signing_required && !co_tenant_signed
               ? 'The signed PDF will appear here once your host and co-tenant have also signed (your co-tenant receives a separate signing link by email).'
               : `The signed PDF will appear here once the ${counterpartyLabel(viewer_role)} has also signed.`}
@@ -455,9 +465,11 @@ export default function BookingLeasePanel({
 
       {state === 'fully_signed' && (
         <>
-          <p className="font-semibold leading-snug">Tenancy agreement signed</p>
+          <p className="font-semibold leading-snug">
+            {licence ? 'Licence to occupy signed' : 'Tenancy agreement signed'}
+          </p>
           <p className="text-xs leading-relaxed text-admin-ink">
-            Your residential tenancy agreement is fully executed
+            {licence ? 'Your licence to occupy is fully executed' : 'Your residential tenancy agreement is fully executed'}
             {co_tenant_signing_required ? ' by all parties' : ' by both parties'}.
           </p>
           {signed_url_rta && signed_url_addendum ? (
@@ -468,7 +480,7 @@ export default function BookingLeasePanel({
                 rel="noopener noreferrer"
                 className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover"
               >
-                Download tenancy agreement
+                {licence ? 'Download licence' : 'Download tenancy agreement'}
               </a>
               <a
                 href={signed_url_addendum}

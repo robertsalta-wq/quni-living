@@ -46,6 +46,18 @@ describe('bondStepRegulatoryCopy', () => {
     expect(copy.acknowledgementCheckbox).toContain('held by the landlord')
   })
 
+  it('VIC T1 says the Act does not apply and the owner holds the deposit', () => {
+    const copy = bondStepRegulatoryCopy(vicTenancyRules('T1').bond, 'VIC', { tier: 'T1' })
+    expect(copy.mode).toBe('landlord_held')
+    expect(copy.landlordHeldParagraphs.join(' ')).toContain('does not apply')
+    expect(copy.landlordHeldParagraphs.join(' ')).toContain(
+      'not lodged with the Residential Tenancies Bond Authority (RTBA)',
+    )
+    expect(copy.landlordHeldParagraphs.join(' ')).not.toContain('rental agreement')
+    expect(copy.landlordHeldParagraphs.join(' ')).not.toContain('may not apply')
+    expect(copy.landlordHeldParagraphs.join(' ')).not.toContain('pay your bond')
+  })
+
   it('VIC omits cap fragment when maxBondCopy is null', () => {
     const copy = bondStepRegulatoryCopy(vicTenancyRules('T2').bond, 'VIC')
     expect(copy.mode).toBe('scheme')

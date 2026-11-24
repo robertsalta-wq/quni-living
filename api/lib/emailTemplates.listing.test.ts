@@ -5,6 +5,8 @@ import {
   listingBondPendingExpiredRenter,
   listingBondReceivedLandlord,
   listingBondReceivedRenter,
+  listingAgreementReadyLandlord,
+  listingAgreementReadyRenter,
   listingBookingAcceptedLandlord,
   listingBookingAcceptedRenter,
   listingCancelledByLandlordLandlord,
@@ -183,6 +185,34 @@ describe('Listing email templates', () => {
     expect(block).not.toContain("First week&apos;s rent:")
     expect(block).not.toContain('in total')
     expect(block).toContain('$350 per week')
+  })
+
+  it('names the Victorian on-site package a licence, not a tenancy agreement', () => {
+    const data = {
+      ...sample,
+      property_state: 'VIC',
+      bond_scheme_applies: false,
+      vic_licence_to_occupy: true,
+      property_address: '12 Example St, Melbourne VIC 3000',
+    }
+    const accepted = listingBookingAcceptedRenter(data)
+    expect(accepted.subject).toContain('security deposit')
+    expect(accepted.html).toContain('Licence to occupy')
+    expect(accepted.html).not.toContain('Tenancy agreement')
+    expect(accepted.html).not.toContain('Residential Tenancies Act')
+
+    const ready = listingAgreementReadyRenter(data)
+    expect(ready.subject).toContain('licence to occupy')
+    expect(ready.html).not.toContain('tenancy agreement')
+    expect(ready.text).toContain('Owner:')
+
+    const landlordReady = listingAgreementReadyLandlord(data)
+    expect(landlordReady.subject).toContain('licence to occupy')
+
+    const bond = listingBondReceivedRenter(data)
+    expect(bond.html).toContain('licence to occupy')
+    expect(bond.html).toContain('security deposit')
+    expect(bond.html).not.toContain('tenancy agreement')
   })
 
   it('renders bond-received templates', () => {

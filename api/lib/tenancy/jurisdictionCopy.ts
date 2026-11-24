@@ -18,7 +18,7 @@ export type TenancyAgreementExplainerCopy = {
 
 const AGREEMENT_BY_STATE: Record<
   string,
-  Partial<Record<'T1' | 'T2' | 'T3', { headline: string; legislation: string }>>
+  Partial<Record<'T1' | 'T2' | 'T3', { headline: string; legislation?: string; body?: string }>>
 > = {
   NSW: {
     T1: {
@@ -50,14 +50,21 @@ const AGREEMENT_BY_STATE: Record<
   },
   VIC: {
     T1: {
-      headline: 'Legally binding Victorian rental agreement',
-      legislation: 'Residential Tenancies Act 1997 (Vic)',
+      headline: 'Legally binding Victorian licence to occupy',
+      body:
+        'This is a common-law licence to occupy a room in the home the owner lives in. It is not a residential rental agreement, and the Residential Tenancies Act 1997 (Vic) does not apply. Signed in-platform via DocuSeal.',
     },
     T2: {
       headline: 'Legally binding Victorian-compliant rental agreement',
       legislation: 'Residential Tenancies Act 1997 (Vic)',
     },
   },
+}
+
+/** True for the Victorian on-site licence (vic-occupancy). Form 1 is not this package. */
+export function isVicOnSiteLicence(input: TenancyPackageInput): boolean {
+  const pkg = resolveTenancyPackage(input)
+  return pkg.supported && pkg.generator === 'vic-occupancy'
 }
 
 /** Trust callout above DocuSeal signing - null when the listing has no supported package. */
@@ -71,7 +78,9 @@ export function tenancyAgreementExplainerCopy(input: TenancyPackageInput): Tenan
   if (mapped) {
     return {
       headline: mapped.headline,
-      body: `Agreement generated under the ${mapped.legislation} and signed in-platform via DocuSeal.`,
+      body:
+        mapped.body ??
+        `Agreement generated under the ${mapped.legislation} and signed in-platform via DocuSeal.`,
     }
   }
 
@@ -128,6 +137,13 @@ export function landlordHeldBondIntroParagraph(
     return (
       `This occupancy is under the Boarding Houses Act 2012 (NSW). Your security deposit is payable to and held by the proprietor. ` +
       `It is not lodged with ${authority} (Rental Bonds Online). The deposit cannot exceed two weeks occupancy fee.`
+    )
+  }
+  if (st === 'VIC') {
+    return (
+      'This is a common-law licence to occupy a room in the home the owner lives in. ' +
+      'The Residential Tenancies Act 1997 (Vic) does not apply. ' +
+      `Your security deposit is held by the owner and is not lodged with the ${authority}.`
     )
   }
   return (

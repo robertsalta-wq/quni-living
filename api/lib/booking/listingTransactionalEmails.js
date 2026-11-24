@@ -199,6 +199,7 @@ async function loadListingEmailContext(admin, bookingId) {
     bondSchemeApplies: Boolean(bondRules?.schemeApplies),
     propertyState: tenancyPackage.ragState,
     isBoarderLodger,
+    vicLicenceToOccupy: tenancyPackage.supported && tenancyPackage.generator === 'vic-occupancy',
     payout,
     paymentReference,
     qldBondRemittancePreference,
@@ -227,6 +228,7 @@ export function buildListingRenterPaymentEmailPayload(ctx, opts) {
     bond_scheme_applies: ctx.bondSchemeApplies,
     property_state: ctx.propertyState,
     is_boarder_lodger: ctx.isBoarderLodger,
+    vic_licence_to_occupy: ctx.vicLicenceToOccupy,
     payout: ctx.payout,
     weekly_rent: ctx.weeklyRent,
     bond_amount_aud: ctx.bondAmountAud,
@@ -326,6 +328,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         bond_obligations_html: ctx.bondPaymentLandlordHtml,
         bond_scheme_applies: ctx.bondSchemeApplies,
         property_state: ctx.propertyState,
+        vic_licence_to_occupy: ctx.vicLicenceToOccupy,
         review_url: markBond,
       })
       if (await listingEmailAttemptExists(admin, bookingId, 'listing_booking_accepted_landlord')) return
@@ -431,6 +434,7 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
       weekly_rent: formatSigningMoney(ctx.weeklyRent),
       bond: formatSigningMoney(ctx.bondAmountAud),
       landlord_contact: landlordContact,
+      vic_licence_to_occupy: ctx.vicLicenceToOccupy,
     }
 
     const sendRenter = async () => {
@@ -536,6 +540,7 @@ export async function sendListingBondReceivedEmails(admin, bookingId, opts) {
         sign_agreement_url: studentDash,
         student_dashboard_url: studentDash,
         receipt_attached: receiptAttached,
+        vic_licence_to_occupy: ctx.vicLicenceToOccupy,
       })
       await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html, attachments })
     }

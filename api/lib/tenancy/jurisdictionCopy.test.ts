@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isVicOnSiteLicence,
   signedTenancyAgreementDownloadFilename,
   statutoryRentBankTransferCopy,
   tenancyAgreementExplainerCopy,
@@ -79,6 +80,42 @@ describe('tenancyAgreementExplainerCopy', () => {
     expect(copy?.headline).toContain('Form R18')
     expect(copy?.body).toMatch(/DocuSeal/)
     expect(copy?.body).not.toMatch(/cannot accept/)
+  })
+
+  it('describes VIC T1 as a common-law licence, not a rental agreement under the Act', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'VIC',
+      property_type: 'private_room_landlord_on_site',
+      is_registered_rooming_house: false,
+    })
+    expect(copy?.headline).toBe('Legally binding Victorian licence to occupy')
+    expect(copy?.body).toContain('common-law licence')
+    expect(copy?.body).toContain('Residential Tenancies Act 1997 (Vic) does not apply')
+    expect(copy?.body).not.toContain('generated under')
+    expect(
+      isVicOnSiteLicence({
+        state: 'VIC',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+      }),
+    ).toBe(true)
+  })
+
+  it('keeps VIC Form 1 on the residential rental agreement explainer', () => {
+    const copy = tenancyAgreementExplainerCopy({
+      state: 'VIC',
+      property_type: 'entire_property',
+      is_registered_rooming_house: false,
+    })
+    expect(copy?.headline).toContain('Victorian-compliant rental agreement')
+    expect(copy?.body).toContain('Residential Tenancies Act 1997 (Vic)')
+    expect(
+      isVicOnSiteLicence({
+        state: 'VIC',
+        property_type: 'entire_property',
+        is_registered_rooming_house: false,
+      }),
+    ).toBe(false)
   })
 
   it('returns null for unsupported state', () => {

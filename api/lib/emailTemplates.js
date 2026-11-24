@@ -11,6 +11,10 @@ function agreementWordingFromEmail(data) {
   })
 }
 
+function vicLicenceToOccupy(data) {
+  return Boolean(data && data.vic_licence_to_occupy === true)
+}
+
 function agreementMoneyParagraph(data) {
   const wording = agreementWordingFromEmail(data)
   if (!wording) return ''
@@ -380,26 +384,32 @@ export function listingBookingAcceptedRenter(data) {
   const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
   const bondPaymentBlock = listingRenterPaymentInstructionsBlockHtml(data)
 
-  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed - arrange bond</h2>
+  const licence = vicLicenceToOccupy(data)
+  const inner = `<h2 style="color: #1A1A2E;">${licence ? 'Your booking is confirmed - arrange the security deposit' : 'Your booking is confirmed - arrange bond'}</h2>
 <p>Hi ${studentName},</p>
 <p>Good news - your host has accepted your booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Tenancy agreement:</strong> We&apos;re preparing your agreement for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
+<p>${
+    licence
+      ? '<strong>Licence to occupy:</strong> We&apos;re preparing your licence for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.'
+      : '<strong>Tenancy agreement:</strong> We&apos;re preparing your agreement for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.'
+  }</p>
 ${bondPaymentBlock}
-<p><strong>Deadline:</strong> Please arrange bond payment before <strong>${bondDeadline}</strong>. If bond isn&apos;t received in time, this booking may lapse.</p>
+<p><strong>Deadline:</strong> Please arrange ${licence ? 'the security deposit' : 'bond payment'} before <strong>${bondDeadline}</strong>. If ${licence ? 'the security deposit isn&apos;t' : 'bond isn&apos;t'} received in time, this booking may lapse.</p>
 <p style="margin-top:12px;font-size:14px;color:#555;">Your host will ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni.</p>
 <a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
 
   return {
-    subject: `Booking confirmed - arrange bond for ${data.property_address || data.property_title || 'your stay'}`,
+    subject: `Booking confirmed - arrange ${licence ? 'the security deposit' : 'bond'} for ${data.property_address || data.property_title || 'your stay'}`,
     html: wrapContent(inner),
   }
 }
 
 function agreementReadyFacts(data) {
-  const address = data.property_address || data.property_title || 'your tenancy'
+  const licence = vicLicenceToOccupy(data)
+  const address = data.property_address || data.property_title || (licence ? 'your stay' : 'your tenancy')
   const lines = [
     `Property: ${address}`,
-    `Landlord: ${data.landlord_name || 'your landlord'}`,
+    `${licence ? 'Owner' : 'Landlord'}: ${data.landlord_name || (licence ? 'the owner' : 'your landlord')}`,
     `Renter: ${data.student_name || 'the renter'}`,
     `Start date: ${data.start_date || '-'}`,
     `Term: ${data.lease_length || '-'}`,
@@ -407,7 +417,7 @@ function agreementReadyFacts(data) {
     `Weekly rent: ${data.weekly_rent || '-'}`,
     `Bond: ${data.bond || '-'}`,
     'After both of you sign, the agreement is complete. The landlord confirms the bond separately. Quni does not hold the bond or the rent.',
-    `Contact the landlord: ${data.landlord_contact || 'use the details on your booking'}`,
+    `${licence ? 'Contact the owner' : 'Contact the landlord'}: ${data.landlord_contact || 'use the details on your booking'}`,
   ]
   return { address, lines }
 }
@@ -421,25 +431,27 @@ export function listingAgreementReadyRenter(data) {
   const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
   const factHtml = facts.lines.map((line) => `<p style="margin:4px 0;">${escapeHtml(line)}</p>`).join('')
 
-  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement for ${propertyAddress}</h2>
+  const licence = vicLicenceToOccupy(data)
+  const heading = licence ? `Your licence to occupy for ${propertyAddress}` : `Your tenancy agreement for ${propertyAddress}`
+  const inner = `<h2 style="color: #1A1A2E;">${heading}</h2>
 <p>Hi ${studentName},</p>
 ${factHtml}
-<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign the agreement</a></p>
+<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">${licence ? 'Sign the licence' : 'Sign the agreement'}</a></p>
 <p style="margin-top:16px;"><a href="${dashboardUrl}" style="color:#FF6F61;font-weight:600;">Student dashboard</a></p>`
 
   const text = [
-    `Your tenancy agreement for ${facts.address}`,
+    licence ? `Your licence to occupy for ${facts.address}` : `Your tenancy agreement for ${facts.address}`,
     '',
     `Hi ${data.student_name || 'there'},`,
     '',
     ...facts.lines,
     '',
-    `Sign the agreement: ${data.sign_agreement_url || ''}`,
+    `${licence ? 'Sign the licence' : 'Sign the agreement'}: ${data.sign_agreement_url || ''}`,
     `Student dashboard: ${data.student_dashboard_url || 'https://quni.com.au/student-dashboard'}`,
   ].join('\n')
 
   return {
-    subject: `Your tenancy agreement for ${facts.address}`,
+    subject: licence ? `Your licence to occupy for ${facts.address}` : `Your tenancy agreement for ${facts.address}`,
     html: wrapContent(inner),
     text,
   }
@@ -464,7 +476,11 @@ export function listingBookingAcceptedLandlord(data) {
 <p>Hi ${landlordName},</p>
 <p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
 <p><strong>Lease fee:</strong> Charged to your saved card once, when everyone required has signed. Nothing is charged for accepting. Renters pay Quni nothing.</p>
-<p><strong>Tenancy agreement:</strong> We&apos;re preparing your state-appropriate agreement. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
+<p>${
+    vicLicenceToOccupy(data)
+      ? '<strong>Licence to occupy:</strong> We&apos;re preparing the licence for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.'
+      : '<strong>Tenancy agreement:</strong> We&apos;re preparing your state-appropriate agreement. You&apos;ll receive a separate email when it&apos;s ready to sign.'
+  }</p>
 ${bondObligationsBlock}
 <p>Please ${agreementWordingFromEmail(data)?.confirmPhrase ?? 'confirm once lodged'} on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
 <a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>
@@ -544,25 +560,27 @@ export function listingAgreementReadyLandlord(data) {
   const reviewUrl = escapeHtml(data.review_url || data.dashboard_url || '#')
   const factHtml = facts.lines.map((line) => `<p style="margin:4px 0;">${escapeHtml(line)}</p>`).join('')
 
-  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement for ${propertyAddress}</h2>
+  const licence = vicLicenceToOccupy(data)
+  const heading = licence ? `Your licence to occupy for ${propertyAddress}` : `Your tenancy agreement for ${propertyAddress}`
+  const inner = `<h2 style="color: #1A1A2E;">${heading}</h2>
 <p>Hi ${landlordName},</p>
 ${factHtml}
-<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign the agreement</a></p>
+<p><a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">${licence ? 'Sign the licence' : 'Sign the agreement'}</a></p>
 <p style="margin-top:16px;"><a href="${reviewUrl}" style="color:#FF6F61;font-weight:600;">Booking review</a></p>`
 
   const text = [
-    `Your tenancy agreement for ${facts.address}`,
+    licence ? `Your licence to occupy for ${facts.address}` : `Your tenancy agreement for ${facts.address}`,
     '',
     `Hi ${data.landlord_name || 'there'},`,
     '',
     ...facts.lines,
     '',
-    `Sign the agreement: ${data.sign_agreement_url || ''}`,
+    `${licence ? 'Sign the licence' : 'Sign the agreement'}: ${data.sign_agreement_url || ''}`,
     `Booking review: ${data.review_url || data.dashboard_url || ''}`,
   ].join('\n')
 
   return {
-    subject: `Your tenancy agreement for ${facts.address}`,
+    subject: licence ? `Your licence to occupy for ${facts.address}` : `Your tenancy agreement for ${facts.address}`,
     html: wrapContent(inner),
     text,
   }
@@ -577,15 +595,18 @@ export function listingBondReceivedRenter(data) {
     ? '<p>A PDF bond receipt is attached to this email. You can also download it later from your student dashboard.</p>'
     : ''
 
-  const inner = `<h2 style="color: #1A1A2E;">Bond received - sign your tenancy agreement</h2>
+  const licence = vicLicenceToOccupy(data)
+  const inner = `<h2 style="color: #1A1A2E;">${licence ? 'Security deposit received - sign your licence to occupy' : 'Bond received - sign your tenancy agreement'}</h2>
 <p>Hi ${studentName},</p>
-<p>Your landlord has confirmed bond receipt for <strong>${propertyAddress}</strong>.</p>
+<p>${licence ? 'The owner has confirmed receipt of the security deposit' : 'Your landlord has confirmed bond receipt'} for <strong>${propertyAddress}</strong>.</p>
 ${receiptLine}
-<p><strong>Next step:</strong> Your tenancy agreement is now ready to sign electronically.</p>
-<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>`
+<p><strong>Next step:</strong> ${licence ? 'Your licence to occupy is now ready to sign electronically.' : 'Your tenancy agreement is now ready to sign electronically.'}</p>
+<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">${licence ? 'Sign the licence →' : 'Sign tenancy agreement →'}</a>`
 
   return {
-    subject: `Sign your agreement - ${data.property_address || data.property_title || 'your booking'}`,
+    subject: licence
+      ? `Sign your licence to occupy - ${data.property_address || data.property_title || 'your booking'}`
+      : `Sign your agreement - ${data.property_address || data.property_title || 'your booking'}`,
     html: wrapContent(inner),
   }
 }

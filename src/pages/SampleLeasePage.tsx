@@ -12,6 +12,7 @@ type SampleAgreement = {
 
 type SampleState = {
   state: string
+  note?: string
   agreements: SampleAgreement[]
 }
 
@@ -64,16 +65,17 @@ const STATES: SampleState[] = [
   },
   {
     state: 'VIC',
+    note: 'Quni does not yet prepare agreements for Victorian rooming houses. In Victoria, a building where four or more people in total can occupy rented rooms is a rooming house.',
     agreements: [
       {
         name: 'Room on its own lease',
-        when: "Consumer Affairs Victoria Form 1 wording, set in Quni's PDF, plus the Quni addendum. A room, a shared room, or the whole place, when you do not live there.",
+        when: 'Consumer Affairs Victoria Form 1, plus the Quni addendum. For a room, a shared room, or the whole place, when you do not live there and the building is not a rooming house.',
         href: '/sample-lease/vic-room-on-its-own-lease.pdf',
         fileName: 'vic-room-on-its-own-lease.pdf',
       },
       {
         name: 'Room in your home',
-        when: 'Licence to occupy. A room in the home you live in.',
+        when: 'Licence to occupy a room in the home you live in. It is a common-law licence, not a residential rental agreement, and the Residential Tenancies Act 1997 (Vic) does not apply.',
         href: '/sample-lease/vic-room-in-your-home.pdf',
         fileName: 'vic-room-in-your-home.pdf',
       },
@@ -123,6 +125,11 @@ export default function SampleLeasePage() {
               >
                 {group.state}
               </h2>
+              {group.note ? (
+                <p className="mb-3 max-w-3xl text-[length:var(--text-body-sm-size)] leading-[var(--text-body-sm-lh)] text-[var(--quni-ink-2)]">
+                  {group.note}
+                </p>
+              ) : null}
               <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
                 {group.agreements.map((item) => (
                   <Card key={item.href} padding={16} className="flex h-full min-w-0 flex-col">

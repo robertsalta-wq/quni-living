@@ -43,6 +43,7 @@ export function bondStepRegulatoryCopy(
 
   if (!bond.schemeApplies) {
     const t3 = opts?.tier === 'T3'
+    const vicLicence = !t3 && st === 'VIC'
     const heldDetail = landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName, { tier: opts?.tier })
     return {
       mode: 'landlord_held',
@@ -50,12 +51,14 @@ export function bondStepRegulatoryCopy(
       landlordHeldParagraphs: [
         agreement?.bondLine ?? heldDetail,
         heldDetail,
-        t3
+        t3 || vicLicence
           ? 'Get a written receipt when you pay your security deposit, and keep a copy for your records.'
           : 'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
         t3
           ? 'Your proprietor can generate an official receipt through their Quni Living dashboard.'
-          : 'Your landlord can generate an official bond receipt through their Quni Living dashboard.',
+          : vicLicence
+            ? 'The owner can generate an official receipt through their Quni Living dashboard.'
+            : 'Your landlord can generate an official bond receipt through their Quni Living dashboard.',
       ],
       schemeLeadBeforeBold: '',
       schemeBoldDeadline: '',

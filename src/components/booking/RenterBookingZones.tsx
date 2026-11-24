@@ -10,6 +10,7 @@ import BookingActivityTimeline from './BookingActivityTimeline'
 import BookingLeasePanel from './BookingLeasePanel'
 import BookingFitSummaryTable from '../landlord/BookingFitSummaryTable'
 import TenancyAgreementExplainer from '../TenancyAgreementExplainer'
+import { isVicOnSiteLicence } from '../../lib/tenancy/jurisdictionCopy'
 import LanguagesSpokenDisplay from '../profile/LanguagesSpokenDisplay'
 import { VerifiedLandlordBadge } from '../VerifiedLandlordBadge'
 import ListingPaymentInstructions, {
@@ -185,16 +186,18 @@ export default function RenterBookingZones({
   const askedQuestion = resolveLandlordAwaitingInfoQuestion(messages)
   const obligation = renterBookingObligation(booking, property ?? undefined)
 
+  const tenancyInput = {
+    state: property?.state ?? '',
+    property_type: property?.property_type ?? '',
+    is_registered_rooming_house: Boolean(property?.is_registered_rooming_house),
+    rooms_rented_to_residents: property?.rooms_rented_to_residents,
+    shares_kitchen_or_bathroom: property?.qld_shares_kitchen_or_bathroom,
+  }
+  const vicLicence = property ? isVicOnSiteLicence(tenancyInput) : false
+  const agreementTitle = vicLicence ? 'Licence to occupy' : 'Tenancy agreement'
+
   const bondWording = property
-    ? bookingBondWordingFromPackage(
-        resolveTenancyPackage({
-          state: property.state ?? '',
-          property_type: property.property_type ?? '',
-          is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-          rooms_rented_to_residents: property.rooms_rented_to_residents,
-          shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
-        }),
-      )
+    ? bookingBondWordingFromPackage(resolveTenancyPackage(tenancyInput))
     : null
 
   const actionCopy = resolveRenterBookingReviewActionCopy({
@@ -553,7 +556,7 @@ export default function RenterBookingZones({
           {reviewLayout.showAgreement && (
             <Section
               id={`review-agreement-${booking.id}`}
-              title="Tenancy agreement"
+              title={agreementTitle}
               icon={<FileText />}
               expanded={agreementExpanded}
               onToggle={() => setAgreementExpanded((v) => !v)}
@@ -569,7 +572,11 @@ export default function RenterBookingZones({
                       sharesKitchenOrBathroom={property.qld_shares_kitchen_or_bathroom}
                       embedded
                     />
-                    <BookingLeasePanel bookingId={booking.id} embedded />
+                    <BookingLeasePanel
+                      bookingId={booking.id}
+                      embedded
+                      agreementKind={vicLicence ? 'vic-licence' : 'tenancy'}
+                    />
                   </div>
                 )}
               </div>

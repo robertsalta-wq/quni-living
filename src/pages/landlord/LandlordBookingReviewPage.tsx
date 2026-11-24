@@ -42,6 +42,7 @@ import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
 import { isQldRoomingArrangement, isQldRoomingFormR18Pending, resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import { isVicOnSiteLicence } from '../../lib/tenancy/jurisdictionCopy'
 import {
   qldRoomingAcceptDocumentHeadline,
   qldRoomingAcceptDocumentParagraphs,
@@ -445,6 +446,24 @@ export default function LandlordBookingReviewPage() {
     data?.booking?.start_date,
     data?.property,
   ])
+
+  const vicLicence = useMemo(() => {
+    if (!data?.property) return false
+    return isVicOnSiteLicence({
+      state: data.property.state ?? '',
+      property_type: data.property.property_type ?? '',
+      is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      rooms_rented_to_residents: data.property.rooms_rented_to_residents,
+      shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
+    })
+  }, [
+    data?.property?.state,
+    data?.property?.property_type,
+    data?.property?.is_registered_rooming_house,
+    data?.property?.rooms_rented_to_residents,
+    data?.property?.qld_shares_kitchen_or_bathroom,
+  ])
+  const agreementTitle = vicLicence ? 'Licence to occupy' : 'Tenancy agreement'
 
   const qldRoomingArrangement = useMemo(() => {
     if (!data?.property) return false
@@ -1333,7 +1352,7 @@ export default function LandlordBookingReviewPage() {
                         )}{' '}
                         Signing links are in{' '}
                         <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
-                          Tenancy agreement
+                          {agreementTitle}
                         </a>{' '}
                         below and in your Quni signing email. This is a self-report - Quni does not hold bond on Listing tenancies.
                       </p>
@@ -1520,6 +1539,7 @@ export default function LandlordBookingReviewPage() {
                 bondObligations={listingBondObligations}
                 agreementBondLine={listingBondWording?.bondLine ?? null}
                 confirmPhrase={listingBondWording?.confirmPhrase ?? null}
+                agreementLinkLabel={agreementTitle}
                 justAccepted={listingAcceptCelebration}
                 onDismissCelebration={() => setListingAcceptCelebration(false)}
               />
@@ -1890,7 +1910,7 @@ export default function LandlordBookingReviewPage() {
             {reviewLayout.showAgreement && (
               <Section
                 id="review-agreement"
-                title="Tenancy agreement"
+                title={agreementTitle}
                 icon={<FileText />}
                 expanded={agreementExpanded}
                 onToggle={() => setAgreementExpanded((v) => !v)}
@@ -1915,6 +1935,7 @@ export default function LandlordBookingReviewPage() {
                       ) : null}
                       <BookingLeasePanel
                         bookingId={booking.id}
+                        agreementKind={vicLicence ? 'vic-licence' : 'tenancy'}
                         refreshKey={leasePanelRefreshKey}
                         allowPrepareRetry={
                           booking.service_tier_final === 'listing' &&

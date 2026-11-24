@@ -16,6 +16,7 @@ type Props = {
   onDismissCelebration?: () => void
   signAgreementUrl?: string | null
   landlordHasSigned?: boolean
+  agreementLinkLabel?: string
 }
 
 function formatBondDeadline(iso: string | null): string {
@@ -37,6 +38,7 @@ export default function LandlordListingAcceptedSummary({
   onDismissCelebration,
   signAgreementUrl = null,
   landlordHasSigned = false,
+  agreementLinkLabel = 'Tenancy agreement',
 }: Props) {
   const locationLine = propertyAddress.trim() || propertyTitle.trim() || 'your listing'
   const bondLine =
@@ -143,7 +145,7 @@ export default function LandlordListingAcceptedSummary({
         <span className="font-semibold">Bond received from renter</span> at the bottom of this page. You can review or sign
         the agreement in{' '}
         <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
-          Tenancy agreement
+          {agreementLinkLabel}
         </a>{' '}
         below, or return anytime from{' '}
         <Link to="/landlord/dashboard?tab=bookings" className="font-semibold text-admin-coral underline underline-offset-2">
