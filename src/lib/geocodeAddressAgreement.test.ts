@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   ADDRESS_NOT_MATCHED_MESSAGE,
+  SUBURB_ONLY_MATCH_MESSAGE,
   campusActionWhenAddressChanges,
+  campusSearchRequiredBeforeSave,
   firstAgreedGeocode,
   geocodeAgreesWithEnteredAddress,
+  geocodeMatchPrecision,
   type GeocoderLocality,
 } from './geocodeAddressAgreement'
 
@@ -93,7 +96,31 @@ describe('firstAgreedGeocode', () => {
       { address: '401/311 Hume Hwy', suburb: 'Liverpool', state: 'NSW', postcode: '2170' },
       lookup,
     )
-    expect(result).toEqual({ ok: true, lat: -33.9, lon: 150.9 })
+    expect(result).toEqual({ ok: true, lat: -33.9, lon: 150.9, precision: 'suburb' })
+  })
+
+  it('prefers a house hit over an earlier suburb centroid that echoes the same suburb', async () => {
+    const lookup = vi.fn(async (query: string) => {
+      if (/^311 Hume Highway/i.test(query)) {
+        return {
+          lat: -33.92,
+          lon: 150.92,
+          address: liverpool,
+          kind: { resultClass: 'building', resultType: 'house', addressType: 'house' },
+        }
+      }
+      return {
+        lat: -33.9,
+        lon: 150.9,
+        address: liverpool,
+        kind: { resultClass: 'place', resultType: 'suburb', addressType: 'suburb' },
+      }
+    })
+    const result = await firstAgreedGeocode(
+      { address: 'Unit 401, 311 Hume Highway', suburb: 'Liverpool', state: 'NSW', postcode: '2170' },
+      lookup,
+    )
+    expect(result).toEqual({ ok: true, lat: -33.92, lon: 150.92, precision: 'street' })
   })
 
   it('returns mismatch when every hit disagrees with the entered suburb', async () => {
@@ -113,6 +140,66 @@ describe('firstAgreedGeocode', () => {
       async () => null,
     )
     expect(result).toEqual({ ok: false, reason: 'not_found' })
+  })
+})
+
+describe('geocodeMatchPrecision', () => {
+  it('treats a house or road as a street and a suburb or missing type as a centroid', () => {
+    expect(geocodeMatchPrecision({ resultClass: 'building', resultType: 'house', addressType: 'house' })).toBe(
+      'street',
+    )
+    expect(geocodeMatchPrecision({ resultClass: 'highway', resultType: 'residential' })).toBe('street')
+    expect(geocodeMatchPrecision({ resultClass: 'place', resultType: 'suburb', addressType: 'suburb' })).toBe(
+      'suburb',
+    )
+    expect(geocodeMatchPrecision({ resultClass: 'boundary', addressType: 'administrative' })).toBe('suburb')
+    expect(geocodeMatchPrecision(null)).toBe('suburb')
+    expect(SUBURB_ONLY_MATCH_MESSAGE).toBe('We matched the suburb, not the exact street')
+  })
+})
+
+describe('campusSearchRequiredBeforeSave', () => {
+  const base = {
+    currentSig: '12 smith st|liverpool|nsw|2170',
+    loadedSig: '',
+    acceptedSig: '',
+    resultsShownSig: '',
+    addressComplete: true,
+  }
+
+  it('saves an unchanged loaded address without searching', () => {
+    expect(
+      campusSearchRequiredBeforeSave({
+        ...base,
+        loadedSig: base.currentSig,
+      }),
+    ).toBe('save')
+  })
+
+  it('searches a complete address that has not been shown yet', () => {
+    expect(campusSearchRequiredBeforeSave(base)).toBe('search')
+  })
+
+  it('saves after the landlord has already searched this address', () => {
+    expect(
+      campusSearchRequiredBeforeSave({
+        ...base,
+        acceptedSig: base.currentSig,
+      }),
+    ).toBe('save')
+  })
+
+  it('treats a second save as confirmation after the results were shown', () => {
+    expect(
+      campusSearchRequiredBeforeSave({
+        ...base,
+        resultsShownSig: base.currentSig,
+      }),
+    ).toBe('confirm')
+  })
+
+  it('does not search an incomplete address', () => {
+    expect(campusSearchRequiredBeforeSave({ ...base, addressComplete: false })).toBe('save')
   })
 })
 

@@ -59,11 +59,14 @@ export default async function handler(request) {
 
   const cache = getCache()
   const cacheTtlMs = Number(process.env.GEOCODE_CACHE_TTL_MS || DEFAULT_TTL_MS)
-  const cacheKey = details ? `details:${q.toLowerCase()}` : q.toLowerCase()
+  const cacheKey = details ? `details:v2:${q.toLowerCase()}` : q.toLowerCase()
   const cached = cache.get(cacheKey)
-  if (cached && cached.ts && Date.now() - cached.ts < cacheTtlMs && (!details || cached.address)) {
+  if (cached && cached.ts && Date.now() - cached.ts < cacheTtlMs && (!details || (cached.address && cached.kind))) {
     const body = { ok: true, lat: cached.lat, lon: cached.lon, cached: true }
-    if (details) body.address = cached.address
+    if (details) {
+      body.address = cached.address
+      body.kind = cached.kind
+    }
     return json(body, 200, origin)
   }
 
@@ -107,9 +110,13 @@ export default async function handler(request) {
   }
 
   const address = details ? localityFromNominatim(item?.address) : null
-  cache.set(cacheKey, { lat, lon, address, ts: Date.now() })
+  const kind = details ? resultKindFromNominatim(item) : null
+  cache.set(cacheKey, { lat, lon, address, kind, ts: Date.now() })
   const body = { ok: true, lat, lon }
-  if (details) body.address = address
+  if (details) {
+    body.address = address
+    body.kind = kind
+  }
   return json(body, 200, origin)
 }
 
@@ -128,6 +135,15 @@ function localityFromNominatim(raw) {
     postcode: text(address.postcode),
     state: text(address.state),
     stateCode: text(address['ISO3166-2-lvl4']),
+  }
+}
+
+function resultKindFromNominatim(item) {
+  const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null)
+  return {
+    resultClass: text(item?.class),
+    resultType: text(item?.type),
+    addressType: text(item?.addresstype),
   }
 }
 
