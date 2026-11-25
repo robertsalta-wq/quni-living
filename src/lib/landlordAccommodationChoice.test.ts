@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   accommodationChoiceFromFields,
+  accommodationIntroForListingState,
+  accommodationOptionsForListingState,
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
   roomingHouseFieldErrors,
@@ -61,6 +63,22 @@ describe('landlordAccommodationChoice', () => {
     expect(shouldScrollAccommodationTypeBlock('private_room_landlord_off_site', 'private_room_landlord_off_site')).toBe(
       false,
     )
+  })
+
+  it('hides the registration card in Victoria and explains capacity routing', () => {
+    const vic = accommodationOptionsForListingState('VIC').map((opt) => opt.value)
+    expect(vic).not.toContain('registered_rooming_house')
+    expect(vic).toContain('private_room_landlord_off_site')
+    expect(vic).toContain('shared_room')
+    expect(accommodationOptionsForListingState('NSW').map((opt) => opt.value)).toContain(
+      'registered_rooming_house',
+    )
+    expect(
+      accommodationOptionsForListingState('VIC').find((opt) => opt.value === 'private_room_landlord_off_site')
+        ?.description,
+    ).not.toContain('registered boarding house')
+    expect(accommodationIntroForListingState('VIC')).toContain('4 or more')
+    expect(accommodationIntroForListingState('NSW')).toContain('registered boarding house')
   })
 
   it('flags rooming house conflicts and missing registration', () => {

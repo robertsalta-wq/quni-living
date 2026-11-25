@@ -21,6 +21,27 @@ const PAY_ROWS: { key: keyof VicRoomingPayMethods; label: string }[] = [
   { key: 'cheque', label: 'Cheque or money order (not fee-free).' },
 ]
 
+export function emptyVicRoomingHouseFieldValues(): VicRoomingHouseFieldValues {
+  return {
+    capacity: '',
+    roomNumber: '',
+    itemsLet: '',
+    houseRules: '',
+    licenceNumber: '',
+    registrationNumber: '',
+    operatorAcceptsElectronicService: null,
+    attestationCurrent: false,
+    pay: {
+      directDebit: false,
+      bankDeposit: false,
+      cash: false,
+      cheque: false,
+      bpay: false,
+      otherEft: false,
+    },
+  }
+}
+
 export function VicRoomingHouseFields({
   showRoomingFields,
   values,

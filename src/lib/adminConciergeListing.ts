@@ -16,7 +16,9 @@ export const ADMIN_ACTIVATE_NSW_T3_MESSAGE =
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-const AU_STATES = new Set(['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'])
+export const AU_LISTING_STATE_CODES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
+
+const AU_STATES = new Set<string>(AU_LISTING_STATE_CODES)
 
 export function parseAdminConciergeLandlordProfileId(value: string | null | undefined): string | null {
   const v = value?.trim() ?? ''

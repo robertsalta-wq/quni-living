@@ -48,14 +48,15 @@ describe('listingHubWizard', () => {
 
   it('Prev on step 1 returns to the hub; later steps go to the previous section', () => {
     expect(listingHubWizardPrevHref('abc', 'basic')).toBe('/landlord/property/edit/abc')
-    expect(listingHubWizardPrevHref('abc', 'property')).toBe('/landlord/property/edit/abc/basic')
+    expect(listingHubWizardPrevHref('abc', 'location')).toBe('/landlord/property/edit/abc/basic')
+    expect(listingHubWizardPrevHref('abc', 'property')).toBe('/landlord/property/edit/abc/section/location')
     expect(listingHubWizardPrevHref(null, 'inclusions')).toBe('/landlord/property/new/section/property')
     expect(listingHubWizardPrevHref('abc', 'photos')).toBe('/landlord/property/edit/abc/section/pricing')
   })
 
   it('Next walks 1-8 and last step opens preview when the listing is saved', () => {
-    expect(listingHubWizardNextHref('abc', 'basic')).toBe('/landlord/property/edit/abc/section/property')
-    expect(listingHubWizardNextHref(null, 'basic')).toBe('/landlord/property/new/section/property')
+    expect(listingHubWizardNextHref('abc', 'basic')).toBe('/landlord/property/edit/abc/section/location')
+    expect(listingHubWizardNextHref(null, 'basic')).toBe('/landlord/property/new/section/location')
     expect(listingHubWizardNextHref('abc', 'pricing')).toBe('/landlord/property/edit/abc/section/photos')
     expect(listingHubWizardNextHref('abc', 'photos')).toBe('/landlord/property/edit/abc/preview')
     expect(listingHubWizardNextHref(null, 'photos')).toBe('/landlord/property/new')
@@ -66,7 +67,7 @@ describe('listingHubWizard', () => {
 
   it('step progress follows hub section order and total section count', () => {
     expect(listingHubWizardStepProgress('basic')).toEqual({ current: 1, total: 8 })
-    expect(listingHubWizardStepProgress('location')).toEqual({ current: 5, total: 8 })
+    expect(listingHubWizardStepProgress('location')).toEqual({ current: 2, total: 8 })
     expect(listingHubWizardStepProgress('photos')).toEqual({ current: 8, total: 8 })
     expect(listingHubWizardStepProgress(null)).toEqual({ current: 1, total: 8 })
     expect(listingHubWizardStepCaption({ current: 1, total: 8 })).toBe('Step 1 of 8')

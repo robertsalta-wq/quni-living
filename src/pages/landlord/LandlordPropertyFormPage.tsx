@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
 import {
+  emptyVicRoomingHouseFieldValues,
   VicRoomingHouseFields,
   type VicRoomingHouseFieldValues,
 } from '../../components/landlord/VicRoomingHouseFields'
@@ -24,10 +25,12 @@ import {
   type AdminLandlordOption,
   adminNewListingStatus,
   filterLandlordOptionsForSearch,
+  AU_LISTING_STATE_CODES,
   listingStateFromLandlordProfile,
   parseAdminConciergeLandlordProfileId,
   skipListingAttestationsForAdmin,
 } from '../../lib/adminConciergeListing'
+import { listingStateFieldClears } from '../../lib/listingFormStateChange'
 import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
@@ -59,8 +62,9 @@ import {
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
-  ACCOMMODATION_UI_OPTIONS,
   accommodationChoiceFromFields,
+  accommodationIntroForListingState,
+  accommodationOptionsForListingState,
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
   roomForRentOptions,
@@ -276,12 +280,12 @@ const LANDLORD_FORM_CHECKBOX_CLASS =
 
 const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-basic-info', label: 'Basic info' },
+  { id: 'section-location', label: 'Location' },
   { id: 'section-property-details', label: 'Property details' },
   { id: 'section-inclusions-features', label: 'Inclusions' },
   { id: 'section-utilities', label: 'Utilities' },
   { id: 'section-ft6600-compliance', label: 'Compliance' },
   { id: 'section-house-rules', label: 'Rules' },
-  { id: 'section-location', label: 'Location' },
   { id: 'section-pricing-availability', label: 'Pricing' },
   { id: 'section-description', label: 'Description' },
   { id: 'section-photos', label: 'Photos' },
@@ -968,7 +972,8 @@ export default function LandlordPropertyFormPage() {
 
   const [address, setAddress] = useState('')
   const [suburb, setSuburb] = useState('')
-  const [state, setState] = useState('NSW')
+  const [state, setState] = useState('')
+  const applyListingStateRef = useRef<(next: string) => void>(() => {})
   const [postcode, setPostcode] = useState('')
 
   const applyAdminLandlordProfile = useCallback(
@@ -977,7 +982,7 @@ export default function LandlordPropertyFormPage() {
       if (isEdit) return
       const opt = landlordOptions.find((o) => o.id === id)
       const st = listingStateFromLandlordProfile(opt?.state)
-      if (st) setState(st)
+      if (st) applyListingStateRef.current(st)
     },
     [isEdit, landlordOptions],
   )
@@ -1022,8 +1027,15 @@ export default function LandlordPropertyFormPage() {
     [state, propertyListingType],
   )
 
-  const showNswFt6600ComplianceSection = state.trim().toUpperCase() === 'NSW'
-  const showPropertyUtilitiesSection = ['QLD', 'VIC'].includes(state.trim().toUpperCase())
+  const listingStateCode = listingStateFromLandlordProfile(state)
+  const showNswFt6600ComplianceSection = listingStateCode === 'NSW'
+  const showPropertyUtilitiesSection = listingStateCode === 'QLD' || listingStateCode === 'VIC'
+  const accommodationOptions = accommodationOptionsForListingState(listingStateCode)
+  const accommodationIntro = accommodationIntroForListingState(listingStateCode ?? '')
+  const displayedAccommodationChoice =
+    listingStateCode === 'VIC' && accommodationChoice === 'registered_rooming_house'
+      ? 'private_room_landlord_off_site'
+      : accommodationChoice
 
   const [utilitiesForm, setUtilitiesForm] = useState<LandlordPropertyUtilitiesFormState>(
     emptyLandlordPropertyUtilitiesFormState(),
@@ -1121,6 +1133,38 @@ export default function LandlordPropertyFormPage() {
     emptyLandlordFt6600ComplianceFormState,
   )
 
+  const applyListingState = useCallback((nextRaw: string) => {
+    const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    const clears = listingStateFieldClears(state, next)
+    setState(next)
+    if (clears.clearNswBoardingParticulars) {
+      setSharedAreas({ ...EMPTY_NSW_T3_SHARED_AREAS })
+      setAdditionalCharges([])
+      setT3ComplianceForm(emptyNswT3ComplianceFormState())
+      setT3ComplianceCompleteOnLoad(false)
+    }
+    if (clears.clearRoomDescription) setRoomDescription('')
+    if (clears.clearNswCompliance) {
+      setFt6600Compliance(emptyLandlordFt6600ComplianceFormState())
+      setWaterSeparatelyMeteredAgreed(false)
+      setWaterSeparatelyMeteredAttestedAt(null)
+    }
+    if (clears.clearQldRooming) {
+      setQldRoomingForm(emptyQldRoomingListingFormState())
+      setQldHouseRulesCommonAreas('')
+      setQldHouseRulesExtras({})
+      setRoomsRentedToResidents('')
+      setQldBondRemittancePreference('tenant_choice')
+    }
+    if (clears.clearVicRooming) setVicRoomingFields(emptyVicRoomingHouseFieldValues())
+    if (clears.clearSharedUtilities) setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
+    if (clears.clearRoomingHouseRegistration) {
+      setIsRegisteredRoomingHouse(false)
+      setRoomingHouseRegistrationNumber('')
+    }
+  }, [state])
+  applyListingStateRef.current = applyListingState
+
   const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
     ? ft6600Compliance.waterUsageChargedSeparately === 'yes'
     : utilitiesForm.waterUsageChargedSeparately === 'yes'
@@ -1212,8 +1256,8 @@ export default function LandlordPropertyFormPage() {
 
   const bondWeekCap = isNswT3Listing ? T3_MAX_SECURITY_DEPOSIT_WEEKS : MAX_BOND_WEEKS
   const serviceTierAvailability = useMemo(
-    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
-    [state, resolvedPropertyTier, serviceTierResolverOptions],
+    () => resolveServiceTierAvailability(listingStateCode ?? '', resolvedPropertyTier, serviceTierResolverOptions),
+    [listingStateCode, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
   const formBondWording = useMemo(() => {
@@ -1578,7 +1622,7 @@ export default function LandlordPropertyFormPage() {
     setHouseRulesResetAck(false)
     setAddress('')
     setSuburb('')
-    setState('NSW')
+    setState('')
     setPostcode('')
     if (role === 'admin' && adminLandlordId) {
       const st = listingStateFromLandlordProfile(
@@ -2727,6 +2771,10 @@ export default function LandlordPropertyFormPage() {
       setSubmitError('Title is required.')
       return
     }
+    if (!listingStateCode) {
+      setSubmitError('Choose the state before saving. The questions below depend on it.')
+      return
+    }
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
       setSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE)
@@ -3130,7 +3178,7 @@ export default function LandlordPropertyFormPage() {
       weekly_cleaning_service: weeklyCleaning,
       address: address.trim() || null,
       suburb: suburb.trim() || null,
-      state: state.trim() || 'NSW',
+      state: listingStateCode,
       postcode: postcode.trim() || null,
       latitude: resolvedLat ?? null,
       longitude: resolvedLon ?? null,
@@ -3175,7 +3223,7 @@ export default function LandlordPropertyFormPage() {
             gas_embedded_network: null,
             strata_bylaws_applicable: null,
           }),
-      ...(state.trim().toUpperCase() === 'VIC'
+      ...(listingStateCode === 'VIC'
         ? {
             vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
             ...(vicRoomingRoute.kind === 'rooming'
@@ -3193,9 +3241,36 @@ export default function LandlordPropertyFormPage() {
                   rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
                   is_registered_rooming_house: true,
                 }
-              : {}),
+              : {
+                  vic_rooming_house_operator_licence_number: null,
+                  vic_rooming_house_rules: null,
+                  vic_rooming_items_let_with_room: null,
+                  vic_rooming_operator_accepts_electronic_service: null,
+                  vic_rooming_pay_direct_debit: false,
+                  vic_rooming_pay_bank_deposit: false,
+                  vic_rooming_pay_cash: false,
+                  vic_rooming_pay_cheque: false,
+                  vic_rooming_pay_bpay: false,
+                  vic_rooming_pay_other_eft: false,
+                }),
           }
+        : {
+            vic_premises_occupant_capacity: null,
+            vic_rooming_house_operator_licence_number: null,
+            vic_rooming_house_rules: null,
+            vic_rooming_items_let_with_room: null,
+            vic_rooming_operator_accepts_electronic_service: null,
+            vic_rooming_pay_direct_debit: false,
+            vic_rooming_pay_bank_deposit: false,
+            vic_rooming_pay_cash: false,
+            vic_rooming_pay_cheque: false,
+            vic_rooming_pay_bpay: false,
+            vic_rooming_pay_other_eft: false,
+          }),
+      ...(!showNswFt6600ComplianceSection && !showPropertyUtilitiesSection
+        ? { water_separately_metered_efficient_attested_at: null, utilities_services: null }
         : {}),
+      ...(showNswFt6600ComplianceSection ? { utilities_services: null } : {}),
       ...attestationPatch,
       ...consentPatch,
       ...waterAttestationPatch,
@@ -3460,7 +3535,7 @@ export default function LandlordPropertyFormPage() {
               weekly_cleaning_service: weeklyCleaning,
               address: address.trim() || null,
               suburb: suburb.trim() || null,
-              state: state.trim() || 'NSW',
+              state: listingStateCode,
               postcode: postcode.trim() || null,
               latitude,
               longitude,
@@ -3476,7 +3551,7 @@ export default function LandlordPropertyFormPage() {
                 isNswT3Listing || qldRoomCard || vicRoomingRoute.kind === 'rooming'
                   ? (vicRoomingRoute.kind === 'rooming' ? vicRoomingFields.roomNumber : roomDescription).trim() || null
                   : null,
-              ...(state.trim().toUpperCase() === 'VIC'
+              ...(listingStateCode === 'VIC'
                 ? {
                     vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
                     ...(vicRoomingRoute.kind === 'rooming'
@@ -3647,7 +3722,7 @@ export default function LandlordPropertyFormPage() {
         weekly_cleaning_service: weeklyCleaning,
         address: address.trim() || null,
         suburb: suburb.trim() || null,
-        state: state.trim() || 'NSW',
+        state: listingStateCode,
         postcode: postcode.trim() || null,
         latitude,
         longitude,
@@ -4112,20 +4187,227 @@ export default function LandlordPropertyFormPage() {
             'section-basic-info',
           )}
 
+          {showFormSection('section-location') &&
+            sectionClass(
+            'Location',
+            <div className="space-y-4">
+              <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
+                This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
+                show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
+                casual browsers.
+              </p>
+              <div>
+                <label htmlFor="pf-addr" className={labelClass}>
+                  Street address
+                </label>
+                <input
+                  id="pf-addr"
+                  value={address}
+                  onChange={(e) => {
+                    addressDirtyRef.current = true
+                    setAddress(e.target.value)
+                  }}
+                  className={inputClass}
+                  placeholder="e.g. Unit 401, 311 Hume Highway"
+                  autoComplete="street-address"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
+                  street address; the unit is still saved on your listing.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="pf-suburb" className={labelClass}>
+                    Suburb
+                  </label>
+                  <input
+                    id="pf-suburb"
+                    value={suburb}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setSuburb(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pf-state" className={labelClass}>
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="pf-state"
+                    value={listingStateCode ?? ''}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      applyListingState(e.target.value)
+                    }}
+                    className={inputClass}
+                    required
+                  >
+                    <option value="">Select a state</option>
+                    {AU_LISTING_STATE_CODES.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  {!listingStateCode ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Bond wording, compliance, and rooming house questions stay hidden until this is set.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Questions below follow this state. Changing it clears the previous state's answers.
+                    </p>
+                  )}
+                </div>
+                <div className="sm:col-span-2 max-sm:col-span-1">
+                  <label htmlFor="pf-pc" className={labelClass}>
+                    Postcode
+                  </label>
+                  <input
+                    id="pf-pc"
+                    value={postcode}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setPostcode(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div>
+                <span className={labelClass}>Nearest university campus</span>
+                <p className="text-xs text-gray-500 mb-2">
+                  We list the closest campuses from your address. Tap a suggestion to select it; your current choice is
+                  marked <span className="font-medium text-gray-700">Selected</span>.{' '}
+                  <span className="font-medium text-gray-700">New</span> listings save the nearest match automatically
+                  unless you override.
+                </p>
+
+                {nearbyCampusError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    {nearbyCampusError}
+                  </p>
+                )}
+                {nearbyCampusSuggestions.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
+                    <div className="space-y-2">
+                      {nearbyCampusSuggestions.map((s) => (
+                        <button
+                          key={s.campusId}
+                          type="button"
+                          onClick={() => applyNearbySuggestion(s)}
+                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {s.universityLabel}: {s.campusLabel}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-[11px] text-gray-500">
+                            {universityId === s.universityId && campusId === s.campusId
+                              ? 'Selected'
+                              : 'Tap to select'}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Based on approximate geocoding from your address.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="pf-add-another-uni"
+                        checked={showAddAnotherUniversity}
+                        onChange={(e) => {
+                          setShowAddAnotherUniversity(e.target.checked)
+                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
+                        }}
+                        disabled={refsLoading || nearbyCampusLoading}
+                        className={LANDLORD_FORM_CHECKBOX_CLASS}
+                      />
+                      <span className="text-sm text-gray-700">Add another university (optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      aria-label="Help: additional university"
+                      aria-expanded={addAnotherUniversityHelpOpen}
+                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
+                    >
+                      ?
+                    </button>
+                  </div>
+                  {addAnotherUniversityHelpOpen && (
+                    <div
+                      role="tooltip"
+                      className="quni-card mt-2 max-w-sm p-3 text-xs text-gray-600"
+                    >
+                      You can choose one additional university and campus for this listing-for example if your property
+                      is a better fit for a campus other than the closest match we suggested above.
+                    </div>
+                  )}
+                </div>
+
+                {showAddAnotherUniversity && (
+                  <div className="mt-4">
+                    <UniversityCampusSelect
+                      universityId={universityId || null}
+                      campusId={campusId || null}
+                      onUniversityChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        universityIdRef.current = id
+                        setUniversityId(id)
+                        campusIdRef.current = ''
+                        setCampusId('')
+                      }}
+                      onCampusChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        campusIdRef.current = id
+                        setCampusId(id)
+                      }}
+                      referenceScope="full"
+                      showState
+                      disabled={refsLoading || nearbyCampusLoading}
+                      labelClassName={labelClass}
+                      universitySelectClassName={inputClass}
+                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+                      universityLabel="University"
+                      campusLabel="Campus"
+                      universityIdAttr="pf-uni"
+                      campusIdAttr="pf-campus"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>,
+            'section-location',
+          )}
+
           {showFormSection('section-property-details') &&
             sectionClass(
             'Property details',
             <div className="space-y-4">
+              {listingStateCode ? (
+              <>
               <div className="space-y-3">
                 <p className="text-sm font-medium text-gray-800">What is the tenant renting?</p>
-                <p className="text-xs text-gray-500">
-                  Choose the arrangement that matches your listing. Rooming house is for a registered boarding house, not
-                  a normal share. For a room in a share house, enter total bedrooms and bathrooms for the whole property,
-                  not just the room you are advertising.
-                </p>
+                <p className="text-xs text-gray-500">{accommodationIntro}</p>
                 <div className="grid grid-cols-1 gap-2">
-                  {ACCOMMODATION_UI_OPTIONS.map((opt) => {
-                    const selected = accommodationChoice === opt.value
+                  {accommodationOptions.map((opt) => {
+                    const selected = displayedAccommodationChoice === opt.value
                     return (
                       <button
                         key={opt.value}
@@ -4149,7 +4431,7 @@ export default function LandlordPropertyFormPage() {
                   <p className="text-sm text-amber-950 leading-relaxed">{qldOffSiteRoomListingNote()}</p>
                 ) : null}
               </div>
-              {showRoomForRentSelect(accommodationChoice) ? (
+              {showRoomForRentSelect(displayedAccommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
               {qldRoomCard ? (
                 <QldSharesKitchenOrBathroomField
@@ -4191,7 +4473,7 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
-              {showRoomForRentSelect(accommodationChoice) && (
+              {showRoomForRentSelect(displayedAccommodationChoice) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
                     Room for rent
@@ -4202,25 +4484,25 @@ export default function LandlordPropertyFormPage() {
                     onChange={(e) => setRoomType(e.target.value as RoomType)}
                     className={inputClass}
                   >
-                    {roomForRentOptions(accommodationChoice).map(([v, lab]) => (
+                    {roomForRentOptions(displayedAccommodationChoice).map(([v, lab]) => (
                       <option key={v} value={v}>
                         {lab}
                       </option>
                     ))}
                   </select>
-                  {accommodationChoice === 'private_room_landlord_off_site' && (
+                  {displayedAccommodationChoice === 'private_room_landlord_off_site' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
                     </p>
                   )}
-                  {accommodationChoice === 'registered_rooming_house' && (
+                  {displayedAccommodationChoice === 'registered_rooming_house' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Identify the room you are listing. Registration number is required below.
                     </p>
                   )}
                 </div>
               )}
-              {isRegisteredRoomingHouse ? (
+              {isRegisteredRoomingHouse && listingStateCode !== 'VIC' ? (
                 <div>
                   <label htmlFor="pf-rooming-reg" className={labelClass}>
                     Rooming house registration number <span className="text-red-500">*</span>
@@ -4420,6 +4702,13 @@ export default function LandlordPropertyFormPage() {
               ) : null}
                 </div>
               ) : null}
+              </>
+              ) : (
+                <p className="text-sm text-gray-700">
+                  Choose a state above before these questions. Bond wording, compliance, and the rooming house fields
+                  depend on the state.
+                </p>
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="pf-bed" className={labelClass}>
@@ -4963,198 +5252,6 @@ export default function LandlordPropertyFormPage() {
               )}
             </div>,
             'section-house-rules',
-          )}
-
-          {showFormSection('section-location') &&
-            sectionClass(
-            'Location',
-            <div className="space-y-4">
-              <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
-                This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
-                show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
-                casual browsers.
-              </p>
-              <div>
-                <label htmlFor="pf-addr" className={labelClass}>
-                  Street address
-                </label>
-                <input
-                  id="pf-addr"
-                  value={address}
-                  onChange={(e) => {
-                    addressDirtyRef.current = true
-                    setAddress(e.target.value)
-                  }}
-                  className={inputClass}
-                  placeholder="e.g. Unit 401, 311 Hume Highway"
-                  autoComplete="street-address"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
-                  street address; the unit is still saved on your listing.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="pf-suburb" className={labelClass}>
-                    Suburb
-                  </label>
-                  <input
-                    id="pf-suburb"
-                    value={suburb}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setSuburb(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pf-state" className={labelClass}>
-                    State
-                  </label>
-                  <input
-                    id="pf-state"
-                    value={state}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setState(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="sm:col-span-2 max-sm:col-span-1">
-                  <label htmlFor="pf-pc" className={labelClass}>
-                    Postcode
-                  </label>
-                  <input
-                    id="pf-pc"
-                    value={postcode}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setPostcode(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <div>
-                <span className={labelClass}>Nearest university campus</span>
-                <p className="text-xs text-gray-500 mb-2">
-                  We list the closest campuses from your address. Tap a suggestion to select it; your current choice is
-                  marked <span className="font-medium text-gray-700">Selected</span>.{' '}
-                  <span className="font-medium text-gray-700">New</span> listings save the nearest match automatically
-                  unless you override.
-                </p>
-
-                {nearbyCampusError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {nearbyCampusError}
-                  </p>
-                )}
-                {nearbyCampusSuggestions.length > 0 && (
-                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
-                    <div className="space-y-2">
-                      {nearbyCampusSuggestions.map((s) => (
-                        <button
-                          key={s.campusId}
-                          type="button"
-                          onClick={() => applyNearbySuggestion(s)}
-                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-900 truncate">
-                              {s.universityLabel}: {s.campusLabel}
-                            </p>
-                            <p className="text-[11px] text-gray-500">
-                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-[11px] text-gray-500">
-                            {universityId === s.universityId && campusId === s.campusId
-                              ? 'Selected'
-                              : 'Tap to select'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-2">
-                      Based on approximate geocoding from your address.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        id="pf-add-another-uni"
-                        checked={showAddAnotherUniversity}
-                        onChange={(e) => {
-                          setShowAddAnotherUniversity(e.target.checked)
-                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
-                        }}
-                        disabled={refsLoading || nearbyCampusLoading}
-                        className={LANDLORD_FORM_CHECKBOX_CLASS}
-                      />
-                      <span className="text-sm text-gray-700">Add another university (optional)</span>
-                    </label>
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      aria-label="Help: additional university"
-                      aria-expanded={addAnotherUniversityHelpOpen}
-                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
-                    >
-                      ?
-                    </button>
-                  </div>
-                  {addAnotherUniversityHelpOpen && (
-                    <div
-                      role="tooltip"
-                      className="quni-card mt-2 max-w-sm p-3 text-xs text-gray-600"
-                    >
-                      You can choose one additional university and campus for this listing-for example if your property
-                      is a better fit for a campus other than the closest match we suggested above.
-                    </div>
-                  )}
-                </div>
-
-                {showAddAnotherUniversity && (
-                  <div className="mt-4">
-                    <UniversityCampusSelect
-                      universityId={universityId || null}
-                      campusId={campusId || null}
-                      onUniversityChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        universityIdRef.current = id
-                        setUniversityId(id)
-                        campusIdRef.current = ''
-                        setCampusId('')
-                      }}
-                      onCampusChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        campusIdRef.current = id
-                        setCampusId(id)
-                      }}
-                      referenceScope="full"
-                      showState
-                      disabled={refsLoading || nearbyCampusLoading}
-                      labelClassName={labelClass}
-                      universitySelectClassName={inputClass}
-                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
-                      universityLabel="University"
-                      campusLabel="Campus"
-                      universityIdAttr="pf-uni"
-                      campusIdAttr="pf-campus"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>,
-            'section-location',
           )}
 
           {showFormSection('section-pricing-availability') &&

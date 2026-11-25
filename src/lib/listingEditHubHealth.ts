@@ -5,10 +5,10 @@ import { normalizePropertyImages } from './propertyImages'
 /** Hub section keys - fixed base 8 (compliance/utilities fold into property/inclusions). */
 export const LISTING_HUB_SECTION_IDS = [
   'basic',
+  'location',
   'property',
   'inclusions',
   'rules',
-  'location',
   'description',
   'pricing',
   'photos',
@@ -75,31 +75,31 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
     step: 1,
   },
   {
+    id: 'location',
+    title: 'Location',
+    subtitle: 'Address, map pin, nearby campuses',
+    formSectionIds: ['section-location'],
+    step: 2,
+  },
+  {
     id: 'property',
     title: 'Property details',
     subtitle: 'Bedrooms, bathrooms, registration & compliance',
     formSectionIds: ['section-property-details', 'section-ft6600-compliance'],
-    step: 2,
+    step: 3,
   },
   {
     id: 'inclusions',
     title: 'Inclusions',
     subtitle: 'Furnished, linen, utilities & bills',
     formSectionIds: ['section-inclusions-features', 'section-utilities'],
-    step: 3,
+    step: 4,
   },
   {
     id: 'rules',
     title: 'Rules',
     subtitle: 'House rules - yes, no or on approval',
     formSectionIds: ['section-house-rules'],
-    step: 4,
-  },
-  {
-    id: 'location',
-    title: 'Location',
-    subtitle: 'Address, map pin, nearby campuses',
-    formSectionIds: ['section-location'],
     step: 5,
   },
   {
