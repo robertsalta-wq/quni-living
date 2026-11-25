@@ -1,8 +1,13 @@
--- Copy shared areas, Annexure 2 charges, and the water efficiency attestation
--- when a landlord duplicates a listing. Without shared_areas, a duplicated NSW
--- boarding house can be published from the dashboard with an empty Annexure 2.
--- Apply this in the SQL editor and record the version in the ledger.
--- Do not edit 20261124143000. This replaces the function in place.
+-- DO NOT APPLY.
+-- Production already runs the duplicate_property_listing from 20261125160000,
+-- which copies vic_rooming_unshared_weekly_rent. This file was built from
+-- 20261124143000 and would replace that function without the unshared rent.
+-- Rewrite it from 20261125160000 after #367 merges. Until then this script stops.
+
+do $$
+begin
+  raise exception 'Do not apply 20261125180000. It drops vic_rooming_unshared_weekly_rent from duplicate_property_listing.';
+end $$;
 
 create or replace function public.duplicate_property_listing(p_source_id uuid)
 returns uuid
