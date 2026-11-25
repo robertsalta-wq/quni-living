@@ -71,6 +71,39 @@ describe('resolvePropertyTierFromListing', () => {
     ).toBe('t3')
   })
 
+  it('VIC off-site room of four is t3 without the registration flag, and three stays t2', () => {
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'VIC',
+        propertyType: 'private_room_landlord_off_site',
+        isRegisteredRoomingHouse: false,
+        premisesOccupantCapacity: 4,
+      }),
+    ).toBe('t3')
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'VIC',
+        propertyType: 'shared_room',
+        premisesOccupantCapacity: 3,
+      }),
+    ).toBe('t2')
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'VIC',
+        propertyType: 'private_room_landlord_on_site',
+        isRegisteredRoomingHouse: true,
+        premisesOccupantCapacity: 8,
+      }),
+    ).toBe('t1')
+    expect(
+      resolvePropertyTierFromListing({
+        state: 'VIC',
+        propertyType: 'entire_property',
+        premisesOccupantCapacity: 8,
+      }),
+    ).toBe('t2')
+  })
+
   it('NSW still uses the registered flag', () => {
     expect(
       resolvePropertyTierFromListing({

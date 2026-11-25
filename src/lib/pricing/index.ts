@@ -4,6 +4,7 @@ import {
   qldFactsFromListing,
   qldPropertyTierFromOutcome,
 } from '../../../api/lib/tenancy/qldClassification.js'
+import { parseVicPremisesOccupantCapacity } from '../../../api/lib/tenancy/vicRoomingHouse.js'
 import { apiUrl } from '../apiUrl'
 import type { Database } from '../database.types'
 
@@ -115,6 +116,7 @@ export type ResolvePropertyTierFromListingInput = {
   isRegisteredRoomingHouse?: boolean | null
   roomsRentedToResidents?: unknown
   sharesKitchenOrBathroom?: unknown
+  premisesOccupantCapacity?: unknown
 }
 
 export function resolvePropertyTierFromListing(
@@ -132,6 +134,18 @@ export function resolvePropertyTierFromListing(
     const outcome = classifyQldArrangement(facts.facts)
     if (outcome === 'needs_room_count') return 't2'
     return qldPropertyTierFromOutcome(outcome)
+  }
+  if (state === 'VIC') {
+    if (propertyType === 'private_room_landlord_on_site') return 't1'
+    const capacity = parseVicPremisesOccupantCapacity(input.premisesOccupantCapacity)
+    if (
+      (propertyType === 'private_room_landlord_off_site' || propertyType === 'shared_room') &&
+      capacity != null &&
+      capacity >= 4
+    ) {
+      return 't3'
+    }
+    return 't2'
   }
   if (propertyType === 'private_room_landlord_on_site') return 't1'
   if (propertyType === 'private_room_landlord_off_site' && Boolean(input.isRegisteredRoomingHouse)) return 't3'

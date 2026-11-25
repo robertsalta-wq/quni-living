@@ -59,6 +59,7 @@ function mockAdmin(opts: {
   eventError?: Error | null
   feeExempt?: boolean
   payoutRow?: { account_name: string; bsb: string; account_number: string; bank_name?: string } | null
+  vicCapacity?: number | null
 }) {
   const booking = opts.booking ?? baseBooking
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
@@ -103,6 +104,18 @@ function mockAdmin(opts: {
         insert: () => ({
           select: () => ({
             single: async () => ({ data: { id: 'evt-1' }, error: eventError }),
+          }),
+        }),
+      }
+    }
+    if (table === 'properties') {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: { vic_premises_occupant_capacity: opts.vicCapacity ?? null },
+              error: null,
+            }),
           }),
         }),
       }
@@ -524,6 +537,35 @@ describe('runListingConfirmBooking', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.body.error).toBe('listing_payout_details_missing')
+    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
+  })
+
+  it('blocks accept on a Victorian rooming house until the section 124 statement is included', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({
+      vicCapacity: 4,
+      booking: {
+        ...baseBooking,
+        properties: {
+          state: 'VIC',
+          property_type: 'private_room_landlord_off_site',
+          is_registered_rooming_house: false,
+        },
+      },
+    })
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      vicRoomingConditionReport: 'will_be_provided',
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.status).toBe(409)
+    expect(result.body.error).toBe('vic_rooming_s124_statement_required')
+    expect(result.body.message).toMatch(/section 124/)
+    expect(result.body.message).toMatch(/stay published/)
     expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
   })
 })

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-23T01:07:04.951Z",
+  "generatedAt": "2026-11-24T22:46:27.897Z",
   "watermark": "SAMPLE: not a real agreement",
   "samples": [
     {
@@ -57,6 +57,13 @@
       "document": "Rooming accommodation agreement (Form R18)",
       "fileName": "qld-t3-rooming-accommodation-agreement-form-r18.pdf",
       "href": "/agreement-samples/qld-t3-rooming-accommodation-agreement-form-r18.pdf"
+    },
+    {
+      "state": "VIC",
+      "tier": "T3",
+      "document": "Rooming house agreement",
+      "fileName": "vic-t3-rooming-house-agreement.pdf",
+      "href": "/agreement-samples/vic-t3-rooming-house-agreement.pdf"
     },
     {
       "state": "VIC",

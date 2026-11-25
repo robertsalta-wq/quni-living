@@ -103,19 +103,23 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
     is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
     rooms_rented_to_residents: property.rooms_rented_to_residents,
     shares_kitchen_or_bathroom: property.qld_shares_kitchen_or_bathroom,
+    vic_premises_occupant_capacity: (property as { vic_premises_occupant_capacity?: number | null })
+      .vic_premises_occupant_capacity,
     date: moveInRaw,
   })
   const schemeApplies = pkg.supported && pkg.rules.bond.schemeApplies
   const agreement = bookingBondWordingFromPackage(pkg)
   const isT3 = pkg.supported && pkg.tier === 'T3'
-  const depositLabel = isT3 ? 'Security deposit' : 'Bond'
-  const payeeLabel =
-    pkg.supported && (pkg.pdfKind === 'residential_tenancy_agreement' || pkg.pdfKind === 'residential_rental_agreement')
+  const isVicRooming = pkg.supported && pkg.generator === 'vic-rooming-house'
+  const depositLabel = isVicRooming ? 'Bond' : isT3 ? 'Security deposit' : 'Bond'
+  const payeeLabel = isVicRooming
+    ? 'rooming house operator'
+    : pkg.supported && (pkg.pdfKind === 'residential_tenancy_agreement' || pkg.pdfKind === 'residential_rental_agreement')
       ? 'landlord'
       : isT3
         ? 'proprietor'
         : 'host'
-  const occupancyFeeLabel = isT3 ? 'occupancy fee' : 'rent'
+  const occupancyFeeLabel = isVicRooming ? 'rent' : isT3 ? 'occupancy fee' : 'rent'
 
   const bondAmountAud = resolveBookingBondAmountAud(
     booking.bond_amount,

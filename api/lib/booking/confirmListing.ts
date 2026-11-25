@@ -13,6 +13,12 @@ import {
   resolveTenancyPackage,
   tenancyPackageInputFromBooking,
 } from '../resolveTenancyPackage.js'
+import {
+  VIC_ROOMING_CONDITION_REPORT_REQUIRED,
+  parseVicRoomingConditionReport,
+  vicRoomingRouting,
+  vicRoomingStatementAcceptBlock,
+} from '../tenancy/vicRoomingHouse.js'
 
 type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
 type ConfirmOk = {
@@ -60,12 +66,13 @@ export type RunListingConfirmBookingParams = {
   origin?: string
   deviceCtx?: { user_agent: string; is_mobile: boolean } | null
   qldHouseRulesAttested?: boolean
+  vicRoomingConditionReport?: 'provided' | 'will_be_provided'
 }
 
 export async function runListingConfirmBooking(
   params: RunListingConfirmBookingParams,
 ): Promise<ConfirmFail | ConfirmOk> {
-  const { stripe, admin, landlord, bookingId, deviceCtx = null, qldHouseRulesAttested } = params
+  const { stripe, admin, landlord, bookingId, deviceCtx = null, qldHouseRulesAttested, vicRoomingConditionReport } = params
   const landlordUserId =
     typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
 
@@ -130,6 +137,51 @@ export async function runListingConfirmBooking(
       : {}
   const tenancyPackage = resolveTenancyPackage(tenancyPackageInputFromBooking(booking, propEmbed))
   const qldRooming = isQldRoomingArrangement(tenancyPackage)
+  const propertyState = typeof propEmbed.state === 'string' ? propEmbed.state.trim().toUpperCase() : ''
+  if (propertyState === 'VIC' && typeof booking.property_id === 'string') {
+    const { data: vicRow, error: vicErr } = await admin
+      .from('properties')
+      .select('vic_premises_occupant_capacity')
+      .eq('id', booking.property_id)
+      .maybeSingle()
+    if (vicErr) {
+      return jsonFail(503, {
+        error: 'vic_rooming_migration_required',
+        message: 'Apply the Victorian rooming house migration before accepting a Victorian booking.',
+      })
+    }
+    const route = vicRoomingRouting({
+      propertyType: typeof propEmbed.property_type === 'string' ? propEmbed.property_type : '',
+      isRegisteredRoomingHouse: Boolean(propEmbed.is_registered_rooming_house),
+      premisesOccupantCapacity: vicRow?.vic_premises_occupant_capacity,
+    })
+    if (route.kind === 'rooming') {
+      const statement = vicRoomingStatementAcceptBlock()
+      if (!statement.ok) {
+        return jsonFail(409, {
+          error: 'vic_rooming_s124_statement_required',
+          message: statement.message,
+        })
+      }
+      const choice = parseVicRoomingConditionReport(vicRoomingConditionReport)
+      if (!choice) {
+        return jsonFail(400, {
+          error: 'vic_rooming_condition_report_required',
+          message: VIC_ROOMING_CONDITION_REPORT_REQUIRED,
+        })
+      }
+      const { error: conditionErr } = await admin
+        .from('bookings')
+        .update({ vic_rooming_condition_report: choice })
+        .eq('id', booking.id)
+      if (conditionErr) {
+        return jsonFail(503, {
+          error: 'vic_rooming_condition_report_failed',
+          message: 'Could not record the condition report choice. Apply the migration if this column is missing.',
+        })
+      }
+    }
+  }
 
   {
     const propertyId =

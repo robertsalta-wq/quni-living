@@ -5,6 +5,7 @@ import {
   qldFactsFromListing,
   qldPropertyTierFromOutcome,
 } from '../tenancy/qldClassification.js'
+import { parseVicPremisesOccupantCapacity } from '../tenancy/vicRoomingHouse.js'
 
 const VALID_PROPERTY_TIERS = new Set(['t1', 't2', 't3'])
 const VALID_SERVICE_TIERS = new Set(['listing', 'managed'])
@@ -179,6 +180,18 @@ export function resolvePropertyTierFromListing(input) {
     const outcome = classifyQldArrangement(facts.facts)
     if (outcome === 'needs_room_count') return 't2'
     return qldPropertyTierFromOutcome(outcome)
+  }
+  if (state === 'VIC') {
+    if (propertyType === 'private_room_landlord_on_site') return 't1'
+    const capacity = parseVicPremisesOccupantCapacity(args.premisesOccupantCapacity)
+    if (
+      (propertyType === 'private_room_landlord_off_site' || propertyType === 'shared_room') &&
+      capacity != null &&
+      capacity >= 4
+    ) {
+      return 't3'
+    }
+    return 't2'
   }
   if (propertyType === 'private_room_landlord_on_site') return 't1'
   if (propertyType === 'private_room_landlord_off_site' && Boolean(args.isRegisteredRoomingHouse)) return 't3'

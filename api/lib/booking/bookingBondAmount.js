@@ -95,7 +95,7 @@ export function assertT3SecurityDepositCap(amount, occupancyFeeAmount, period = 
 export function maxBondWeeksForProperty(property) {
   if (!property) return MAX_BOND_WEEKS
   const r = resolveTenancyPackage(tenancyPackageInputFromPropertyRow(property))
-  if (r.supported && r.tier === 'T3') return T3_MAX_SECURITY_DEPOSIT_WEEKS
+  if (r.supported && r.generator === 'nsw-boarding-house') return T3_MAX_SECURITY_DEPOSIT_WEEKS
   return MAX_BOND_WEEKS
 }
 

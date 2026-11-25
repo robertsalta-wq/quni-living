@@ -304,6 +304,10 @@ export default async function handler(req, res) {
         origin,
         deviceCtx: requestContextFromNodeRequest(req),
         qldHouseRulesAttested: body.qldHouseRulesAttested === true,
+        vicRoomingConditionReport:
+          body.vicRoomingConditionReport === 'provided' || body.vicRoomingConditionReport === 'will_be_provided'
+            ? body.vicRoomingConditionReport
+            : undefined,
       })
 
       if (!listingResult.ok) {

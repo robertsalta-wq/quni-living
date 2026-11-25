@@ -6,6 +6,7 @@ import type { TenancyRules } from './tenancy/rules/types.js'
 import { nswTenancyRules } from './tenancy/rules/nsw.js'
 import { qldTenancyRules } from './tenancy/rules/qld.js'
 import { vicTenancyRules } from './tenancy/rules/vic.js'
+import { vicRoomingRouting } from './tenancy/vicRoomingHouse.js'
 import {
   classifyQldArrangement,
   qldFactsFromListing,
@@ -49,6 +50,12 @@ export interface TenancyPackageInput {
    * Tenancy start / agreement date for future rule versioning - v1 ignored.
    */
   date?: string | Date
+  /**
+   * properties.vic_premises_occupant_capacity.
+   * Victoria only. Four or more on an off-site room or shared room is the rooming house agreement.
+   * Unanswered does not default to Form 1.
+   */
+  vic_premises_occupant_capacity?: unknown
 }
 
 /** @deprecated Use TenancyPackageInput */
@@ -261,6 +268,60 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
     )
   }
 
+  if (state === 'VIC') {
+    const route = vicRoomingRouting({
+      propertyType,
+      isRegisteredRoomingHouse: isRooming,
+      premisesOccupantCapacity: input.vic_premises_occupant_capacity,
+    })
+    if (route.kind === 'unsupported') {
+      return unsupportedBase('T2', route.reason, ragState)
+    }
+    if (route.kind === 'licence') {
+      const rules = vicTenancyRules('T1')
+      return {
+        tier: 'T1',
+        supported: true,
+        generator: 'vic-occupancy',
+        pdfKind: 'occupancy_agreement',
+        rules,
+        signingPackageName: 'VIC Licence to Occupy',
+        storagePaths: vicOccupancyPaths(),
+        ragState,
+        unsupportedReason: null,
+      }
+    }
+    if (route.kind === 'rooming') {
+      const rules = vicTenancyRules('T3')
+      return {
+        tier: 'T3',
+        supported: true,
+        generator: 'vic-rooming-house',
+        pdfKind: 'rooming_house_agreement',
+        rules,
+        signingPackageName: 'VIC rooming house agreement',
+        storagePaths: {
+          draft: 'vic_rooming_house_agreement_draft.pdf',
+          signed: 'vic_rooming_house_agreement_signed.pdf',
+        },
+        ragState,
+        unsupportedReason: null,
+      }
+    }
+    const rules = vicTenancyRules('T2')
+    return {
+      tier: 'T2',
+      supported: true,
+      generator: 'vic-form1',
+      pdfKind: 'residential_rental_agreement',
+      rules,
+      signingPackageName: 'VIC Form 1 - Residential rental agreement',
+      storagePaths: vicForm1Paths(),
+      ragState,
+      unsupportedReason: null,
+    }
+  }
+
   if (isRooming && propertyType !== 'private_room_landlord_off_site') {
     return unsupportedBase(
       'T2',
@@ -368,6 +429,7 @@ export function tenancyPackageInputFromPropertyRow(
     is_registered_rooming_house: Boolean(p.is_registered_rooming_house),
     rooms_rented_to_residents: parseRoomsOccupiedOrAvailableToResidents(p.rooms_rented_to_residents),
     shares_kitchen_or_bathroom: parseQldSharesKitchenOrBathroom(p.qld_shares_kitchen_or_bathroom),
+    vic_premises_occupant_capacity: p.vic_premises_occupant_capacity,
     date: opts?.date,
   }
 }
@@ -437,5 +499,6 @@ export function tenancyGeneratorToApiPath(generator: string | null): string | nu
   if (generator === 'qld-form-r18') return '/api/documents/generate-qld-form-r18'
   if (generator === 'vic-form1') return '/api/documents/generate-vic-residential-rental'
   if (generator === 'vic-occupancy') return '/api/documents/generate-vic-occupancy'
+  if (generator === 'vic-rooming-house') return '/api/documents/generate-vic-rooming-house'
   return null
 }

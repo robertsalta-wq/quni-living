@@ -67,9 +67,15 @@ const STATES: SampleState[] = [
     agreements: [
       {
         name: 'Room on its own lease',
-        when: "Consumer Affairs Victoria Form 1 wording, set in Quni's PDF, plus the Quni addendum. A room, a shared room, or the whole place, when you do not live there.",
+        when: "Consumer Affairs Victoria Form 1 wording, set in Quni's PDF, plus the Quni addendum. A room or a shared room when you do not live there and the building holds fewer than four people, or the whole place let together.",
         href: '/sample-lease/vic-room-on-its-own-lease.pdf',
         fileName: 'vic-room-on-its-own-lease.pdf',
+      },
+      {
+        name: 'Rooming house',
+        when: 'The prescribed rooming house agreement. A room or a shared room when four or more people can live in the building.',
+        href: '/sample-lease/vic-rooming-house.pdf',
+        fileName: 'vic-rooming-house.pdf',
       },
       {
         name: 'Room in your home',

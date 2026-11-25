@@ -29,6 +29,7 @@ export function landlordAcceptTierUiModel(args: {
   isRegisteredRoomingHouse: boolean | null | undefined
   roomsRentedToResidents?: unknown
   sharesKitchenOrBathroom?: unknown
+  premisesOccupantCapacity?: unknown
   moduleEnabled: boolean
   managedGloballyEnabled?: boolean
   managedOverrides?: ManagedOverridesMap
@@ -43,6 +44,7 @@ export function landlordAcceptTierUiModel(args: {
     isRegisteredRoomingHouse: args.isRegisteredRoomingHouse,
     roomsRentedToResidents: args.roomsRentedToResidents,
     sharesKitchenOrBathroom: args.sharesKitchenOrBathroom,
+    premisesOccupantCapacity: args.premisesOccupantCapacity,
   }) as PropertyTier
   const resolverOptions: ResolveServiceTierOptions = {
     managedGloballyEnabled: args.managedGloballyEnabled,

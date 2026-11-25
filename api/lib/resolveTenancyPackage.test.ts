@@ -114,11 +114,12 @@ describe('resolveTenancyPackage', () => {
       expect(r.storagePaths?.signed).toBe('vic_occupancy_agreement_signed.pdf')
     })
 
-    it('T2 off_site → vic-form1', () => {
+    it('T2 off_site of three → vic-form1', () => {
       const r = pkg({
         state: 'vic',
         property_type: 'private_room_landlord_off_site',
         is_registered_rooming_house: false,
+        vic_premises_occupant_capacity: 3,
       })
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T2')
@@ -135,23 +136,78 @@ describe('resolveTenancyPackage', () => {
       expect(r.generator).toBe('vic-form1')
     })
 
-    it('T2 shared_room → vic-form1', () => {
+    it('T2 shared_room of three → vic-form1', () => {
       const r = pkg({
         state: 'VIC',
         property_type: 'shared_room',
         is_registered_rooming_house: false,
+        vic_premises_occupant_capacity: 3,
       })
       expect(r.generator).toBe('vic-form1')
     })
 
-    it('T3 deferred', () => {
+    it('off-site room of four uses the rooming agreement with or without the registration flag', () => {
+      for (const flagged of [false, true]) {
+        const r = pkg({
+          state: 'VIC',
+          property_type: 'private_room_landlord_off_site',
+          is_registered_rooming_house: flagged,
+          vic_premises_occupant_capacity: 4,
+        })
+        expect(r.supported).toBe(true)
+        expect(r.tier).toBe('T3')
+        expect(r.generator).toBe('vic-rooming-house')
+        if (r.supported) expect(r.pdfKind).toBe('rooming_house_agreement')
+      }
+    })
+
+    it('shared room of four uses the rooming agreement', () => {
+      const r = pkg({
+        state: 'VIC',
+        property_type: 'shared_room',
+        is_registered_rooming_house: false,
+        vic_premises_occupant_capacity: 4,
+      })
+      expect(r.generator).toBe('vic-rooming-house')
+    })
+
+    it('entire place stays on Form 1 however many people the household is', () => {
+      const r = pkg({
+        state: 'VIC',
+        property_type: 'entire_property',
+        is_registered_rooming_house: true,
+        vic_premises_occupant_capacity: 8,
+      })
+      expect(r.generator).toBe('vic-form1')
+    })
+
+    it('does not default an unanswered off-site room to Form 1', () => {
       const r = pkg({
         state: 'VIC',
         property_type: 'private_room_landlord_off_site',
-        is_registered_rooming_house: true,
+        is_registered_rooming_house: false,
       })
       expect(r.supported).toBe(false)
-      expect(r.tier).toBe('T3')
+    })
+
+    it('on-site without the flag stays the licence, including at four or more', () => {
+      const r = pkg({
+        state: 'VIC',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+        vic_premises_occupant_capacity: 6,
+      })
+      expect(r.generator).toBe('vic-occupancy')
+    })
+
+    it('on-site with the flag stays unsupported', () => {
+      const r = pkg({
+        state: 'VIC',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: true,
+        vic_premises_occupant_capacity: 6,
+      })
+      expect(r.supported).toBe(false)
     })
   })
 

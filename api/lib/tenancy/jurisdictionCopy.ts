@@ -57,6 +57,10 @@ const AGREEMENT_BY_STATE: Record<
       headline: 'Legally binding Victorian-compliant rental agreement',
       legislation: 'Residential Tenancies Act 1997 (Vic)',
     },
+    T3: {
+      headline: 'Victorian rooming house agreement',
+      legislation: 'Residential Tenancies Act 1997 (Vic)',
+    },
   },
 }
 
@@ -124,7 +128,7 @@ export function landlordHeldBondIntroParagraph(
   const st = normalizeAuStateCode(state)
   const jurisdiction = st || 'your state'
   const authority = ackAuthorityName ?? 'the relevant state regulator'
-  if (opts?.tier === 'T3') {
+  if (opts?.tier === 'T3' && st === 'NSW') {
     return (
       `This occupancy is under the Boarding Houses Act 2012 (NSW). Your security deposit is payable to and held by the proprietor. ` +
       `It is not lodged with ${authority} (Rental Bonds Online). The deposit cannot exceed two weeks occupancy fee.`

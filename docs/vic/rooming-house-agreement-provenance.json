@@ -1,0 +1,15 @@
+{
+  "title": "Rooming house agreement",
+  "citation": "Residential Tenancies Amendment Act 2018 Section 93A(2(b)",
+  "regulation": "Residential Tenancies Regulations 2021 Regulation 38",
+  "sourceDocx": "docs/vic/rooming-house-agreement.docx",
+  "sourceSha256": "f746b28342c4e6d74f43b824d57f2f78a55421c3545f84369903f43eb91d79e1",
+  "coreModified": "2026-05-07T05:18:00Z",
+  "blankPdf": "docs/vic/rooming-house-agreement-blank.pdf",
+  "blankSha256": "6c4b5150f7c93f01b75124d1d4823a6993d523a63e96c37a2a0d069ed5d7ba8e",
+  "pageCount": 9,
+  "acroFormFieldCount": 0,
+  "converter": "LibreOffice 24.2.7.2 420(Build:2)",
+  "converterNote": "Local soffice. The pinned Docker image lankalana/libreoffice-headless@sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0 was not available in this environment. Re-freeze with scripts/freeze-vic-rooming-house-agreement.mjs when Docker can run that image.",
+  "wordFormFieldsDidNotSurvive": true
+}

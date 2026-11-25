@@ -27,6 +27,11 @@ import {
 } from '../../lib/landlordBookingConfirmGate'
 import { deriveLandlordPrimaryAction } from '../../lib/booking/landlordPrimaryAction'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
+import {
+  VIC_ROOMING_S124_ACCEPT_MESSAGE,
+  vicRoomingRouting,
+  vicRoomingStatementAcceptBlock,
+} from '../../../api/lib/tenancy/vicRoomingHouse'
 import { acceptFailureOutcome } from '../../lib/booking/acceptBookingOutcome'
 import { isBrowserNetworkFailure } from '../../lib/supabaseErrorMessage'
 import { runSingleFlight } from '../../lib/singleFlight'
@@ -244,6 +249,7 @@ export default function LandlordBookingReviewPage() {
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
   const [qldHouseRulesAttested, setQldHouseRulesAttested] = useState(false)
+  const [vicConditionReport, setVicConditionReport] = useState<'provided' | 'will_be_provided' | ''>('')
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
@@ -320,6 +326,8 @@ export default function LandlordBookingReviewPage() {
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
       roomsRentedToResidents: data.property.rooms_rented_to_residents,
       sharesKitchenOrBathroom: data.property.qld_shares_kitchen_or_bathroom,
+      premisesOccupantCapacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
       managedGloballyEnabled: serviceTierResolverOptions.managedGloballyEnabled,
       managedOverrides: serviceTierResolverOptions.managedOverrides,
@@ -377,6 +385,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? 'NSW',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -409,6 +419,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? '',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -435,6 +447,8 @@ export default function LandlordBookingReviewPage() {
         state: data.property.state ?? '',
         property_type: data.property.property_type ?? '',
         is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
         rooms_rented_to_residents: data.property.rooms_rented_to_residents,
         shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
         date: moveIn,
@@ -456,6 +470,8 @@ export default function LandlordBookingReviewPage() {
       state: data.property.state ?? '',
       property_type: data.property.property_type ?? '',
       is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      vic_premises_occupant_capacity: (data.property as { vic_premises_occupant_capacity?: number | null })
+        .vic_premises_occupant_capacity,
       rooms_rented_to_residents: data.property.rooms_rented_to_residents,
       shares_kitchen_or_bathroom: data.property.qld_shares_kitchen_or_bathroom,
       date: moveIn,
@@ -471,6 +487,20 @@ export default function LandlordBookingReviewPage() {
     data?.property?.qld_shares_kitchen_or_bathroom,
   ])
 
+  const vicRoomingAccept = useMemo(() => {
+    if (!data?.property || (data.property.state || '').trim().toUpperCase() !== 'VIC') return false
+    const capacity = (data.property as { vic_premises_occupant_capacity?: number | null }).vic_premises_occupant_capacity
+    return (
+      vicRoomingRouting({
+        propertyType: data.property.property_type ?? '',
+        isRegisteredRoomingHouse: Boolean(data.property.is_registered_rooming_house),
+        premisesOccupantCapacity: capacity,
+      }).kind === 'rooming'
+    )
+  }, [data?.property])
+
+  const vicRoomingAcceptBlocked = vicRoomingAccept && !vicRoomingStatementAcceptBlock().ok
+
   const qldHouseRulesAlreadyAttested = Boolean(
     typeof data?.booking?.qld_house_rules_attested_at === 'string' && data.booking.qld_house_rules_attested_at.trim(),
   )
@@ -479,7 +509,9 @@ export default function LandlordBookingReviewPage() {
     !!data &&
     !!tierModel &&
     !qldRoomingAcceptBlocked &&
+    !vicRoomingAcceptBlocked &&
     (!qldRoomingArrangement || qldHouseRulesAlreadyAttested || qldHouseRulesAttested) &&
+    (!vicRoomingAccept || vicConditionReport !== '') &&
     (tierModel.showListing || tierModel.showManaged) &&
     landlordBookingConfirmAllowed({
       bookingStatus: data.booking.status,
@@ -558,7 +590,7 @@ export default function LandlordBookingReviewPage() {
 
   const onConfirm = useCallback(() => {
     void runSingleFlight(confirmFlight, async () => {
-      if (!bookingId || qldRoomingAcceptBlocked) return
+      if (!bookingId || qldRoomingAcceptBlocked || vicRoomingAcceptBlocked) return
       setActionError(null)
       setPayBookingId(null)
       setActionBusy(true)
@@ -574,6 +606,7 @@ export default function LandlordBookingReviewPage() {
             serviceTier: 'listing',
             qldHouseRulesAttested:
               qldRoomingArrangement && (qldHouseRulesAlreadyAttested || qldHouseRulesAttested) ? true : undefined,
+            vicRoomingConditionReport: vicRoomingAccept && vicConditionReport ? vicConditionReport : undefined,
           },
         )
         if (!result.ok) {
@@ -608,7 +641,10 @@ export default function LandlordBookingReviewPage() {
     qldHouseRulesAlreadyAttested,
     qldHouseRulesAttested,
     qldRoomingAcceptBlocked,
+    vicRoomingAcceptBlocked,
     qldRoomingArrangement,
+    vicConditionReport,
+    vicRoomingAccept,
   ])
 
   const onDecline = useCallback(async () => {
@@ -1406,12 +1442,35 @@ export default function LandlordBookingReviewPage() {
                           <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
                         </div>
                       ) : null}
+                      {vicRoomingAcceptBlocked ? (
+                        <div className="rounded-admin-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                          <p className="font-semibold">Accepting is blocked</p>
+                          <p className="mt-2 leading-relaxed">{VIC_ROOMING_S124_ACCEPT_MESSAGE}</p>
+                        </div>
+                      ) : vicRoomingAccept ? (
+                        <label className="block text-sm text-admin-ink-2">
+                          <span className="font-semibold">Condition report</span>
+                          <select
+                            className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
+                            value={vicConditionReport}
+                            onChange={(e) =>
+                              setVicConditionReport(
+                                e.target.value === 'provided' || e.target.value === 'will_be_provided' ? e.target.value : '',
+                              )
+                            }
+                          >
+                            <option value="">Choose one</option>
+                            <option value="provided">A condition report has been provided</option>
+                            <option value="will_be_provided">A condition report will be provided</option>
+                          </select>
+                        </label>
+                      ) : null}
                       <button
                         type="button"
                         disabled={!canConfirm || actionBusy}
                         aria-disabled={!canConfirm || actionBusy}
                         onClick={() => {
-                          if (qldRoomingAcceptBlocked) return
+                          if (qldRoomingAcceptBlocked || vicRoomingAcceptBlocked) return
                           if (!canConfirm) {
                             document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             return
@@ -1433,7 +1492,7 @@ export default function LandlordBookingReviewPage() {
                           'Accept booking'
                         )}
                       </button>
-                      {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked ? (
+                      {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked && !vicRoomingAcceptBlocked ? (
                         <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
                       ) : null}
                       <button
