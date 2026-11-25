@@ -2,15 +2,19 @@ import type { PropertyListingType, RoomType } from './listings'
 import { accommodationChoiceFromFields, isEntirePlaceChoice } from './landlordAccommodationChoice'
 import { normalizePropertyImages } from './propertyImages'
 
-/** Hub section keys - fixed base 8 (compliance/utilities fold into property/inclusions). */
+/**
+ * One order for the desktop form and the mobile steps.
+ * Utilities and compliance are one slot. The label depends on the state.
+ */
 export const LISTING_HUB_SECTION_IDS = [
   'basic',
   'location',
   'property',
   'inclusions',
+  'services',
   'rules',
-  'description',
   'pricing',
+  'description',
   'photos',
 ] as const
 
@@ -27,6 +31,7 @@ export const LISTING_HUB_IMPACT_PRIORITY: ListingHubSectionId[] = [
   'property',
   'location',
   'inclusions',
+  'services',
   'rules',
 ]
 
@@ -43,6 +48,8 @@ export type ListingHubHealthInput = {
   featureCount: number
   /** Soft signal: utilities/bills touched (QLD/VIC). When null, ignored. */
   utilitiesStarted?: boolean | null
+  /** Smoke alarms, embedded networks, strata, or utility bill answers. */
+  servicesStarted?: boolean | null
   houseRulesText: string | null | undefined
   selectedRulesCount: number
   address: string | null | undefined
@@ -84,30 +91,29 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
   {
     id: 'property',
     title: 'Property details',
-    subtitle: 'Bedrooms, bathrooms, registration & compliance',
-    formSectionIds: ['section-property-details', 'section-ft6600-compliance'],
+    subtitle: 'Bedrooms, bathrooms, and what the tenant is renting',
+    formSectionIds: ['section-property-details'],
     step: 3,
   },
   {
     id: 'inclusions',
     title: 'Inclusions',
-    subtitle: 'Furnished, linen, utilities & bills',
-    formSectionIds: ['section-inclusions-features', 'section-utilities'],
+    subtitle: 'Furnished, linen, and features',
+    formSectionIds: ['section-inclusions-features'],
     step: 4,
+  },
+  {
+    id: 'services',
+    title: 'Utilities and compliance',
+    subtitle: 'Smoke alarms, utilities, and embedded networks',
+    formSectionIds: ['section-services', 'section-ft6600-compliance', 'section-utilities'],
+    step: 5,
   },
   {
     id: 'rules',
     title: 'Rules',
     subtitle: 'House rules - yes, no or on approval',
     formSectionIds: ['section-house-rules'],
-    step: 5,
-  },
-  {
-    id: 'description',
-    title: 'Description',
-    subtitle: 'Tell students about the place',
-    aiTag: 'writer',
-    formSectionIds: ['section-description'],
     step: 6,
   },
   {
@@ -119,13 +125,59 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
     step: 7,
   },
   {
+    id: 'description',
+    title: 'Description',
+    subtitle: 'Tell students about the place',
+    aiTag: 'writer',
+    formSectionIds: ['section-description'],
+    step: 8,
+  },
+  {
     id: 'photos',
     title: 'Photos',
     subtitle: 'Upload, reorder, add captions',
     formSectionIds: ['section-photos'],
-    step: 8,
+    step: 9,
   },
 ]
+
+export function listingStateUsesServicesSection(state: string | null | undefined): boolean {
+  const code = (state ?? '').trim().toUpperCase()
+  return code === 'NSW' || code === 'QLD' || code === 'VIC'
+}
+
+/** Visible sections for a state. NSW, QLD and VIC include utilities or compliance. */
+export function listingHubSectionIdsForState(state: string | null | undefined): ListingHubSectionId[] {
+  if (listingStateUsesServicesSection(state)) return [...LISTING_HUB_SECTION_IDS]
+  return LISTING_HUB_SECTION_IDS.filter((id) => id !== 'services')
+}
+
+export function listingSectionLabel(id: ListingHubSectionId, state: string | null | undefined): string {
+  if (id !== 'services') return LISTING_HUB_SECTIONS.find((section) => section.id === id)?.title ?? id
+  const code = (state ?? '').trim().toUpperCase()
+  if (code === 'NSW') return 'Compliance'
+  if (code === 'QLD' || code === 'VIC') return 'Utilities'
+  return 'Utilities and compliance'
+}
+
+export function listingSectionSubtitle(id: ListingHubSectionId, state: string | null | undefined): string {
+  if (id !== 'services') return LISTING_HUB_SECTIONS.find((section) => section.id === id)?.subtitle ?? ''
+  const code = (state ?? '').trim().toUpperCase()
+  if (code === 'NSW') return 'Smoke alarms, embedded networks, and strata'
+  if (code === 'QLD' || code === 'VIC') return 'Utilities and how bills are shared'
+  return 'Shown once the state is NSW, Queensland, or Victoria'
+}
+
+/** Desktop jump pills. Same ids and order as the mobile steps. */
+export function listingFormNavItems(state: string | null | undefined): { id: string; label: string }[] {
+  return listingHubSectionIdsForState(state).map((id) => {
+    const section = LISTING_HUB_SECTIONS.find((item) => item.id === id)
+    return {
+      id: section?.formSectionIds[0] ?? `section-${id}`,
+      label: listingSectionLabel(id, state),
+    }
+  })
+}
 
 export type HubListingTypeTile = 'entire' | 'room' | 'rooming'
 
@@ -263,6 +315,11 @@ export function listingHubSectionStatus(
       if (n >= 3) return 'complete'
       return 'attention'
     }
+    case 'services': {
+      if (!listingStateUsesServicesSection(input.state)) return 'complete'
+      if (input.servicesStarted === true) return 'complete'
+      return 'notstarted'
+    }
   }
 }
 
@@ -281,19 +338,22 @@ export function computeListingHubHealth(
   opts?: { isNewListing?: boolean },
 ): ListingHubHealthResult {
   const statuses = {} as Record<ListingHubSectionId, ListingHubSectionStatus>
+  const counted = listingHubSectionIdsForState(input.state)
   let completeCount = 0
   for (const id of LISTING_HUB_SECTION_IDS) {
     const s = listingHubSectionStatus(id, input)
     statuses[id] = s
-    if (s === 'complete') completeCount += 1
   }
-  const score = Math.round((completeCount / LISTING_HUB_SECTION_IDS.length) * 100)
+  for (const id of counted) {
+    if (statuses[id] === 'complete') completeCount += 1
+  }
+  const score = Math.round((completeCount / counted.length) * 100)
 
   const isSetupMode =
     Boolean(opts?.isNewListing) || input.status === 'draft' || input.status == null
 
   const firstIncomplete =
-    LISTING_HUB_IMPACT_PRIORITY.find((id) => statuses[id] !== 'complete') ?? null
+    LISTING_HUB_IMPACT_PRIORITY.find((id) => counted.includes(id) && statuses[id] !== 'complete') ?? null
 
   const nudgeCopy: Record<ListingHubSectionId, string> = {
     photos: 'Add a few more photos to reach top-listing quality and rank higher in search.',
@@ -303,6 +363,7 @@ export function computeListingHubHealth(
     property: 'Confirm bedrooms and bathrooms so students can filter accurately.',
     location: 'Complete the address so we can pin the map and nearby campuses.',
     inclusions: 'Add inclusions or features so students know what is covered.',
+    services: 'Answer the utilities or compliance questions for this state.',
     rules: 'Set house rules so expectations are clear before they enquire.',
   }
 

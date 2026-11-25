@@ -8,6 +8,7 @@ import LandlordListingPublishButton from '../../components/landlord/listings/Lan
 import Seo from '../../components/Seo'
 import { listingPreviewActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import { draftTilePublishGap } from '../../lib/draftTilePublish'
+import { isListingAgreementState } from '../../lib/listingAgreementState'
 import {
   listingActionsFromPageSnapshot,
   listingPageShowsPublishButton,
@@ -86,6 +87,7 @@ export default function LandlordListingPreviewPage() {
     role,
     hasSavedProperty: Boolean(property?.id),
   })
+  const publishBlockedByState = Boolean(property?.state) && !isListingAgreementState(property?.state)
   const listingForPublish = property
     ? listingActionsFromPageSnapshot({
         id: property.id,
@@ -113,6 +115,7 @@ export default function LandlordListingPreviewPage() {
 
   const handlePublish = useCallback(() => {
     if (!property || !listingForPublish) return
+    if (property.state && !isListingAgreementState(property.state)) return
     const gap = draftTilePublishGap({
       id: property.id,
       title: property.title,
@@ -136,7 +139,11 @@ export default function LandlordListingPreviewPage() {
 
   const chromeItems: AppActionBarItem[] = useMemo(
     () =>
-      listingPreviewActionBarItemSpecs({ canPublish, publishing }).map((spec) => ({
+      listingPreviewActionBarItemSpecs({
+        canPublish,
+        publishing,
+        publishDisabled: publishBlockedByState,
+      }).map((spec) => ({
         ...spec,
         icon: spec.id === 'publish' ? Check : Pencil,
         ...(spec.id === 'edit' ? { to: editHref } : {}),
@@ -146,7 +153,7 @@ export default function LandlordListingPreviewPage() {
             }
           : {}),
       })),
-    [canPublish, publishing, editHref, listingForPublish, handlePublish],
+    [canPublish, publishing, publishBlockedByState, editHref, listingForPublish, handlePublish],
   )
   useSetAppChromeActions(chromeItems)
 
@@ -200,8 +207,9 @@ export default function LandlordListingPreviewPage() {
             {canPublish && listingForPublish ? (
               <LandlordListingPublishButton
                 busy={publishing}
+                disabled={publishBlockedByState}
                 onClick={handlePublish}
-                className="inline-flex h-10 min-w-[7.5rem] items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
+                className="inline-flex h-10 min-w-[7.5rem] items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50"
               />
             ) : null}
           </div>

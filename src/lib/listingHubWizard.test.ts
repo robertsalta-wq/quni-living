@@ -51,13 +51,22 @@ describe('listingHubWizard', () => {
     expect(listingHubWizardPrevHref('abc', 'location')).toBe('/landlord/property/edit/abc/basic')
     expect(listingHubWizardPrevHref('abc', 'property')).toBe('/landlord/property/edit/abc/section/location')
     expect(listingHubWizardPrevHref(null, 'inclusions')).toBe('/landlord/property/new/section/property')
-    expect(listingHubWizardPrevHref('abc', 'photos')).toBe('/landlord/property/edit/abc/section/pricing')
+    expect(listingHubWizardPrevHref('abc', 'photos')).toBe('/landlord/property/edit/abc/section/description')
+    expect(listingHubWizardPrevHref('abc', 'services', 'NSW')).toBe(
+      '/landlord/property/edit/abc/section/inclusions',
+    )
   })
 
   it('Next walks 1-8 and last step opens preview when the listing is saved', () => {
     expect(listingHubWizardNextHref('abc', 'basic')).toBe('/landlord/property/edit/abc/section/location')
     expect(listingHubWizardNextHref(null, 'basic')).toBe('/landlord/property/new/section/location')
-    expect(listingHubWizardNextHref('abc', 'pricing')).toBe('/landlord/property/edit/abc/section/photos')
+    expect(listingHubWizardNextHref('abc', 'pricing')).toBe('/landlord/property/edit/abc/section/description')
+    expect(listingHubWizardNextHref('abc', 'inclusions', { state: 'NSW' })).toBe(
+      '/landlord/property/edit/abc/section/services',
+    )
+    expect(listingHubWizardNextHref('abc', 'inclusions', { state: 'WA' })).toBe(
+      '/landlord/property/edit/abc/section/rules',
+    )
     expect(listingHubWizardNextHref('abc', 'photos')).toBe('/landlord/property/edit/abc/preview')
     expect(listingHubWizardNextHref(null, 'photos')).toBe('/landlord/property/new')
     expect(
@@ -69,6 +78,8 @@ describe('listingHubWizard', () => {
     expect(listingHubWizardStepProgress('basic')).toEqual({ current: 1, total: 8 })
     expect(listingHubWizardStepProgress('location')).toEqual({ current: 2, total: 8 })
     expect(listingHubWizardStepProgress('photos')).toEqual({ current: 8, total: 8 })
+    expect(listingHubWizardStepProgress('photos', 'NSW')).toEqual({ current: 9, total: 9 })
+    expect(listingHubWizardStepProgress('services', 'VIC')).toEqual({ current: 5, total: 9 })
     expect(listingHubWizardStepProgress(null)).toEqual({ current: 1, total: 8 })
     expect(listingHubWizardStepCaption({ current: 1, total: 8 })).toBe('Step 1 of 8')
   })

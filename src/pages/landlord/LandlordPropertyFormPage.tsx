@@ -39,6 +39,11 @@ import {
   unsupportedListingStateMessage,
 } from '../../lib/listingAgreementState'
 import {
+  postcodeStateConflictMessage,
+  stateFromAustralianPostcode,
+} from '../../lib/australianPostcodeState'
+import { listingFormNavItems } from '../../lib/listingEditHubHealth'
+import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
   hubSectionIdFromFormSectionId,
@@ -284,19 +289,6 @@ function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: bool
 /** Checkbox styling - single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
-
-const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
-  { id: 'section-basic-info', label: 'Basic info' },
-  { id: 'section-location', label: 'Location' },
-  { id: 'section-property-details', label: 'Property details' },
-  { id: 'section-inclusions-features', label: 'Inclusions' },
-  { id: 'section-utilities', label: 'Utilities' },
-  { id: 'section-ft6600-compliance', label: 'Compliance' },
-  { id: 'section-house-rules', label: 'Rules' },
-  { id: 'section-pricing-availability', label: 'Pricing' },
-  { id: 'section-description', label: 'Description' },
-  { id: 'section-photos', label: 'Photos' },
-]
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 type FeatureRow = Database['public']['Tables']['features']['Row']
@@ -982,6 +974,8 @@ export default function LandlordPropertyFormPage() {
   const [state, setState] = useState('')
   const applyListingStateRef = useRef<(next: string) => void>(() => {})
   const stateSpecificAnswersRef = useRef(false)
+  /** True after the landlord, a saved listing, or an admin profile sets the state. */
+  const stateChosenByLandlordRef = useRef(false)
   const [postcode, setPostcode] = useState('')
 
   const applyAdminLandlordProfile = useCallback(
@@ -990,7 +984,10 @@ export default function LandlordPropertyFormPage() {
       if (isEdit) return
       const opt = landlordOptions.find((o) => o.id === id)
       const st = listingStateFromLandlordProfile(opt?.state)
-      if (st) applyListingStateRef.current(st)
+      if (st) {
+        stateChosenByLandlordRef.current = true
+        applyListingStateRef.current(st)
+      }
     },
     [isEdit, landlordOptions],
   )
@@ -1036,6 +1033,9 @@ export default function LandlordPropertyFormPage() {
   )
 
   const listingStateCode = listingStateFromLandlordProfile(state)
+  const postcodeStateConflict = postcodeStateConflictMessage(postcode, listingStateCode ?? '')
+  const unsupportedListingState = Boolean(listingStateCode) && !isListingAgreementState(listingStateCode)
+  const listingWritesBlocked = unsupportedListingState || Boolean(postcodeStateConflict)
   const showNswFt6600ComplianceSection = listingStateCode === 'NSW'
   const showPropertyUtilitiesSection = listingStateCode === 'QLD' || listingStateCode === 'VIC'
   const accommodationOptions = accommodationOptionsForListingState(listingStateCode)
@@ -1050,18 +1050,12 @@ export default function LandlordPropertyFormPage() {
   )
 
   const formNavSections = useMemo(() => {
-    let sections = LANDLORD_FORM_NAV_SECTIONS
-    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+    const sections = listingFormNavItems(listingStateCode)
+    if (unsupportedListingState) {
       return sections.filter((s) => s.id === 'section-basic-info' || s.id === 'section-location')
     }
-    if (!showNswFt6600ComplianceSection) {
-      sections = sections.filter((s) => s.id !== 'section-ft6600-compliance')
-    }
-    if (!showPropertyUtilitiesSection) {
-      sections = sections.filter((s) => s.id !== 'section-utilities')
-    }
     return sections
-  }, [listingStateCode, showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
+  }, [listingStateCode, unsupportedListingState])
 
   const showFormSection = useCallback(
     (sectionDomId: string) => {
@@ -1186,6 +1180,13 @@ export default function LandlordPropertyFormPage() {
     }
   }, [state])
   applyListingStateRef.current = applyListingState
+
+  useEffect(() => {
+    if (stateChosenByLandlordRef.current) return
+    const inferred = stateFromAustralianPostcode(postcode)
+    if (!inferred || inferred === listingStateCode) return
+    applyListingStateRef.current(inferred)
+  }, [postcode, listingStateCode])
 
   const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
     ? ft6600Compliance.waterUsageChargedSeparately === 'yes'
@@ -1669,13 +1670,17 @@ export default function LandlordPropertyFormPage() {
     setHouseRulesResetAck(false)
     setAddress('')
     setSuburb('')
+    stateChosenByLandlordRef.current = false
     setState('')
     setPostcode('')
     if (role === 'admin' && adminLandlordId) {
       const st = listingStateFromLandlordProfile(
         landlordOptions.find((o) => o.id === adminLandlordId)?.state,
       )
-      if (st) setState(st)
+      if (st) {
+        stateChosenByLandlordRef.current = true
+        setState(st)
+      }
     }
     setLatitude(null)
     setLongitude(null)
@@ -1877,7 +1882,8 @@ export default function LandlordPropertyFormPage() {
         setOpenToNonStudents(Boolean(prop.open_to_non_students))
         setAddress(prop.address ?? '')
         setSuburb(prop.suburb ?? '')
-        setState(prop.state ?? 'NSW')
+        stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(prop.state))
+        setState(listingStateFromLandlordProfile(prop.state) ?? '')
         setPostcode(prop.postcode ?? '')
         setLatitude(prop.latitude ?? null)
         setLongitude(prop.longitude ?? null)
@@ -2065,7 +2071,8 @@ export default function LandlordPropertyFormPage() {
       setSelectedFeatureIds(new Set(featureIds))
       setAddress(parsed.address)
       setSuburb(parsed.suburb)
-      setState(parsed.state)
+      stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(parsed.state))
+      setState(listingStateFromLandlordProfile(parsed.state) ?? '')
       setPostcode(parsed.postcode)
       setLatitude(parsed.latitude)
       setLongitude(parsed.longitude)
@@ -2828,6 +2835,11 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    if (postcodeStateConflict) {
+      reportSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
       setSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE)
@@ -3562,6 +3574,11 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    if (postcodeStateConflict) {
+      setSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
@@ -3702,6 +3719,7 @@ export default function LandlordPropertyFormPage() {
     }
   }, [
     listingStateCode,
+    postcodeStateConflict,
     persistLandlordPropertyDraft,
     flashDraftSavedIndicator,
     isEdit,
@@ -3763,6 +3781,7 @@ export default function LandlordPropertyFormPage() {
   const flushDraftToAccount = useCallback(async () => {
     persistLandlordPropertyDraft()
     if (listingStateCode && !isListingAgreementState(listingStateCode)) return
+    if (postcodeStateConflict) return
     if (!propertyId || !user?.id) return
     const t = title.trim()
     if (!t) return
@@ -3803,6 +3822,7 @@ export default function LandlordPropertyFormPage() {
     await saveQldRoomingStage2(propertyId)
   }, [
     persistLandlordPropertyDraft,
+    postcodeStateConflict,
     propertyId,
     user?.id,
     title,
@@ -3835,8 +3855,8 @@ export default function LandlordPropertyFormPage() {
   const handleWizardPrev = useCallback(() => {
     if (!hubSectionId) return
     persistLandlordPropertyDraft()
-    navigate(listingHubWizardPrevHref(propertyId, hubSectionId))
-  }, [hubSectionId, persistLandlordPropertyDraft, navigate, propertyId])
+    navigate(listingHubWizardPrevHref(propertyId, hubSectionId, listingStateCode))
+  }, [hubSectionId, listingStateCode, persistLandlordPropertyDraft, navigate, propertyId])
 
   const handleWizardNext = useCallback(async () => {
     if (!hubSectionId) return
@@ -3855,6 +3875,7 @@ export default function LandlordPropertyFormPage() {
     const href = listingHubWizardNextHref(propertyId, hubSectionId, {
       status: existingListingStatus,
       slug: existingSlug,
+      state: listingStateCode,
     })
     const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId) && isWizardSetupMode
     if (isWizardSetupMode && (goingToPreview || propertyId)) {
@@ -3898,6 +3919,11 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    if (postcodeStateConflict) {
+      setSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     persistLandlordPropertyDraft()
     if (propertyId && isWizardSetupMode) {
       try {
@@ -3917,7 +3943,7 @@ export default function LandlordPropertyFormPage() {
       }
     }
     navigate(footerPreviewHref)
-  }, [footerPreviewHref, listingStateCode, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
+  }, [footerPreviewHref, listingStateCode, postcodeStateConflict, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
@@ -3925,9 +3951,14 @@ export default function LandlordPropertyFormPage() {
         saving: submitting,
         isSetupMode: isWizardSetupMode,
         isLiveListing: !isWizardSetupMode,
-        wizardStep: listingHubWizardStepProgress(hubSectionId),
+        wizardStep: listingHubWizardStepProgress(hubSectionId, listingStateCode),
+        writesDisabled: listingWritesBlocked,
       }).map((spec) => ({
         ...spec,
+        disabled:
+          spec.disabled ||
+          (listingWritesBlocked && (spec.id === 'draft' || spec.id === 'save' || spec.id === 'preview')) ||
+          (unsupportedListingState && hubSectionId !== 'basic' && spec.id === 'next'),
         icon: spec.stepProgress ? undefined : listingChromeActionIcon(spec),
         onClick:
           spec.id === 'step'
@@ -3940,7 +3971,7 @@ export default function LandlordPropertyFormPage() {
                   ? () => void handleWizardNext()
                   : () => formRef.current?.requestSubmit(),
       })),
-    [submitting, isWizardSetupMode, hubSectionId, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
+    [submitting, isWizardSetupMode, hubSectionId, listingStateCode, listingWritesBlocked, unsupportedListingState, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -3982,7 +4013,6 @@ export default function LandlordPropertyFormPage() {
     )
   }
 
-  const unsupportedListingState = Boolean(listingStateCode) && !isListingAgreementState(listingStateCode)
   const inputClass =
     'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
   const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
@@ -3990,7 +4020,7 @@ export default function LandlordPropertyFormPage() {
     footerPreviewHref && !isHubSectionMode ? (
       <button
         type="button"
-        disabled={submitting}
+        disabled={submitting || listingWritesBlocked}
         onClick={() => void handleOpenPreview()}
         className={className}
       >
@@ -3998,10 +4028,10 @@ export default function LandlordPropertyFormPage() {
       </button>
     ) : null
   const desktopBannerPreviewButton = desktopTopPreviewButton(
-    'hidden sm:inline-flex items-center rounded-lg bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+    'hidden sm:inline-flex items-center rounded-lg bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50',
   )
   const desktopHeaderPreviewButton = desktopTopPreviewButton(
-    'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+    'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50',
   )
 
   return (
@@ -4063,7 +4093,7 @@ export default function LandlordPropertyFormPage() {
                 ) : null}
                 {hubSectionMeta ? (
                   <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
-                    {listingHubWizardStepCaption(listingHubWizardStepProgress(hubSectionId))}
+                    {listingHubWizardStepCaption(listingHubWizardStepProgress(hubSectionId, listingStateCode))}
                   </span>
                 ) : null}
               </div>
@@ -4318,6 +4348,7 @@ export default function LandlordPropertyFormPage() {
                     value={listingStateCode ?? ''}
                     onChange={(e) => {
                       addressDirtyRef.current = true
+                      stateChosenByLandlordRef.current = e.target.value !== ''
                       applyListingState(e.target.value)
                     }}
                     className={inputClass}
@@ -4352,8 +4383,18 @@ export default function LandlordPropertyFormPage() {
                       addressDirtyRef.current = true
                       setPostcode(e.target.value)
                     }}
-                    className={inputClass}
+                    aria-invalid={postcodeStateConflict ? true : undefined}
+                    className={
+                      postcodeStateConflict
+                        ? `${inputClass} border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]`
+                        : inputClass
+                    }
                   />
+                  {postcodeStateConflict ? (
+                    <p className="mt-1 text-sm text-red-700" role="alert">
+                      {postcodeStateConflict}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div>
@@ -5141,7 +5182,11 @@ export default function LandlordPropertyFormPage() {
             'section-inclusions-features',
           )}
 
-          {!unsupportedListingState && showFormSection('section-utilities') && showPropertyUtilitiesSection
+          {!unsupportedListingState &&
+          showFormSection('section-services') &&
+          (showPropertyUtilitiesSection || showNswFt6600ComplianceSection) ? (
+            <div id="section-services" className="scroll-mt-below-header space-y-8">
+          {showFormSection('section-utilities') && showPropertyUtilitiesSection
             ? sectionClass(
                 'Utilities & water',
                 <LandlordPropertyUtilitiesFields
@@ -5224,6 +5269,8 @@ export default function LandlordPropertyFormPage() {
                 'section-ft6600-compliance',
               )
             : null}
+            </div>
+          ) : null}
 
           {!unsupportedListingState && showFormSection('section-house-rules') &&
             sectionClass(
@@ -5932,23 +5979,23 @@ export default function LandlordPropertyFormPage() {
                     type="button"
                     disabled={submitting}
                     onClick={() => handleWizardPrev()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || listingWritesBlocked}
                     onClick={() => void handleSaveDraftAndLeave()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Save draft
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || (unsupportedListingState && hubSectionId !== 'basic')}
                     onClick={() => void handleWizardNext()}
-                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? 'Saving…' : 'Next'}
                   </button>
@@ -5959,22 +6006,22 @@ export default function LandlordPropertyFormPage() {
                     type="button"
                     disabled={submitting}
                     onClick={() => handleWizardPrev()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || (unsupportedListingState && hubSectionId !== 'basic')}
                     onClick={() => void handleWizardNext()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                    disabled={submitting || listingWritesBlocked}
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? 'Saving…' : 'Save'}
                   </button>
@@ -5984,20 +6031,20 @@ export default function LandlordPropertyFormPage() {
                   {footerPreviewHref ? (
                     <button
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || listingWritesBlocked}
                       onClick={() => void handleOpenPreview()}
-                      className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                      className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Preview listing
                     </button>
                   ) : null}
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || listingWritesBlocked}
                     className={
                       footerPreviewHref
-                        ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
-                        : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50'
+                        ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50'
+                        : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50'
                     }
                   >
                     {submitting && submitMode !== 'publish'
@@ -6011,11 +6058,11 @@ export default function LandlordPropertyFormPage() {
                   {isWizardSetupMode ? (
                     <button
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || listingWritesBlocked}
                       onClick={() => void handleSaveDraftAndLeave()}
-                      className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                      className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Save draft
+                      Save and exit
                     </button>
                   ) : null}
                   <button

@@ -10,6 +10,7 @@ import {
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
 import {
+  listingHubWizardNextHref,
   listingHubWizardStepCaption,
   listingHubWizardStepProgress,
   writeListingWizardResume,
@@ -44,6 +45,8 @@ type Props = {
   error: string | null
   onSave: (values: ListingBasicInfoValues, intent: 'save' | 'draft' | 'next' | 'advance') => void
   onCancel: () => void
+  writesDisabled?: boolean
+  listingState?: string | null
 }
 
 function isoToDisplay(iso: string): string {
@@ -61,6 +64,8 @@ export default function ListingBasicInfoDrillIn({
   error,
   onSave,
   onCancel,
+  writesDisabled = false,
+  listingState = null,
 }: Props) {
   const [title, setTitle] = useState(initial.title)
   const [headline, setHeadline] = useState(initial.headline)
@@ -193,14 +198,15 @@ export default function ListingBasicInfoDrillIn({
   }, [propertyId])
 
   const hubHref = listingHubPath({ propertyId })
-  const nextHref = listingHubPath({ propertyId, view: 'property' })
+  const nextHref = listingHubWizardNextHref(propertyId, 'basic')
 
   const actionItems: AppActionBarItem[] = useMemo(() => {
     const specs = listingBasicInfoActionBarItemSpecs({
       isSetupMode,
       saving,
       canSubmit: Boolean(title.trim()),
-      wizardStep: listingHubWizardStepProgress('basic'),
+      wizardStep: listingHubWizardStepProgress('basic', listingState),
+      writesDisabled,
     })
     return specs.map((spec) => ({
       ...spec,
@@ -222,14 +228,15 @@ export default function ListingBasicInfoDrillIn({
                       : 'save',
                 ),
     }))
-  }, [isSetupMode, saving, title, values, onSave, onCancel])
+  }, [isSetupMode, saving, title, values, onSave, onCancel, writesDisabled, listingState])
   useSetAppChromeActions(actionItems)
 
   const footerSpecs = listingBasicInfoActionBarItemSpecs({
     isSetupMode,
     saving,
     canSubmit: Boolean(title.trim()),
-    wizardStep: listingHubWizardStepProgress('basic'),
+    wizardStep: listingHubWizardStepProgress('basic', listingState),
+    writesDisabled,
   }).filter((spec) => !spec.stepProgress)
 
   return (
@@ -254,7 +261,7 @@ export default function ListingBasicInfoDrillIn({
               </p>
             ) : null}
             <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
-              {listingHubWizardStepCaption(listingHubWizardStepProgress('basic'))}
+              {listingHubWizardStepCaption(listingHubWizardStepProgress('basic', listingState))}
             </span>
           </div>
         </div>

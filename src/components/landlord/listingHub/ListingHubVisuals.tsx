@@ -48,6 +48,16 @@ export function ListingHubSectionIcon({ id }: { id: ListingHubSectionId }) {
           <path d="M4 13.5h6v6H4z" />
         </Svg>
       )
+    case 'services':
+      return (
+        <Svg>
+          <path d="M12 3.5v4" />
+          <path d="M12 16.5v4" />
+          <path d="M4.5 12h4" />
+          <path d="M15.5 12h4" />
+          <circle cx="12" cy="12" r="3" />
+        </Svg>
+      )
     case 'rules':
       return (
         <Svg>

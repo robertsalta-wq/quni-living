@@ -43,8 +43,9 @@ export type ListingHubPropertySnapshot = {
   coupleSurchargePerWeek: number | null
   parkingSurchargePerWeek: number | null
   parkingAvailable: boolean
-  listerRole: string | null
-}
+    listerRole: string | null
+    servicesStarted: boolean
+  }
 
 function toHealthInput(p: ListingHubPropertySnapshot | null): ListingHubHealthInput {
   if (!p) {
@@ -94,6 +95,7 @@ function toHealthInput(p: ListingHubPropertySnapshot | null): ListingHubHealthIn
     availableFrom: p.availableFrom,
     images: p.images,
     status: p.status,
+    servicesStarted: p.servicesStarted,
   }
 }
 
@@ -136,7 +138,21 @@ function mapRow(
     parkingSurchargePerWeek: prop.parking_surcharge_per_week,
     parkingAvailable: Boolean(prop.parking_available),
     listerRole: prop.lister_role,
+    servicesStarted: propertyServicesStarted(prop),
   }
+}
+
+function propertyServicesStarted(prop: PropertyRow): boolean {
+  if (prop.smoke_alarm_type) return true
+  if (prop.electricity_embedded_network != null) return true
+  if (prop.gas_embedded_network != null) return true
+  if (prop.strata_bylaws_applicable != null) return true
+  if (prop.strata_oc_responsible_for_alarms != null) return true
+  if (prop.water_usage_charged_separately != null) return true
+  const utils = prop.utilities_services
+  if (!utils || typeof utils !== 'object') return false
+  const text = JSON.stringify(utils)
+  return text.includes('true') || text.includes('false')
 }
 
 export function useListingHubProperty(propertyId: string | null) {
