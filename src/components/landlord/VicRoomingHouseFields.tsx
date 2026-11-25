@@ -30,9 +30,10 @@ export function emptyVicRoomingHouseFieldValues(): VicRoomingHouseFieldValues {
     houseRules: '',
     licenceNumber: '',
     registrationNumber: '',
-    operatorAcceptsElectronicService: null,
-    attestationCurrent: false,
-    pay: {
+  operatorAcceptsElectronicService: null,
+  attestationCurrent: false,
+  unsharedWeeklyRent: '',
+  pay: {
       directDebit: false,
       bankDeposit: false,
       cash: false,
@@ -77,6 +78,7 @@ export function VicRoomingHouseFields({
             <label className="block text-sm text-admin-ink-2">
               <span className="font-semibold">Weekly rent if this room were not shared ($)</span>
               <input
+                id="pf-unshared-weekly-rent"
                 className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
                 inputMode="decimal"
                 value={values.unsharedWeeklyRent}

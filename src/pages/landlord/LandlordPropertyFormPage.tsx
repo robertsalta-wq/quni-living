@@ -10,6 +10,8 @@ import {
   parseVicPremisesOccupantCapacity,
   parseVicRoomingUnsharedWeeklyRent,
   vicRoomingPayMethodsFromRow,
+  VIC_ROOMING_UNSHARED_RENT_HIGHER,
+  VIC_ROOMING_UNSHARED_RENT_REQUIRED,
   vicRoomingUnsharedWeeklyRentError,
   vicRoomingPublishErrors,
   vicRoomingRouting,
@@ -3027,7 +3029,7 @@ export default function LandlordPropertyFormPage() {
 
     if (
       !isPublishingListing &&
-      (state.trim() || '').toUpperCase() === 'VIC' &&
+      listingStateCode === 'VIC' &&
       vicRoomingRoute.kind === 'rooming' &&
       propertyListingType === 'shared_room'
     ) {
@@ -3039,11 +3041,12 @@ export default function LandlordPropertyFormPage() {
       })
       if (draftRentErr) {
         reportSubmitError(draftRentErr)
+        document.getElementById('pf-unshared-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
     }
 
-    if (isPublishingListing && (state.trim() || '').toUpperCase() === 'VIC') {
+    if (isPublishingListing && listingStateCode === 'VIC') {
       if (!parseVicPremisesOccupantCapacity(vicRoomingFields.capacity)) {
         reportSubmitError('Enter how many people the building can hold before publishing.')
         return
@@ -3068,6 +3071,9 @@ export default function LandlordPropertyFormPage() {
         })
         if (vicErr) {
           reportSubmitError(vicErr)
+          if (vicErr === VIC_ROOMING_UNSHARED_RENT_REQUIRED || vicErr === VIC_ROOMING_UNSHARED_RENT_HIGHER) {
+            document.getElementById('pf-unshared-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
           return
         }
       }
@@ -4685,7 +4691,7 @@ export default function LandlordPropertyFormPage() {
                   ) : null}
                 </div>
               ) : null}
-              {(state.trim() || '').toUpperCase() === 'VIC' ? (
+              {listingStateCode === 'VIC' ? (
                 <VicRoomingHouseFields
                   showRoomingFields={vicRoomingRoute.kind === 'rooming'}
                   showUnsharedRent={vicRoomingRoute.kind === 'rooming' && propertyListingType === 'shared_room'}
