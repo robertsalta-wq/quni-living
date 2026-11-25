@@ -184,17 +184,22 @@ import {
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 import { geocodeQueryWithAddress } from '../../lib/geocodeClient'
 import {
-  ADDRESS_CHANGED_FIND_AGAIN_MESSAGE,
   ADDRESS_NOT_MATCHED_MESSAGE,
   CAMPUS_CHECK_AFTER_ADDRESS_CHANGE_MESSAGE,
-  CHECK_CAMPUSES_THEN_SAVE_MESSAGE,
-  FIND_CAMPUSES_ON_LOCATION_STEP_MESSAGE,
+  CONFIRM_ADDRESS_AGAIN_MESSAGE,
+  CONFIRM_ADDRESS_FIRST_MESSAGE,
   SUBURB_ONLY_MATCH_MESSAGE,
   campusActionWhenAddressChanges,
-  campusSearchRequiredBeforeSave,
   firstAgreedGeocode,
   type CampusSelectionSource,
 } from '../../lib/geocodeAddressAgreement'
+import {
+  fetchPlaceDetails,
+  fetchPlaceSuggestions,
+  geocodeAddressWithGoogle,
+  type PlaceSuggestion,
+} from '../../lib/googlePlacesClient'
+import type { ParsedAustralianAddress } from '../../lib/googlePlaceAddress'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
 import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
@@ -366,6 +371,8 @@ type LandlordPropertyDraftV1 = {
   campusId: string
   /** Who chose the campus. Missing on older device drafts. */
   campusSelectionSource?: CampusSelectionSource
+  /** False after an edit that still needs Confirm address. Missing on older drafts means confirmed. */
+  addressConfirmed?: boolean
   latitude: number | null
   longitude: number | null
   showAddAnotherUniversity: boolean
@@ -562,6 +569,7 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       universityId: typeof d.universityId === 'string' ? d.universityId : '',
       campusId: typeof d.campusId === 'string' ? d.campusId : '',
       campusSelectionSource: parseDraftCampusSelectionSource(d.campusSelectionSource),
+      addressConfirmed: typeof d.addressConfirmed === 'boolean' ? d.addressConfirmed : undefined,
       latitude: typeof d.latitude === 'number' && Number.isFinite(d.latitude) ? d.latitude : null,
       longitude: typeof d.longitude === 'number' && Number.isFinite(d.longitude) ? d.longitude : null,
       showAddAnotherUniversity: Boolean(d.showAddAnotherUniversity),
@@ -1135,6 +1143,12 @@ export default function LandlordPropertyFormPage() {
   /** Address whose campuses the landlord has already accepted, including a loaded listing. */
   const [acceptedAddressSig, setAcceptedAddressSig] = useState('')
   const [addressMatchNote, setAddressMatchNote] = useState<string | null>(null)
+  const [manualAddressOpen, setManualAddressOpen] = useState(false)
+  const [placeQuery, setPlaceQuery] = useState('')
+  const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestion[]>([])
+  const [placesHint, setPlacesHint] = useState<string | null>(null)
+  const [matchedAddressLabel, setMatchedAddressLabel] = useState<string | null>(null)
+  const placeSessionRef = useRef('')
   const [campusConfirmMessage, setCampusConfirmMessage] = useState<string | null>(null)
 
   // When a user manually edits the university/campus dropdown while geocoding is in-flight,
@@ -1178,7 +1192,7 @@ export default function LandlordPropertyFormPage() {
   const nearbyAbortRef = useRef<AbortController | null>(null)
   const propertyCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
   const loadedCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
-  const prepareCampusSearchForSaveRef = useRef<() => Promise<boolean>>(async () => true)
+  const requireConfirmedAddressRef = useRef<() => boolean>(() => true)
 
   function rememberCampusChoice(next: CampusSelectionSource, sig: string) {
     campusSelectionSourceRef.current = next
@@ -1266,6 +1280,7 @@ export default function LandlordPropertyFormPage() {
     resultsShownSigRef.current = ''
     setNearbyCampusSuggestions([])
     setNearbyCampusError(null)
+    setMatchedAddressLabel(null)
     if (campusActionWhenAddressChanges(campusSelectionSourceRef.current) === 'clear') {
       universityIdRef.current = ''
       campusIdRef.current = ''
@@ -1606,6 +1621,10 @@ export default function LandlordPropertyFormPage() {
   const imagesRef = useRef<PropertyImage[]>([])
   imagesRef.current = images
 
+  const addressIsConfirmed =
+    acceptedAddressSig !== '' &&
+    acceptedAddressSig === addressSigFrom({ address, suburb, state, postcode })
+
   const landlordPropertyDraftSnapshot = useMemo(
     () =>
       landlordPropertyDraftFromState({
@@ -1628,6 +1647,7 @@ export default function LandlordPropertyFormPage() {
         universityId,
         campusId,
         campusSelectionSource,
+        addressConfirmed: addressIsConfirmed,
         latitude,
         longitude,
         showAddAnotherUniversity,
@@ -1687,6 +1707,7 @@ export default function LandlordPropertyFormPage() {
       universityId,
       campusId,
       campusSelectionSource,
+      addressIsConfirmed,
       latitude,
       longitude,
       showAddAnotherUniversity,
@@ -2052,6 +2073,7 @@ export default function LandlordPropertyFormPage() {
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
         setOpenToNonStudents(Boolean(prop.open_to_non_students))
         setAddress(prop.address ?? '')
+        setManualAddressOpen(Boolean((prop.address ?? '').trim() || (prop.suburb ?? '').trim()))
         setSuburb(prop.suburb ?? '')
         stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(prop.state))
         setState(listingStateFromLandlordProfile(prop.state) ?? '')
@@ -2254,6 +2276,7 @@ export default function LandlordPropertyFormPage() {
       setOpenToNonStudents(parsed.openToNonStudents)
       setSelectedFeatureIds(new Set(featureIds))
       setAddress(parsed.address)
+      setManualAddressOpen(Boolean(parsed.address.trim() || parsed.suburb.trim()))
       setSuburb(parsed.suburb)
       stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(parsed.state))
       setState(listingStateFromLandlordProfile(parsed.state) ?? '')
@@ -2281,12 +2304,15 @@ export default function LandlordPropertyFormPage() {
       resultsShownSigRef.current = ''
       setAddressMatchNote(null)
       setCampusConfirmMessage(null)
-      if (restoredHasCampus || addressReadyForCampusSearch({
+      const restoredReady = addressReadyForCampusSearch({
         address: parsed.address,
         suburb: parsed.suburb,
         state: parsed.state,
         postcode: parsed.postcode,
-      })) {
+      })
+      const restoredConfirmed =
+        typeof parsed.addressConfirmed === 'boolean' ? parsed.addressConfirmed : restoredReady || restoredHasCampus
+      if (restoredConfirmed && (restoredReady || restoredHasCampus)) {
         acceptCampusForAddress(restoredAddressSig, { lat: parsed.latitude, lon: parsed.longitude })
       } else {
         acceptedAddressSigRef.current = ''
@@ -2547,25 +2573,6 @@ export default function LandlordPropertyFormPage() {
     return pt
   }
 
-  async function geocodeAddressForSave(
-    addr: string,
-    sub: string,
-    st: string,
-    pc: string,
-  ): Promise<GeoPoint | null> {
-    const ac = new AbortController()
-    const timeout = window.setTimeout(() => ac.abort(), 8000)
-    try {
-      const verified = await firstAgreedGeocode(
-        { address: addr, suburb: sub, state: st, postcode: pc },
-        (query) => geocodeQueryWithAddress(query, ac.signal),
-      )
-      return verified.ok ? { lat: verified.lat, lon: verified.lon } : null
-    } finally {
-      window.clearTimeout(timeout)
-    }
-  }
-
   function scrollToFormFeedback(anchorId: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
     if (anchorId === 'listing-form-feedback-top') {
       const scroller = getAppShellScrollElement()
@@ -2596,12 +2603,15 @@ export default function LandlordPropertyFormPage() {
     })
   }
 
-  async function runNearbyCampusLookup(fields: {
-    address: string
-    suburb: string
-    state: string
-    postcode: string
-  }): Promise<boolean> {
+  async function runNearbyCampusLookup(
+    fields: {
+      address: string
+      suburb: string
+      state: string
+      postcode: string
+    },
+    preset: { lat: number; lon: number; precision: 'street' | 'suburb' },
+  ): Promise<boolean> {
     if (refsLoading || campusRefRows.length === 0 || uniRefRows.length === 0) {
       setNearbyCampusLoading(false)
       setNearbyCampusError('No campus reference data found to compare against.')
@@ -2620,12 +2630,11 @@ export default function LandlordPropertyFormPage() {
     }
 
     const sig = addressSigFrom({ address: addr, suburb: sub, state: st, postcode: pc })
-    const addressUnchangedFromLoaded =
-      loadedPropertyAddressSigRef.current !== '' && sig === loadedPropertyAddressSigRef.current
-    const la = propertyCoordsRef.current.lat != null ? Number(propertyCoordsRef.current.lat) : NaN
-    const lo = propertyCoordsRef.current.lon != null ? Number(propertyCoordsRef.current.lon) : NaN
-    const useSavedPropertyCoords =
-      addressUnchangedFromLoaded && Number.isFinite(la) && Number.isFinite(lo)
+    const propertyPoint: GeoPoint = { lat: preset.lat, lon: preset.lon }
+    const precision = preset.precision
+    propertyCoordsRef.current = propertyPoint
+    setLatitude(propertyPoint.lat)
+    setLongitude(propertyPoint.lon)
 
     nearbyAbortRef.current?.abort()
     const ac = new AbortController()
@@ -2636,30 +2645,6 @@ export default function LandlordPropertyFormPage() {
     setNearbyCampusSuggestions([])
     setAddressMatchNote(null)
     try {
-          let propertyPoint: GeoPoint | null = useSavedPropertyCoords ? { lat: la, lon: lo } : null
-          let precision: 'street' | 'suburb' | null = null
-          if (!propertyPoint) {
-            const verified = await firstAgreedGeocode(
-              { address: addr, suburb: sub, state: st, postcode: pc },
-              (query) => geocodeQueryWithAddress(query, ac.signal),
-            )
-            if (requestId !== nearbyRequestIdRef.current) return false
-            if (!verified.ok) {
-              setNearbyCampusError(
-                verified.reason === 'mismatch'
-                  ? ADDRESS_NOT_MATCHED_MESSAGE
-                  : 'We could not find that street in this suburb. Check the street line, suburb, state and postcode - unit numbers are optional for campus suggestions.',
-              )
-              setNearbyCampusLoading(false)
-              return false
-            }
-            precision = verified.precision
-            propertyPoint = { lat: verified.lat, lon: verified.lon }
-            propertyCoordsRef.current = propertyPoint
-            setLatitude(propertyPoint.lat)
-            setLongitude(propertyPoint.lon)
-          }
-
           const stateNorm = st.trim().toUpperCase()
           const candidates = campusRefRows.filter((c) => {
             const cSub = c.suburb?.trim() ?? ''
@@ -2690,14 +2675,14 @@ export default function LandlordPropertyFormPage() {
             const fromDb = campusLatLonFromRow(c)
             if (fromDb) {
               campusPointById.set(c.id, fromDb)
-            } else if (!useSavedPropertyCoords) {
+            } else {
               const cState = (c.state ?? stateNorm).trim()
               const q = `${c.name}, ${c.suburb}, ${cState}, Australia`.replace(/\s+/g, ' ').trim()
               campusGeoQueryById.set(c.id, q)
             }
           }
 
-          if (!useSavedPropertyCoords) {
+          {
             const uniqueGeoQueries = [...new Set([...campusGeoQueryById.values()])].slice(0, 30)
             const coordsByQuery = new Map<string, GeoPoint>()
 
@@ -2738,11 +2723,7 @@ export default function LandlordPropertyFormPage() {
           const top = suggestions.slice(0, 5)
 
           if (top.length === 0) {
-            setNearbyCampusError(
-              useSavedPropertyCoords
-                ? 'Could not determine nearby campuses from saved coordinates.'
-                : 'Could not determine nearby campuses from your address.',
-            )
+            setNearbyCampusError('Could not determine nearby campuses from your address.')
             setNearbyCampusLoading(false)
             return false
           }
@@ -2770,53 +2751,183 @@ export default function LandlordPropertyFormPage() {
     }
   }
 
-  async function findNearbyCampuses() {
+  function rotatePlaceSession() {
+    placeSessionRef.current = crypto.randomUUID()
+  }
+
+  async function applyConfirmedPlace(parsed: ParsedAustralianAddress) {
+    const nextState = parsed.state.trim().toUpperCase()
+    const conflict = postcodeStateConflictMessage(parsed.postcode, nextState)
+    if (conflict) {
+      setSubmitError(conflict)
+      document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    const current = addressFieldsRef.current
+    const streetLine = parsed.streetLine.trim() || current.address.trim()
+    const fields = {
+      address: streetLine,
+      suburb: parsed.suburb,
+      state: nextState || current.state,
+      postcode: parsed.postcode,
+    }
+    if (!streetLine || !parsed.suburb.trim() || !fields.state.trim() || !parsed.postcode.trim()) {
+      if (nextState) {
+        stateChosenByLandlordRef.current = true
+        setState(nextState)
+      }
+      setAddress(streetLine)
+      setSuburb(parsed.suburb)
+      setPostcode(parsed.postcode)
+      addressFieldsRef.current = fields
+      setManualAddressOpen(true)
+      setAddressMatchNote(parsed.precision === 'suburb' ? SUBURB_ONLY_MATCH_MESSAGE : null)
+      setNearbyCampusError('Add the street, then press Confirm address.')
+      return
+    }
+    if (nextState && nextState !== current.state.trim().toUpperCase()) {
+      stateChosenByLandlordRef.current = true
+      if (!applyListingState(nextState)) return
+    } else if (nextState) {
+      stateChosenByLandlordRef.current = true
+      setState(nextState)
+    }
+    setAddress(streetLine)
+    setSuburb(parsed.suburb)
+    setPostcode(parsed.postcode)
+    addressFieldsRef.current = fields
+    addressDirtyRef.current = true
+    setLatitude(parsed.lat)
+    setLongitude(parsed.lon)
+    propertyCoordsRef.current = { lat: parsed.lat, lon: parsed.lon }
+    setMatchedAddressLabel(parsed.formatted || null)
+    setManualAddressOpen(true)
+    if (campusSelectionSourceRef.current === 'auto') {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+    await runNearbyCampusLookup(fields, {
+      lat: parsed.lat,
+      lon: parsed.lon,
+      precision: parsed.precision,
+    })
+    if (parsed.precision === 'suburb') setAddressMatchNote(SUBURB_ONLY_MATCH_MESSAGE)
+    acceptCampusForAddress(addressSigFrom(fields), { lat: parsed.lat, lon: parsed.lon })
+    setCampusConfirmMessage(null)
+    setSubmitError(null)
+  }
+
+  async function pickPlace(placeId: string) {
+    setPlaceSuggestions([])
+    setPlacesHint(null)
+    if (!placeSessionRef.current) rotatePlaceSession()
+    const result = await fetchPlaceDetails(placeId, placeSessionRef.current)
+    rotatePlaceSession()
+    if (!result.ok) {
+      setNearbyCampusError('We could not read that address. Try another result or enter it manually.')
+      return
+    }
+    setPlaceQuery('')
+    await applyConfirmedPlace(result.address)
+  }
+
+  async function confirmEnteredAddress() {
     const fields = { ...addressFieldsRef.current }
     if (!addressReadyForCampusSearch(fields)) return
     setCampusConfirmMessage(null)
     setSubmitError(null)
-    const ok = await runNearbyCampusLookup(fields)
-    if (!ok) return
-    const sig = addressSigFrom(fields)
-    resultsShownSigRef.current = sig
-    acceptCampusForAddress(sig)
+    setNearbyCampusError(null)
+    const google = await geocodeAddressWithGoogle(fields)
+    if (google.ok) {
+      await applyConfirmedPlace(google.address)
+      return
+    }
+    if (google.reason === 'mismatch') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(ADDRESS_NOT_MATCHED_MESSAGE)
+      return
+    }
+    if (google.reason !== 'not_configured') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(
+        'We could not find that street in this suburb. Check the street line, suburb, state and postcode.',
+      )
+      return
+    }
+    const ac = new AbortController()
+    const timeout = window.setTimeout(() => ac.abort(), 8000)
+    try {
+      const verified = await firstAgreedGeocode(fields, (query) => geocodeQueryWithAddress(query, ac.signal))
+      if (!verified.ok) {
+        setNearbyCampusSuggestions([])
+        setNearbyCampusError(
+          verified.reason === 'mismatch'
+            ? ADDRESS_NOT_MATCHED_MESSAGE
+            : 'We could not find that street in this suburb. Check the street line, suburb, state and postcode.',
+        )
+        return
+      }
+      await applyConfirmedPlace({
+        streetLine: fields.address.trim(),
+        suburb: fields.suburb.trim(),
+        state: fields.state.trim().toUpperCase(),
+        postcode: fields.postcode.trim(),
+        formatted: [fields.address.trim(), fields.suburb.trim(), fields.state.trim(), fields.postcode.trim()]
+          .filter(Boolean)
+          .join(', '),
+        lat: verified.lat,
+        lon: verified.lon,
+        precision: verified.precision,
+      })
+    } finally {
+      window.clearTimeout(timeout)
+    }
   }
 
-  async function prepareCampusSearchForSave(): Promise<boolean> {
-    const fields = { ...addressFieldsRef.current }
-    const sig = addressSigFrom(fields)
-    const decision = campusSearchRequiredBeforeSave({
-      currentSig: sig,
-      loadedSig: loadedPropertyAddressSigRef.current,
-      acceptedSig: acceptedAddressSigRef.current,
-      resultsShownSig: resultsShownSigRef.current,
-      addressComplete: addressReadyForCampusSearch(fields),
-    })
-    if (decision === 'save') return true
-    if (decision === 'confirm') {
-      acceptCampusForAddress(sig)
-      setCampusConfirmMessage(null)
-      return true
-    }
-    if (!showFormSection('section-location')) {
-      reportSubmitError(FIND_CAMPUSES_ON_LOCATION_STEP_MESSAGE)
-      return false
-    }
-    setSubmitError(null)
-    setCampusConfirmMessage(null)
-    const ok = await runNearbyCampusLookup(fields)
-    if (!ok) {
+  function requireConfirmedAddress(): boolean {
+    const sig = addressSigFrom(addressFieldsRef.current)
+    if (sig !== '' && sig === acceptedAddressSigRef.current) return true
+    setCampusConfirmMessage(CONFIRM_ADDRESS_FIRST_MESSAGE)
+    setSubmitError(CONFIRM_ADDRESS_FIRST_MESSAGE)
+    if (showFormSection('section-location')) {
       document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      return false
+    } else {
+      navigate(listingHubPath({ propertyId, view: 'location' }))
     }
-    resultsShownSigRef.current = sig
-    setCampusConfirmMessage(CHECK_CAMPUSES_THEN_SAVE_MESSAGE)
-    setSubmitSuccessMessage(null)
-    setSubmitError(CHECK_CAMPUSES_THEN_SAVE_MESSAGE)
-    document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     return false
   }
-  prepareCampusSearchForSaveRef.current = prepareCampusSearchForSave
+  requireConfirmedAddressRef.current = requireConfirmedAddress
+
+  useEffect(() => {
+    const q = placeQuery.trim()
+    if (q.length < 3) {
+      setPlaceSuggestions([])
+      return
+    }
+    if (!placeSessionRef.current) rotatePlaceSession()
+    const ac = new AbortController()
+    const timer = window.setTimeout(() => {
+      void fetchPlaceSuggestions(q, placeSessionRef.current, ac.signal).then((result) => {
+        if (ac.signal.aborted) return
+        if (!result.ok) {
+          setPlaceSuggestions([])
+          if (result.reason === 'not_configured') {
+            setPlacesHint('Address search needs a Google API key. Enter the address manually for now.')
+          }
+          return
+        }
+        setPlacesHint(null)
+        setPlaceSuggestions(result.suggestions)
+      })
+    }, 300)
+    return () => {
+      ac.abort()
+      window.clearTimeout(timer)
+    }
+  }, [placeQuery])
 
   const removeImage = useCallback(
     async (url: string) => {
@@ -3370,7 +3481,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (!(await prepareCampusSearchForSave())) return
+    if (!requireConfirmedAddress()) return
 
     setSubmitting(true)
     try {
@@ -3402,26 +3513,8 @@ export default function LandlordPropertyFormPage() {
     const campusColumns = campusColumnsForCurrentAddress()
     const resolvedUniversityId = campusColumns.university_id
     const resolvedCampusId = campusColumns.campus_id
-
-    // Ensure coordinates are persisted on every save/publish.
-    // Nearby-campus lookup usually sets these, but we also geocode here as a fallback so
-    // listings always have latitude/longitude when address fields are present.
-    const addr = address.trim()
-    const sub = suburb.trim()
-    const st = state.trim()
-    const pc = postcode.trim()
-    const canGeocode = Boolean(addr && sub && st && pc)
-    let resolvedLat = latitude
-    let resolvedLon = longitude
-    if (canGeocode && (resolvedLat == null || resolvedLon == null)) {
-      const pt = await geocodeAddressForSave(addr, sub, st, pc)
-      if (pt) {
-        resolvedLat = pt.lat
-        resolvedLon = pt.lon
-        setLatitude(pt.lat)
-        setLongitude(pt.lon)
-      }
-    }
+    const resolvedLat = latitude
+    const resolvedLon = longitude
 
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
@@ -3819,7 +3912,7 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
-    if (!(await prepareCampusSearchForSaveRef.current())) return
+    if (!requireConfirmedAddressRef.current()) return
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
@@ -4029,7 +4122,7 @@ export default function LandlordPropertyFormPage() {
     if (!propertyId || !user?.id) return true
     const t = title.trim()
     if (!t) return true
-    if (!(await prepareCampusSearchForSaveRef.current())) return false
+    if (!requireConfirmedAddressRef.current()) return false
     const rent = Number(rentPerWeek)
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const { error: upErr } = await supabase
@@ -4554,6 +4647,57 @@ export default function LandlordPropertyFormPage() {
                 casual browsers.
               </p>
               <div>
+                <label htmlFor="pf-address-search" className={labelClass}>
+                  Search for the address
+                </label>
+                <input
+                  id="pf-address-search"
+                  value={placeQuery}
+                  onChange={(e) => setPlaceQuery(e.target.value)}
+                  className={inputClass}
+                  placeholder="Start typing a street address"
+                  autoComplete="off"
+                  role="combobox"
+                  aria-expanded={placeSuggestions.length > 0}
+                  aria-controls="pf-address-suggestions"
+                />
+                {placeSuggestions.length > 0 ? (
+                  <ul
+                    id="pf-address-suggestions"
+                    role="listbox"
+                    className="mt-1 overflow-hidden rounded-[10px] border border-[var(--quni-input-border)] bg-white"
+                  >
+                    {placeSuggestions.map((suggestion) => (
+                      <li key={suggestion.placeId}>
+                        <button
+                          type="button"
+                          role="option"
+                          className="block w-full px-3 py-2 text-left text-sm text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                          onClick={() => void pickPlace(suggestion.placeId)}
+                        >
+                          {suggestion.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {placesHint ? (
+                  <p className="mt-1 text-xs text-gray-600" role="status">
+                    {placesHint}
+                  </p>
+                ) : null}
+                {!manualAddressOpen ? (
+                  <button
+                    type="button"
+                    className="mt-2 text-sm font-semibold text-[var(--quni-link)] underline"
+                    onClick={() => setManualAddressOpen(true)}
+                  >
+                    Enter address manually
+                  </button>
+                ) : null}
+              </div>
+              {manualAddressOpen ? (
+              <div>
               <div>
                 <label htmlFor="pf-addr" className={labelClass}>
                   Street address
@@ -4646,11 +4790,10 @@ export default function LandlordPropertyFormPage() {
                     </p>
                   ) : null}
                 </div>
-              </div>
-              </div>
+                </div>
               <button
                 type="button"
-                id="find-nearby-campuses"
+                id="confirm-address"
                 disabled={
                   refsLoading ||
                   nearbyCampusLoading ||
@@ -4660,18 +4803,23 @@ export default function LandlordPropertyFormPage() {
                   !postcode.trim() ||
                   Boolean(postcodeStateConflict)
                 }
-                onClick={() => void findNearbyCampuses()}
+                onClick={() => void confirmEnteredAddress()}
                 className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Find nearby campuses
+                Confirm address
               </button>
+              </div>
+              ) : null}
+              {matchedAddressLabel ? (
+                <p className="text-sm text-gray-800" role="status">
+                  {matchedAddressLabel}
+                </p>
+              ) : null}
               <div>
                 <span className={labelClass}>Nearest university campus</span>
                 <p className="text-xs text-gray-500 mb-2">
-                  Press Find nearby campuses when the street, suburb, state and postcode are ready. Tap a suggestion
-                  to select it; your current choice is marked{' '}
-                  <span className="font-medium text-gray-700">Selected</span>. A new listing selects the nearest match
-                  unless you pick a different one.
+                  A confirmed address selects the nearest campus. Tap another suggestion if you want a different one.
+                  Your current choice is marked <span className="font-medium text-gray-700">Selected</span>.
                 </p>
 
                 {nearbyCampusLoading ? (
@@ -4683,7 +4831,7 @@ export default function LandlordPropertyFormPage() {
                 !campusConfirmMessage &&
                 addressSigFrom({ address, suburb, state, postcode }) !== acceptedAddressSig ? (
                   <p className="mt-2 text-xs text-gray-700" role="status">
-                    {ADDRESS_CHANGED_FIND_AGAIN_MESSAGE}
+                    {CONFIRM_ADDRESS_AGAIN_MESSAGE}
                   </p>
                 ) : null}
                 {(campusSelectionSource === 'landlord' || campusSelectionSource === 'saved') &&

@@ -7,8 +7,10 @@ export const ADDRESS_NOT_MATCHED_MESSAGE =
 /** Shown when the only agreeing hit is a suburb or town centroid, not a street or house. */
 export const SUBURB_ONLY_MATCH_MESSAGE = "We matched the suburb, not the exact street"
 
-/** Shown under the address after a field changes once a search or a saved address exists. */
-export const ADDRESS_CHANGED_FIND_AGAIN_MESSAGE = "Address changed. Find nearby campuses again."
+/** Shown under the address after a confirmed address is edited. */
+export const ADDRESS_CHANGED_FIND_AGAIN_MESSAGE = "Confirm the address again."
+export const CONFIRM_ADDRESS_AGAIN_MESSAGE = ADDRESS_CHANGED_FIND_AGAIN_MESSAGE
+export const CONFIRM_ADDRESS_FIRST_MESSAGE = "Confirm the address first."
 
 /** Shown when a campus the landlord chose is still selected after the address changes. */
 export const CAMPUS_CHECK_AFTER_ADDRESS_CHANGE_MESSAGE =

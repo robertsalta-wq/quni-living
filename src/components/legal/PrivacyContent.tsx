@@ -150,8 +150,13 @@ export function PrivacyContent() {
           'Vercel (website hosting)',
           'Resend (transactional email delivery)',
           'Cloudflare (spam protection)',
+          'Google (property address lookup)',
         ]}
       />
+      <LegalP>
+        When you search for or confirm a property address while creating or editing a listing, that address is sent to
+        Google to match the street, suburb, state, postcode and map location.
+      </LegalP>
       <LegalP>
         These providers are contractually required to handle your information securely and only for the purposes we specify.
       </LegalP>
