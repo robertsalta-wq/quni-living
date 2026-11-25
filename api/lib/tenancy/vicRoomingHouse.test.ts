@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   vicRoomingApplyBlock,
-  vicRoomingStatementAcceptBlock,
-  VIC_ROOMING_S124_ACCEPT_MESSAGE,
+  vicRoomingMoveInPackGap,
+  VIC_ROOMING_MOVE_IN_FILES,
+  VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE,
   vicRoomingPayMethodsPublishError,
   vicRoomingPaymentDetailsLine,
   vicRoomingPublishErrors,
@@ -83,10 +84,21 @@ describe('vic rooming publish and booking gates', () => {
     expect(vicRoomingPaymentDetailsLine({ ...pay, bankDeposit: true }, bank)).toContain('998877')
   })
 
-  it('lets a rooming house listing publish while section 124 is still missing, and blocks accept', () => {
-    expect(vicRoomingStatementAcceptBlock()).toEqual({ ok: false, message: VIC_ROOMING_S124_ACCEPT_MESSAGE })
-    expect(VIC_ROOMING_S124_ACCEPT_MESSAGE).toMatch(/stay published/)
-    expect(VIC_ROOMING_S124_ACCEPT_MESSAGE).toMatch(/section 124/)
+  it('blocks accept only when a move-in document is missing', () => {
+    const present = new Set(VIC_ROOMING_MOVE_IN_FILES.map((file) => file.path))
+    expect(vicRoomingMoveInPackGap((path) => present.has(path)).ok).toBe(true)
+    present.delete(VIC_ROOMING_MOVE_IN_FILES[0].path)
+    const blocked = vicRoomingMoveInPackGap((path) => present.has(path))
+    expect(blocked.ok).toBe(false)
+    if (blocked.ok) return
+    expect(blocked.message).toMatch(/stay published/)
+    expect(blocked.message).toMatch(/statement of rights and duties/)
+  })
+
+  it('cites 14 days notice for this fixed-term package', () => {
+    expect(VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE).toMatch(/14 days/)
+    expect(VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE).toMatch(/statement of rights and duties/)
+    expect(VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE).toMatch(/2 days/)
   })
 
   it('blocks a flexible term and more than two residents', () => {

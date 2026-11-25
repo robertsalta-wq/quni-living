@@ -3,11 +3,15 @@ import Seo from '../components/Seo'
 import { Card } from '../components/admin/primitives/Card'
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 
-type SampleAgreement = {
+type SampleLink = {
   name: string
-  when: string
   href: string
   fileName: string
+}
+
+type SampleAgreement = SampleLink & {
+  when: string
+  also?: SampleLink[]
 }
 
 type SampleState = {
@@ -73,9 +77,31 @@ const STATES: SampleState[] = [
       },
       {
         name: 'Rooming house',
-        when: 'The prescribed rooming house agreement. A room or a shared room when four or more people can live in the building.',
+        when: 'The prescribed rooming house agreement. A room or a shared room when four or more people can live in the building. The move-in documents are given with it, as separate files.',
         href: '/sample-lease/vic-rooming-house.pdf',
         fileName: 'vic-rooming-house.pdf',
+        also: [
+          {
+            name: 'Rights and duties',
+            href: '/sample-lease/rooming-house-rights-and-duties-s124.pdf',
+            fileName: 'rooming-house-rights-and-duties-s124.pdf',
+          },
+          {
+            name: 'Residents guide',
+            href: '/sample-lease/rooming-house-residents-guide.pdf',
+            fileName: 'rooming-house-residents-guide.pdf',
+          },
+          {
+            name: 'Exclusive occupancy notice',
+            href: '/sample-lease/rooming-house-notice-exclusive-occupancy.pdf',
+            fileName: 'rooming-house-notice-exclusive-occupancy.pdf',
+          },
+          {
+            name: 'Shared room notice',
+            href: '/sample-lease/rooming-house-notice-shared-room.pdf',
+            fileName: 'rooming-house-notice-shared-room.pdf',
+          },
+        ],
       },
       {
         name: 'Room in your home',
@@ -152,6 +178,18 @@ export default function SampleLeasePage() {
                         Download
                       </a>
                     </div>
+                    {item.also && item.also.length > 0 ? (
+                      <ul className="mt-3 space-y-1 text-sm">
+                        {item.also.map((link) => (
+                          <li key={link.href}>
+                            <a href={link.href} target="_blank" rel="noopener" className="font-semibold text-[var(--quni-coral-active)]">
+                              {link.name}
+                              <span className="sr-only"> (opens in a new tab)</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </Card>
                 ))}
               </div>
