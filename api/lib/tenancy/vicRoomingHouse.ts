@@ -26,14 +26,32 @@ export const VIC_ROOMING_CONDITION_REPORT_REQUIRED =
 export const VIC_ROOMING_CAPACITY_REQUIRED =
   'Enter how many people can live in this building, including you if you live there, before this Victorian listing can be published.'
 
-/**
- * The Director-approved statement of rights and duties (Residential Tenancies Act 1997 s124)
- * is not attached yet. Publishing stays open. Accepting a booking stays closed until this is true.
- */
-export const VIC_ROOMING_S124_STATEMENT_PLACED = false
+/** Frozen CAV files the signing package gives the resident with the agreement. */
+export const VIC_ROOMING_MOVE_IN_FILES = [
+  {
+    id: 'rights_and_duties',
+    path: 'docs/vic/rooming-house-rights-and-duties-s124.pdf',
+    label: 'statement of rights and duties',
+  },
+  { id: 'residents_guide', path: 'docs/vic/rooming-house-residents-guide.pdf', label: 'residents guide' },
+  {
+    id: 'notice_exclusive',
+    path: 'docs/vic/rooming-house-notice-exclusive-occupancy.pdf',
+    label: 'notice of exclusive occupancy',
+  },
+  {
+    id: 'notice_shared',
+    path: 'docs/vic/rooming-house-notice-shared-room.pdf',
+    label: 'notice of a shared room right',
+  },
+] as const
 
-export const VIC_ROOMING_S124_ACCEPT_MESSAGE =
-  'This listing can stay published. Accepting a booking is blocked until the section 124 statement of rights and duties is included with the agreement.'
+/**
+ * Fixed-term package only. The section 124 statement says a resident on a fixed-term
+ * rooming house agreement gives at least 14 days' notice to leave, and otherwise 2 days.
+ */
+export const VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE =
+  "To leave before the end date, give at least 14 days' notice. This package is a fixed-term rooming house agreement. The statement of rights and duties, given with the agreement, says a resident on a fixed-term agreement gives 14 days' notice, and otherwise gives 2 days' notice."
 
 export const VIC_ROOMING_PAYMENT_METHODS_MESSAGE =
   'Tick at least one fee-free method (bank deposit, BPAY, or other electronic payment including Centrepay) and allow Centrepay or another electronic transfer. Cash only, cheque only, or direct debit only cannot be published. BPAY and other electronic payment do not print account details. Only bank deposit prints the account name, BSB, and account number.'
@@ -162,9 +180,15 @@ export function vicRoomingPublishErrors(args: {
   return null
 }
 
-export function vicRoomingStatementAcceptBlock(): { ok: true } | { ok: false; message: string } {
-  if (VIC_ROOMING_S124_STATEMENT_PLACED) return { ok: true }
-  return { ok: false, message: VIC_ROOMING_S124_ACCEPT_MESSAGE }
+export function vicRoomingMoveInPackGap(
+  present: (relativePath: string) => boolean,
+): { ok: true } | { ok: false; message: string } {
+  const missing = VIC_ROOMING_MOVE_IN_FILES.filter((file) => !present(file.path)).map((file) => file.label)
+  if (missing.length === 0) return { ok: true }
+  return {
+    ok: false,
+    message: `This listing can stay published. Accepting a booking is blocked until every move-in document is included with the agreement. Missing: ${missing.join(', ')}.`,
+  }
 }
 
 export function vicRoomingApplyBlock(args: {

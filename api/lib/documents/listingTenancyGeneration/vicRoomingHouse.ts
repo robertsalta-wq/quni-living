@@ -5,6 +5,12 @@ import {
   fillOfficialVicRoomingHousePdf,
   type VicRoomingHouseFillProps,
 } from '../officialVicRoomingHouseFill.js'
+import {
+  fillVicRoomingNotice,
+  readVicRoomingMoveInPdf,
+  sha256Bytes,
+  type VicRoomingNoticeKind,
+} from '../officialVicRoomingMoveInPack.js'
 import { sendVicRoomingHousePackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import { inclusiveLeaseLastDay } from '../../booking/leaseEndDate.js'
@@ -24,6 +30,23 @@ import {
 
 const DRAFT_PATH = 'vic_rooming_house_agreement_draft.pdf'
 const RULES_DRAFT = 'vic_rooming_house_rules_draft.pdf'
+const RIGHTS_DRAFT = 'vic_rooming_rights_and_duties.pdf'
+const GUIDE_DRAFT = 'vic_rooming_residents_guide.pdf'
+const NOTICE_DRAFT = 'vic_rooming_notice.pdf'
+const NOTICE_2_DRAFT = 'vic_rooming_notice_resident_2.pdf'
+
+type MoveInRecord = { id: string; name: string; file_path: string; sha256: string }
+
+function noticeDateLabel(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(now)
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? ''
+  return `${get('day')}/${get('month')}/${get('year')}`
+}
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -156,6 +179,14 @@ export async function runVicRoomingHouseListingTenancy(
     .upload(rulesPath, Buffer.from(rules), { contentType: 'application/pdf', upsert: true })
   if (up2.error) return { ok: false, status: 500, error: 'Could not upload the house rules' }
 
+  let moveInPack: MoveInRecord[]
+  try {
+    moveInPack = await uploadMoveInPack(admin, tenancyId, loaded)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, status: 500, error: 'Could not build the move-in documents', detail: msg }
+  }
+
   if (refreshOnly) return { ok: true, tenancyId, documentId }
 
   const { error: pathErr } = await admin
@@ -167,6 +198,7 @@ export async function runVicRoomingHouseListingTenancy(
         signing_package: VIC_ROOMING_SIGNING_PACKAGE,
         generator: VIC_ROOMING_GENERATOR_ID,
         house_rules_file_path: rulesPath,
+        move_in_pack: moveInPack,
       } as Json,
     })
     .eq('id', documentId)
@@ -234,6 +266,9 @@ async function loadVicRoomingHouseContext(
       endDate: string
       weeklyRent: number
       bondAmount: number | null
+      noticeKind: VicRoomingNoticeKind
+      peopleInRoom: string
+      noticeAddress: string
     }
   | { ok: false; status: number; error: string; detail?: string }
 > {
@@ -245,7 +280,7 @@ async function loadVicRoomingHouseContext(
       lease_length, occupant_count, co_tenant,
       properties (
         address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house,
-        rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, room_description
+        rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, room_description, max_occupants
       )
     `,
     )
@@ -373,7 +408,7 @@ async function loadVicRoomingHouseContext(
     urgentContactEmail: text(operator.email),
     conditionReport,
   }
-
+  const people = Math.floor(Number(prop.max_occupants))
   return {
     ok: true,
     fill,
@@ -386,5 +421,79 @@ async function loadVicRoomingHouseContext(
     endDate,
     weeklyRent,
     bondAmount: booking.bond_amount != null ? Number(booking.bond_amount) : null,
+    noticeKind: text(prop.property_type) === 'shared_room' ? 'shared' : 'exclusive',
+    peopleInRoom: Number.isFinite(people) && people > 0 ? String(people) : '',
+    noticeAddress: [text(prop.address), text(prop.suburb), text(prop.state)].filter(Boolean).join(', '),
   }
+}
+
+async function storePdf(
+  admin: SupabaseClient<Database>,
+  path: string,
+  bytes: Uint8Array,
+): Promise<void> {
+  const uploaded = await admin.storage
+    .from('tenancy-documents')
+    .upload(path, Buffer.from(bytes), { contentType: 'application/pdf', upsert: true })
+  if (uploaded.error) throw new Error(uploaded.error.message)
+}
+
+async function uploadMoveInPack(
+  admin: SupabaseClient<Database>,
+  tenancyId: string,
+  loaded: {
+    fill: VicRoomingHouseFillProps
+    noticeKind: VicRoomingNoticeKind
+    peopleInRoom: string
+    noticeAddress: string
+    weeklyRent: number
+  },
+): Promise<MoveInRecord[]> {
+  const rights = readVicRoomingMoveInPdf('rooming-house-rights-and-duties-s124.pdf')
+  const guide = readVicRoomingMoveInPdf('rooming-house-residents-guide.pdf')
+  const rightsPath = `${tenancyId}/rooming/${RIGHTS_DRAFT}`
+  const guidePath = `${tenancyId}/rooming/${GUIDE_DRAFT}`
+  await storePdf(admin, rightsPath, rights)
+  await storePdf(admin, guidePath, guide)
+  const records: MoveInRecord[] = [
+    {
+      id: 'rights_and_duties',
+      name: 'Rights and duties of a rooming house resident.pdf',
+      file_path: rightsPath,
+      sha256: sha256Bytes(rights),
+    },
+    {
+      id: 'residents_guide',
+      name: 'Rooming house residents guide.pdf',
+      file_path: guidePath,
+      sha256: sha256Bytes(guide),
+    },
+  ]
+  const residents = [loaded.fill.resident1Name, loaded.fill.resident2Name].map((name) => name.trim()).filter(Boolean)
+  for (const [index, residentName] of residents.entries()) {
+    const notice = await fillVicRoomingNotice({
+      kind: loaded.noticeKind,
+      noticeDateLabel: noticeDateLabel(),
+      residentName,
+      address: loaded.noticeAddress,
+      postcode: loaded.fill.postcode,
+      roomNumber: loaded.fill.roomNumber,
+      operatorName: loaded.fill.operatorName,
+      peopleInRoom: loaded.peopleInRoom,
+      sharedWeeklyRent: loaded.weeklyRent.toFixed(2),
+      signatureLabel: index === 0 ? 'Operator notice signature' : 'Operator notice signature 2',
+    })
+    const path = `${tenancyId}/rooming/${index === 0 ? NOTICE_DRAFT : NOTICE_2_DRAFT}`
+    await storePdf(admin, path, notice.pdfBytes)
+    records.push({
+      id: loaded.noticeKind === 'shared' ? 'notice_shared' : 'notice_exclusive',
+      name:
+        loaded.noticeKind === 'shared'
+          ? `Notice to proposed resident - shared room${index === 0 ? '' : ' - resident 2'}.pdf`
+          : `Notice to proposed resident - exclusive occupancy${index === 0 ? '' : ' - resident 2'}.pdf`,
+      file_path: path,
+      sha256: sha256Bytes(notice.pdfBytes),
+    })
+  }
+  return records
 }

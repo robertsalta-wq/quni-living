@@ -540,7 +540,7 @@ describe('runListingConfirmBooking', () => {
     expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
   })
 
-  it('blocks accept on a Victorian rooming house until the section 124 statement is included', async () => {
+  it('accepts a Victorian rooming house once the move-in pack is in the deployment', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({
       vicCapacity: 4,
@@ -560,12 +560,7 @@ describe('runListingConfirmBooking', () => {
       bookingId: baseBooking.id,
       vicRoomingConditionReport: 'will_be_provided',
     })
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.status).toBe(409)
-    expect(result.body.error).toBe('vic_rooming_s124_statement_required')
-    expect(result.body.message).toMatch(/section 124/)
-    expect(result.body.message).toMatch(/stay published/)
-    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
+    expect(result.ok).toBe(true)
+    expect(preflightListingTenancyDocument).toHaveBeenCalled()
   })
 })

@@ -3,6 +3,7 @@ import { formatDate } from '../../pages/admin/adminUi'
 import { resolveBookingBondAmountAud } from '../../lib/booking/resolveBookingBondAmount'
 import { bookingBondWordingFromPackage } from '../../../api/lib/tenancy/bookingBondWording'
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
+import { VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE } from '../../../api/lib/tenancy/vicRoomingHouse'
 import {
   formatPropertyPayoutBsbDisplay,
   normalizePropertyPayoutEmbed,
@@ -161,6 +162,9 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
         <p className="text-xs leading-relaxed text-indigo-900/95">
           {agreement.bondLine} {agreement.rentLine}
         </p>
+      ) : null}
+      {isVicRooming ? (
+        <p className="text-xs leading-relaxed text-indigo-900/95">{VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE}</p>
       ) : null}
       <p className="text-xs leading-relaxed text-indigo-900/95">
         {showBondSection

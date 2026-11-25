@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import type Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../src/lib/database.types.js'
@@ -16,8 +18,8 @@ import {
 import {
   VIC_ROOMING_CONDITION_REPORT_REQUIRED,
   parseVicRoomingConditionReport,
+  vicRoomingMoveInPackGap,
   vicRoomingRouting,
-  vicRoomingStatementAcceptBlock,
 } from '../tenancy/vicRoomingHouse.js'
 
 type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
@@ -156,11 +158,11 @@ export async function runListingConfirmBooking(
       premisesOccupantCapacity: vicRow?.vic_premises_occupant_capacity,
     })
     if (route.kind === 'rooming') {
-      const statement = vicRoomingStatementAcceptBlock()
-      if (!statement.ok) {
+      const pack = vicRoomingMoveInPackGap((relativePath) => existsSync(join(process.cwd(), relativePath)))
+      if (!pack.ok) {
         return jsonFail(409, {
-          error: 'vic_rooming_s124_statement_required',
-          message: statement.message,
+          error: 'vic_rooming_move_in_pack_missing',
+          message: pack.message,
         })
       }
       const choice = parseVicRoomingConditionReport(vicRoomingConditionReport)
