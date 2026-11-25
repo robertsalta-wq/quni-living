@@ -20,6 +20,9 @@ import {
   parseVicRoomingConditionReport,
   vicRoomingMoveInPackGap,
   vicRoomingRouting,
+  vicRoomingUnsharedRentAcceptBlock,
+  VIC_ROOMING_UNSHARED_RENT_HIGHER,
+  parseVicRoomingUnsharedWeeklyRent,
 } from '../tenancy/vicRoomingHouse.js'
 
 type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
@@ -91,6 +94,7 @@ export async function runListingConfirmBooking(
       service_tier_at_request,
       move_in_date,
       start_date,
+      weekly_rent,
       qld_house_rules_attested_at,
       properties ( state, property_type, is_registered_rooming_house, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom )
     `,
@@ -143,7 +147,7 @@ export async function runListingConfirmBooking(
   if (propertyState === 'VIC' && typeof booking.property_id === 'string') {
     const { data: vicRow, error: vicErr } = await admin
       .from('properties')
-      .select('vic_premises_occupant_capacity')
+      .select('vic_premises_occupant_capacity, vic_rooming_unshared_weekly_rent, rent_per_week')
       .eq('id', booking.property_id)
       .maybeSingle()
     if (vicErr) {
@@ -163,6 +167,31 @@ export async function runListingConfirmBooking(
         return jsonFail(409, {
           error: 'vic_rooming_move_in_pack_missing',
           message: pack.message,
+        })
+      }
+      const unsharedBlock = vicRoomingUnsharedRentAcceptBlock({
+        propertyType: propEmbed.property_type,
+        unsharedWeeklyRent: vicRow?.vic_rooming_unshared_weekly_rent,
+      })
+      if (!unsharedBlock.ok) {
+        return jsonFail(409, {
+          error: 'vic_rooming_unshared_rent_required',
+          message: unsharedBlock.message,
+        })
+      }
+      const unsharedAmount = parseVicRoomingUnsharedWeeklyRent(vicRow?.vic_rooming_unshared_weekly_rent)
+      const sharedRent = Number(
+        (booking as { weekly_rent?: unknown }).weekly_rent ?? vicRow?.rent_per_week ?? 0,
+      )
+      if (
+        propEmbed.property_type === 'shared_room' &&
+        unsharedAmount != null &&
+        Number.isFinite(sharedRent) &&
+        !(unsharedAmount > sharedRent)
+      ) {
+        return jsonFail(409, {
+          error: 'vic_rooming_unshared_rent_too_low',
+          message: VIC_ROOMING_UNSHARED_RENT_HIGHER,
         })
       }
       const choice = parseVicRoomingConditionReport(vicRoomingConditionReport)

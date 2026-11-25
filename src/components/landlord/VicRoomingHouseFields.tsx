@@ -9,6 +9,7 @@ export type VicRoomingHouseFieldValues = {
   registrationNumber: string
   operatorAcceptsElectronicService: boolean | null
   attestationCurrent: boolean
+  unsharedWeeklyRent: string
   pay: VicRoomingPayMethods
 }
 
@@ -44,10 +45,12 @@ export function emptyVicRoomingHouseFieldValues(): VicRoomingHouseFieldValues {
 
 export function VicRoomingHouseFields({
   showRoomingFields,
+  showUnsharedRent,
   values,
   onChange,
 }: {
   showRoomingFields: boolean
+  showUnsharedRent: boolean
   values: VicRoomingHouseFieldValues
   onChange: (next: VicRoomingHouseFieldValues) => void
 }) {
@@ -70,6 +73,21 @@ export function VicRoomingHouseFields({
       </label>
       {showRoomingFields ? (
         <>
+          {showUnsharedRent ? (
+            <label className="block text-sm text-admin-ink-2">
+              <span className="font-semibold">Weekly rent if this room were not shared ($)</span>
+              <input
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
+                inputMode="decimal"
+                value={values.unsharedWeeklyRent}
+                onChange={(e) => onChange({ ...values, unsharedWeeklyRent: e.target.value })}
+              />
+              <span className="mt-1 block text-xs text-admin-ink-5">
+                The shared room notice has to show this next to the rent the resident pays. It must be higher than the
+                weekly rent, because the notice says they pay less for sharing the room.
+              </span>
+            </label>
+          ) : null}
           <label className="block text-sm text-admin-ink-2">
             <span className="font-semibold">Room number</span>
             <input

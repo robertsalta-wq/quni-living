@@ -72,6 +72,8 @@ const SHARED = {
   peopleInRoom: { x: 45.65, y: 274.74, w: 75.6, h: 17 },
   sharedRent: { x: 45.65, y: 212.94, w: 92.7, h: 17 },
   sharedWeek: { x: 163.65, y: 215.79, w: 11.3, h: 11.3 },
+  unsharedRent: { x: 45.65, y: 174.94, w: 92.7, h: 17 },
+  unsharedWeek: { x: 163.65, y: 177.79, w: 11.3, h: 11.3 },
   operatorName: { x: 45.35, y: 113.14, w: 521.9, h: 17 },
   signature: { x: 45.35, y: 56.44, w: 253.1, h: 34 },
 } as const satisfies Record<string, Box>
@@ -88,8 +90,10 @@ export type VicRoomingNoticeFill = {
   operatorName: string
   /** Listing field max_occupants. Shared notice only. */
   peopleInRoom: string
-  /** Weekly rent on this booking. Shared notice only. The exclusive-room comparison is not stored. */
+  /** Weekly rent on this booking. Shared notice only. */
   sharedWeeklyRent: string
+  /** Weekly rent if the room were not shared. Shared notice only. */
+  unsharedWeeklyRent: string
   signatureLabel: string
   signingTags?: boolean
 }
@@ -157,6 +161,8 @@ export async function fillVicRoomingNotice(props: VicRoomingNoticeFill): Promise
     drawInBox(page, font, props.peopleInRoom, SHARED.peopleInRoom)
     drawInBox(page, font, props.sharedWeeklyRent, SHARED.sharedRent)
     if (props.sharedWeeklyRent.trim()) tickBox(page, font, SHARED.sharedWeek)
+    drawInBox(page, font, props.unsharedWeeklyRent, SHARED.unsharedRent)
+    if (props.unsharedWeeklyRent.trim()) tickBox(page, font, SHARED.unsharedWeek)
   }
   drawSignature(page, font, boxes.signature, props.signatureLabel, signingTags)
   return { pdfBytes: await doc.save() }

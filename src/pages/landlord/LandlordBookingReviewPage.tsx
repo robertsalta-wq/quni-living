@@ -27,7 +27,11 @@ import {
 } from '../../lib/landlordBookingConfirmGate'
 import { deriveLandlordPrimaryAction } from '../../lib/booking/landlordPrimaryAction'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
-import { vicRoomingRouting } from '../../../api/lib/tenancy/vicRoomingHouse'
+import {
+  VIC_ROOMING_UNSHARED_RENT_ACCEPT_MESSAGE,
+  vicRoomingRouting,
+  vicRoomingUnsharedRentAcceptBlock,
+} from '../../../api/lib/tenancy/vicRoomingHouse'
 import { acceptFailureOutcome } from '../../lib/booking/acceptBookingOutcome'
 import { isBrowserNetworkFailure } from '../../lib/supabaseErrorMessage'
 import { runSingleFlight } from '../../lib/singleFlight'
@@ -495,6 +499,13 @@ export default function LandlordBookingReviewPage() {
     )
   }, [data?.property])
 
+  const vicSharedRentBlocked =
+    vicRoomingAccept &&
+    !vicRoomingUnsharedRentAcceptBlock({
+      propertyType: data?.property?.property_type,
+      unsharedWeeklyRent: data?.property?.vic_rooming_unshared_weekly_rent,
+    }).ok
+
   const qldHouseRulesAlreadyAttested = Boolean(
     typeof data?.booking?.qld_house_rules_attested_at === 'string' && data.booking.qld_house_rules_attested_at.trim(),
   )
@@ -503,6 +514,7 @@ export default function LandlordBookingReviewPage() {
     !!data &&
     !!tierModel &&
     !qldRoomingAcceptBlocked &&
+    !vicSharedRentBlocked &&
     (!qldRoomingArrangement || qldHouseRulesAlreadyAttested || qldHouseRulesAttested) &&
     (!vicRoomingAccept || vicConditionReport !== '') &&
     (tierModel.showListing || tierModel.showManaged) &&
@@ -583,7 +595,7 @@ export default function LandlordBookingReviewPage() {
 
   const onConfirm = useCallback(() => {
     void runSingleFlight(confirmFlight, async () => {
-      if (!bookingId || qldRoomingAcceptBlocked) return
+      if (!bookingId || qldRoomingAcceptBlocked || vicSharedRentBlocked) return
       setActionError(null)
       setPayBookingId(null)
       setActionBusy(true)
@@ -634,6 +646,7 @@ export default function LandlordBookingReviewPage() {
     qldHouseRulesAlreadyAttested,
     qldHouseRulesAttested,
     qldRoomingAcceptBlocked,
+    vicSharedRentBlocked,
     qldRoomingArrangement,
     vicConditionReport,
     vicRoomingAccept,
@@ -1434,7 +1447,12 @@ export default function LandlordBookingReviewPage() {
                           <p className="mt-2 leading-relaxed">{qldRoomingS276AcceptCopy()}</p>
                         </div>
                       ) : null}
-                      {vicRoomingAccept ? (
+                      {vicSharedRentBlocked ? (
+                        <div className="rounded-admin-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                          <p className="font-semibold">Accepting is blocked</p>
+                          <p className="mt-2 leading-relaxed">{VIC_ROOMING_UNSHARED_RENT_ACCEPT_MESSAGE}</p>
+                        </div>
+                      ) : vicRoomingAccept ? (
                         <label className="block text-sm text-admin-ink-2">
                           <span className="font-semibold">Condition report</span>
                           <select
@@ -1457,7 +1475,7 @@ export default function LandlordBookingReviewPage() {
                         disabled={!canConfirm || actionBusy}
                         aria-disabled={!canConfirm || actionBusy}
                         onClick={() => {
-                          if (qldRoomingAcceptBlocked) return
+                          if (qldRoomingAcceptBlocked || vicSharedRentBlocked) return
                           if (!canConfirm) {
                             document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             return
@@ -1479,7 +1497,7 @@ export default function LandlordBookingReviewPage() {
                           'Accept booking'
                         )}
                       </button>
-                      {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked ? (
+                      {!canConfirm && !actionBusy && showReadinessDriver && !qldRoomingAcceptBlocked && !vicSharedRentBlocked ? (
                         <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
                       ) : null}
                       <button

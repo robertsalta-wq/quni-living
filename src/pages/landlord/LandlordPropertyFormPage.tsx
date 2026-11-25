@@ -8,7 +8,9 @@ import {
 } from '../../components/landlord/VicRoomingHouseFields'
 import {
   parseVicPremisesOccupantCapacity,
+  parseVicRoomingUnsharedWeeklyRent,
   vicRoomingPayMethodsFromRow,
+  vicRoomingUnsharedWeeklyRentError,
   vicRoomingPublishErrors,
   vicRoomingRouting,
 } from '../../../api/lib/tenancy/vicRoomingHouse'
@@ -906,6 +908,7 @@ export default function LandlordPropertyFormPage() {
     registrationNumber: '',
     operatorAcceptsElectronicService: null,
     attestationCurrent: false,
+    unsharedWeeklyRent: '',
     pay: {
       directDebit: false,
       bankDeposit: false,
@@ -1872,6 +1875,8 @@ export default function LandlordPropertyFormPage() {
             typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
           operatorAcceptsElectronicService: prop.vic_rooming_operator_accepts_electronic_service,
           attestationCurrent: false,
+          unsharedWeeklyRent:
+            prop.vic_rooming_unshared_weekly_rent != null ? String(prop.vic_rooming_unshared_weekly_rent) : '',
           pay: vicRoomingPayMethodsFromRow(prop),
         })
         setSharedAreas(parseNswT3SharedAreas(prop.shared_areas))
@@ -3020,6 +3025,24 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (
+      !isPublishingListing &&
+      (state.trim() || '').toUpperCase() === 'VIC' &&
+      vicRoomingRoute.kind === 'rooming' &&
+      propertyListingType === 'shared_room'
+    ) {
+      const draftRentErr = vicRoomingUnsharedWeeklyRentError({
+        propertyType: propertyListingType,
+        sharedWeeklyRent: rent,
+        unsharedWeeklyRent: vicRoomingFields.unsharedWeeklyRent,
+        required: false,
+      })
+      if (draftRentErr) {
+        reportSubmitError(draftRentErr)
+        return
+      }
+    }
+
     if (isPublishingListing && (state.trim() || '').toUpperCase() === 'VIC') {
       if (!parseVicPremisesOccupantCapacity(vicRoomingFields.capacity)) {
         reportSubmitError('Enter how many people the building can hold before publishing.')
@@ -3039,6 +3062,9 @@ export default function LandlordPropertyFormPage() {
           roomNumber: vicRoomingFields.roomNumber,
           pay: vicRoomingFields.pay,
           attestationCurrent: vicRoomingFields.attestationCurrent,
+          propertyType: propertyListingType,
+          sharedWeeklyRent: rent,
+          unsharedWeeklyRent: vicRoomingFields.unsharedWeeklyRent,
         })
         if (vicErr) {
           reportSubmitError(vicErr)
@@ -3305,6 +3331,10 @@ export default function LandlordPropertyFormPage() {
                   vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
                   rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
                   is_registered_rooming_house: true,
+                  vic_rooming_unshared_weekly_rent:
+                    propertyListingType === 'shared_room'
+                      ? parseVicRoomingUnsharedWeeklyRent(vicRoomingFields.unsharedWeeklyRent)
+                      : null,
                 }
               : {
                   vic_rooming_house_operator_licence_number: null,
@@ -3644,6 +3674,10 @@ export default function LandlordPropertyFormPage() {
                           vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
                           rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
                           is_registered_rooming_house: true,
+                          vic_rooming_unshared_weekly_rent:
+                            propertyListingType === 'shared_room'
+                              ? parseVicRoomingUnsharedWeeklyRent(vicRoomingFields.unsharedWeeklyRent)
+                              : null,
                         }
                       : {}),
                   }
@@ -4654,6 +4688,7 @@ export default function LandlordPropertyFormPage() {
               {(state.trim() || '').toUpperCase() === 'VIC' ? (
                 <VicRoomingHouseFields
                   showRoomingFields={vicRoomingRoute.kind === 'rooming'}
+                  showUnsharedRent={vicRoomingRoute.kind === 'rooming' && propertyListingType === 'shared_room'}
                   values={vicRoomingFields}
                   onChange={setVicRoomingFields}
                 />

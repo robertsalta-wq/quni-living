@@ -60,6 +60,8 @@ function mockAdmin(opts: {
   feeExempt?: boolean
   payoutRow?: { account_name: string; bsb: string; account_number: string; bank_name?: string } | null
   vicCapacity?: number | null
+  vicUnsharedWeeklyRent?: number | null
+  rentPerWeek?: number | null
 }) {
   const booking = opts.booking ?? baseBooking
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
@@ -113,7 +115,11 @@ function mockAdmin(opts: {
         select: () => ({
           eq: () => ({
             maybeSingle: async () => ({
-              data: { vic_premises_occupant_capacity: opts.vicCapacity ?? null },
+              data: {
+                vic_premises_occupant_capacity: opts.vicCapacity ?? null,
+                vic_rooming_unshared_weekly_rent: opts.vicUnsharedWeeklyRent ?? null,
+                rent_per_week: opts.rentPerWeek ?? 300,
+              },
               error: null,
             }),
           }),
@@ -562,5 +568,33 @@ describe('runListingConfirmBooking', () => {
     })
     expect(result.ok).toBe(true)
     expect(preflightListingTenancyDocument).toHaveBeenCalled()
+  })
+
+  it('blocks accept on a Victorian shared room until the unshared weekly rent is entered', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({
+      vicCapacity: 4,
+      booking: {
+        ...baseBooking,
+        properties: {
+          state: 'VIC',
+          property_type: 'shared_room',
+          is_registered_rooming_house: false,
+        },
+      },
+    })
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      vicRoomingConditionReport: 'will_be_provided',
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.status).toBe(409)
+    expect(result.body.error).toBe('vic_rooming_unshared_rent_required')
+    expect(result.body.message).toMatch(/if it were not shared/)
+    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
   })
 })

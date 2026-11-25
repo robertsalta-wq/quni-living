@@ -23,7 +23,10 @@ import {
   VIC_ROOMING_RESIDENT_EMAIL_REQUIRED,
   VIC_ROOMING_SIGNING_PACKAGE,
   VIC_ROOMING_TWO_RESIDENTS_MESSAGE,
+  VIC_ROOMING_UNSHARED_RENT_HIGHER,
   parseVicRoomingConditionReport,
+  parseVicRoomingUnsharedWeeklyRent,
+  vicRoomingUnsharedRentAcceptBlock,
   vicRoomingPayMethodsFromRow,
   vicRoomingRentInAdvanceError,
 } from '../../tenancy/vicRoomingHouse.js'
@@ -235,7 +238,7 @@ async function loadVicRoomingColumns(
   const { data, error } = await admin
     .from('properties')
     .select(
-      'vic_premises_occupant_capacity, vic_rooming_house_operator_licence_number, vic_rooming_house_rules, vic_rooming_items_let_with_room, vic_rooming_operator_accepts_electronic_service, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft',
+      'vic_premises_occupant_capacity, vic_rooming_unshared_weekly_rent, vic_rooming_house_operator_licence_number, vic_rooming_house_rules, vic_rooming_items_let_with_room, vic_rooming_operator_accepts_electronic_service, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft',
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -269,6 +272,7 @@ async function loadVicRoomingHouseContext(
       noticeKind: VicRoomingNoticeKind
       peopleInRoom: string
       noticeAddress: string
+      unsharedWeeklyRent: string
     }
   | { ok: false; status: number; error: string; detail?: string }
 > {
@@ -359,7 +363,19 @@ async function loadVicRoomingHouseContext(
     .eq('property_id', booking.property_id)
     .maybeSingle()
 
+  const noticeKind = text(prop.property_type) === 'shared_room' ? 'shared' : 'exclusive'
+  const unsharedWeekly = parseVicRoomingUnsharedWeeklyRent(propertyRow.vic_rooming_unshared_weekly_rent)
   const weeklyRent = Number(booking.weekly_rent ?? prop.rent_per_week ?? 0)
+  if (noticeKind === 'shared') {
+    const missing = vicRoomingUnsharedRentAcceptBlock({
+      propertyType: 'shared_room',
+      unsharedWeeklyRent: unsharedWeekly,
+    })
+    if (!missing.ok) return { ok: false, status: 422, error: missing.message }
+    if (unsharedWeekly == null || !(unsharedWeekly > weeklyRent)) {
+      return { ok: false, status: 422, error: VIC_ROOMING_UNSHARED_RENT_HIGHER }
+    }
+  }
   const rentErr = vicRoomingRentInAdvanceError({ weeklyRent, amountDueOnOrBeforeMoveIn: weeklyRent })
   if (rentErr) return { ok: false, status: 422, error: rentErr }
 
@@ -421,9 +437,10 @@ async function loadVicRoomingHouseContext(
     endDate,
     weeklyRent,
     bondAmount: booking.bond_amount != null ? Number(booking.bond_amount) : null,
-    noticeKind: text(prop.property_type) === 'shared_room' ? 'shared' : 'exclusive',
+    noticeKind,
     peopleInRoom: Number.isFinite(people) && people > 0 ? String(people) : '',
     noticeAddress: [text(prop.address), text(prop.suburb), text(prop.state)].filter(Boolean).join(', '),
+    unsharedWeeklyRent: unsharedWeekly != null ? unsharedWeekly.toFixed(2) : '',
   }
 }
 
@@ -447,6 +464,7 @@ async function uploadMoveInPack(
     peopleInRoom: string
     noticeAddress: string
     weeklyRent: number
+    unsharedWeeklyRent: string
   },
 ): Promise<MoveInRecord[]> {
   const rights = readVicRoomingMoveInPdf('rooming-house-rights-and-duties-s124.pdf')
@@ -481,6 +499,7 @@ async function uploadMoveInPack(
       operatorName: loaded.fill.operatorName,
       peopleInRoom: loaded.peopleInRoom,
       sharedWeeklyRent: loaded.weeklyRent.toFixed(2),
+      unsharedWeeklyRent: loaded.unsharedWeeklyRent,
       signatureLabel: index === 0 ? 'Operator notice signature' : 'Operator notice signature 2',
     })
     const path = `${tenancyId}/rooming/${index === 0 ? NOTICE_DRAFT : NOTICE_2_DRAFT}`
