@@ -11,14 +11,11 @@ alter table public.properties
   add constraint properties_vic_rooming_unshared_weekly_rent_check
   check (
     vic_rooming_unshared_weekly_rent is null
-    or (
-      vic_rooming_unshared_weekly_rent > 0
-      and vic_rooming_unshared_weekly_rent > rent_per_week
-    )
+    or vic_rooming_unshared_weekly_rent > 0
   );
 
 comment on column public.properties.vic_rooming_unshared_weekly_rent is
-  'Weekly rent this room would be if it were not shared. Null until set. Printed on the Victorian shared room notice. Must be higher than rent_per_week when set.';
+  'Weekly rent this room would be if it were not shared. Null until set. Printed on the Victorian shared room notice. The app requires it to be higher than the shared weekly rent when the listing is saved or published. This check only requires a positive amount, so a later rent increase does not fail in the database.';
 
 create or replace function public.duplicate_property_listing(p_source_id uuid)
 returns uuid
