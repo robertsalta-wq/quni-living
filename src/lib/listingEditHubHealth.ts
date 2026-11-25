@@ -77,35 +77,35 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
   {
     id: 'basic',
     title: 'Basic info',
-    subtitle: 'Listing title, type, availability',
+    subtitle: 'Listing title and who can enquire',
     formSectionIds: ['section-basic-info'],
     step: 1,
   },
   {
     id: 'location',
     title: 'Location',
-    subtitle: 'Address, map pin, nearby campuses',
+    subtitle: 'Address, suburb, state, postcode, and campus',
     formSectionIds: ['section-location'],
     step: 2,
   },
   {
     id: 'property',
     title: 'Property details',
-    subtitle: 'Bedrooms, bathrooms, and what the tenant is renting',
+    subtitle: 'Accommodation type, bedrooms, and state questions',
     formSectionIds: ['section-property-details'],
     step: 3,
   },
   {
     id: 'inclusions',
     title: 'Inclusions',
-    subtitle: 'Furnished, linen, and features',
+    subtitle: 'Furnished, linen, cleaning, and features',
     formSectionIds: ['section-inclusions-features'],
     step: 4,
   },
   {
     id: 'services',
     title: 'Utilities and compliance',
-    subtitle: 'Smoke alarms, utilities, and embedded networks',
+    subtitle: 'Smoke alarms, embedded networks, and strata',
     formSectionIds: ['section-services', 'section-ft6600-compliance', 'section-utilities'],
     step: 5,
   },
@@ -119,7 +119,7 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
   {
     id: 'pricing',
     title: 'Pricing',
-    subtitle: 'Rent, bond, occupants, surcharges',
+    subtitle: 'Rent, bond, availability, and surcharges',
     aiTag: 'price',
     formSectionIds: ['section-pricing-availability'],
     step: 7,
@@ -164,7 +164,7 @@ export function listingSectionSubtitle(id: ListingHubSectionId, state: string | 
   if (id !== 'services') return LISTING_HUB_SECTIONS.find((section) => section.id === id)?.subtitle ?? ''
   const code = (state ?? '').trim().toUpperCase()
   if (code === 'NSW') return 'Smoke alarms, embedded networks, and strata'
-  if (code === 'QLD' || code === 'VIC') return 'Utilities and how bills are shared'
+  if (code === 'QLD' || code === 'VIC') return 'Utilities, water, and how bills are shared'
   return 'Shown once the state is NSW, Queensland, or Victoria'
 }
 
@@ -367,7 +367,7 @@ export function computeListingHubHealth(
     photos: 'Add a few more photos to reach top-listing quality and rank higher in search.',
     pricing: 'Add rent and an available-from date so students can enquire with confidence.',
     description: 'Write a fuller description - students decide from the story of the place.',
-    basic: 'Finish Basic info (title and listing type) to unlock a clearer listing.',
+    basic: 'Finish Basic info (listing title) to unlock a clearer listing.',
     property: 'Confirm bedrooms and bathrooms so students can filter accurately.',
     location: 'Complete the address so we can pin the map and nearby campuses.',
     inclusions: 'Add inclusions or features so students know what is covered.',

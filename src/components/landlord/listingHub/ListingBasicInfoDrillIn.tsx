@@ -53,13 +53,6 @@ type Props = {
   listingState?: string | null
 }
 
-function isoToDisplay(iso: string): string {
-  if (!iso || iso.length < 10) return ''
-  const [y, m, d] = iso.slice(0, 10).split('-')
-  if (!y || !m || !d) return ''
-  return `${d}/${m}/${y}`
-}
-
 export default function ListingBasicInfoDrillIn({
   propertyId,
   isSetupMode,
@@ -411,33 +404,6 @@ export default function ListingBasicInfoDrillIn({
           </p>
         </div>
 
-        <div className="mb-[22px]">
-          <label
-            htmlFor="hub-available-from"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]"
-          >
-            Available from
-          </label>
-          <div className="flex items-center gap-2.5 rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3">
-            <span className="text-[var(--quni-ink-5)]" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </span>
-            <input
-              id="hub-available-from"
-              type="date"
-              value={availableFrom}
-              onChange={(e) => setAvailableFrom(e.target.value)}
-              className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-[var(--quni-ink)] outline-none"
-            />
-            <span className="shrink-0 text-xs text-[var(--quni-ink-5)]">
-              {availableFrom ? isoToDisplay(availableFrom) : 'dd/mm/yyyy'}
-            </span>
-          </div>
-        </div>
-
         <div className="mb-[18px] flex items-center gap-3 rounded-xl border border-[var(--quni-line)] bg-white p-3.5">
           <div className="min-w-0 flex-1">
             <p className="mb-0.5 text-sm font-semibold text-[var(--quni-ink)]">Open to non-students</p>
@@ -467,7 +433,7 @@ export default function ListingBasicInfoDrillIn({
           <p className="text-[12.5px] leading-snug text-[var(--quni-ink-4)]">
             {basicDone
               ? 'Looking good - saving turns Basic info green on your listing health.'
-              : 'Add a listing title and listing type to complete this section and turn it green.'}
+              : 'Add a listing title to complete this section and turn it green.'}
           </p>
         </div>
       </div>

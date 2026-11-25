@@ -18,6 +18,14 @@ import {
   isNswT3ListingFields,
 } from '../lib/tenancy/nswT3ComplianceAttestation'
 import { propertyHasCurrentNswT3ComplianceAttestation } from '../lib/tenancy/nswT3ComplianceAttestationPersist'
+import {
+  listingDashboardPublishFieldBlock,
+  listingNeedsVicRoomingAttestation,
+  vicRoomingOperatorAttestationIsCurrent,
+  type ListingDashboardPublishFields,
+} from '../lib/tenancy/listingDashboardPublishBlock'
+import { fetchCurrentVicRoomingOperatorAttestation } from '../lib/tenancy/recordVicRoomingOperatorAttestation'
+import { vicRoomingPayMethodsFromRow } from '../../api/lib/tenancy/vicRoomingHouse'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { requestSiteRebuild } from '../lib/triggerSiteRebuild'
@@ -69,6 +77,49 @@ async function assertNswT3ComplianceBeforeActivate(
   return ok ? null : NSW_T3_COMPLIANCE_BLOCKED_MESSAGE
 }
 
+const LISTING_PUBLISH_CHECK_COLUMNS =
+  'state, property_type, is_registered_rooming_house, shared_areas, additional_charges, room_description, vic_premises_occupant_capacity, rooming_house_registration_number, vic_rooming_house_operator_licence_number, vic_rooming_operator_accepts_electronic_service, vic_rooming_house_rules, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft'
+
+async function assertListingCanGoLive(
+  property: LandlordPropertyForListingActions,
+): Promise<string | null> {
+  const t3Block = await assertNswT3ComplianceBeforeActivate(property)
+  if (t3Block) return t3Block
+
+  const { data, error } = await supabase
+    .from('properties')
+    .select(LISTING_PUBLISH_CHECK_COLUMNS)
+    .eq('id', property.id)
+    .maybeSingle()
+  if (error || !data) return 'Could not check this listing before publishing.'
+
+  const fields: ListingDashboardPublishFields = {
+    state: data.state,
+    propertyType: data.property_type,
+    isRegisteredRoomingHouse: data.is_registered_rooming_house,
+    sharedAreas: data.shared_areas,
+    additionalCharges: data.additional_charges,
+    roomDescription: data.room_description,
+    capacity: data.vic_premises_occupant_capacity,
+    registrationNumber: data.rooming_house_registration_number,
+    operatorLicenceNumber: data.vic_rooming_house_operator_licence_number,
+    operatorAcceptsElectronicService: data.vic_rooming_operator_accepts_electronic_service,
+    houseRules: data.vic_rooming_house_rules,
+    pay: vicRoomingPayMethodsFromRow(data),
+    attestationCurrent: false,
+  }
+  if (listingNeedsVicRoomingAttestation(fields)) {
+    const att = await fetchCurrentVicRoomingOperatorAttestation(property.id)
+    if (!att.ok) return 'Could not check this listing before publishing.'
+    fields.attestationCurrent = vicRoomingOperatorAttestationIsCurrent(
+      att.row,
+      fields.registrationNumber,
+      fields.operatorLicenceNumber,
+    )
+  }
+  return listingDashboardPublishFieldBlock(fields)
+}
+
 function listingNeedsGoLiveConfirmation(property: LandlordPropertyForListingActions): boolean {
   return !propertyHasAuthorityToLetAttestation(property) || headTenantConsentMissing(property)
 }
@@ -98,7 +149,7 @@ export function useLandlordPropertyListingActions(args: {
         setAuthorityToLetPending({ property, intent: 'publish' })
         return
       }
-      const t3Block = await assertNswT3ComplianceBeforeActivate(property)
+      const t3Block = await assertListingCanGoLive(property)
       if (t3Block) {
         showToast({ kind: 'error', message: t3Block })
         return
@@ -154,7 +205,7 @@ export function useLandlordPropertyListingActions(args: {
         return
       }
       if (nextStatus === 'active') {
-        const t3Block = await assertNswT3ComplianceBeforeActivate(property)
+        const t3Block = await assertListingCanGoLive(property)
         if (t3Block) {
           showToast({ kind: 'error', message: t3Block })
           return

@@ -729,6 +729,68 @@ export interface Database {
           },
         ]
       }
+      property_vic_rooming_operator_attestations: {
+        Row: {
+          id: string
+          property_id: string | null
+          property_id_at_attestation: string
+          attested_by: string
+          attested_at: string
+          registration_number: string
+          operator_licence_number: string
+          registration_current_declared: boolean
+          licence_current_declared: boolean
+          warranty_version: string
+          premises_address: string | null
+          premises_suburb: string | null
+          premises_state: string | null
+          premises_postcode: string | null
+          superseded_at: string | null
+        }
+        Insert: {
+          id?: string
+          property_id?: string | null
+          property_id_at_attestation?: string
+          attested_by?: string
+          attested_at?: string
+          registration_number: string
+          operator_licence_number: string
+          registration_current_declared: boolean
+          licence_current_declared: boolean
+          warranty_version: string
+          premises_address?: string | null
+          premises_suburb?: string | null
+          premises_state?: string | null
+          premises_postcode?: string | null
+          superseded_at?: string | null
+        }
+        Update: {
+          id?: string
+          property_id?: string | null
+          property_id_at_attestation?: string
+          attested_by?: string
+          attested_at?: string
+          registration_number?: string
+          operator_licence_number?: string
+          registration_current_declared?: boolean
+          licence_current_declared?: boolean
+          warranty_version?: string
+          premises_address?: string | null
+          premises_suburb?: string | null
+          premises_state?: string | null
+          premises_postcode?: string | null
+          superseded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'property_vic_rooming_operator_attestations_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       student_profiles: {
         Row: {
           id: string
