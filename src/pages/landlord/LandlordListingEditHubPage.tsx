@@ -14,7 +14,13 @@ import {
   listingHubPath,
   type ListingHubHealthInput,
 } from '../../lib/listingEditHubHealth'
-import { listingOwnerOrPublicPreviewHref, readListingWizardResume } from '../../lib/listingHubWizard'
+import {
+  listingHubWizardNextHref,
+  listingOwnerOrPublicPreviewHref,
+  readListingWizardResume,
+} from '../../lib/listingHubWizard'
+import { isListingAgreementState } from '../../lib/listingAgreementState'
+import { postcodeStateConflictMessage } from '../../lib/australianPostcodeState'
 import {
   patchLandlordPropertyDraftBasic,
   patchLandlordPropertyEditDraftBasic,
@@ -214,7 +220,7 @@ export default function LandlordListingEditHubPage() {
         })
         setDraftTick((n) => n + 1)
         if (intent === 'next') {
-          navigate(listingHubPath({ propertyId: null, view: 'property' }))
+          navigate(listingHubWizardNextHref(null, 'basic'))
         } else {
           navigate(listingHubPath({ propertyId: null }), { state: { listingHubIntent: true } })
         }
@@ -232,7 +238,7 @@ export default function LandlordListingEditHubPage() {
           roomType: values.roomType || 'apartment',
           isRegisteredRoomingHouse: values.isRegisteredRoomingHouse,
         })
-        navigate(listingHubPath({ propertyId, view: 'property' }))
+        navigate(listingHubWizardNextHref(propertyId, 'basic', { state: property?.state }))
         return
       }
 
@@ -272,7 +278,7 @@ export default function LandlordListingEditHubPage() {
       await reload()
 
       if (intent === 'next') {
-        navigate(listingHubPath({ propertyId, view: 'property' }))
+        navigate(listingHubWizardNextHref(propertyId, 'basic', { state: property?.state }))
       } else {
         navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
       }
@@ -283,15 +289,21 @@ export default function LandlordListingEditHubPage() {
     }
   }
 
+  const hubListingState = property?.state ?? (propertyId ? null : healthFromDraft().state)
+  const hubPostcode = property?.postcode ?? (propertyId ? '' : healthFromDraft().postcode)
+  const hubWritesBlocked =
+    (Boolean(hubListingState) && !isListingAgreementState(hubListingState)) ||
+    Boolean(postcodeStateConflictMessage(hubPostcode, hubListingState))
+
   const hubActionItems: AppActionBarItem[] = useMemo(() => {
     const icons = { 'exit-listings': ChevronLeft, health: Activity, preview: Eye } as const
-    return listingHubActionBarItemSpecs(previewHref != null).map((spec) => ({
+    return listingHubActionBarItemSpecs(previewHref != null, { writesDisabled: hubWritesBlocked }).map((spec) => ({
       ...spec,
       icon: icons[spec.id as keyof typeof icons],
       ...(spec.id === 'exit-listings' ? { to: LANDLORD_LISTINGS_EXIT_HREF } : {}),
-      ...(spec.id === 'preview' && previewHref ? { to: previewHref } : {}),
+      ...(spec.id === 'preview' && previewHref && !hubWritesBlocked ? { to: previewHref } : {}),
     }))
-  }, [previewHref])
+  }, [previewHref, hubWritesBlocked])
 
   /**
    * `null` when `isBasic` - ListingBasicInfoDrillIn owns registration.
@@ -344,6 +356,8 @@ export default function LandlordListingEditHubPage() {
         error={saveError}
         onSave={saveBasic}
         onCancel={() => navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })}
+        writesDisabled={hubWritesBlocked}
+        listingState={hubListingState}
       />
     )
   }
@@ -355,7 +369,9 @@ export default function LandlordListingEditHubPage() {
       thumbUrl={property?.thumbUrl ?? null}
       statusLabel={statusLabel}
       health={health}
+      listingState={hubListingState}
       previewHref={previewHref}
+      previewDisabled={hubWritesBlocked}
     />
   )
 }

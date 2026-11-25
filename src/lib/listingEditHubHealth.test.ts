@@ -72,7 +72,8 @@ describe('listingEditHubHealth', () => {
     expect(health.statuses.property).toBe('complete')
     expect(health.statuses.location).toBe('complete')
     expect(health.completeCount).toBe(3)
-    expect(health.score).toBe(38)
+    expect(health.statuses.services).toBe('notstarted')
+    expect(health.score).toBe(33)
   })
 
   it('maps hub listing type tiles to accommodation fields', () => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
 import {
+  emptyVicRoomingHouseFieldValues,
   VicRoomingHouseFields,
   type VicRoomingHouseFieldValues,
 } from '../../components/landlord/VicRoomingHouseFields'
@@ -24,10 +25,24 @@ import {
   type AdminLandlordOption,
   adminNewListingStatus,
   filterLandlordOptionsForSearch,
+  AU_LISTING_STATE_CODES,
   listingStateFromLandlordProfile,
   parseAdminConciergeLandlordProfileId,
   skipListingAttestationsForAdmin,
 } from '../../lib/adminConciergeListing'
+import { listingStateFieldClears } from '../../lib/listingFormStateChange'
+import {
+  hasListingStateSpecificAnswers,
+  isListingAgreementState,
+  listingStateChangeConfirmMessage,
+  listingStateChangeNeedsConfirm,
+  unsupportedListingStateMessage,
+} from '../../lib/listingAgreementState'
+import {
+  postcodeStateConflictMessage,
+  stateFromAustralianPostcode,
+} from '../../lib/australianPostcodeState'
+import { listingFormNavItems } from '../../lib/listingEditHubHealth'
 import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
@@ -59,8 +74,9 @@ import {
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
-  ACCOMMODATION_UI_OPTIONS,
   accommodationChoiceFromFields,
+  accommodationIntroForListingState,
+  accommodationOptionsForListingState,
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
   roomForRentOptions,
@@ -273,19 +289,6 @@ function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: bool
 /** Checkbox styling - single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
-
-const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
-  { id: 'section-basic-info', label: 'Basic info' },
-  { id: 'section-property-details', label: 'Property details' },
-  { id: 'section-inclusions-features', label: 'Inclusions' },
-  { id: 'section-utilities', label: 'Utilities' },
-  { id: 'section-ft6600-compliance', label: 'Compliance' },
-  { id: 'section-house-rules', label: 'Rules' },
-  { id: 'section-location', label: 'Location' },
-  { id: 'section-pricing-availability', label: 'Pricing' },
-  { id: 'section-description', label: 'Description' },
-  { id: 'section-photos', label: 'Photos' },
-]
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 type FeatureRow = Database['public']['Tables']['features']['Row']
@@ -968,7 +971,11 @@ export default function LandlordPropertyFormPage() {
 
   const [address, setAddress] = useState('')
   const [suburb, setSuburb] = useState('')
-  const [state, setState] = useState('NSW')
+  const [state, setState] = useState('')
+  const applyListingStateRef = useRef<(next: string) => void>(() => {})
+  const stateSpecificAnswersRef = useRef(false)
+  /** True after the landlord, a saved listing, or an admin profile sets the state. */
+  const stateChosenByLandlordRef = useRef(false)
   const [postcode, setPostcode] = useState('')
 
   const applyAdminLandlordProfile = useCallback(
@@ -977,7 +984,10 @@ export default function LandlordPropertyFormPage() {
       if (isEdit) return
       const opt = landlordOptions.find((o) => o.id === id)
       const st = listingStateFromLandlordProfile(opt?.state)
-      if (st) setState(st)
+      if (st) {
+        stateChosenByLandlordRef.current = true
+        applyListingStateRef.current(st)
+      }
     },
     [isEdit, landlordOptions],
   )
@@ -1022,23 +1032,30 @@ export default function LandlordPropertyFormPage() {
     [state, propertyListingType],
   )
 
-  const showNswFt6600ComplianceSection = state.trim().toUpperCase() === 'NSW'
-  const showPropertyUtilitiesSection = ['QLD', 'VIC'].includes(state.trim().toUpperCase())
+  const listingStateCode = listingStateFromLandlordProfile(state)
+  const postcodeStateConflict = postcodeStateConflictMessage(postcode, listingStateCode ?? '')
+  const unsupportedListingState = Boolean(listingStateCode) && !isListingAgreementState(listingStateCode)
+  const listingWritesBlocked = unsupportedListingState || Boolean(postcodeStateConflict)
+  const showNswFt6600ComplianceSection = listingStateCode === 'NSW'
+  const showPropertyUtilitiesSection = listingStateCode === 'QLD' || listingStateCode === 'VIC'
+  const accommodationOptions = accommodationOptionsForListingState(listingStateCode)
+  const accommodationIntro = accommodationIntroForListingState(listingStateCode ?? '')
+  const displayedAccommodationChoice =
+    listingStateCode === 'VIC' && accommodationChoice === 'registered_rooming_house'
+      ? 'private_room_landlord_off_site'
+      : accommodationChoice
 
   const [utilitiesForm, setUtilitiesForm] = useState<LandlordPropertyUtilitiesFormState>(
     emptyLandlordPropertyUtilitiesFormState(),
   )
 
   const formNavSections = useMemo(() => {
-    let sections = LANDLORD_FORM_NAV_SECTIONS
-    if (!showNswFt6600ComplianceSection) {
-      sections = sections.filter((s) => s.id !== 'section-ft6600-compliance')
-    }
-    if (!showPropertyUtilitiesSection) {
-      sections = sections.filter((s) => s.id !== 'section-utilities')
+    const sections = listingFormNavItems(listingStateCode)
+    if (unsupportedListingState) {
+      return sections.filter((s) => s.id === 'section-basic-info' || s.id === 'section-location')
     }
     return sections
-  }, [showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
+  }, [listingStateCode, unsupportedListingState])
 
   const showFormSection = useCallback(
     (sectionDomId: string) => {
@@ -1120,6 +1137,56 @@ export default function LandlordPropertyFormPage() {
   const [ft6600Compliance, setFt6600Compliance] = useState<LandlordFt6600ComplianceFormState>(
     emptyLandlordFt6600ComplianceFormState,
   )
+
+  const applyListingState = useCallback((nextRaw: string) => {
+    const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    const from = listingStateFromLandlordProfile(state) ?? ''
+    if (
+      listingStateChangeNeedsConfirm({
+        fromState: from,
+        toState: next,
+        hasSpecificAnswers: stateSpecificAnswersRef.current,
+      }) &&
+      !window.confirm(listingStateChangeConfirmMessage(from))
+    ) {
+      return
+    }
+    const clears = listingStateFieldClears(state, next)
+    setState(next)
+    if (clears.clearNswBoardingParticulars) {
+      setSharedAreas({ ...EMPTY_NSW_T3_SHARED_AREAS })
+      setAdditionalCharges([])
+      setT3ComplianceForm(emptyNswT3ComplianceFormState())
+      setT3ComplianceCompleteOnLoad(false)
+    }
+    if (clears.clearRoomDescription) setRoomDescription('')
+    if (clears.clearNswCompliance) {
+      setFt6600Compliance(emptyLandlordFt6600ComplianceFormState())
+      setWaterSeparatelyMeteredAgreed(false)
+      setWaterSeparatelyMeteredAttestedAt(null)
+    }
+    if (clears.clearQldRooming) {
+      setQldRoomingForm(emptyQldRoomingListingFormState())
+      setQldHouseRulesCommonAreas('')
+      setQldHouseRulesExtras({})
+      setRoomsRentedToResidents('')
+      setQldBondRemittancePreference('tenant_choice')
+    }
+    if (clears.clearVicRooming) setVicRoomingFields(emptyVicRoomingHouseFieldValues())
+    if (clears.clearSharedUtilities) setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
+    if (clears.clearRoomingHouseRegistration) {
+      setIsRegisteredRoomingHouse(false)
+      setRoomingHouseRegistrationNumber('')
+    }
+  }, [state])
+  applyListingStateRef.current = applyListingState
+
+  useEffect(() => {
+    if (stateChosenByLandlordRef.current) return
+    const inferred = stateFromAustralianPostcode(postcode)
+    if (!inferred || inferred === listingStateCode) return
+    applyListingStateRef.current(inferred)
+  }, [postcode, listingStateCode])
 
   const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
     ? ft6600Compliance.waterUsageChargedSeparately === 'yes'
@@ -1212,8 +1279,8 @@ export default function LandlordPropertyFormPage() {
 
   const bondWeekCap = isNswT3Listing ? T3_MAX_SECURITY_DEPOSIT_WEEKS : MAX_BOND_WEEKS
   const serviceTierAvailability = useMemo(
-    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
-    [state, resolvedPropertyTier, serviceTierResolverOptions],
+    () => resolveServiceTierAvailability(listingStateCode ?? '', resolvedPropertyTier, serviceTierResolverOptions),
+    [listingStateCode, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
   const formBondWording = useMemo(() => {
@@ -1345,6 +1412,31 @@ export default function LandlordPropertyFormPage() {
 
   const [qldBondRemittancePreference, setQldBondRemittancePreference] =
     useState<QldBondRemittancePreference>('tenant_choice')
+  stateSpecificAnswersRef.current = hasListingStateSpecificAnswers(state, {
+    nsw: {
+      sharedAreas,
+      additionalCharges,
+      t3ComplianceForm,
+      roomDescription,
+      ft6600Compliance,
+      waterSeparatelyMeteredAgreed,
+      waterSeparatelyMeteredAttestedAt,
+    },
+    qld: {
+      qldRoomingForm,
+      qldHouseRulesCommonAreas,
+      qldHouseRulesExtras,
+      roomsRentedToResidents,
+      roomDescription,
+    },
+    vic: vicRoomingFields,
+    utilities: utilitiesForm,
+    registration: {
+      isRegisteredRoomingHouse,
+      roomingHouseRegistrationNumber,
+    },
+    qldBondIsCustom: qldBondRemittancePreference !== 'tenant_choice',
+  })
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
 
@@ -1578,13 +1670,17 @@ export default function LandlordPropertyFormPage() {
     setHouseRulesResetAck(false)
     setAddress('')
     setSuburb('')
-    setState('NSW')
+    stateChosenByLandlordRef.current = false
+    setState('')
     setPostcode('')
     if (role === 'admin' && adminLandlordId) {
       const st = listingStateFromLandlordProfile(
         landlordOptions.find((o) => o.id === adminLandlordId)?.state,
       )
-      if (st) setState(st)
+      if (st) {
+        stateChosenByLandlordRef.current = true
+        setState(st)
+      }
     }
     setLatitude(null)
     setLongitude(null)
@@ -1786,7 +1882,8 @@ export default function LandlordPropertyFormPage() {
         setOpenToNonStudents(Boolean(prop.open_to_non_students))
         setAddress(prop.address ?? '')
         setSuburb(prop.suburb ?? '')
-        setState(prop.state ?? 'NSW')
+        stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(prop.state))
+        setState(listingStateFromLandlordProfile(prop.state) ?? '')
         setPostcode(prop.postcode ?? '')
         setLatitude(prop.latitude ?? null)
         setLongitude(prop.longitude ?? null)
@@ -1974,7 +2071,8 @@ export default function LandlordPropertyFormPage() {
       setSelectedFeatureIds(new Set(featureIds))
       setAddress(parsed.address)
       setSuburb(parsed.suburb)
-      setState(parsed.state)
+      stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(parsed.state))
+      setState(listingStateFromLandlordProfile(parsed.state) ?? '')
       setPostcode(parsed.postcode)
       setLatitude(parsed.latitude)
       setLongitude(parsed.longitude)
@@ -2727,6 +2825,21 @@ export default function LandlordPropertyFormPage() {
       setSubmitError('Title is required.')
       return
     }
+    if (!listingStateCode) {
+      setSubmitError('Choose the state before saving. The questions below depend on it.')
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (!isListingAgreementState(listingStateCode)) {
+      reportSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (postcodeStateConflict) {
+      reportSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
       setSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE)
@@ -3130,7 +3243,7 @@ export default function LandlordPropertyFormPage() {
       weekly_cleaning_service: weeklyCleaning,
       address: address.trim() || null,
       suburb: suburb.trim() || null,
-      state: state.trim() || 'NSW',
+      state: listingStateCode,
       postcode: postcode.trim() || null,
       latitude: resolvedLat ?? null,
       longitude: resolvedLon ?? null,
@@ -3175,7 +3288,7 @@ export default function LandlordPropertyFormPage() {
             gas_embedded_network: null,
             strata_bylaws_applicable: null,
           }),
-      ...(state.trim().toUpperCase() === 'VIC'
+      ...(listingStateCode === 'VIC'
         ? {
             vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
             ...(vicRoomingRoute.kind === 'rooming'
@@ -3193,9 +3306,36 @@ export default function LandlordPropertyFormPage() {
                   rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
                   is_registered_rooming_house: true,
                 }
-              : {}),
+              : {
+                  vic_rooming_house_operator_licence_number: null,
+                  vic_rooming_house_rules: null,
+                  vic_rooming_items_let_with_room: null,
+                  vic_rooming_operator_accepts_electronic_service: null,
+                  vic_rooming_pay_direct_debit: false,
+                  vic_rooming_pay_bank_deposit: false,
+                  vic_rooming_pay_cash: false,
+                  vic_rooming_pay_cheque: false,
+                  vic_rooming_pay_bpay: false,
+                  vic_rooming_pay_other_eft: false,
+                }),
           }
+        : {
+            vic_premises_occupant_capacity: null,
+            vic_rooming_house_operator_licence_number: null,
+            vic_rooming_house_rules: null,
+            vic_rooming_items_let_with_room: null,
+            vic_rooming_operator_accepts_electronic_service: null,
+            vic_rooming_pay_direct_debit: false,
+            vic_rooming_pay_bank_deposit: false,
+            vic_rooming_pay_cash: false,
+            vic_rooming_pay_cheque: false,
+            vic_rooming_pay_bpay: false,
+            vic_rooming_pay_other_eft: false,
+          }),
+      ...(!showNswFt6600ComplianceSection && !showPropertyUtilitiesSection
+        ? { water_separately_metered_efficient_attested_at: null, utilities_services: null }
         : {}),
+      ...(showNswFt6600ComplianceSection ? { utilities_services: null } : {}),
       ...attestationPatch,
       ...consentPatch,
       ...waterAttestationPatch,
@@ -3429,6 +3569,16 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleSaveDraftAndLeave = useCallback(async () => {
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (postcodeStateConflict) {
+      setSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
@@ -3460,7 +3610,7 @@ export default function LandlordPropertyFormPage() {
               weekly_cleaning_service: weeklyCleaning,
               address: address.trim() || null,
               suburb: suburb.trim() || null,
-              state: state.trim() || 'NSW',
+              state: listingStateCode,
               postcode: postcode.trim() || null,
               latitude,
               longitude,
@@ -3476,7 +3626,7 @@ export default function LandlordPropertyFormPage() {
                 isNswT3Listing || qldRoomCard || vicRoomingRoute.kind === 'rooming'
                   ? (vicRoomingRoute.kind === 'rooming' ? vicRoomingFields.roomNumber : roomDescription).trim() || null
                   : null,
-              ...(state.trim().toUpperCase() === 'VIC'
+              ...(listingStateCode === 'VIC'
                 ? {
                     vic_premises_occupant_capacity: parseVicPremisesOccupantCapacity(vicRoomingFields.capacity),
                     ...(vicRoomingRoute.kind === 'rooming'
@@ -3568,6 +3718,8 @@ export default function LandlordPropertyFormPage() {
       navigate('/landlord/dashboard?tab=listings')
     }
   }, [
+    listingStateCode,
+    postcodeStateConflict,
     persistLandlordPropertyDraft,
     flashDraftSavedIndicator,
     isEdit,
@@ -3628,6 +3780,8 @@ export default function LandlordPropertyFormPage() {
 
   const flushDraftToAccount = useCallback(async () => {
     persistLandlordPropertyDraft()
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) return
+    if (postcodeStateConflict) return
     if (!propertyId || !user?.id) return
     const t = title.trim()
     if (!t) return
@@ -3647,7 +3801,7 @@ export default function LandlordPropertyFormPage() {
         weekly_cleaning_service: weeklyCleaning,
         address: address.trim() || null,
         suburb: suburb.trim() || null,
-        state: state.trim() || 'NSW',
+        state: listingStateCode,
         postcode: postcode.trim() || null,
         latitude,
         longitude,
@@ -3668,6 +3822,7 @@ export default function LandlordPropertyFormPage() {
     await saveQldRoomingStage2(propertyId)
   }, [
     persistLandlordPropertyDraft,
+    postcodeStateConflict,
     propertyId,
     user?.id,
     title,
@@ -3700,11 +3855,16 @@ export default function LandlordPropertyFormPage() {
   const handleWizardPrev = useCallback(() => {
     if (!hubSectionId) return
     persistLandlordPropertyDraft()
-    navigate(listingHubWizardPrevHref(propertyId, hubSectionId))
-  }, [hubSectionId, persistLandlordPropertyDraft, navigate, propertyId])
+    navigate(listingHubWizardPrevHref(propertyId, hubSectionId, listingStateCode))
+  }, [hubSectionId, listingStateCode, persistLandlordPropertyDraft, navigate, propertyId])
 
   const handleWizardNext = useCallback(async () => {
     if (!hubSectionId) return
+    if (listingStateCode && !isListingAgreementState(listingStateCode) && hubSectionId !== 'basic') {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     const stepError = listingHubWizardStepError(hubSectionId, { title, rentPerWeek })
     if (stepError) {
       revealWizardStepError(hubSectionId, stepError)
@@ -3715,6 +3875,7 @@ export default function LandlordPropertyFormPage() {
     const href = listingHubWizardNextHref(propertyId, hubSectionId, {
       status: existingListingStatus,
       slug: existingSlug,
+      state: listingStateCode,
     })
     const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId) && isWizardSetupMode
     if (isWizardSetupMode && (goingToPreview || propertyId)) {
@@ -3739,6 +3900,7 @@ export default function LandlordPropertyFormPage() {
     navigate(href)
   }, [
     hubSectionId,
+    listingStateCode,
     title,
     rentPerWeek,
     persistLandlordPropertyDraft,
@@ -3752,6 +3914,16 @@ export default function LandlordPropertyFormPage() {
 
   const handleOpenPreview = useCallback(async () => {
     if (!footerPreviewHref) return
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (postcodeStateConflict) {
+      setSubmitError(postcodeStateConflict)
+      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     persistLandlordPropertyDraft()
     if (propertyId && isWizardSetupMode) {
       try {
@@ -3771,7 +3943,7 @@ export default function LandlordPropertyFormPage() {
       }
     }
     navigate(footerPreviewHref)
-  }, [footerPreviewHref, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
+  }, [footerPreviewHref, listingStateCode, postcodeStateConflict, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
@@ -3779,9 +3951,14 @@ export default function LandlordPropertyFormPage() {
         saving: submitting,
         isSetupMode: isWizardSetupMode,
         isLiveListing: !isWizardSetupMode,
-        wizardStep: listingHubWizardStepProgress(hubSectionId),
+        wizardStep: listingHubWizardStepProgress(hubSectionId, listingStateCode),
+        writesDisabled: listingWritesBlocked,
       }).map((spec) => ({
         ...spec,
+        disabled:
+          spec.disabled ||
+          (listingWritesBlocked && (spec.id === 'draft' || spec.id === 'save' || spec.id === 'preview')) ||
+          (unsupportedListingState && hubSectionId !== 'basic' && spec.id === 'next'),
         icon: spec.stepProgress ? undefined : listingChromeActionIcon(spec),
         onClick:
           spec.id === 'step'
@@ -3794,7 +3971,7 @@ export default function LandlordPropertyFormPage() {
                   ? () => void handleWizardNext()
                   : () => formRef.current?.requestSubmit(),
       })),
-    [submitting, isWizardSetupMode, hubSectionId, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
+    [submitting, isWizardSetupMode, hubSectionId, listingStateCode, listingWritesBlocked, unsupportedListingState, handleSaveDraftAndLeave, handleWizardPrev, handleWizardNext],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -3843,7 +4020,7 @@ export default function LandlordPropertyFormPage() {
     footerPreviewHref && !isHubSectionMode ? (
       <button
         type="button"
-        disabled={submitting}
+        disabled={submitting || listingWritesBlocked}
         onClick={() => void handleOpenPreview()}
         className={className}
       >
@@ -3851,10 +4028,10 @@ export default function LandlordPropertyFormPage() {
       </button>
     ) : null
   const desktopBannerPreviewButton = desktopTopPreviewButton(
-    'hidden sm:inline-flex items-center rounded-lg bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+    'hidden sm:inline-flex items-center rounded-lg bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50',
   )
   const desktopHeaderPreviewButton = desktopTopPreviewButton(
-    'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50',
+    'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50',
   )
 
   return (
@@ -3916,7 +4093,7 @@ export default function LandlordPropertyFormPage() {
                 ) : null}
                 {hubSectionMeta ? (
                   <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
-                    {listingHubWizardStepCaption(listingHubWizardStepProgress(hubSectionId))}
+                    {listingHubWizardStepCaption(listingHubWizardStepProgress(hubSectionId, listingStateCode))}
                   </span>
                 ) : null}
               </div>
@@ -4051,6 +4228,12 @@ export default function LandlordPropertyFormPage() {
             </div>
           )}
 
+          {unsupportedListingState && isHubSectionMode && hubSectionId !== 'location' ? (
+            <p className="text-sm text-amber-950" role="status">
+              {unsupportedListingStateMessage(listingStateCode ?? '')}
+            </p>
+          ) : null}
+
           {role === 'admin' && (
             <section className="rounded-2xl border border-amber-100 bg-amber-50/50 p-8 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Listing owner</h2>
@@ -4112,20 +4295,239 @@ export default function LandlordPropertyFormPage() {
             'section-basic-info',
           )}
 
-          {showFormSection('section-property-details') &&
+          {showFormSection('section-location') &&
+            sectionClass(
+            'Location',
+            <div className="space-y-4">
+              <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
+                This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
+                show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
+                casual browsers.
+              </p>
+              <div>
+                <label htmlFor="pf-addr" className={labelClass}>
+                  Street address
+                </label>
+                <input
+                  id="pf-addr"
+                  value={address}
+                  onChange={(e) => {
+                    addressDirtyRef.current = true
+                    setAddress(e.target.value)
+                  }}
+                  className={inputClass}
+                  placeholder="e.g. Unit 401, 311 Hume Highway"
+                  autoComplete="street-address"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
+                  street address; the unit is still saved on your listing.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="pf-suburb" className={labelClass}>
+                    Suburb
+                  </label>
+                  <input
+                    id="pf-suburb"
+                    value={suburb}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setSuburb(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pf-state" className={labelClass}>
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="pf-state"
+                    value={listingStateCode ?? ''}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      stateChosenByLandlordRef.current = e.target.value !== ''
+                      applyListingState(e.target.value)
+                    }}
+                    className={inputClass}
+                    required
+                  >
+                    <option value="">Select a state</option>
+                    {AU_LISTING_STATE_CODES.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  {!listingStateCode ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Bond wording, compliance, and rooming house questions stay hidden until this is set.
+                    </p>
+                  ) : null}
+                  {listingStateCode && !isListingAgreementState(listingStateCode) ? (
+                    <p className="mt-2 text-sm text-amber-950" role="status">
+                      {unsupportedListingStateMessage(listingStateCode)}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="sm:col-span-2 max-sm:col-span-1">
+                  <label htmlFor="pf-pc" className={labelClass}>
+                    Postcode
+                  </label>
+                  <input
+                    id="pf-pc"
+                    value={postcode}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setPostcode(e.target.value)
+                    }}
+                    aria-invalid={postcodeStateConflict ? true : undefined}
+                    className={
+                      postcodeStateConflict
+                        ? `${inputClass} border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]`
+                        : inputClass
+                    }
+                  />
+                  {postcodeStateConflict ? (
+                    <p className="mt-1 text-sm text-red-700" role="alert">
+                      {postcodeStateConflict}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <div>
+                <span className={labelClass}>Nearest university campus</span>
+                <p className="text-xs text-gray-500 mb-2">
+                  We list the closest campuses from your address. Tap a suggestion to select it; your current choice is
+                  marked <span className="font-medium text-gray-700">Selected</span>.{' '}
+                  <span className="font-medium text-gray-700">New</span> listings save the nearest match automatically
+                  unless you override.
+                </p>
+
+                {nearbyCampusError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    {nearbyCampusError}
+                  </p>
+                )}
+                {nearbyCampusSuggestions.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
+                    <div className="space-y-2">
+                      {nearbyCampusSuggestions.map((s) => (
+                        <button
+                          key={s.campusId}
+                          type="button"
+                          onClick={() => applyNearbySuggestion(s)}
+                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {s.universityLabel}: {s.campusLabel}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-[11px] text-gray-500">
+                            {universityId === s.universityId && campusId === s.campusId
+                              ? 'Selected'
+                              : 'Tap to select'}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Based on approximate geocoding from your address.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="pf-add-another-uni"
+                        checked={showAddAnotherUniversity}
+                        onChange={(e) => {
+                          setShowAddAnotherUniversity(e.target.checked)
+                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
+                        }}
+                        disabled={refsLoading || nearbyCampusLoading}
+                        className={LANDLORD_FORM_CHECKBOX_CLASS}
+                      />
+                      <span className="text-sm text-gray-700">Add another university (optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      aria-label="Help: additional university"
+                      aria-expanded={addAnotherUniversityHelpOpen}
+                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
+                    >
+                      ?
+                    </button>
+                  </div>
+                  {addAnotherUniversityHelpOpen && (
+                    <div
+                      role="tooltip"
+                      className="quni-card mt-2 max-w-sm p-3 text-xs text-gray-600"
+                    >
+                      You can choose one additional university and campus for this listing-for example if your property
+                      is a better fit for a campus other than the closest match we suggested above.
+                    </div>
+                  )}
+                </div>
+
+                {showAddAnotherUniversity && (
+                  <div className="mt-4">
+                    <UniversityCampusSelect
+                      universityId={universityId || null}
+                      campusId={campusId || null}
+                      onUniversityChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        universityIdRef.current = id
+                        setUniversityId(id)
+                        campusIdRef.current = ''
+                        setCampusId('')
+                      }}
+                      onCampusChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        campusIdRef.current = id
+                        setCampusId(id)
+                      }}
+                      referenceScope="full"
+                      showState
+                      disabled={refsLoading || nearbyCampusLoading}
+                      labelClassName={labelClass}
+                      universitySelectClassName={inputClass}
+                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+                      universityLabel="University"
+                      campusLabel="Campus"
+                      universityIdAttr="pf-uni"
+                      campusIdAttr="pf-campus"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>,
+            'section-location',
+          )}
+
+          {!unsupportedListingState && showFormSection('section-property-details') &&
             sectionClass(
             'Property details',
             <div className="space-y-4">
+              {listingStateCode ? (
+              <>
               <div className="space-y-3">
                 <p className="text-sm font-medium text-gray-800">What is the tenant renting?</p>
-                <p className="text-xs text-gray-500">
-                  Choose the arrangement that matches your listing. Rooming house is for a registered boarding house, not
-                  a normal share. For a room in a share house, enter total bedrooms and bathrooms for the whole property,
-                  not just the room you are advertising.
-                </p>
+                <p className="text-xs text-gray-500">{accommodationIntro}</p>
                 <div className="grid grid-cols-1 gap-2">
-                  {ACCOMMODATION_UI_OPTIONS.map((opt) => {
-                    const selected = accommodationChoice === opt.value
+                  {accommodationOptions.map((opt) => {
+                    const selected = displayedAccommodationChoice === opt.value
                     return (
                       <button
                         key={opt.value}
@@ -4149,7 +4551,7 @@ export default function LandlordPropertyFormPage() {
                   <p className="text-sm text-amber-950 leading-relaxed">{qldOffSiteRoomListingNote()}</p>
                 ) : null}
               </div>
-              {showRoomForRentSelect(accommodationChoice) ? (
+              {showRoomForRentSelect(displayedAccommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
               {qldRoomCard ? (
                 <QldSharesKitchenOrBathroomField
@@ -4191,7 +4593,7 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
-              {showRoomForRentSelect(accommodationChoice) && (
+              {showRoomForRentSelect(displayedAccommodationChoice) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
                     Room for rent
@@ -4202,25 +4604,25 @@ export default function LandlordPropertyFormPage() {
                     onChange={(e) => setRoomType(e.target.value as RoomType)}
                     className={inputClass}
                   >
-                    {roomForRentOptions(accommodationChoice).map(([v, lab]) => (
+                    {roomForRentOptions(displayedAccommodationChoice).map(([v, lab]) => (
                       <option key={v} value={v}>
                         {lab}
                       </option>
                     ))}
                   </select>
-                  {accommodationChoice === 'private_room_landlord_off_site' && (
+                  {displayedAccommodationChoice === 'private_room_landlord_off_site' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
                     </p>
                   )}
-                  {accommodationChoice === 'registered_rooming_house' && (
+                  {displayedAccommodationChoice === 'registered_rooming_house' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Identify the room you are listing. Registration number is required below.
                     </p>
                   )}
                 </div>
               )}
-              {isRegisteredRoomingHouse ? (
+              {isRegisteredRoomingHouse && listingStateCode !== 'VIC' ? (
                 <div>
                   <label htmlFor="pf-rooming-reg" className={labelClass}>
                     Rooming house registration number <span className="text-red-500">*</span>
@@ -4420,6 +4822,13 @@ export default function LandlordPropertyFormPage() {
               ) : null}
                 </div>
               ) : null}
+              </>
+              ) : (
+                <p className="text-sm text-gray-700">
+                  Choose a state above before these questions. Bond wording, compliance, and the rooming house fields
+                  depend on the state.
+                </p>
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="pf-bed" className={labelClass}>
@@ -4697,7 +5106,7 @@ export default function LandlordPropertyFormPage() {
             'section-property-details',
           )}
 
-          {showFormSection('section-inclusions-features') &&
+          {!unsupportedListingState && showFormSection('section-inclusions-features') &&
             sectionClass(
             'Inclusions & features',
             <div className="space-y-4">
@@ -4773,6 +5182,10 @@ export default function LandlordPropertyFormPage() {
             'section-inclusions-features',
           )}
 
+          {!unsupportedListingState &&
+          showFormSection('section-services') &&
+          (showPropertyUtilitiesSection || showNswFt6600ComplianceSection) ? (
+            <div id="section-services" className="scroll-mt-below-header space-y-8">
           {showFormSection('section-utilities') && showPropertyUtilitiesSection
             ? sectionClass(
                 'Utilities & water',
@@ -4801,7 +5214,7 @@ export default function LandlordPropertyFormPage() {
               )
             : null}
 
-          {showFormSection('section-ft6600-compliance') && showNswFt6600ComplianceSection
+          {!unsupportedListingState && showFormSection('section-ft6600-compliance') && showNswFt6600ComplianceSection
             ? sectionClass(
                 'Smoke alarms & compliance (NSW)',
                 <div className="space-y-5">
@@ -4856,8 +5269,10 @@ export default function LandlordPropertyFormPage() {
                 'section-ft6600-compliance',
               )
             : null}
+            </div>
+          ) : null}
 
-          {showFormSection('section-house-rules') &&
+          {!unsupportedListingState && showFormSection('section-house-rules') &&
             sectionClass(
             'House rules',
             <div className="space-y-6">
@@ -4965,199 +5380,7 @@ export default function LandlordPropertyFormPage() {
             'section-house-rules',
           )}
 
-          {showFormSection('section-location') &&
-            sectionClass(
-            'Location',
-            <div className="space-y-4">
-              <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
-                This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
-                show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
-                casual browsers.
-              </p>
-              <div>
-                <label htmlFor="pf-addr" className={labelClass}>
-                  Street address
-                </label>
-                <input
-                  id="pf-addr"
-                  value={address}
-                  onChange={(e) => {
-                    addressDirtyRef.current = true
-                    setAddress(e.target.value)
-                  }}
-                  className={inputClass}
-                  placeholder="e.g. Unit 401, 311 Hume Highway"
-                  autoComplete="street-address"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
-                  street address; the unit is still saved on your listing.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="pf-suburb" className={labelClass}>
-                    Suburb
-                  </label>
-                  <input
-                    id="pf-suburb"
-                    value={suburb}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setSuburb(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pf-state" className={labelClass}>
-                    State
-                  </label>
-                  <input
-                    id="pf-state"
-                    value={state}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setState(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="sm:col-span-2 max-sm:col-span-1">
-                  <label htmlFor="pf-pc" className={labelClass}>
-                    Postcode
-                  </label>
-                  <input
-                    id="pf-pc"
-                    value={postcode}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setPostcode(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <div>
-                <span className={labelClass}>Nearest university campus</span>
-                <p className="text-xs text-gray-500 mb-2">
-                  We list the closest campuses from your address. Tap a suggestion to select it; your current choice is
-                  marked <span className="font-medium text-gray-700">Selected</span>.{' '}
-                  <span className="font-medium text-gray-700">New</span> listings save the nearest match automatically
-                  unless you override.
-                </p>
-
-                {nearbyCampusError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {nearbyCampusError}
-                  </p>
-                )}
-                {nearbyCampusSuggestions.length > 0 && (
-                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
-                    <div className="space-y-2">
-                      {nearbyCampusSuggestions.map((s) => (
-                        <button
-                          key={s.campusId}
-                          type="button"
-                          onClick={() => applyNearbySuggestion(s)}
-                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-900 truncate">
-                              {s.universityLabel}: {s.campusLabel}
-                            </p>
-                            <p className="text-[11px] text-gray-500">
-                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-[11px] text-gray-500">
-                            {universityId === s.universityId && campusId === s.campusId
-                              ? 'Selected'
-                              : 'Tap to select'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-2">
-                      Based on approximate geocoding from your address.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        id="pf-add-another-uni"
-                        checked={showAddAnotherUniversity}
-                        onChange={(e) => {
-                          setShowAddAnotherUniversity(e.target.checked)
-                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
-                        }}
-                        disabled={refsLoading || nearbyCampusLoading}
-                        className={LANDLORD_FORM_CHECKBOX_CLASS}
-                      />
-                      <span className="text-sm text-gray-700">Add another university (optional)</span>
-                    </label>
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      aria-label="Help: additional university"
-                      aria-expanded={addAnotherUniversityHelpOpen}
-                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
-                    >
-                      ?
-                    </button>
-                  </div>
-                  {addAnotherUniversityHelpOpen && (
-                    <div
-                      role="tooltip"
-                      className="quni-card mt-2 max-w-sm p-3 text-xs text-gray-600"
-                    >
-                      You can choose one additional university and campus for this listing-for example if your property
-                      is a better fit for a campus other than the closest match we suggested above.
-                    </div>
-                  )}
-                </div>
-
-                {showAddAnotherUniversity && (
-                  <div className="mt-4">
-                    <UniversityCampusSelect
-                      universityId={universityId || null}
-                      campusId={campusId || null}
-                      onUniversityChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        universityIdRef.current = id
-                        setUniversityId(id)
-                        campusIdRef.current = ''
-                        setCampusId('')
-                      }}
-                      onCampusChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        campusIdRef.current = id
-                        setCampusId(id)
-                      }}
-                      referenceScope="full"
-                      showState
-                      disabled={refsLoading || nearbyCampusLoading}
-                      labelClassName={labelClass}
-                      universitySelectClassName={inputClass}
-                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
-                      universityLabel="University"
-                      campusLabel="Campus"
-                      universityIdAttr="pf-uni"
-                      campusIdAttr="pf-campus"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>,
-            'section-location',
-          )}
-
-          {showFormSection('section-pricing-availability') &&
+          {!unsupportedListingState && showFormSection('section-pricing-availability') &&
             sectionClass(
             'Pricing & availability',
             <div className="space-y-4">
@@ -5637,7 +5860,7 @@ export default function LandlordPropertyFormPage() {
             'section-pricing-availability',
           )}
 
-          {showFormSection('section-description') &&
+          {!unsupportedListingState && showFormSection('section-description') &&
             sectionClass(
             'Description',
             <div className="space-y-4">
@@ -5659,7 +5882,7 @@ export default function LandlordPropertyFormPage() {
             'section-description',
           )}
 
-          {showFormSection('section-photos') &&
+          {!unsupportedListingState && showFormSection('section-photos') &&
             sectionClass(
             'Property photos',
             <div className="space-y-4">
@@ -5756,23 +5979,23 @@ export default function LandlordPropertyFormPage() {
                     type="button"
                     disabled={submitting}
                     onClick={() => handleWizardPrev()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || listingWritesBlocked}
                     onClick={() => void handleSaveDraftAndLeave()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Save draft
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || (unsupportedListingState && hubSectionId !== 'basic')}
                     onClick={() => void handleWizardNext()}
-                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? 'Saving…' : 'Next'}
                   </button>
@@ -5783,22 +6006,22 @@ export default function LandlordPropertyFormPage() {
                     type="button"
                     disabled={submitting}
                     onClick={() => handleWizardPrev()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
-                    disabled={submitting}
+                    disabled={submitting || (unsupportedListingState && hubSectionId !== 'basic')}
                     onClick={() => void handleWizardNext()}
-                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                    className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                    disabled={submitting || listingWritesBlocked}
+                    className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? 'Saving…' : 'Save'}
                   </button>
@@ -5808,20 +6031,20 @@ export default function LandlordPropertyFormPage() {
                   {footerPreviewHref ? (
                     <button
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || listingWritesBlocked}
                       onClick={() => void handleOpenPreview()}
-                      className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                      className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Preview listing
                     </button>
                   ) : null}
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || listingWritesBlocked}
                     className={
                       footerPreviewHref
-                        ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
-                        : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50'
+                        ? 'rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50'
+                        : 'rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:cursor-not-allowed disabled:opacity-50'
                     }
                   >
                     {submitting && submitMode !== 'publish'
@@ -5835,11 +6058,11 @@ export default function LandlordPropertyFormPage() {
                   {isWizardSetupMode ? (
                     <button
                       type="button"
-                      disabled={submitting}
+                      disabled={submitting || listingWritesBlocked}
                       onClick={() => void handleSaveDraftAndLeave()}
-                      className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
+                      className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Save draft
+                      Save and exit
                     </button>
                   ) : null}
                   <button

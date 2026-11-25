@@ -53,6 +53,26 @@ export const ACCOMMODATION_UI_OPTIONS: {
   },
 ]
 
+export function accommodationOptionsForListingState(state: string | null | undefined) {
+  if ((state ?? '').trim().toUpperCase() !== 'VIC') return ACCOMMODATION_UI_OPTIONS
+  return ACCOMMODATION_UI_OPTIONS.filter((opt) => opt.value !== 'registered_rooming_house').map((opt) => {
+    if (opt.value !== 'private_room_landlord_off_site') return opt
+    return {
+      ...opt,
+      description: 'A bedroom in a share house. You do not live on site.',
+    }
+  })
+}
+
+export function accommodationIntroForListingState(state: string | null | undefined): string {
+  const share =
+    'For a room in a share house, enter total bedrooms and bathrooms for the whole property, not just the room you are advertising.'
+  if ((state ?? '').trim().toUpperCase() === 'VIC') {
+    return `Choose the arrangement that matches your listing. A private room or a shared bedroom uses the rooming house agreement when the building can hold 4 or more people. ${share}`
+  }
+  return `Choose the arrangement that matches your listing. Rooming house is for a registered boarding house, not a normal share. ${share}`
+}
+
 export function isEntirePlaceChoice(choice: AccommodationUiChoice): boolean {
   return choice === 'entire_house' || choice === 'entire_apartment' || choice === 'entire_studio'
 }

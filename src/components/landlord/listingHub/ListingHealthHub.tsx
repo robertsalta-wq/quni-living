@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import { Eye } from 'lucide-react'
 import {
-  LISTING_HUB_SECTIONS,
   listingHubPath,
+  listingHubSectionIdsForState,
+  listingSectionLabel,
+  listingSectionSubtitle,
+  LISTING_HUB_SECTIONS,
   type ListingHubHealthResult,
   type ListingHubSectionId,
 } from '../../../lib/listingEditHubHealth'
@@ -17,8 +20,10 @@ type Props = {
   thumbUrl: string | null
   statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
   health: ListingHubHealthResult
+  listingState?: string | null
   /** Owner preview for drafts, public page when live. */
   previewHref?: string | null
+  previewDisabled?: boolean
 }
 
 /**
@@ -32,7 +37,9 @@ export default function ListingHealthHub({
   thumbUrl,
   statusLabel,
   health,
+  listingState = null,
   previewHref = null,
+  previewDisabled = false,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -63,7 +70,7 @@ export default function ListingHealthHub({
           >
             {statusLabel}
           </span>
-          {previewHref ? (
+          {previewHref && !previewDisabled ? (
             <Link
               to={previewHref}
               className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
@@ -74,7 +81,11 @@ export default function ListingHealthHub({
           ) : (
             <span
               className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line-soft)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-5)]"
-              title="Save this listing to your account to preview it"
+              title={
+                previewDisabled
+                  ? 'Preview stays off until the state is one Quni can list'
+                  : 'Save this listing to your account to preview it'
+              }
             >
               <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
               Preview
@@ -125,7 +136,9 @@ export default function ListingHealthHub({
         ) : null}
 
         <div className="flex flex-col gap-1.5">
-          {LISTING_HUB_SECTIONS.map((s) => {
+          {listingHubSectionIdsForState(listingState).map((id) => {
+            const s = LISTING_HUB_SECTIONS.find((section) => section.id === id)
+            if (!s) return null
             const status = health.statuses[s.id]
             return (
               <Link
@@ -138,7 +151,9 @@ export default function ListingHealthHub({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-sm font-semibold text-[var(--quni-ink)]">{s.title}</span>
+                    <span className="text-sm font-semibold text-[var(--quni-ink)]">
+                      {listingSectionLabel(s.id, listingState)}
+                    </span>
                     {s.aiTag === 'writer' ? (
                       <span className="rounded-full border border-[var(--quni-ai-border)] bg-[var(--quni-ai-tint)] px-1.5 py-px text-[9.5px] font-semibold text-[var(--quni-ai)]">
                         ✦ AI writer
@@ -151,7 +166,7 @@ export default function ListingHealthHub({
                     ) : null}
                   </span>
                   <span className="mt-px block truncate text-[11.5px] text-[var(--quni-ink-5)]">
-                    {s.subtitle}
+                    {listingSectionSubtitle(s.id, listingState)}
                   </span>
                 </span>
                 <ListingHubStatusDot status={status} />
@@ -167,12 +182,22 @@ export default function ListingHealthHub({
 
         {isSetup && previewHref ? (
           <div className="mt-4 space-y-2">
+            {previewDisabled ? (
+              <button
+                type="button"
+                disabled
+                className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white opacity-50"
+              >
+                Preview listing
+              </button>
+            ) : (
             <Link
               to={previewHref}
               className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-4 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               Preview listing
             </Link>
+            )}
             <p className="text-[12px] leading-snug text-[var(--quni-ink-5)]">
               See how students will see this listing, then publish from the preview.
             </p>

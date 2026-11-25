@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import ShareListingButton from '../ShareListingButton'
 import type { LandlordPropertyForListingActions } from '../../hooks/useLandlordPropertyListingActions'
+import { isListingAgreementState } from '../../lib/listingAgreementState'
 
 type Props = {
   property: LandlordPropertyForListingActions
@@ -62,8 +63,12 @@ export default function LandlordPropertyListingActions({
           <button
             type="button"
             onClick={() => void onPublish(p)}
-            disabled={publishingListingId === p.id || duplicatingListingId === p.id}
-            className="flex-1 min-w-[7.5rem] text-center rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-60"
+            disabled={
+              publishingListingId === p.id ||
+              duplicatingListingId === p.id ||
+              (Boolean(p.state) && !isListingAgreementState(p.state))
+            }
+            className="flex-1 min-w-[7.5rem] text-center rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {publishingListingId === p.id ? 'Publishing…' : 'Publish'}
           </button>

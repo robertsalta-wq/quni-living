@@ -49,11 +49,14 @@ export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
 ]
 
 /** Listing hub - mobile action bar: exit · Health · Preview. */
-export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChromeBarItemSpec[] {
+export function listingHubActionBarItemSpecs(
+  hasPreviewHref: boolean,
+  opts?: { writesDisabled?: boolean },
+): AppChromeBarItemSpec[] {
   return [
     { id: 'exit-listings', label: '‹ Listings' },
     { id: 'health', label: 'Health', active: true },
-    { id: 'preview', label: 'Preview', disabled: !hasPreviewHref },
+    { id: 'preview', label: 'Preview', disabled: !hasPreviewHref || Boolean(opts?.writesDisabled) },
   ]
 }
 
@@ -63,7 +66,9 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
   saving: boolean
   canSubmit: boolean
   wizardStep?: AppChromeBarStepProgress
+  writesDisabled?: boolean
 }): AppChromeBarItemSpec[] {
+  const writesDisabled = Boolean(opts.saving || opts.writesDisabled)
   const prev: AppChromeBarItemSpec = { id: 'prev', label: 'Prev', disabled: opts.saving }
   if (opts.isSetupMode) {
     return [
@@ -75,7 +80,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
         primary: true,
         disabled: opts.saving || !opts.canSubmit,
       },
-      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      { id: 'draft', label: 'Save draft', disabled: writesDisabled },
     ]
   }
   return [
@@ -85,7 +90,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
       id: 'save',
       label: opts.saving ? 'Saving…' : 'Save',
       primary: true,
-      disabled: opts.saving || !opts.canSubmit,
+      disabled: writesDisabled || !opts.canSubmit,
     },
   ]
 }
@@ -101,10 +106,13 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
   isSetupMode?: boolean
   isLiveListing?: boolean
   wizardStep?: AppChromeBarStepProgress
+  /** Save, Save draft, and Publish stay visible but cannot be pressed. */
+  writesDisabled?: boolean
   /** @deprecated Use isSetupMode. Kept so older callers still type-check. */
   isNewListing?: boolean
 }): AppChromeBarItemSpec[] {
   const setup = Boolean(opts.isSetupMode ?? opts.isNewListing)
+  const writesDisabled = Boolean(opts.saving || opts.writesDisabled)
   if (setup) {
     return [
       { id: 'prev', label: 'Prev', disabled: opts.saving },
@@ -115,7 +123,7 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
         primary: true,
         disabled: opts.saving,
       },
-      { id: 'draft', label: 'Save draft', disabled: opts.saving },
+      { id: 'draft', label: 'Save draft', disabled: writesDisabled },
     ]
   }
   if (opts.isLiveListing) {
@@ -126,17 +134,17 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
         id: 'save',
         label: opts.saving ? 'Saving…' : 'Save',
         primary: true,
-        disabled: opts.saving,
+        disabled: writesDisabled,
       },
     ]
   }
   return [
-    { id: 'draft', label: 'Save draft', disabled: opts.saving },
+    { id: 'draft', label: 'Save draft', disabled: writesDisabled },
     {
       id: 'save',
       label: opts.saving ? 'Saving…' : 'Save',
       primary: true,
-      disabled: opts.saving,
+      disabled: writesDisabled,
     },
   ]
 }
@@ -145,14 +153,16 @@ export function listingSectionDrillInActionBarItemSpecs(opts: {
 export function listingPreviewActionBarItemSpecs(opts: {
   canPublish: boolean
   publishing: boolean
+  /** Keep Publish on screen, but it cannot be pressed. */
+  publishDisabled?: boolean
 }): AppChromeBarItemSpec[] {
   const items: AppChromeBarItemSpec[] = [{ id: 'edit', label: 'Edit' }]
-  if (opts.canPublish) {
+  if (opts.canPublish || opts.publishDisabled) {
     items.push({
       id: 'publish',
       label: opts.publishing ? 'Publishing…' : 'Publish',
       primary: true,
-      disabled: opts.publishing,
+      disabled: opts.publishing || Boolean(opts.publishDisabled),
     })
   }
   return items

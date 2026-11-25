@@ -1,6 +1,7 @@
 import {
   LISTING_HUB_SECTION_IDS,
   listingHubPath,
+  listingHubSectionIdsForState,
   type ListingHubSectionId,
 } from './listingEditHubHealth'
 
@@ -32,10 +33,12 @@ export function listingOwnerOrPublicPreviewHref(opts: {
 /** Same current/total as the listing drill-in header "Step X of Y". */
 export function listingHubWizardStepProgress(
   sectionId: ListingHubSectionId | null | undefined,
+  state?: string | null,
 ): { current: number; total: number } {
-  const total = LISTING_HUB_SECTION_IDS.length
+  const ids = listingHubSectionIdsForState(state)
+  const total = ids.length
   if (!sectionId) return { current: 1, total }
-  const i = LISTING_HUB_SECTION_IDS.indexOf(sectionId)
+  const i = ids.indexOf(sectionId)
   return { current: i >= 0 ? i + 1 : 1, total }
 }
 
@@ -46,20 +49,23 @@ export function listingHubWizardStepCaption(progress: { current: number; total: 
 export function listingHubWizardPrevHref(
   propertyId: string | null,
   sectionId: ListingHubSectionId,
+  state?: string | null,
 ): string {
-  const i = LISTING_HUB_SECTION_IDS.indexOf(sectionId)
+  const ids = listingHubSectionIdsForState(state)
+  const i = ids.indexOf(sectionId)
   if (i <= 0) return listingHubPath({ propertyId })
-  return listingHubPath({ propertyId, view: LISTING_HUB_SECTION_IDS[i - 1] })
+  return listingHubPath({ propertyId, view: ids[i - 1] })
 }
 
 export function listingHubWizardNextHref(
   propertyId: string | null,
   sectionId: ListingHubSectionId,
-  opts?: { status?: string | null; slug?: string | null },
+  opts?: { status?: string | null; slug?: string | null; state?: string | null },
 ): string {
-  const i = LISTING_HUB_SECTION_IDS.indexOf(sectionId)
+  const ids = listingHubSectionIdsForState(opts?.state)
+  const i = ids.indexOf(sectionId)
   if (i < 0) return listingHubPath({ propertyId })
-  if (i >= LISTING_HUB_SECTION_IDS.length - 1) {
+  if (i >= ids.length - 1) {
     return (
       listingOwnerOrPublicPreviewHref({
         propertyId,
@@ -68,7 +74,7 @@ export function listingHubWizardNextHref(
       }) ?? listingHubPath({ propertyId })
     )
   }
-  return listingHubPath({ propertyId, view: LISTING_HUB_SECTION_IDS[i + 1] })
+  return listingHubPath({ propertyId, view: ids[i + 1] })
 }
 
 export const LISTING_HUB_RENT_REQUIRED_MESSAGE = 'Rent per week cannot be empty.'
