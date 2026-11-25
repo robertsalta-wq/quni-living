@@ -13,6 +13,8 @@ import {
 } from '../officialVicRoomingMoveInPack.js'
 import { sendVicRoomingHousePackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import { coTenantEmailDistinctFromPrimary, bookingRequiresCoTenantSignature } from '../../booking/coTenantSigning.js'
+import { parseCoTenantFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { inclusiveLeaseLastDay } from '../../booking/leaseEndDate.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
 import {
@@ -33,6 +35,7 @@ import {
 
 const DRAFT_PATH = 'vic_rooming_house_agreement_draft.pdf'
 const RULES_DRAFT = 'vic_rooming_house_rules_draft.pdf'
+const RULES_2_DRAFT = 'vic_rooming_house_rules_resident_2_draft.pdf'
 const RIGHTS_DRAFT = 'vic_rooming_rights_and_duties.pdf'
 const GUIDE_DRAFT = 'vic_rooming_residents_guide.pdf'
 const NOTICE_DRAFT = 'vic_rooming_notice.pdf'
@@ -160,12 +163,24 @@ export async function runVicRoomingHouseListingTenancy(
 
   let agreement: Uint8Array
   let rules: Uint8Array
+  let rulesForResident2: Uint8Array | null = null
   try {
     agreement = (await fillOfficialVicRoomingHousePdf(loaded.fill)).pdfBytes
     rules = await buildVicRoomingHouseRulesPdf({
       premisesLine: loaded.premisesLine,
       rules: loaded.houseRules,
     })
+    if (loaded.fill.resident2Name.trim()) {
+      rulesForResident2 = await buildVicRoomingHouseRulesPdf({
+        premisesLine: loaded.premisesLine,
+        rules: loaded.houseRules,
+        signer: {
+          role: 'Co-tenant',
+          signatureName: 'Resident 2 House Rules Signature',
+          dateName: 'Resident 2 House Rules Date',
+        },
+      })
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, status: 500, error: 'Could not build the rooming house agreement', detail: msg }
@@ -173,6 +188,7 @@ export async function runVicRoomingHouseListingTenancy(
 
   const agreementPath = `${tenancyId}/rooming/${DRAFT_PATH}`
   const rulesPath = `${tenancyId}/rooming/${RULES_DRAFT}`
+  const rules2Path = rulesForResident2 ? `${tenancyId}/rooming/${RULES_2_DRAFT}` : null
   const up1 = await admin.storage
     .from('tenancy-documents')
     .upload(agreementPath, Buffer.from(agreement), { contentType: 'application/pdf', upsert: true })
@@ -181,6 +197,12 @@ export async function runVicRoomingHouseListingTenancy(
     .from('tenancy-documents')
     .upload(rulesPath, Buffer.from(rules), { contentType: 'application/pdf', upsert: true })
   if (up2.error) return { ok: false, status: 500, error: 'Could not upload the house rules' }
+  if (rulesForResident2 && rules2Path) {
+    const up3 = await admin.storage
+      .from('tenancy-documents')
+      .upload(rules2Path, Buffer.from(rulesForResident2), { contentType: 'application/pdf', upsert: true })
+    if (up3.error) return { ok: false, status: 500, error: 'Could not upload resident 2 house rules' }
+  }
 
   let moveInPack: MoveInRecord[]
   try {
@@ -201,6 +223,7 @@ export async function runVicRoomingHouseListingTenancy(
         signing_package: VIC_ROOMING_SIGNING_PACKAGE,
         generator: VIC_ROOMING_GENERATOR_ID,
         house_rules_file_path: rulesPath,
+        house_rules_co_tenant_file_path: rules2Path,
         move_in_pack: moveInPack,
       } as Json,
     })
@@ -309,9 +332,16 @@ async function loadVicRoomingHouseContext(
     return { ok: false, status: 422, error: VIC_ROOMING_FIXED_TERM_MESSAGE }
   }
   const occupantCount = Math.floor(Number(booking.occupant_count ?? 1))
-  const co = booking.co_tenant && typeof booking.co_tenant === 'object' ? (booking.co_tenant as Record<string, unknown>) : null
-  if (occupantCount > 2 || (co && occupantCount > 2)) {
+  if (occupantCount > 2) {
     return { ok: false, status: 422, error: VIC_ROOMING_TWO_RESIDENTS_MESSAGE }
+  }
+  const coSigner = bookingRequiresCoTenantSignature(booking) ? parseCoTenantFromBooking(booking.co_tenant) : null
+  if (occupantCount === 2 && !coSigner) {
+    return {
+      ok: false,
+      status: 422,
+      error: 'Enter resident 2\'s name and email. Both residents have to sign the rooming house agreement.',
+    }
   }
 
   const condition = await admin
@@ -356,6 +386,13 @@ async function loadVicRoomingHouseContext(
     .eq('id', booking.student_id)
     .maybeSingle()
   if (!lp || !sp) return { ok: false, status: 500, error: 'Could not load profiles' }
+  if (coSigner && !coTenantEmailDistinctFromPrimary(text(sp.email), coSigner.email)) {
+    return {
+      ok: false,
+      status: 422,
+      error: 'Resident 2 must use a different email from resident 1 so each resident can sign.',
+    }
+  }
 
   const { data: payout } = await admin
     .from('property_payout_details')
@@ -401,11 +438,11 @@ async function loadVicRoomingHouseContext(
     resident1Postcode: '',
     resident1Phone: text(resident.phone),
     resident1Email: text(resident.email),
-    resident2Name: co ? text(co.full_name) : '',
+    resident2Name: coSigner?.full_name ?? '',
     resident2Address: '',
     resident2Postcode: '',
-    resident2Phone: co ? text(co.phone) : '',
-    resident2Email: co ? text(co.email) : '',
+    resident2Phone: coSigner?.phone ?? '',
+    resident2Email: coSigner?.email ?? '',
     startDateLabel: auDate(moveIn),
     endDateLabel: auDate(lastDay),
     weeklyRent: weeklyRent.toFixed(2),
