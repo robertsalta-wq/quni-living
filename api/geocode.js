@@ -55,13 +55,16 @@ export default async function handler(request) {
   const url = new URL(request.url)
   const q = (url.searchParams.get('q') || url.searchParams.get('address') || '').trim()
   if (!q) return json({ ok: false, error: 'Missing query parameter q' }, 400, origin)
+  const details = url.searchParams.get('details') === '1'
 
   const cache = getCache()
   const cacheTtlMs = Number(process.env.GEOCODE_CACHE_TTL_MS || DEFAULT_TTL_MS)
-  const cacheKey = q.toLowerCase()
+  const cacheKey = details ? `details:${q.toLowerCase()}` : q.toLowerCase()
   const cached = cache.get(cacheKey)
-  if (cached && cached.ts && Date.now() - cached.ts < cacheTtlMs) {
-    return json({ ok: true, lat: cached.lat, lon: cached.lon, cached: true }, 200, origin)
+  if (cached && cached.ts && Date.now() - cached.ts < cacheTtlMs && (!details || cached.address)) {
+    const body = { ok: true, lat: cached.lat, lon: cached.lon, cached: true }
+    if (details) body.address = cached.address
+    return json(body, 200, origin)
   }
 
   // Nominatim usage policy: keep requests reasonable; include User-Agent; optionally email.
@@ -72,7 +75,7 @@ export default async function handler(request) {
   const searchUrl = new URL('https://nominatim.openstreetmap.org/search')
   searchUrl.searchParams.set('format', 'json')
   searchUrl.searchParams.set('limit', '1')
-  searchUrl.searchParams.set('addressdetails', '0')
+  searchUrl.searchParams.set('addressdetails', details ? '1' : '0')
   searchUrl.searchParams.set('countrycodes', 'AU')
   searchUrl.searchParams.set('q', q)
   if (nominatimEmail) searchUrl.searchParams.set('email', nominatimEmail)
@@ -103,7 +106,28 @@ export default async function handler(request) {
     return json({ ok: false, error: 'Could not find coordinates for that address.' }, 404, origin)
   }
 
-  cache.set(cacheKey, { lat, lon, ts: Date.now() })
-  return json({ ok: true, lat, lon }, 200, origin)
+  const address = details ? localityFromNominatim(item?.address) : null
+  cache.set(cacheKey, { lat, lon, address, ts: Date.now() })
+  const body = { ok: true, lat, lon }
+  if (details) body.address = address
+  return json(body, 200, origin)
+}
+
+function localityFromNominatim(raw) {
+  const address = raw && typeof raw === 'object' ? raw : {}
+  const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null)
+  return {
+    suburb: text(address.suburb),
+    town: text(address.town),
+    village: text(address.village),
+    hamlet: text(address.hamlet),
+    locality: text(address.locality),
+    cityDistrict: text(address.city_district),
+    municipality: text(address.municipality),
+    city: text(address.city),
+    postcode: text(address.postcode),
+    state: text(address.state),
+    stateCode: text(address['ISO3166-2-lvl4']),
+  }
 }
 
