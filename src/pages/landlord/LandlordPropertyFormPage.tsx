@@ -32,6 +32,13 @@ import {
 } from '../../lib/adminConciergeListing'
 import { listingStateFieldClears } from '../../lib/listingFormStateChange'
 import {
+  hasListingStateSpecificAnswers,
+  isListingAgreementState,
+  listingStateChangeConfirmMessage,
+  listingStateChangeNeedsConfirm,
+  unsupportedListingStateMessage,
+} from '../../lib/listingAgreementState'
+import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
   hubSectionIdFromFormSectionId,
@@ -974,6 +981,7 @@ export default function LandlordPropertyFormPage() {
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('')
   const applyListingStateRef = useRef<(next: string) => void>(() => {})
+  const stateSpecificAnswersRef = useRef(false)
   const [postcode, setPostcode] = useState('')
 
   const applyAdminLandlordProfile = useCallback(
@@ -1043,6 +1051,9 @@ export default function LandlordPropertyFormPage() {
 
   const formNavSections = useMemo(() => {
     let sections = LANDLORD_FORM_NAV_SECTIONS
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+      return sections.filter((s) => s.id === 'section-basic-info' || s.id === 'section-location')
+    }
     if (!showNswFt6600ComplianceSection) {
       sections = sections.filter((s) => s.id !== 'section-ft6600-compliance')
     }
@@ -1050,7 +1061,7 @@ export default function LandlordPropertyFormPage() {
       sections = sections.filter((s) => s.id !== 'section-utilities')
     }
     return sections
-  }, [showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
+  }, [listingStateCode, showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
 
   const showFormSection = useCallback(
     (sectionDomId: string) => {
@@ -1135,6 +1146,17 @@ export default function LandlordPropertyFormPage() {
 
   const applyListingState = useCallback((nextRaw: string) => {
     const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    const from = listingStateFromLandlordProfile(state) ?? ''
+    if (
+      listingStateChangeNeedsConfirm({
+        fromState: from,
+        toState: next,
+        hasSpecificAnswers: stateSpecificAnswersRef.current,
+      }) &&
+      !window.confirm(listingStateChangeConfirmMessage(from))
+    ) {
+      return
+    }
     const clears = listingStateFieldClears(state, next)
     setState(next)
     if (clears.clearNswBoardingParticulars) {
@@ -1389,6 +1411,31 @@ export default function LandlordPropertyFormPage() {
 
   const [qldBondRemittancePreference, setQldBondRemittancePreference] =
     useState<QldBondRemittancePreference>('tenant_choice')
+  stateSpecificAnswersRef.current = hasListingStateSpecificAnswers(state, {
+    nsw: {
+      sharedAreas,
+      additionalCharges,
+      t3ComplianceForm,
+      roomDescription,
+      ft6600Compliance,
+      waterSeparatelyMeteredAgreed,
+      waterSeparatelyMeteredAttestedAt,
+    },
+    qld: {
+      qldRoomingForm,
+      qldHouseRulesCommonAreas,
+      qldHouseRulesExtras,
+      roomsRentedToResidents,
+      roomDescription,
+    },
+    vic: vicRoomingFields,
+    utilities: utilitiesForm,
+    registration: {
+      isRegisteredRoomingHouse,
+      roomingHouseRegistrationNumber,
+    },
+    qldBondIsCustom: qldBondRemittancePreference !== 'tenant_choice',
+  })
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
 
@@ -2773,6 +2820,12 @@ export default function LandlordPropertyFormPage() {
     }
     if (!listingStateCode) {
       setSubmitError('Choose the state before saving. The questions below depend on it.')
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (!isListingAgreementState(listingStateCode)) {
+      reportSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     const rent = Number(rentPerWeek)
@@ -3504,6 +3557,11 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleSaveDraftAndLeave = useCallback(async () => {
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
@@ -3643,6 +3701,7 @@ export default function LandlordPropertyFormPage() {
       navigate('/landlord/dashboard?tab=listings')
     }
   }, [
+    listingStateCode,
     persistLandlordPropertyDraft,
     flashDraftSavedIndicator,
     isEdit,
@@ -3703,6 +3762,7 @@ export default function LandlordPropertyFormPage() {
 
   const flushDraftToAccount = useCallback(async () => {
     persistLandlordPropertyDraft()
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) return
     if (!propertyId || !user?.id) return
     const t = title.trim()
     if (!t) return
@@ -3780,6 +3840,11 @@ export default function LandlordPropertyFormPage() {
 
   const handleWizardNext = useCallback(async () => {
     if (!hubSectionId) return
+    if (listingStateCode && !isListingAgreementState(listingStateCode) && hubSectionId !== 'basic') {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     const stepError = listingHubWizardStepError(hubSectionId, { title, rentPerWeek })
     if (stepError) {
       revealWizardStepError(hubSectionId, stepError)
@@ -3814,6 +3879,7 @@ export default function LandlordPropertyFormPage() {
     navigate(href)
   }, [
     hubSectionId,
+    listingStateCode,
     title,
     rentPerWeek,
     persistLandlordPropertyDraft,
@@ -3827,6 +3893,11 @@ export default function LandlordPropertyFormPage() {
 
   const handleOpenPreview = useCallback(async () => {
     if (!footerPreviewHref) return
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
+      setSubmitError(unsupportedListingStateMessage(listingStateCode))
+      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     persistLandlordPropertyDraft()
     if (propertyId && isWizardSetupMode) {
       try {
@@ -3846,7 +3917,7 @@ export default function LandlordPropertyFormPage() {
       }
     }
     navigate(footerPreviewHref)
-  }, [footerPreviewHref, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
+  }, [footerPreviewHref, listingStateCode, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
 
   const hubSectionActionItems: AppActionBarItem[] = useMemo(
     () =>
@@ -3911,6 +3982,7 @@ export default function LandlordPropertyFormPage() {
     )
   }
 
+  const unsupportedListingState = Boolean(listingStateCode) && !isListingAgreementState(listingStateCode)
   const inputClass =
     'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
   const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
@@ -4126,6 +4198,12 @@ export default function LandlordPropertyFormPage() {
             </div>
           )}
 
+          {unsupportedListingState && isHubSectionMode && hubSectionId !== 'location' ? (
+            <p className="text-sm text-amber-950" role="status">
+              {unsupportedListingStateMessage(listingStateCode ?? '')}
+            </p>
+          ) : null}
+
           {role === 'admin' && (
             <section className="rounded-2xl border border-amber-100 bg-amber-50/50 p-8 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Listing owner</h2>
@@ -4256,11 +4334,12 @@ export default function LandlordPropertyFormPage() {
                     <p className="text-xs text-gray-500 mt-1">
                       Bond wording, compliance, and rooming house questions stay hidden until this is set.
                     </p>
-                  ) : (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Questions below follow this state. Changing it clears the previous state's answers.
+                  ) : null}
+                  {listingStateCode && !isListingAgreementState(listingStateCode) ? (
+                    <p className="mt-2 text-sm text-amber-950" role="status">
+                      {unsupportedListingStateMessage(listingStateCode)}
                     </p>
-                  )}
+                  ) : null}
                 </div>
                 <div className="sm:col-span-2 max-sm:col-span-1">
                   <label htmlFor="pf-pc" className={labelClass}>
@@ -4396,7 +4475,7 @@ export default function LandlordPropertyFormPage() {
             'section-location',
           )}
 
-          {showFormSection('section-property-details') &&
+          {!unsupportedListingState && showFormSection('section-property-details') &&
             sectionClass(
             'Property details',
             <div className="space-y-4">
@@ -4986,7 +5065,7 @@ export default function LandlordPropertyFormPage() {
             'section-property-details',
           )}
 
-          {showFormSection('section-inclusions-features') &&
+          {!unsupportedListingState && showFormSection('section-inclusions-features') &&
             sectionClass(
             'Inclusions & features',
             <div className="space-y-4">
@@ -5062,7 +5141,7 @@ export default function LandlordPropertyFormPage() {
             'section-inclusions-features',
           )}
 
-          {showFormSection('section-utilities') && showPropertyUtilitiesSection
+          {!unsupportedListingState && showFormSection('section-utilities') && showPropertyUtilitiesSection
             ? sectionClass(
                 'Utilities & water',
                 <LandlordPropertyUtilitiesFields
@@ -5090,7 +5169,7 @@ export default function LandlordPropertyFormPage() {
               )
             : null}
 
-          {showFormSection('section-ft6600-compliance') && showNswFt6600ComplianceSection
+          {!unsupportedListingState && showFormSection('section-ft6600-compliance') && showNswFt6600ComplianceSection
             ? sectionClass(
                 'Smoke alarms & compliance (NSW)',
                 <div className="space-y-5">
@@ -5146,7 +5225,7 @@ export default function LandlordPropertyFormPage() {
               )
             : null}
 
-          {showFormSection('section-house-rules') &&
+          {!unsupportedListingState && showFormSection('section-house-rules') &&
             sectionClass(
             'House rules',
             <div className="space-y-6">
@@ -5254,7 +5333,7 @@ export default function LandlordPropertyFormPage() {
             'section-house-rules',
           )}
 
-          {showFormSection('section-pricing-availability') &&
+          {!unsupportedListingState && showFormSection('section-pricing-availability') &&
             sectionClass(
             'Pricing & availability',
             <div className="space-y-4">
@@ -5734,7 +5813,7 @@ export default function LandlordPropertyFormPage() {
             'section-pricing-availability',
           )}
 
-          {showFormSection('section-description') &&
+          {!unsupportedListingState && showFormSection('section-description') &&
             sectionClass(
             'Description',
             <div className="space-y-4">
@@ -5756,7 +5835,7 @@ export default function LandlordPropertyFormPage() {
             'section-description',
           )}
 
-          {showFormSection('section-photos') &&
+          {!unsupportedListingState && showFormSection('section-photos') &&
             sectionClass(
             'Property photos',
             <div className="space-y-4">
