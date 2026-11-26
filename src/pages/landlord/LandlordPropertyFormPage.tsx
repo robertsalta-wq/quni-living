@@ -43,6 +43,7 @@ import {
   addressConfirmRefusal,
   isListingAgreementState,
   unsupportedListingStateMessage,
+  unsupportedListingStateNotice,
 } from '../../lib/listingAgreementState'
 import { composeStreetLine, splitUnitFromStreetLine } from '../../lib/normalizeAustralianAddressForGeocode'
 import {
@@ -792,6 +793,17 @@ function blockImplicitFormSubmit(event: KeyboardEvent<HTMLFormElement>) {
   if (!(target instanceof HTMLElement)) return
   if (target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement) return
   event.preventDefault()
+}
+
+function UnsupportedStateNotice({ state }: { state: string }) {
+  const notice = unsupportedListingStateNotice(state)
+  if (!notice) return null
+  return (
+    <div className="rounded-[10px] border border-sky-200 bg-[var(--quni-info-bg)] px-4 py-3" role="status">
+      <p className="text-sm font-semibold text-[var(--quni-info-fg)]">{notice.heading}</p>
+      <p className="mt-1 text-sm leading-relaxed text-[var(--quni-info-fg)]">{notice.body}</p>
+    </div>
+  )
 }
 
 function sectionClass(title: string, children: ReactNode, sectionId?: string) {
@@ -4774,9 +4786,7 @@ export default function LandlordPropertyFormPage() {
           )}
 
           {unsupportedListingState && isHubSectionMode && hubSectionId !== 'location' ? (
-            <p className="text-sm text-amber-950" role="status">
-              {unsupportedListingStateMessage(listingStateCode ?? '')}
-            </p>
+            <UnsupportedStateNotice state={listingStateCode ?? ''} />
           ) : null}
 
           {role === 'admin' && (
@@ -4844,16 +4854,12 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'Location',
             <div className="space-y-4">
+              {unsupportedListingState ? <UnsupportedStateNotice state={listingStateCode ?? ''} /> : null}
               <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
                 This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
                 show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
                 casual browsers.
               </p>
-              {listingStateCode && !isListingAgreementState(listingStateCode) ? (
-                <p className="text-sm text-amber-950" role="status">
-                  {unsupportedListingStateMessage(listingStateCode)}
-                </p>
-              ) : null}
               {showAddressSummary ? (
                 <div className="rounded-[10px] border border-[var(--quni-line)] bg-white px-4 py-3">
                   <div className="flex gap-3">
@@ -5123,7 +5129,7 @@ export default function LandlordPropertyFormPage() {
               ) : null}
               <div>
                 <span className={labelClass}>Nearest university campus</span>
-                {addressIsConfirmed || unsupportedListingState ? null : (
+                {addressIsConfirmed ? null : (
                   <p className="text-sm text-gray-700">Confirm the property address to see nearby campuses.</p>
                 )}
 
