@@ -34,7 +34,11 @@ import {
   parseAdminConciergeLandlordProfileId,
   skipListingAttestationsForAdmin,
 } from '../../lib/adminConciergeListing'
-import { listingStateConfirmNotice, listingStateFieldClears } from '../../lib/listingFormStateChange'
+import {
+  listingStateConfirmNotice,
+  listingStateFieldClears,
+  listingStateHadClearedAnswers,
+} from '../../lib/listingFormStateChange'
 import {
   addressConfirmRefusal,
   isListingAgreementState,
@@ -1322,6 +1326,7 @@ export default function LandlordPropertyFormPage() {
 
   function rememberConfirmedListingState(nextRaw: string) {
     const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    if (next && !isListingAgreementState(next)) return
     confirmedListingStateRef.current = next
     setConfirmedListingState(next)
   }
@@ -1329,8 +1334,24 @@ export default function LandlordPropertyFormPage() {
   /** Wipe only after a confirm whose state differs from the last confirmed address. */
   function commitConfirmedListingState(nextRaw: string) {
     const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    if (!isListingAgreementState(next)) return
     const from = listingStateFromLandlordProfile(confirmedListingStateRef.current) ?? ''
-    const notice = listingStateConfirmNotice(from, next)
+    const hadAnswers = listingStateHadClearedAnswers(from, next, {
+      nswBoarding: { sharedAreas, additionalCharges, t3ComplianceForm },
+      roomDescription,
+      nswCompliance: { ft6600Compliance, waterSeparatelyMeteredAgreed, waterSeparatelyMeteredAttestedAt },
+      qldRooming: {
+        qldRoomingForm,
+        qldHouseRulesCommonAreas,
+        qldHouseRulesExtras,
+        roomsRentedToResidents,
+        qldBondIsCustom: qldBondRemittancePreference !== 'tenant_choice',
+      },
+      vicRooming: vicRoomingFields,
+      utilities: utilitiesForm,
+      registration: { isRegisteredRoomingHouse, roomingHouseRegistrationNumber },
+    })
+    const notice = listingStateConfirmNotice(from, next, hadAnswers)
     if (notice) {
       const clears = listingStateFieldClears(from, next)
       if (clears.clearNswBoardingParticulars) {
