@@ -14,6 +14,26 @@ function expandStreetAbbreviations(line: string): string {
 const UNIT_LINE_PREFIX =
   /^(?:unit|apt|apartment|apts?|suite|ste|level|lvl|lot|shop|office|flat)\s*[\d\w-]+\s*,?\s*/i
 
+/** "Unit 401, 311 Hume Highway". A slash unit such as "4/12 Smith Street" is left on the street line. */
+const UNIT_COMMA_LINE =
+  /^(?:unit|apt|apartment|apts?|suite|ste|level|lvl|lot|shop|office|flat)\s+([0-9A-Za-z-]+)\s*,\s*(.*)$/i
+
+export function splitUnitFromStreetLine(address: string): { unit: string; street: string } {
+  const line = address.trim()
+  const match = line.match(UNIT_COMMA_LINE)
+  if (!match) return { unit: '', street: line }
+  return { unit: match[1], street: match[2].trim() }
+}
+
+/** Stored on properties.address. There is no separate unit column. */
+export function composeStreetLine(unit: string, street: string): string {
+  const u = unit.trim()
+  const s = street.trim()
+  if (!u) return s
+  if (!s) return `Unit ${u}`
+  return `Unit ${u}, ${s}`
+}
+
 /**
  * Street number + name for geocoding (no unit/apartment). Used for lat/lng and nearest campus.
  * The full address line is still stored on the listing.

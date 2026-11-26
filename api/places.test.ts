@@ -50,6 +50,22 @@ describe('/api/places', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('reports whether the key is set without calling Google or the rate limit', async () => {
+    delete process.env.GOOGLE_PLACES_API_KEY
+    const missing = await handler(new Request('https://quni.test/api/places?probe=1'))
+    expect(missing.status).toBe(200)
+    await expect(missing.json()).resolves.toEqual({ ok: true, configured: false })
+    expect(mocks.consumePlacesRateLimit).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    process.env.GOOGLE_PLACES_API_KEY = 'test-places-key'
+    const present = await handler(new Request('https://quni.test/api/places?probe=1'))
+    expect(present.status).toBe(200)
+    await expect(present.json()).resolves.toEqual({ ok: true, configured: true })
+    expect(mocks.consumePlacesRateLimit).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('returns 429 before calling Google when the user is over the limit', async () => {
     mocks.consumePlacesRateLimit.mockReturnValue(false)
     const res = await handler(

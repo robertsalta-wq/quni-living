@@ -37,6 +37,21 @@ async function fetchPlaces(params: URLSearchParams, signal?: AbortSignal): Promi
   })
 }
 
+/** Whether address search can be offered. Unknown means the probe did not answer. */
+export async function fetchPlacesSearchAvailable(
+  signal?: AbortSignal,
+): Promise<'on' | 'off' | 'unknown'> {
+  try {
+    const fetched = await fetchPlaces(new URLSearchParams({ probe: '1' }), signal)
+    if (fetched === 'signed_out') return 'unknown'
+    const body = await readPlacesJson(fetched)
+    if (!fetched.ok || !body || body.ok !== true || typeof body.configured !== 'boolean') return 'unknown'
+    return body.configured ? 'on' : 'off'
+  } catch {
+    return 'unknown'
+  }
+}
+
 export async function fetchPlaceSuggestions(
   input: string,
   sessionToken: string,

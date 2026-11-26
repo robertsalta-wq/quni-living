@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildGeocodeQueryCandidates, streetLineForGeocode } from './normalizeAustralianAddressForGeocode'
+import {
+  buildGeocodeQueryCandidates,
+  composeStreetLine,
+  splitUnitFromStreetLine,
+  streetLineForGeocode,
+} from './normalizeAustralianAddressForGeocode'
 
 describe('streetLineForGeocode', () => {
   it('strips Unit prefix for Quinn-style address', () => {
@@ -12,6 +17,21 @@ describe('streetLineForGeocode', () => {
 
   it('returns expanded line when no unit', () => {
     expect(streetLineForGeocode('311 Hume Highway')).toBe('311 Hume Highway')
+  })
+})
+
+describe('splitUnitFromStreetLine', () => {
+  it('splits a Unit comma line and leaves a slash unit on the street', () => {
+    expect(splitUnitFromStreetLine('Unit 401, 311 Hume Highway')).toEqual({
+      unit: '401',
+      street: '311 Hume Highway',
+    })
+    expect(splitUnitFromStreetLine('4/12 Smith Street')).toEqual({
+      unit: '',
+      street: '4/12 Smith Street',
+    })
+    expect(composeStreetLine('401', '311 Hume Highway')).toBe('Unit 401, 311 Hume Highway')
+    expect(composeStreetLine('', '4/12 Smith Street')).toBe('4/12 Smith Street')
   })
 })
 

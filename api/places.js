@@ -5,6 +5,7 @@
  * Only a signed-in landlord or platform admin can call this. Each user is limited to
  * 60 requests a minute on this instance. Place Details asks only for Essentials fields.
  *
+ * GET /api/places?probe=1
  * GET /api/places?input=&session=
  * GET /api/places?placeId=&session=
  * GET /api/places?confirm=1&address=&suburb=&state=&postcode=
@@ -49,12 +50,17 @@ export default async function handler(req) {
 
   const access = await requireLandlordOrAdmin(req)
   if (!access.user) return json({ ok: false, error: access.error }, access.status)
+
+  const url = new URL(req.url)
+  if (url.searchParams.get('probe') === '1') {
+    return json({ ok: true, configured: Boolean(placesKey()) })
+  }
+
   if (!consumePlacesRateLimit(access.user.id)) return json({ ok: false, error: 'rate_limited' }, 429)
 
   const key = placesKey()
   if (!key) return json({ ok: false, error: 'not_configured' }, 503)
 
-  const url = new URL(req.url)
   const session = sessionToken(url.searchParams.get('session'))
 
   try {

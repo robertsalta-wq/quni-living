@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { listingStateFieldClears } from './listingFormStateChange'
+import { listingStateConfirmNotice, listingStateFieldClears } from './listingFormStateChange'
 
 describe('listingStateFieldClears', () => {
   it('clears nothing until a known state changes', () => {
@@ -22,6 +22,15 @@ describe('listingStateFieldClears', () => {
     expect(clears.clearQldRooming).toBe(false)
     expect(clears.clearSharedUtilities).toBe(false)
     expect(clears.clearRoomingHouseRegistration).toBe(true)
+  })
+
+  it('notices only when a confirmed address moves to another state', () => {
+    expect(listingStateConfirmNotice('', 'VIC')).toBeNull()
+    expect(listingStateConfirmNotice('NSW', 'NSW')).toBeNull()
+    expect(listingStateConfirmNotice('nsw', 'NSW')).toBeNull()
+    expect(listingStateConfirmNotice('NSW', 'VIC')).toBe(
+      'The address is now in VIC. The NSW bond, compliance, and rooming answers were cleared. Check the questions below.',
+    )
   })
 
   it('clears Queensland rooming fields and shared utilities when the state leaves both', () => {
