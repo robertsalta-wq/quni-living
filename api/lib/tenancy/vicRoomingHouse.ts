@@ -155,6 +155,52 @@ export function vicRoomingPaymentDetailsLine(methods: VicRoomingPayMethods, bank
   return `Account name: ${name}. BSB: ${bsb}. Account number: ${number}.`
 }
 
+/** Dollars per week. Null when blank, zero, or not a number. */
+export function parseVicRoomingUnsharedWeeklyRent(value: unknown): number | null {
+  if (value == null || value === '') return null
+  const raw = typeof value === 'number' ? value : Number(String(value).replace(/[$,\s]/g, ''))
+  if (!Number.isFinite(raw) || raw <= 0) return null
+  return Math.round(raw * 100) / 100
+}
+
+export const VIC_ROOMING_UNSHARED_RENT_REQUIRED =
+  'Enter the weekly rent this room would be if it were not shared. The shared room notice prints that figure next to the rent the resident pays.'
+
+export const VIC_ROOMING_UNSHARED_RENT_HIGHER =
+  'The weekly rent if this room were not shared must be higher than the shared weekly rent. The notice says the resident pays less because the room is shared.'
+
+export const VIC_ROOMING_UNSHARED_RENT_ACCEPT_MESSAGE =
+  'This listing can stay published. Accepting a booking is blocked until you enter the weekly rent this room would be if it were not shared. The shared room notice prints that figure.'
+
+/**
+ * Shared-room comparison on the CAV notice. Required only when publishing a room that uses the rooming house agreement.
+ * A figure that is present must be higher than the shared weekly rent even on a draft.
+ */
+export function vicRoomingUnsharedWeeklyRentError(args: {
+  propertyType: unknown
+  sharedWeeklyRent: unknown
+  unsharedWeeklyRent: unknown
+  required: boolean
+}): string | null {
+  if (args.propertyType !== 'shared_room') return null
+  const amount = parseVicRoomingUnsharedWeeklyRent(args.unsharedWeeklyRent)
+  const shared = Number(args.sharedWeeklyRent)
+  if (amount == null) return args.required ? VIC_ROOMING_UNSHARED_RENT_REQUIRED : null
+  if (!Number.isFinite(shared) || !(amount > shared)) return VIC_ROOMING_UNSHARED_RENT_HIGHER
+  return null
+}
+
+export function vicRoomingUnsharedRentAcceptBlock(args: {
+  propertyType: unknown
+  unsharedWeeklyRent: unknown
+}): { ok: true } | { ok: false; message: string } {
+  if (args.propertyType !== 'shared_room') return { ok: true }
+  if (parseVicRoomingUnsharedWeeklyRent(args.unsharedWeeklyRent) == null) {
+    return { ok: false, message: VIC_ROOMING_UNSHARED_RENT_ACCEPT_MESSAGE }
+  }
+  return { ok: true }
+}
+
 export function vicRoomingPublishErrors(args: {
   capacity: unknown
   registrationNumber: unknown
@@ -164,6 +210,9 @@ export function vicRoomingPublishErrors(args: {
   roomNumber: unknown
   pay: VicRoomingPayMethods
   attestationCurrent: boolean
+  propertyType: unknown
+  sharedWeeklyRent: unknown
+  unsharedWeeklyRent: unknown
 }): string | null {
   if (parseVicPremisesOccupantCapacity(args.capacity) == null) return VIC_ROOMING_CAPACITY_REQUIRED
   const payErr = vicRoomingPayMethodsPublishError(args.pay)
@@ -177,6 +226,13 @@ export function vicRoomingPublishErrors(args: {
   if (args.operatorAcceptsElectronicService !== true) return VIC_ROOMING_OPERATOR_EMAIL_REQUIRED
   if (!String(args.houseRules || '').trim()) return 'Enter the rooming house rules before publishing.'
   if (!String(args.roomNumber || '').trim()) return 'Enter the room number printed on the agreement.'
+  const unshared = vicRoomingUnsharedWeeklyRentError({
+    propertyType: args.propertyType,
+    sharedWeeklyRent: args.sharedWeeklyRent,
+    unsharedWeeklyRent: args.unsharedWeeklyRent,
+    required: true,
+  })
+  if (unshared) return unshared
   return null
 }
 

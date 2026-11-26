@@ -261,7 +261,13 @@ export async function fillOfficialVicRoomingHousePdf(
 export async function buildVicRoomingHouseRulesPdf(args: {
   premisesLine: string
   rules: string
+  signer?: { role: 'Second Party' | 'Co-tenant'; signatureName: string; dateName: string }
 }): Promise<Uint8Array> {
+  const signer = args.signer ?? {
+    role: 'Second Party' as const,
+    signatureName: 'Resident House Rules Signature',
+    dateName: 'Resident House Rules Date',
+  }
   const doc = await PDFDocument.create()
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const bold = await doc.embedFont(StandardFonts.HelveticaBold)
@@ -286,14 +292,11 @@ export async function buildVicRoomingHouseRulesPdf(args: {
   page.drawText('I have been given these house rules.', { x: 48, y: 120, size: 10, font, color: INK })
   page.drawLine({ start: { x: 48, y: 94 }, end: { x: 260, y: 94 }, thickness: 0.6, color: INK })
   page.drawLine({ start: { x: 48, y: 76 }, end: { x: 180, y: 76 }, thickness: 0.6, color: INK })
-  page.drawText('{{Resident House Rules Signature;role=Second Party;type=signature;width=180;height=28}}', {
-    x: 48,
-    y: 96,
-    size: 6,
-    font,
-    color: PAPER,
-  })
-  page.drawText('{{Resident House Rules Date;role=Second Party;type=date;width=120;height=16}}', {
+  page.drawText(
+    `{{${signer.signatureName};role=${signer.role};type=signature;width=180;height=28}}`,
+    { x: 48, y: 96, size: 6, font, color: PAPER },
+  )
+  page.drawText(`{{${signer.dateName};role=${signer.role};type=date;width=120;height=16}}`, {
     x: 48,
     y: 78,
     size: 6,

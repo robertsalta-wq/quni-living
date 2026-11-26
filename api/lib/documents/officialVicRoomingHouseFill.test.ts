@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
 import {
   VIC_ROOMING_HOUSE_FORM_REFERENCE,
+  buildVicRoomingHouseRulesPdf,
   fillOfficialVicRoomingHousePdf,
   loadOfficialVicRoomingHouseTemplate,
   type VicRoomingHouseFillProps,
@@ -154,5 +155,24 @@ describe('official Victorian rooming house agreement', () => {
     const text = await textOf(pdfBytes)
     expect(text).not.toContain('99887766')
     expect(text).toContain('Sam Resident')
+  })
+
+  it('gives resident 2 their own house rules signature', async () => {
+    const resident1 = await textOf(await buildVicRoomingHouseRulesPdf({ premisesLine: '1 Test St', rules: 'Quiet after 10.' }))
+    const resident2 = await textOf(
+      await buildVicRoomingHouseRulesPdf({
+        premisesLine: '1 Test St',
+        rules: 'Quiet after 10.',
+        signer: {
+          role: 'Co-tenant',
+          signatureName: 'Resident 2 House Rules Signature',
+          dateName: 'Resident 2 House Rules Date',
+        },
+      }),
+    )
+    expect(resident1).toContain('role=Second Party')
+    expect(resident1).not.toContain('role=Co-tenant')
+    expect(resident2).toContain('Resident 2 House Rules Signature;role=Co-tenant')
+    expect(resident2).not.toContain('role=Second Party')
   })
 })

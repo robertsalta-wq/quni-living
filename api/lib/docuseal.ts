@@ -855,10 +855,28 @@ export async function sendVicRoomingHousePackageForSigning(documentId: string): 
   const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
   const residentEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
   if (!landlordEmail || !residentEmail) throw new Error('Operator or resident email missing for DocuSeal')
+  const coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, residentEmail)
+  const coRulesPath =
+    typeof meta.house_rules_co_tenant_file_path === 'string' ? meta.house_rules_co_tenant_file_path.trim() : ''
+  if (coTenantSigner && !coRulesPath) {
+    throw new Error('Victorian rooming package is missing resident 2 house rules')
+  }
+  if (!coTenantSigner && coRulesPath) {
+    throw new Error('Victorian rooming package has resident 2 house rules but no second resident to sign them')
+  }
   const { data: agreementBlob, error: agreementErr } = await admin.storage.from('tenancy-documents').download(row.file_path)
   const { data: rulesBlob, error: rulesErr } = await admin.storage.from('tenancy-documents').download(houseRulesPath)
   if (agreementErr || !agreementBlob) throw new Error(agreementErr?.message || 'Could not download the rooming house agreement')
   if (rulesErr || !rulesBlob) throw new Error(rulesErr?.message || 'Could not download the house rules')
+  let coRulesDocument: { name: string; file: string } | null = null
+  if (coTenantSigner && coRulesPath) {
+    const { data: coRulesBlob, error: coRulesErr } = await admin.storage.from('tenancy-documents').download(coRulesPath)
+    if (coRulesErr || !coRulesBlob) throw new Error(coRulesErr?.message || 'Could not download resident 2 house rules')
+    coRulesDocument = {
+      name: 'Rooming house rules - resident 2.pdf',
+      file: Buffer.from(await coRulesBlob.arrayBuffer()).toString('base64'),
+    }
+  }
   const moveInDocuments = []
   for (const file of moveInFiles) {
     const { data: blob, error } = await admin.storage.from('tenancy-documents').download(file.filePath)
@@ -866,14 +884,18 @@ export async function sendVicRoomingHousePackageForSigning(documentId: string): 
     moveInDocuments.push({ name: file.name, file: Buffer.from(await blob.arrayBuffer()).toString('base64') })
   }
   const submissionRaw = await createDocusealSubmissionFromPdf({
-    name: `VIC rooming house agreement - ${landlordName} / ${residentSalutationName}`,
+    name: coTenantSigner
+      ? `VIC rooming house agreement - ${landlordName} / ${residentSalutationName} / ${coTenantSigner.name}`
+      : `VIC rooming house agreement - ${landlordName} / ${residentSalutationName}`,
     documents: [
       { name: 'Rooming house agreement.pdf', file: Buffer.from(await agreementBlob.arrayBuffer()).toString('base64') },
       { name: 'Rooming house rules.pdf', file: Buffer.from(await rulesBlob.arrayBuffer()).toString('base64') },
+      ...(coRulesDocument ? [coRulesDocument] : []),
       ...moveInDocuments,
     ],
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: residentSubmitterName, email: residentEmail },
+    coTenant: coTenantSigner,
     landlordRole: 'First Party',
     tenantRole: 'Second Party',
     coTenantRole: 'Co-tenant',
@@ -891,6 +913,7 @@ export async function sendVicRoomingHousePackageForSigning(documentId: string): 
         ...meta,
         signing_package: 'rooming_house_vic',
         house_rules_file_path: houseRulesPath,
+        house_rules_co_tenant_file_path: coRulesPath || null,
         move_in_pack: moveInPack,
         move_in_pack_delivered_at: new Date().toISOString(),
         docuseal_response: submission as unknown as Json,

@@ -1542,6 +1542,7 @@ export interface Database {
           vic_rooming_pay_bpay: boolean
           vic_rooming_pay_other_eft: boolean
           vic_premises_occupant_capacity: number | null
+          vic_rooming_unshared_weekly_rent: number | null
           shared_areas: Json
           additional_charges: Json
           house_rules: string | null
@@ -1628,6 +1629,7 @@ export interface Database {
           vic_rooming_pay_bpay?: boolean
           vic_rooming_pay_other_eft?: boolean
           vic_premises_occupant_capacity?: number | null
+          vic_rooming_unshared_weekly_rent?: number | null
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null
@@ -1713,6 +1715,7 @@ export interface Database {
           vic_rooming_pay_bpay?: boolean
           vic_rooming_pay_other_eft?: boolean
           vic_premises_occupant_capacity?: number | null
+          vic_rooming_unshared_weekly_rent?: number | null
           shared_areas?: Json
           additional_charges?: Json
           house_rules?: string | null

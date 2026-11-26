@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   vicRoomingApplyBlock,
   vicRoomingMoveInPackGap,
+  vicRoomingUnsharedRentAcceptBlock,
+  vicRoomingUnsharedWeeklyRentError,
   VIC_ROOMING_MOVE_IN_FILES,
   VIC_ROOMING_RESIDENT_NOTICE_TO_LEAVE,
   vicRoomingPayMethodsPublishError,
@@ -122,7 +124,54 @@ describe('vic rooming publish and booking gates', () => {
       roomNumber: '4',
       pay: { ...pay, bankDeposit: true },
       attestationCurrent: true,
+      propertyType: 'private_room_landlord_off_site',
+      sharedWeeklyRent: 300,
+      unsharedWeeklyRent: null,
     })
     expect(err).toMatch(/electronic service/)
+  })
+
+  it('requires a higher unshared weekly rent only for a shared room', () => {
+    expect(
+      vicRoomingUnsharedWeeklyRentError({
+        propertyType: 'private_room_landlord_off_site',
+        sharedWeeklyRent: 300,
+        unsharedWeeklyRent: null,
+        required: true,
+      }),
+    ).toBeNull()
+    expect(
+      vicRoomingPublishErrors({
+        capacity: 4,
+        registrationNumber: 'R1',
+        operatorLicenceNumber: 'L1',
+        operatorAcceptsElectronicService: true,
+        houseRules: 'Quiet after 10.',
+        roomNumber: '4',
+        pay: { ...pay, bankDeposit: true },
+        attestationCurrent: true,
+        propertyType: 'shared_room',
+        sharedWeeklyRent: 300,
+        unsharedWeeklyRent: null,
+      }),
+    ).toMatch(/if it were not shared/)
+    expect(
+      vicRoomingUnsharedWeeklyRentError({
+        propertyType: 'shared_room',
+        sharedWeeklyRent: 300,
+        unsharedWeeklyRent: 300,
+        required: true,
+      }),
+    ).toMatch(/higher than the shared weekly rent/)
+    expect(
+      vicRoomingUnsharedWeeklyRentError({
+        propertyType: 'shared_room',
+        sharedWeeklyRent: 300,
+        unsharedWeeklyRent: 450,
+        required: true,
+      }),
+    ).toBeNull()
+    expect(vicRoomingUnsharedRentAcceptBlock({ propertyType: 'shared_room', unsharedWeeklyRent: null }).ok).toBe(false)
+    expect(vicRoomingUnsharedRentAcceptBlock({ propertyType: 'shared_room', unsharedWeeklyRent: 450 }).ok).toBe(true)
   })
 })

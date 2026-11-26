@@ -65,6 +65,7 @@ describe('fillVicRoomingNotice', () => {
       kind: 'exclusive',
       peopleInRoom: '',
       sharedWeeklyRent: '',
+      unsharedWeeklyRent: '',
       signatureLabel: 'Operator notice signature',
     })
     const text = await textOf(pdfBytes)
@@ -73,17 +74,19 @@ describe('fillVicRoomingNotice', () => {
     expect(text).toContain('{{Operator notice signature;role=First Party;type=signature;')
   })
 
-  it('fills the shared notice from the listing and leaves the exclusive-room rent blank', async () => {
+  it('fills the shared notice with both weekly rents and ticks week', async () => {
     const { pdfBytes } = await fillVicRoomingNotice({
       ...common,
       kind: 'shared',
       peopleInRoom: '9',
       sharedWeeklyRent: '350.00',
+      unsharedWeeklyRent: '480.00',
       signatureLabel: 'Operator notice signature',
       signingTags: false,
     })
     const text = await textOf(pdfBytes)
     expect(text).toContain('350.00')
+    expect(text).toContain('480.00')
     expect(text).toContain('shared room right')
     expect(text).not.toContain('{{')
     const doc = await getDocument({ data: new Uint8Array(pdfBytes), disableWorker: true }).promise
@@ -91,9 +94,16 @@ describe('fillVicRoomingNotice', () => {
     const content = await page.getTextContent()
     const people = content.items.find((item) => 'str' in item && item.str === '9')
     const rent = content.items.find((item) => 'str' in item && item.str === '350.00')
+    const unshared = content.items.find((item) => 'str' in item && item.str === '480.00')
+    const postcode = content.items.find((item) => 'str' in item && item.str === '3053')
     expect(people && 'transform' in people ? people.transform[5] : 0).toBeGreaterThan(274)
     expect(people && 'transform' in people ? people.transform[5] : 999).toBeLessThan(292)
     expect(rent && 'transform' in rent ? rent.transform[5] : 0).toBeGreaterThan(212)
     expect(rent && 'transform' in rent ? rent.transform[5] : 999).toBeLessThan(230)
+    expect(unshared && 'transform' in unshared ? unshared.transform[5] : 0).toBeGreaterThan(174)
+    expect(unshared && 'transform' in unshared ? unshared.transform[5] : 999).toBeLessThan(192)
+    expect(postcode && 'transform' in postcode ? postcode.transform[4] : 0).toBeGreaterThan(500)
+    expect(rent && 'transform' in rent ? rent.transform[4] : 0).toBeGreaterThan(58)
+    expect(unshared && 'transform' in unshared ? unshared.transform[4] : 0).toBeGreaterThan(58)
   })
 })

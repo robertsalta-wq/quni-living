@@ -13,6 +13,13 @@ export function occupancyLeaseFieldsFromBooking(
   property?: Record<string, unknown> | null,
 ): OccupancyLeaseFields
 
+export function parseCoTenantFromBooking(raw: unknown): {
+  full_name: string
+  email: string
+  phone: string
+  date_of_birth: string
+} | null
+
 export function occupancyCoResidentNameFromBooking(
   booking: { co_tenant?: unknown } | null | undefined,
 ): string | null

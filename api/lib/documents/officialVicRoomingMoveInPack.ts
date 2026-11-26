@@ -57,7 +57,7 @@ const EXCLUSIVE = {
   date: { x: 45.65, y: 541.34, w: 106.8, h: 17 },
   residentName: { x: 45.35, y: 479.54, w: 521.9, h: 17 },
   address: { x: 45.35, y: 444.54, w: 400, h: 17 },
-  postcode: { x: 453.8, y: 443.84, w: 49.6, h: 17.5 },
+  postcode: { x: 498, y: 444.54, w: 66, h: 17 },
   roomNumber: { x: 45.65, y: 409.54, w: 106.8, h: 17 },
   operatorName: { x: 45.35, y: 251.34, w: 521.9, h: 17 },
   signature: { x: 45.35, y: 194.74, w: 253.1, h: 34 },
@@ -67,11 +67,13 @@ const SHARED = {
   date: { x: 45.65, y: 512.64, w: 106.8, h: 17 },
   residentName: { x: 45.35, y: 450.84, w: 521.9, h: 17 },
   address: { x: 45.35, y: 415.84, w: 400, h: 17 },
-  postcode: { x: 453.8, y: 415.14, w: 49.6, h: 17.5 },
+  postcode: { x: 498, y: 415.84, w: 66, h: 17 },
   roomNumber: { x: 45.65, y: 380.84, w: 75.6, h: 17 },
   peopleInRoom: { x: 45.65, y: 274.74, w: 75.6, h: 17 },
-  sharedRent: { x: 45.65, y: 212.94, w: 92.7, h: 17 },
+  sharedRent: { x: 56, y: 212.94, w: 80, h: 17 },
   sharedWeek: { x: 163.65, y: 215.79, w: 11.3, h: 11.3 },
+  unsharedRent: { x: 56, y: 174.94, w: 80, h: 17 },
+  unsharedWeek: { x: 163.65, y: 177.79, w: 11.3, h: 11.3 },
   operatorName: { x: 45.35, y: 113.14, w: 521.9, h: 17 },
   signature: { x: 45.35, y: 56.44, w: 253.1, h: 34 },
 } as const satisfies Record<string, Box>
@@ -88,8 +90,10 @@ export type VicRoomingNoticeFill = {
   operatorName: string
   /** Listing field max_occupants. Shared notice only. */
   peopleInRoom: string
-  /** Weekly rent on this booking. Shared notice only. The exclusive-room comparison is not stored. */
+  /** Weekly rent on this booking. Shared notice only. */
   sharedWeeklyRent: string
+  /** Weekly rent if the room were not shared. Shared notice only. */
+  unsharedWeeklyRent: string
   signatureLabel: string
   signingTags?: boolean
 }
@@ -157,6 +161,8 @@ export async function fillVicRoomingNotice(props: VicRoomingNoticeFill): Promise
     drawInBox(page, font, props.peopleInRoom, SHARED.peopleInRoom)
     drawInBox(page, font, props.sharedWeeklyRent, SHARED.sharedRent)
     if (props.sharedWeeklyRent.trim()) tickBox(page, font, SHARED.sharedWeek)
+    drawInBox(page, font, props.unsharedWeeklyRent, SHARED.unsharedRent)
+    if (props.unsharedWeeklyRent.trim()) tickBox(page, font, SHARED.unsharedWeek)
   }
   drawSignature(page, font, boxes.signature, props.signatureLabel, signingTags)
   return { pdfBytes: await doc.save() }
