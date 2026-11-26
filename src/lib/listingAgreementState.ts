@@ -1,4 +1,5 @@
 import { listingStateFromLandlordProfile } from './adminConciergeListing'
+import { postcodeStateConflictMessage } from './australianPostcodeState'
 
 /** States Quni can write an agreement for. The full AU list stays on the concierge helper. */
 export function isListingAgreementState(state: string | null | undefined): boolean {
@@ -8,6 +9,21 @@ export function isListingAgreementState(state: string | null | undefined): boole
 
 export function unsupportedListingStateMessage(state: string): string {
   return `Quni doesn't support listings in ${state.trim().toUpperCase()} yet`
+}
+
+/**
+ * Why a parsed address must stay unconfirmed.
+ * Unsupported states are refused before a postcode mismatch, so a consistent
+ * SA address is still refused. An empty state is not a refusal: the form
+ * still has to collect one.
+ */
+export function addressConfirmRefusal(
+  state: string | null | undefined,
+  postcode: string | null | undefined,
+): string | null {
+  const code = (listingStateFromLandlordProfile(state) ?? '').trim()
+  if (code && !isListingAgreementState(code)) return unsupportedListingStateMessage(code)
+  return postcodeStateConflictMessage(postcode, code)
 }
 
 export function listingStateChangeConfirmMessage(fromState: string): string {

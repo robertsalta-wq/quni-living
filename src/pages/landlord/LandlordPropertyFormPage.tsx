@@ -36,6 +36,7 @@ import {
 } from '../../lib/adminConciergeListing'
 import { listingStateConfirmNotice, listingStateFieldClears } from '../../lib/listingFormStateChange'
 import {
+  addressConfirmRefusal,
   isListingAgreementState,
   unsupportedListingStateMessage,
 } from '../../lib/listingAgreementState'
@@ -2112,13 +2113,16 @@ export default function LandlordPropertyFormPage() {
         resultsShownSigRef.current = ''
         setAddressMatchNote(null)
         setCampusConfirmMessage(null)
+        const loadedStateCode = listingStateFromLandlordProfile(prop.state) ?? ''
         const loadedAddressReady = addressReadyForCampusSearch({
           address: prop.address ?? '',
           suburb: prop.suburb ?? '',
-          state: listingStateFromLandlordProfile(prop.state) ?? '',
+          state: loadedStateCode,
           postcode: prop.postcode ?? '',
         })
-        const loadedAddressConfirmed = Boolean(prop.campus_id) || loadedAddressReady
+        const loadedAddressConfirmed =
+          (loadedStateCode === '' || isListingAgreementState(loadedStateCode)) &&
+          (Boolean(prop.campus_id) || loadedAddressReady)
         setManualAddressOpen(!loadedAddressConfirmed && Boolean(loadedStreet.trim() || (prop.suburb ?? '').trim()))
         if (loadedAddressConfirmed) {
           acceptCampusForAddress(loadedSig, { lat: prop.latitude ?? null, lon: prop.longitude ?? null })
@@ -2324,7 +2328,11 @@ export default function LandlordPropertyFormPage() {
       })
       const restoredConfirmed =
         typeof parsed.addressConfirmed === 'boolean' ? parsed.addressConfirmed : restoredReady || restoredHasCampus
-      const restoredIsConfirmed = restoredConfirmed && (restoredReady || restoredHasCampus)
+      const restoredStateCode = listingStateFromLandlordProfile(parsed.state) ?? ''
+      const restoredIsConfirmed =
+        (restoredStateCode === '' || isListingAgreementState(restoredStateCode)) &&
+        restoredConfirmed &&
+        (restoredReady || restoredHasCampus)
       setManualAddressOpen(!restoredIsConfirmed && Boolean(parsed.address.trim() || parsed.suburb.trim()))
       if (typeof parsed.confirmedListingState === 'string') {
         rememberConfirmedListingState(parsed.confirmedListingState)
@@ -2774,22 +2782,64 @@ export default function LandlordPropertyFormPage() {
     placeSessionRef.current = crypto.randomUUID()
   }
 
+  function holdUnconfirmedAddress(
+    fields: { address: string; suburb: string; state: string; postcode: string },
+    streetParts: { unit: string; street: string },
+  ) {
+    nearbyAbortRef.current?.abort()
+    nearbyRequestIdRef.current += 1
+    setNearbyCampusLoading(false)
+    setNearbyCampusSuggestions([])
+    setNearbyCampusError(null)
+    setAddressMatchNote(null)
+    setCampusConfirmMessage(null)
+    setSubmitError(null)
+    setAddress(fields.address)
+    setAddressUnit(streetParts.unit)
+    setAddressStreet(streetParts.street)
+    setSuburb(fields.suburb)
+    setPostcode(fields.postcode)
+    if (fields.state) {
+      stateChosenByLandlordRef.current = true
+      setState(fields.state)
+    }
+    addressFieldsRef.current = fields
+    addressDirtyRef.current = true
+    setLatitude(null)
+    setLongitude(null)
+    propertyCoordsRef.current = { lat: null, lon: null }
+    setManualAddressOpen(true)
+    setAddressEditing(false)
+    setPlaceQuery('')
+    setPlaceSuggestions([])
+    acceptedAddressSigRef.current = ''
+    setAcceptedAddressSig('')
+    if (campusSelectionSourceRef.current === 'auto') {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+    document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   async function applyConfirmedPlace(parsed: ParsedAustralianAddress) {
     const nextState = parsed.state.trim().toUpperCase()
-    const conflict = postcodeStateConflictMessage(parsed.postcode, nextState)
-    if (conflict) {
-      setSubmitError(conflict)
-      document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      return
-    }
     const current = addressFieldsRef.current
     const streetLine = (parsed.streetLine.trim() || current.address.trim()).trim()
     const streetParts = splitUnitFromStreetLine(streetLine)
+    const resolvedState = (nextState || current.state).trim().toUpperCase()
     const fields = {
       address: streetLine,
       suburb: parsed.suburb,
-      state: nextState || current.state,
+      state: resolvedState,
       postcode: parsed.postcode,
+    }
+    const refusal = addressConfirmRefusal(resolvedState, parsed.postcode)
+    if (refusal) {
+      holdUnconfirmedAddress(fields, streetParts)
+      return
     }
     if (!streetLine || !parsed.suburb.trim() || !fields.state.trim() || !parsed.postcode.trim()) {
       if (nextState) {
@@ -2868,6 +2918,13 @@ export default function LandlordPropertyFormPage() {
   async function confirmEnteredAddress() {
     // Manual entries only. A Google suggestion already has a location from Place Details.
     const fields = { ...addressFieldsRef.current }
+    if (addressConfirmRefusal(fields.state, fields.postcode)) {
+      setManualAddressOpen(true)
+      setAddressEditing(false)
+      acceptedAddressSigRef.current = ''
+      setAcceptedAddressSig('')
+      return
+    }
     if (!addressReadyForCampusSearch(fields)) return
     setCampusConfirmMessage(null)
     setSubmitError(null)
@@ -4762,6 +4819,11 @@ export default function LandlordPropertyFormPage() {
                 show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
                 casual browsers.
               </p>
+              {listingStateCode && !isListingAgreementState(listingStateCode) ? (
+                <p className="text-sm text-amber-950" role="status">
+                  {unsupportedListingStateMessage(listingStateCode)}
+                </p>
+              ) : null}
               {showAddressSummary ? (
                 <div className="rounded-[10px] border border-[var(--quni-line)] bg-white px-4 py-3">
                   <div className="flex gap-3">
@@ -4958,11 +5020,6 @@ export default function LandlordPropertyFormPage() {
                           </option>
                         ))}
                       </select>
-                      {listingStateCode && !isListingAgreementState(listingStateCode) ? (
-                        <p className="mt-2 text-sm text-amber-950" role="status">
-                          {unsupportedListingStateMessage(listingStateCode)}
-                        </p>
-                      ) : null}
                     </div>
                     <div>
                       <label htmlFor="pf-pc" className={labelClass}>
@@ -4999,7 +5056,8 @@ export default function LandlordPropertyFormPage() {
                       !suburb.trim() ||
                       !listingStateCode ||
                       !postcode.trim() ||
-                      Boolean(postcodeStateConflict)
+                      Boolean(postcodeStateConflict) ||
+                      unsupportedListingState
                     }
                     onClick={() => void confirmEnteredAddress()}
                     className="w-full rounded-[10px] bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -5027,7 +5085,7 @@ export default function LandlordPropertyFormPage() {
               ) : null}
               <div>
                 <span className={labelClass}>Nearest university campus</span>
-                {addressIsConfirmed ? null : (
+                {addressIsConfirmed || unsupportedListingState ? null : (
                   <p className="text-sm text-gray-700">Confirm the property address to see nearby campuses.</p>
                 )}
 

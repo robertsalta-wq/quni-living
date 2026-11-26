@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addressConfirmRefusal,
   hasListingStateSpecificAnswers,
   isListingAgreementState,
   listingStateChangeConfirmMessage,
@@ -18,6 +19,22 @@ describe('listingAgreementState', () => {
 
   it('names the unsupported state in the form message', () => {
     expect(unsupportedListingStateMessage('wa')).toBe("Quni doesn't support listings in WA yet")
+  })
+
+  it('refuses an unsupported state even when the postcode matches', () => {
+    expect(addressConfirmRefusal('SA', '5254')).toBe("Quni doesn't support listings in SA yet")
+    expect(addressConfirmRefusal('WA', '6000')).toBe("Quni doesn't support listings in WA yet")
+    expect(addressConfirmRefusal('TAS', '7000')).toBe("Quni doesn't support listings in TAS yet")
+    expect(addressConfirmRefusal('ACT', '2600')).toBe("Quni doesn't support listings in ACT yet")
+    expect(addressConfirmRefusal('NT', '0800')).toBe("Quni doesn't support listings in NT yet")
+    expect(addressConfirmRefusal('NSW', '2000')).toBeNull()
+    expect(addressConfirmRefusal('VIC', '3053')).toBeNull()
+    expect(addressConfirmRefusal('QLD', '4000')).toBeNull()
+  })
+
+  it('still refuses a supported state whose postcode belongs somewhere else', () => {
+    expect(addressConfirmRefusal('VIC', '5254')).toBe('Postcode 5254 is in SA, but the state is VIC')
+    expect(addressConfirmRefusal('', '5254')).toBeNull()
   })
 
   it('asks before clearing a state that already has answers', () => {
