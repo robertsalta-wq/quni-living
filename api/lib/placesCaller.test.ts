@@ -10,7 +10,36 @@ vi.mock('@supabase/supabase-js', () => ({
 
 import { requireLandlordOrAdmin } from './placesCaller.js'
 
-const ENV_KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'] as const
+const ENV_KEYS = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_JWT_SECRET'] as const
+
+function bytesToBase64Url(bytes: Uint8Array) {
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
+async function signAccessToken(payload: Record<string, unknown>, secret = 'jwt-secret') {
+  const header = bytesToBase64Url(new TextEncoder().encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })))
+  const body = bytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)))
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${header}.${body}`)))
+  return `${header}.${body}.${bytesToBase64Url(sig)}`
+}
+
+function accessToken(sub: string, email: string, expSecondsFromNow = 3600) {
+  return signAccessToken({
+    sub,
+    email,
+    role: 'authenticated',
+    exp: Math.floor(Date.now() / 1000) + expSecondsFromNow,
+  })
+}
 
 afterEach(() => {
   mocks.createClient.mockReset()
@@ -26,7 +55,7 @@ function authedRequest(token = 'session-token') {
 function clientFor(user: { id: string; email?: string } | null, rows: Record<string, { id: string } | null>) {
   return {
     auth: {
-      getUser: async () => ({ data: { user }, error: user ? null : { message: 'invalid' } }),
+      getUser: vi.fn(async () => ({ data: { user }, error: user ? null : { message: 'invalid' } })),
     },
     from(table: string) {
       return {
@@ -96,6 +125,77 @@ describe('requireLandlordOrAdmin', () => {
       clientFor(key === 'anon' ? user : user, {}),
     )
     const result = await requireLandlordOrAdmin(authedRequest())
+    expect(result).toEqual({ error: 'forbidden', status: 403 })
+  })
+
+  it('verifies a Supabase JWT locally and skips the auth server', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_ANON_KEY = 'anon'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service'
+    process.env.SUPABASE_JWT_SECRET = 'jwt-secret'
+    const client = clientFor({ id: 'user-1', email: 'land@quni.test' }, { landlord_profiles: { id: 'lp-1' } })
+    mocks.createClient.mockReturnValue(client)
+    const token = await accessToken('user-1', 'land@quni.test')
+    const result = await requireLandlordOrAdmin(authedRequest(token))
+    expect(result.user?.id).toBe('user-1')
+    expect(result.pass).toEqual(expect.any(String))
+    expect(client.auth.getUser).not.toHaveBeenCalled()
+  })
+
+  it('rejects a bad or expired JWT before any Supabase call', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_JWT_SECRET = 'jwt-secret'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service'
+    const forged = await accessToken('user-1', 'land@quni.test')
+    const [header, body] = forged.split('.')
+    const bad = await requireLandlordOrAdmin(authedRequest(`${header}.${body}.not-a-signature`))
+    expect(bad).toEqual({ error: 'unauthorized', status: 401 })
+    const expired = await accessToken('user-1', 'land@quni.test', -60)
+    const stale = await requireLandlordOrAdmin(authedRequest(expired))
+    expect(stale).toEqual({ error: 'unauthorized', status: 401 })
+    expect(mocks.createClient).not.toHaveBeenCalled()
+  })
+
+  it('skips the landlord lookup on a later suggestion that carries a fresh pass', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_ANON_KEY = 'anon'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service'
+    process.env.SUPABASE_JWT_SECRET = 'jwt-secret'
+    mocks.createClient.mockReturnValue(
+      clientFor({ id: 'user-1', email: 'land@quni.test' }, { landlord_profiles: { id: 'lp-1' } }),
+    )
+    const token = await accessToken('user-1', 'land@quni.test')
+    const first = await requireLandlordOrAdmin(authedRequest(token))
+    expect(first.pass).toEqual(expect.any(String))
+    mocks.createClient.mockClear()
+    const suggestion = new Request('https://quni.test/api/places?input=buffalo', {
+      headers: { authorization: `Bearer ${token}`, 'x-quni-places-pass': first.pass ?? '' },
+    })
+    const second = await requireLandlordOrAdmin(suggestion, { allowPass: true })
+    expect(second.user?.id).toBe('user-1')
+    expect(mocks.createClient).not.toHaveBeenCalled()
+
+    const confirm = await requireLandlordOrAdmin(suggestion, { allowPass: false })
+    expect(confirm.user?.id).toBe('user-1')
+    expect(mocks.createClient).toHaveBeenCalled()
+  })
+
+  it('does not treat another user pass as this caller', async () => {
+    process.env.SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_ANON_KEY = 'anon'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service'
+    process.env.SUPABASE_JWT_SECRET = 'jwt-secret'
+    mocks.createClient.mockReturnValue(clientFor({ id: 'user-1', email: 'land@quni.test' }, { landlord_profiles: { id: 'lp-1' } }))
+    const landlordToken = await accessToken('user-1', 'land@quni.test')
+    const landlord = await requireLandlordOrAdmin(authedRequest(landlordToken))
+    const studentToken = await accessToken('student-1', 'student@quni.test')
+    mocks.createClient.mockReturnValue(clientFor({ id: 'student-1', email: 'student@quni.test' }, {}))
+    const result = await requireLandlordOrAdmin(
+      new Request('https://quni.test/api/places?input=buffalo', {
+        headers: { authorization: `Bearer ${studentToken}`, 'x-quni-places-pass': landlord.pass ?? '' },
+      }),
+      { allowPass: true },
+    )
     expect(result).toEqual({ error: 'forbidden', status: 403 })
   })
 })

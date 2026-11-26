@@ -1159,6 +1159,7 @@ export default function LandlordPropertyFormPage() {
   const [manualAddressOpen, setManualAddressOpen] = useState(false)
   const [placesSearch, setPlacesSearch] = useState<'unknown' | 'on' | 'off'>('unknown')
   const [placeQuery, setPlaceQuery] = useState('')
+  const [placeSearchLoading, setPlaceSearchLoading] = useState(false)
   const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestion[]>([])
   const [placesHint, setPlacesHint] = useState<string | null>(null)
   const placeSessionRef = useRef('')
@@ -3107,8 +3108,10 @@ export default function LandlordPropertyFormPage() {
     if (!placeSessionRef.current) rotatePlaceSession()
     const ac = new AbortController()
     const timer = window.setTimeout(() => {
+      setPlaceSearchLoading(true)
       void fetchPlaceSuggestions(q, placeSessionRef.current, ac.signal).then((result) => {
         if (ac.signal.aborted) return
+        setPlaceSearchLoading(false)
         if (!result.ok) {
           setPlaceSuggestions([])
           if (result.reason === 'not_configured') {
@@ -3125,10 +3128,11 @@ export default function LandlordPropertyFormPage() {
         setPlacesHint(null)
         setPlaceSuggestions(result.suggestions)
       })
-    }, 300)
+    }, 200)
     return () => {
       ac.abort()
       window.clearTimeout(timer)
+      setPlaceSearchLoading(false)
     }
   }, [placeQuery, placesSearch])
 
@@ -4906,13 +4910,21 @@ export default function LandlordPropertyFormPage() {
                       id="pf-address-search"
                       value={placeQuery}
                       onChange={(e) => setPlaceQuery(e.target.value)}
-                      className={placeQuery ? `${inputClass} pr-10` : inputClass}
+                      className={placeQuery ? `${inputClass} ${placeSearchLoading ? 'pr-16' : 'pr-10'}` : inputClass}
                       placeholder="Start typing a street address"
                       autoComplete="off"
                       role="combobox"
                       aria-expanded={placeSuggestions.length > 0}
                       aria-controls="pf-address-suggestions"
+                      aria-busy={placeSearchLoading}
                     />
+                    {placeSearchLoading ? (
+                      <span
+                        className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[var(--quni-line)] border-t-[var(--quni-navy)] ${placeQuery ? 'right-10' : 'right-3'}`}
+                        role="status"
+                        aria-label="Searching addresses"
+                      />
+                    ) : null}
                     {placeQuery ? (
                       <button
                         type="button"

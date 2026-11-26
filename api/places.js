@@ -45,15 +45,23 @@ function sessionToken(raw) {
   return SESSION_TOKEN.test(value) ? value : ''
 }
 
+function ok(body, access) {
+  if (access.pass) body.pass = access.pass
+  return json(body)
+}
+
 export default async function handler(req) {
   if (req.method !== 'GET') return json({ ok: false, error: 'method' }, 405)
 
-  const access = await requireLandlordOrAdmin(req)
+  const url = new URL(req.url)
+  const probe = url.searchParams.get('probe') === '1'
+  const confirm = url.searchParams.get('confirm') === '1'
+  const placeIdEarly = placeResource(url.searchParams.get('placeId'))
+  const access = await requireLandlordOrAdmin(req, { allowPass: !probe && !confirm && !placeIdEarly })
   if (!access.user) return json({ ok: false, error: access.error }, access.status)
 
-  const url = new URL(req.url)
-  if (url.searchParams.get('probe') === '1') {
-    return json({ ok: true, configured: Boolean(placesKey()) })
+  if (probe) {
+    return ok({ ok: true, configured: Boolean(placesKey()) }, access)
   }
 
   if (!consumePlacesRateLimit(access.user.id)) return json({ ok: false, error: 'rate_limited' }, 429)
@@ -64,7 +72,7 @@ export default async function handler(req) {
   const session = sessionToken(url.searchParams.get('session'))
 
   try {
-    if (url.searchParams.get('confirm') === '1') {
+    if (confirm) {
       const parts = ['address', 'suburb', 'state', 'postcode'].map((name) =>
         (url.searchParams.get(name) || '').trim(),
       )
@@ -78,7 +86,7 @@ export default async function handler(req) {
       const body = await res.json()
       if (!res.ok || body.status === 'REQUEST_DENIED') return json({ ok: false, error: 'unavailable' }, 502)
       const results = Array.isArray(body.results) ? body.results.slice(0, 5) : []
-      return json({ ok: true, results })
+      return ok({ ok: true, results }, access)
     }
 
     const placeId = placeResource(url.searchParams.get('placeId'))
@@ -94,7 +102,7 @@ export default async function handler(req) {
       })
       const body = await res.json()
       if (!res.ok) return json({ ok: false, error: 'unavailable' }, 502)
-      return json({ ok: true, place: body })
+      return ok({ ok: true, place: body }, access)
     }
 
     const input = (url.searchParams.get('input') || '').trim()
@@ -124,7 +132,7 @@ export default async function handler(req) {
         label: prediction.text?.text || '',
       }))
       .filter((item) => item.placeId && item.label)
-    return json({ ok: true, suggestions })
+    return ok({ ok: true, suggestions }, access)
   } catch {
     return json({ ok: false, error: 'unavailable' }, 502)
   }

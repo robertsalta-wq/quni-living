@@ -27,14 +27,24 @@ function failureFrom(body: Record<string, unknown> | null, status: number): Plac
   return 'unavailable'
 }
 
+let landlordPass = ''
+
 async function fetchPlaces(params: URLSearchParams, signal?: AbortSignal): Promise<Response | 'signed_out'> {
   const { data, error } = await supabase.auth.getSession()
   const token = data.session?.access_token
   if (error || !token || signal?.aborted) return 'signed_out'
-  return fetch(`/api/places?${params.toString()}`, {
-    signal,
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const suggestion = params.has('input') && !params.has('placeId') && params.get('confirm') !== '1'
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
+  if (suggestion && landlordPass) headers['x-quni-places-pass'] = landlordPass
+  const res = await fetch(`/api/places?${params.toString()}`, { signal, headers })
+  try {
+    const body = await res.clone().json()
+    if (body && typeof body === 'object' && typeof body.pass === 'string' && body.pass) landlordPass = body.pass
+    if (res.status === 401 || res.status === 403) landlordPass = ''
+  } catch {
+    // The caller reads the body and reports a failure.
+  }
+  return res
 }
 
 /** Whether address search can be offered. Unknown means the probe did not answer. */
