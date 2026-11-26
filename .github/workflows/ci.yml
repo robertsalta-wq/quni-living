@@ -92,7 +92,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHA: ${{ github.event.pull_request.head.sha }}
-          MAX_TIMEOUT: "600"
+          # One preview was recorded about 14 minutes after the push. 600s expired first.
+          MAX_TIMEOUT: "900"
           CHECK_INTERVAL: "5"
         run: bash .github/scripts/wait-for-vercel-preview.sh
 
