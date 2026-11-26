@@ -2827,7 +2827,13 @@ export default function LandlordPropertyFormPage() {
     const result = await fetchPlaceDetails(placeId, placeSessionRef.current)
     rotatePlaceSession()
     if (!result.ok) {
-      setNearbyCampusError('We could not read that address. Try another result or enter it manually.')
+      if (result.reason === 'unauthorized' || result.reason === 'forbidden') {
+        setNearbyCampusError('Sign in again to use that address.')
+      } else if (result.reason === 'rate_limited') {
+        setNearbyCampusError('Too many address lookups. Wait a minute and try again.')
+      } else {
+        setNearbyCampusError('We could not read that address. Try another result or enter it manually.')
+      }
       return
     }
     setPlaceQuery('')
@@ -2848,6 +2854,16 @@ export default function LandlordPropertyFormPage() {
     if (google.reason === 'mismatch') {
       setNearbyCampusSuggestions([])
       setNearbyCampusError(ADDRESS_NOT_MATCHED_MESSAGE)
+      return
+    }
+    if (google.reason === 'unauthorized' || google.reason === 'forbidden') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError('Sign in again to confirm this address.')
+      return
+    }
+    if (google.reason === 'rate_limited') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError('Too many address lookups. Wait a minute and try again.')
       return
     }
     if (google.reason !== 'not_configured') {
@@ -2905,6 +2921,7 @@ export default function LandlordPropertyFormPage() {
     const q = placeQuery.trim()
     if (q.length < 3) {
       setPlaceSuggestions([])
+      placeSessionRef.current = ''
       return
     }
     if (!placeSessionRef.current) rotatePlaceSession()
@@ -2916,6 +2933,10 @@ export default function LandlordPropertyFormPage() {
           setPlaceSuggestions([])
           if (result.reason === 'not_configured') {
             setPlacesHint('Address search needs a Google API key. Enter the address manually for now.')
+          } else if (result.reason === 'unauthorized' || result.reason === 'forbidden') {
+            setPlacesHint('Sign in again to search for an address. You can still enter it manually.')
+          } else if (result.reason === 'rate_limited') {
+            setPlacesHint('Too many address lookups. Wait a minute and try again.')
           }
           return
         }

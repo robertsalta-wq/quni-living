@@ -122,17 +122,19 @@ export function parseGoogleAddressResult(raw: unknown): ParsedAustralianAddress 
     componentByType(components, 'sublocality_level_1') ||
     componentByType(components, 'sublocality') ||
     componentByType(components, 'neighborhood')
-  const postcode = componentByType(components, 'postal_code')
+  const postcodeComponent = componentByType(components, 'postal_code')
+  const suburb = suburbComponent ? componentText(suburbComponent) : ''
   const state = australianStateCode(componentByType(components, 'administrative_area_level_1'))
+  const postcode = postcodeComponent ? componentText(postcodeComponent) : ''
   const formatted =
     (typeof record.formattedAddress === 'string' && record.formattedAddress) ||
     (typeof record.formatted_address === 'string' && record.formatted_address) ||
-    ''
+    [streetLine, suburb, state, postcode].filter(Boolean).join(', ')
   return {
     streetLine,
-    suburb: suburbComponent ? componentText(suburbComponent) : '',
+    suburb,
     state,
-    postcode: postcode ? componentText(postcode) : '',
+    postcode,
     formatted,
     lat: point.lat,
     lon: point.lon,

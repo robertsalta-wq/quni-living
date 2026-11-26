@@ -29,6 +29,21 @@ describe('parseGoogleAddressResult', () => {
     })
   })
 
+  it('reads Essentials Place Details fields without a formatted address or types', () => {
+    const parsed = parseGoogleAddressResult({
+      location: { latitude: -33.92, longitude: 150.92 },
+      addressComponents: place.addressComponents,
+    })
+    expect(parsed).toMatchObject({
+      streetLine: 'Unit 401, 311 Hume Highway',
+      suburb: 'Liverpool',
+      state: 'NSW',
+      postcode: '2170',
+      formatted: 'Unit 401, 311 Hume Highway, Liverpool, NSW, 2170',
+      precision: 'street',
+    })
+  })
+
   it('reads a Geocoding API result and marks a locality as suburb-only', () => {
     const parsed = parseGoogleAddressResult({
       formatted_address: 'Liverpool NSW 2170, Australia',

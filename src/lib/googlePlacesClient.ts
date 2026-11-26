@@ -1,3 +1,4 @@
+import { supabase } from './supabase'
 import {
   firstAgreedGoogleAddress,
   parseGoogleAddressResult,
@@ -6,7 +7,7 @@ import {
 
 export type PlaceSuggestion = { placeId: string; label: string }
 
-type PlacesFailure = 'not_configured' | 'mismatch' | 'not_found' | 'unavailable'
+type PlacesFailure = 'not_configured' | 'mismatch' | 'not_found' | 'unavailable' | 'unauthorized' | 'forbidden' | 'rate_limited'
 
 async function readPlacesJson(res: Response): Promise<Record<string, unknown> | null> {
   try {
@@ -18,8 +19,22 @@ async function readPlacesJson(res: Response): Promise<Record<string, unknown> | 
 }
 
 function failureFrom(body: Record<string, unknown> | null, status: number): PlacesFailure {
-  if (body?.error === 'not_configured' || status === 503) return 'not_configured'
+  if (body?.error === 'not_configured') return 'not_configured'
+  if (body?.error === 'unauthorized' || status === 401) return 'unauthorized'
+  if (body?.error === 'forbidden' || status === 403) return 'forbidden'
+  if (body?.error === 'rate_limited' || status === 429) return 'rate_limited'
+  if (status === 503 && body?.error !== 'unavailable') return 'not_configured'
   return 'unavailable'
+}
+
+async function fetchPlaces(params: URLSearchParams, signal?: AbortSignal): Promise<Response | 'signed_out'> {
+  const { data, error } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (error || !token || signal?.aborted) return 'signed_out'
+  return fetch(`/api/places?${params.toString()}`, {
+    signal,
+    headers: { Authorization: `Bearer ${token}` },
+  })
 }
 
 export async function fetchPlaceSuggestions(
@@ -30,7 +45,9 @@ export async function fetchPlaceSuggestions(
   const params = new URLSearchParams({ input, session: sessionToken })
   let res: Response
   try {
-    res = await fetch(`/api/places?${params.toString()}`, { signal })
+    const fetched = await fetchPlaces(params, signal)
+    if (fetched === 'signed_out') return { ok: false, reason: 'unauthorized' }
+    res = fetched
   } catch {
     return { ok: false, reason: 'unavailable' }
   }
@@ -58,7 +75,9 @@ export async function fetchPlaceDetails(
   const params = new URLSearchParams({ placeId, session: sessionToken })
   let res: Response
   try {
-    res = await fetch(`/api/places?${params.toString()}`, { signal })
+    const fetched = await fetchPlaces(params, signal)
+    if (fetched === 'signed_out') return { ok: false, reason: 'unauthorized' }
+    res = fetched
   } catch {
     return { ok: false, reason: 'unavailable' }
   }
@@ -82,7 +101,9 @@ export async function geocodeAddressWithGoogle(
   })
   let res: Response
   try {
-    res = await fetch(`/api/places?${params.toString()}`, { signal })
+    const fetched = await fetchPlaces(params, signal)
+    if (fetched === 'signed_out') return { ok: false, reason: 'unauthorized' }
+    res = fetched
   } catch {
     return { ok: false, reason: 'unavailable' }
   }
