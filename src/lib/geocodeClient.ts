@@ -1,3 +1,5 @@
+import type { AgreedGeocodeHit, GeocoderLocality, GeocoderResultKind } from './geocodeAddressAgreement'
+
 export type GeoPoint = { lat: number; lon: number }
 
 const geocodeCache = new Map<string, GeoPoint | null>()
@@ -28,6 +30,28 @@ export async function geocodeQuery(
   } catch {
     if (signal?.aborted) return null
     geocodeCache.set(key, null)
+    return null
+  }
+}
+
+type GeocodeDetailsResponse = GeocodeResponse & {
+  address?: GeocoderLocality | null
+  kind?: GeocoderResultKind | null
+}
+
+/** Geocode with Nominatim locality fields. Not stored in the lat/lon cache, so a point is never reused before the suburb check. */
+export async function geocodeQueryWithAddress(
+  query: string,
+  signal?: AbortSignal,
+): Promise<AgreedGeocodeHit | null> {
+  const q = query.trim()
+  if (q.length < 4) return null
+  try {
+    const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&details=1`, { signal })
+    const body = (await res.json()) as GeocodeDetailsResponse
+    if (!body.ok || body.lat == null || body.lon == null || !body.address) return null
+    return { lat: body.lat, lon: body.lon, address: body.address, kind: body.kind ?? null }
+  } catch {
     return null
   }
 }

@@ -150,8 +150,14 @@ export function PrivacyContent() {
           'Vercel (website hosting)',
           'Resend (transactional email delivery)',
           'Cloudflare (spam protection)',
+          'Google LLC (property address lookup)',
         ]}
       />
+      <LegalP>
+        When you search for or confirm a property address while creating or editing a listing, that address is sent to
+        Google LLC and may be processed in the United States. Google uses it to match the street, suburb, state,
+        postcode and map location.
+      </LegalP>
       <LegalP>
         These providers are contractually required to handle your information securely and only for the purposes we specify.
       </LegalP>
@@ -165,6 +171,11 @@ export function PrivacyContent() {
         If Quni Living is involved in a merger, acquisition, or sale of assets, your personal information may be transferred
         as part of that transaction. We will notify you before your information is transferred and becomes subject to a
         different privacy policy.
+      </LegalP>
+      <LegalH3 id="disclosure-overseas">5.5 Overseas disclosure</LegalH3>
+      <LegalP>
+        When you search for or confirm a property address while creating or editing a listing, that address is sent to
+        Google LLC and may be processed in the United States.
       </LegalP>
 
       <LegalH2 id="security">6. Data Storage and Security</LegalH2>

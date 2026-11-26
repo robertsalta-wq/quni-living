@@ -10,9 +10,54 @@ function expandStreetAbbreviations(line: string): string {
     .replace(/\bPde\b/gi, 'Parade')
 }
 
-/** Prefixes like "Unit 406," that geocoders often fail on - strip for street-level lookup. */
-const UNIT_LINE_PREFIX =
-  /^(?:unit|apt|apartment|apts?|suite|ste|level|lvl|lot|shop|office|flat)\s*[\d\w-]+\s*,?\s*/i
+/**
+ * Words a landlord may already have typed in the Unit field.
+ * Longer words come first so "Apartment" is not read as "Apt".
+ */
+const UNIT_PREFIX = String.raw`apartment|apt|suite|ste|level|lvl|office|flat|unit|shop|lot`
+
+const UNIT_PREFIX_START = new RegExp(`^(?:${UNIT_PREFIX})\\b`, 'i')
+const UNIT_CLAUSE_WITH_STREET = new RegExp(`^((?:${UNIT_PREFIX})\\b.*?)\\s*,\\s*(.*)$`, 'i')
+const DOUBLED_PREFIX = new RegExp(`^(${UNIT_PREFIX})\\s+\\1\\b\\s*`, 'i')
+
+function collapseDoubledPrefix(clause: string): string {
+  let text = clause.trim().replace(/\s+/g, ' ')
+  while (DOUBLED_PREFIX.test(text)) {
+    text = text.replace(DOUBLED_PREFIX, '$1 ').replace(/\s+/g, ' ').trim()
+  }
+  return text
+}
+
+/** A bare number or letter, such as "1", "A", "U1", or "12B". Prefix words are not bare. */
+function isBareUnitToken(unit: string): boolean {
+  return /^[0-9A-Za-z]+$/.test(unit) && !new RegExp(`^(?:${UNIT_PREFIX})$`, 'i').test(unit)
+}
+
+/** The unit clause stored before the comma. Adds "Unit" only for a bare token. */
+function unitClause(unit: string): string {
+  const text = collapseDoubledPrefix(unit)
+  if (!text) return ''
+  if (UNIT_PREFIX_START.test(text)) return text
+  if (isBareUnitToken(text)) return `Unit ${text}`
+  return text
+}
+
+export function splitUnitFromStreetLine(address: string): { unit: string; street: string } {
+  const line = address.trim()
+  const match = line.match(UNIT_CLAUSE_WITH_STREET)
+  if (match) return { unit: collapseDoubledPrefix(match[1]), street: match[2].trim() }
+  if (UNIT_PREFIX_START.test(line)) return { unit: collapseDoubledPrefix(line), street: '' }
+  return { unit: '', street: line }
+}
+
+/** Stored on properties.address. There is no separate unit column. */
+export function composeStreetLine(unit: string, street: string): string {
+  const clause = unitClause(unit)
+  const s = street.trim()
+  if (!clause) return s
+  if (!s) return clause
+  return `${clause}, ${s}`
+}
 
 /**
  * Street number + name for geocoding (no unit/apartment). Used for lat/lng and nearest campus.
@@ -22,11 +67,8 @@ export function streetLineForGeocode(address: string): string | null {
   let line = address.trim()
   if (!line) return null
 
-  let guard = 0
-  while (UNIT_LINE_PREFIX.test(line) && guard < 4) {
-    line = line.replace(UNIT_LINE_PREFIX, '').trim()
-    guard += 1
-  }
+  const parts = splitUnitFromStreetLine(line)
+  if (parts.unit) line = parts.street
 
   const unitSlash = line.match(/^(\d+)\s*\/\s*(\d+)\s+(.+)$/i)
   if (unitSlash) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
 import {
@@ -34,14 +34,18 @@ import {
   parseAdminConciergeLandlordProfileId,
   skipListingAttestationsForAdmin,
 } from '../../lib/adminConciergeListing'
-import { listingStateFieldClears } from '../../lib/listingFormStateChange'
 import {
-  hasListingStateSpecificAnswers,
+  listingStateConfirmNotice,
+  listingStateFieldClears,
+  listingStateHadClearedAnswers,
+} from '../../lib/listingFormStateChange'
+import {
+  addressConfirmRefusal,
   isListingAgreementState,
-  listingStateChangeConfirmMessage,
-  listingStateChangeNeedsConfirm,
   unsupportedListingStateMessage,
+  unsupportedListingStateNotice,
 } from '../../lib/listingAgreementState'
+import { composeStreetLine, splitUnitFromStreetLine } from '../../lib/normalizeAustralianAddressForGeocode'
 import {
   postcodeStateConflictMessage,
   stateFromAustralianPostcode,
@@ -182,7 +186,26 @@ import {
   type PropertyImage,
 } from '../../lib/propertyImages'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
-import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
+import { geocodeQueryWithAddress } from '../../lib/geocodeClient'
+import {
+  ADDRESS_NOT_MATCHED_MESSAGE,
+  CAMPUS_CHECK_AFTER_ADDRESS_CHANGE_MESSAGE,
+  CONFIRM_ADDRESS_AGAIN_MESSAGE,
+  CONFIRM_ADDRESS_FIRST_MESSAGE,
+  SUBURB_ONLY_MATCH_MESSAGE,
+  campusActionWhenAddressChanges,
+  firstAgreedGeocode,
+  type CampusSelectionSource,
+} from '../../lib/geocodeAddressAgreement'
+import {
+  fetchPlaceDetails,
+  fetchPlacesSearchAvailable,
+  fetchPlaceSuggestions,
+  geocodeAddressWithGoogle,
+  manualConfirmCanUseNominatim,
+  type PlaceSuggestion,
+} from '../../lib/googlePlacesClient'
+import type { ParsedAustralianAddress } from '../../lib/googlePlaceAddress'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
 import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
@@ -352,6 +375,12 @@ type LandlordPropertyDraftV1 = {
   postcode: string
   universityId: string
   campusId: string
+  /** Who chose the campus. Missing on older device drafts. */
+  campusSelectionSource?: CampusSelectionSource
+  /** False after an edit that still needs Confirm address. Missing on older drafts means confirmed. */
+  addressConfirmed?: boolean
+  /** Last confirmed state. Kept while a later edit is still unconfirmed. Missing on older drafts. */
+  confirmedListingState?: string
   latitude: number | null
   longitude: number | null
   showAddAnotherUniversity: boolean
@@ -506,6 +535,11 @@ function parseDraftLeaseLength(raw: unknown): LandlordPropertyDraftV1['leaseLeng
   return 'Flexible'
 }
 
+function parseDraftCampusSelectionSource(raw: unknown): CampusSelectionSource | undefined {
+  if (raw === 'none' || raw === 'auto' || raw === 'landlord' || raw === 'saved') return raw
+  return undefined
+}
+
 function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1 | null {
   if (!raw) return null
   try {
@@ -542,6 +576,10 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       postcode: typeof d.postcode === 'string' ? d.postcode : '',
       universityId: typeof d.universityId === 'string' ? d.universityId : '',
       campusId: typeof d.campusId === 'string' ? d.campusId : '',
+      campusSelectionSource: parseDraftCampusSelectionSource(d.campusSelectionSource),
+      addressConfirmed: typeof d.addressConfirmed === 'boolean' ? d.addressConfirmed : undefined,
+      confirmedListingState:
+        typeof d.confirmedListingState === 'string' ? d.confirmedListingState : undefined,
       latitude: typeof d.latitude === 'number' && Number.isFinite(d.latitude) ? d.latitude : null,
       longitude: typeof d.longitude === 'number' && Number.isFinite(d.longitude) ? d.longitude : null,
       showAddAnotherUniversity: Boolean(d.showAddAnotherUniversity),
@@ -746,6 +784,25 @@ function ListingDescriptionAiBlock({
       />
       <div className="mt-2 space-y-2">{feedback}</div>
     </>
+  )
+}
+
+function blockImplicitFormSubmit(event: KeyboardEvent<HTMLFormElement>) {
+  if (event.key !== 'Enter') return
+  const target = event.target
+  if (!(target instanceof HTMLElement)) return
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLButtonElement) return
+  event.preventDefault()
+}
+
+function UnsupportedStateNotice({ state }: { state: string }) {
+  const notice = unsupportedListingStateNotice(state)
+  if (!notice) return null
+  return (
+    <div className="rounded-[10px] border border-sky-200 bg-[var(--quni-info-bg)] px-4 py-3" role="status">
+      <p className="text-sm font-semibold text-[var(--quni-info-fg)]">{notice.heading}</p>
+      <p className="mt-1 text-sm leading-relaxed text-[var(--quni-info-fg)]">{notice.body}</p>
+    </div>
   )
 }
 
@@ -975,10 +1032,15 @@ export default function LandlordPropertyFormPage() {
   const [houseRulesResetError, setHouseRulesResetError] = useState<string | null>(null)
 
   const [address, setAddress] = useState('')
+  const [addressUnit, setAddressUnit] = useState('')
+  const [addressStreet, setAddressStreet] = useState('')
+  const [addressEditing, setAddressEditing] = useState(false)
+  const [confirmedListingState, setConfirmedListingState] = useState('')
+  const confirmedListingStateRef = useRef('')
+  const [listingStateNotice, setListingStateNotice] = useState<string | null>(null)
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('')
-  const applyListingStateRef = useRef<(next: string) => void>(() => {})
-  const stateSpecificAnswersRef = useRef(false)
+  const applyListingStateRef = useRef<(next: string) => boolean>(() => true)
   /** True after the landlord, a saved listing, or an admin profile sets the state. */
   const stateChosenByLandlordRef = useRef(false)
   const [postcode, setPostcode] = useState('')
@@ -1102,7 +1164,19 @@ export default function LandlordPropertyFormPage() {
   const [nearbyCampusSuggestions, setNearbyCampusSuggestions] = useState<NearbyCampusSuggestion[]>([])
   const [nearbyCampusLoading, setNearbyCampusLoading] = useState(false)
   const [nearbyCampusError, setNearbyCampusError] = useState<string | null>(null)
-  const [nearbyLookupNonce, setNearbyLookupNonce] = useState(0)
+  const [campusSelectionSource, setCampusSelectionSource] = useState<CampusSelectionSource>('none')
+  const [campusAddressSig, setCampusAddressSig] = useState('')
+  /** Address whose campuses the landlord has already accepted, including a loaded listing. */
+  const [acceptedAddressSig, setAcceptedAddressSig] = useState('')
+  const [addressMatchNote, setAddressMatchNote] = useState<string | null>(null)
+  const [manualAddressOpen, setManualAddressOpen] = useState(false)
+  const [placesSearch, setPlacesSearch] = useState<'unknown' | 'on' | 'off'>('unknown')
+  const [placeQuery, setPlaceQuery] = useState('')
+  const [placeSearchLoading, setPlaceSearchLoading] = useState(false)
+  const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestion[]>([])
+  const [placesHint, setPlacesHint] = useState<string | null>(null)
+  const placeSessionRef = useRef('')
+  const [campusConfirmMessage, setCampusConfirmMessage] = useState<string | null>(null)
 
   // When a user manually edits the university/campus dropdown while geocoding is in-flight,
   // we don't want the auto-fill to overwrite their selection.
@@ -1122,17 +1196,132 @@ export default function LandlordPropertyFormPage() {
    * state on open (that made the form look "saved" while DB stayed null). User picks from the list
    * or changes address; new listings still auto-fill.
    */
-  const editDeferNearbyAutoFillRef = useRef(false)
   const lastNearbySigRef = useRef<string>('')
   const geoCacheRef = useRef<Map<string, GeoPoint | null>>(new Map())
   const geoCacheLoadedRef = useRef(false)
   const nearbyRequestIdRef = useRef(0)
-  /** Edit load: run campus lookup once when address is complete but campus_id is missing. */
-  const editCampusLookupQueuedRef = useRef(false)
-  /** Allows nearby lookup without marking the address dirty (edit bootstrap only). */
-  const runNearbyLookupRef = useRef(false)
   const universityIdRef = useRef<string>(universityId)
   const campusIdRef = useRef<string>(campusId)
+  const campusSelectionSourceRef = useRef<CampusSelectionSource>('none')
+  const campusAddressSigRef = useRef('')
+  const acceptedAddressSigRef = useRef('')
+  const resultsShownSigRef = useRef('')
+  const loadedCampusRef = useRef<{ universityId: string; campusId: string } | null>(null)
+  const acceptedCampusSnapRef = useRef<{
+    sig: string
+    universityId: string
+    campusId: string
+    source: CampusSelectionSource
+    lat: number | null
+    lon: number | null
+  } | null>(null)
+  const addressFieldsRef = useRef({ address: '', suburb: '', state: '', postcode: '' })
+  const nearbyAbortRef = useRef<AbortController | null>(null)
+  const propertyCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
+  const loadedCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
+  const requireConfirmedAddressRef = useRef<() => boolean>(() => true)
+
+  function rememberCampusChoice(next: CampusSelectionSource, sig: string) {
+    campusSelectionSourceRef.current = next
+    campusAddressSigRef.current = sig
+    setCampusSelectionSource(next)
+    setCampusAddressSig(sig)
+    const chosen = next === 'landlord' || next === 'saved'
+    manualUniCampusSelectionRef.current = chosen
+    skipNearbyAutoFillOverwriteRef.current = chosen
+  }
+
+  function acceptCampusForAddress(
+    sig: string,
+    coords?: { lat: number | null; lon: number | null },
+  ) {
+    if (coords) propertyCoordsRef.current = coords
+    acceptedAddressSigRef.current = sig
+    setAcceptedAddressSig(sig)
+    lastNearbySigRef.current = sig
+    acceptedCampusSnapRef.current = {
+      sig,
+      universityId: universityIdRef.current,
+      campusId: campusIdRef.current,
+      source: campusSelectionSourceRef.current,
+      lat: propertyCoordsRef.current.lat,
+      lon: propertyCoordsRef.current.lon,
+    }
+  }
+
+  function campusColumnsForCurrentAddress(): { university_id: string | null; campus_id: string | null } {
+    const sig = addressSigFrom(addressFieldsRef.current)
+    const campusIdValue = campusIdRef.current.trim()
+    const universityIdValue = universityIdRef.current.trim()
+    if (!campusIdValue) return { university_id: universityIdValue || null, campus_id: null }
+    const campusSig = campusAddressSigRef.current
+    const addressMatchesChoice =
+      campusSig === sig || acceptedAddressSigRef.current === sig || loadedPropertyAddressSigRef.current === sig
+    if (!addressMatchesChoice) return { university_id: null, campus_id: null }
+    return { university_id: universityIdValue || null, campus_id: campusIdValue }
+  }
+
+  function addressReadyForCampusSearch(fields: { address: string; suburb: string; state: string; postcode: string }) {
+    return Boolean(
+      fields.address.trim() &&
+        fields.suburb.trim() &&
+        fields.state.trim() &&
+        fields.postcode.trim() &&
+        !postcodeStateConflictMessage(fields.postcode, fields.state),
+    )
+  }
+
+  function addressSigFrom(fields: { address: string; suburb: string; state: string; postcode: string }) {
+    return [fields.address, fields.suburb, fields.state, fields.postcode].map((part) => part.trim()).join('|').toLowerCase()
+  }
+
+  function restoreAcceptedCampus(sig: string) {
+    const snap = acceptedCampusSnapRef.current
+    if (!snap || snap.sig !== sig) return
+    universityIdRef.current = snap.universityId
+    campusIdRef.current = snap.campusId
+    setUniversityId(snap.universityId)
+    setCampusId(snap.campusId)
+    rememberCampusChoice(snap.source, snap.campusId.trim() ? sig : '')
+    setLatitude(snap.lat)
+    setLongitude(snap.lon)
+  }
+
+  function onAddressPartChange(part: 'address' | 'suburb' | 'state' | 'postcode', value: string) {
+    const nextFields = { ...addressFieldsRef.current, [part]: value }
+    addressFieldsRef.current = nextFields
+    addressDirtyRef.current = true
+    const sig = addressSigFrom(nextFields)
+    nearbyAbortRef.current?.abort()
+    nearbyRequestIdRef.current += 1
+    setNearbyCampusLoading(false)
+    setAddressMatchNote(null)
+    setCampusConfirmMessage(null)
+    if (sig === acceptedAddressSigRef.current && acceptedAddressSigRef.current !== '') {
+      resultsShownSigRef.current = ''
+      restoreAcceptedCampus(sig)
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(null)
+      return
+    }
+    resultsShownSigRef.current = ''
+    setNearbyCampusSuggestions([])
+    setNearbyCampusError(null)
+    if (campusActionWhenAddressChanges(campusSelectionSourceRef.current) === 'clear') {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+    if (sig === loadedPropertyAddressSigRef.current && loadedPropertyAddressSigRef.current !== '') {
+      setLatitude(loadedCoordsRef.current.lat)
+      setLongitude(loadedCoordsRef.current.lon)
+    } else {
+      setLatitude(null)
+      setLongitude(null)
+    }
+  }
 
   const [rentPerWeek, setRentPerWeek] = useState('')
   const [maxOccupants, setMaxOccupants] = useState('1')
@@ -1143,54 +1332,82 @@ export default function LandlordPropertyFormPage() {
     emptyLandlordFt6600ComplianceFormState,
   )
 
-  const applyListingState = useCallback((nextRaw: string) => {
-    const next = listingStateFromLandlordProfile(nextRaw) ?? ''
-    const from = listingStateFromLandlordProfile(state) ?? ''
-    if (
-      listingStateChangeNeedsConfirm({
-        fromState: from,
-        toState: next,
-        hasSpecificAnswers: stateSpecificAnswersRef.current,
-      }) &&
-      !window.confirm(listingStateChangeConfirmMessage(from))
-    ) {
-      return
-    }
-    const clears = listingStateFieldClears(state, next)
-    setState(next)
-    if (clears.clearNswBoardingParticulars) {
-      setSharedAreas({ ...EMPTY_NSW_T3_SHARED_AREAS })
-      setAdditionalCharges([])
-      setT3ComplianceForm(emptyNswT3ComplianceFormState())
-      setT3ComplianceCompleteOnLoad(false)
-    }
-    if (clears.clearRoomDescription) setRoomDescription('')
-    if (clears.clearNswCompliance) {
-      setFt6600Compliance(emptyLandlordFt6600ComplianceFormState())
-      setWaterSeparatelyMeteredAgreed(false)
-      setWaterSeparatelyMeteredAttestedAt(null)
-    }
-    if (clears.clearQldRooming) {
-      setQldRoomingForm(emptyQldRoomingListingFormState())
-      setQldHouseRulesCommonAreas('')
-      setQldHouseRulesExtras({})
-      setRoomsRentedToResidents('')
-      setQldBondRemittancePreference('tenant_choice')
-    }
-    if (clears.clearVicRooming) setVicRoomingFields(emptyVicRoomingHouseFieldValues())
-    if (clears.clearSharedUtilities) setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
-    if (clears.clearRoomingHouseRegistration) {
-      setIsRegisteredRoomingHouse(false)
-      setRoomingHouseRegistrationNumber('')
-    }
-  }, [state])
+  const applyListingState = useCallback((nextRaw: string): boolean => {
+    setState(listingStateFromLandlordProfile(nextRaw) ?? '')
+    return true
+  }, [])
   applyListingStateRef.current = applyListingState
+
+  function rememberConfirmedListingState(nextRaw: string) {
+    const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    if (next && !isListingAgreementState(next)) return
+    confirmedListingStateRef.current = next
+    setConfirmedListingState(next)
+  }
+
+  /** Wipe only after a confirm whose state differs from the last confirmed address. */
+  function commitConfirmedListingState(nextRaw: string) {
+    const next = listingStateFromLandlordProfile(nextRaw) ?? ''
+    if (!isListingAgreementState(next)) return
+    const from = listingStateFromLandlordProfile(confirmedListingStateRef.current) ?? ''
+    const hadAnswers = listingStateHadClearedAnswers(from, next, {
+      nswBoarding: { sharedAreas, additionalCharges, t3ComplianceForm },
+      roomDescription,
+      nswCompliance: { ft6600Compliance, waterSeparatelyMeteredAgreed, waterSeparatelyMeteredAttestedAt },
+      qldRooming: {
+        qldRoomingForm,
+        qldHouseRulesCommonAreas,
+        qldHouseRulesExtras,
+        roomsRentedToResidents,
+        qldBondIsCustom: qldBondRemittancePreference !== 'tenant_choice',
+      },
+      vicRooming: vicRoomingFields,
+      utilities: utilitiesForm,
+      registration: { isRegisteredRoomingHouse, roomingHouseRegistrationNumber },
+    })
+    const notice = listingStateConfirmNotice(from, next, hadAnswers)
+    if (notice) {
+      const clears = listingStateFieldClears(from, next)
+      if (clears.clearNswBoardingParticulars) {
+        setSharedAreas({ ...EMPTY_NSW_T3_SHARED_AREAS })
+        setAdditionalCharges([])
+        setT3ComplianceForm(emptyNswT3ComplianceFormState())
+        setT3ComplianceCompleteOnLoad(false)
+      }
+      if (clears.clearRoomDescription) setRoomDescription('')
+      if (clears.clearNswCompliance) {
+        setFt6600Compliance(emptyLandlordFt6600ComplianceFormState())
+        setWaterSeparatelyMeteredAgreed(false)
+        setWaterSeparatelyMeteredAttestedAt(null)
+      }
+      if (clears.clearQldRooming) {
+        setQldRoomingForm(emptyQldRoomingListingFormState())
+        setQldHouseRulesCommonAreas('')
+        setQldHouseRulesExtras({})
+        setRoomsRentedToResidents('')
+        setQldBondRemittancePreference('tenant_choice')
+      }
+      if (clears.clearVicRooming) setVicRoomingFields(emptyVicRoomingHouseFieldValues())
+      if (clears.clearSharedUtilities) setUtilitiesForm(emptyLandlordPropertyUtilitiesFormState())
+      if (clears.clearRoomingHouseRegistration) {
+        setIsRegisteredRoomingHouse(false)
+        setRoomingHouseRegistrationNumber('')
+      }
+    }
+    setListingStateNotice(notice)
+    rememberConfirmedListingState(next)
+  }
+
+  const onAddressPartChangeRef = useRef(onAddressPartChange)
+  onAddressPartChangeRef.current = onAddressPartChange
 
   useEffect(() => {
     if (stateChosenByLandlordRef.current) return
+    if (!addressDirtyRef.current) return
     const inferred = stateFromAustralianPostcode(postcode)
     if (!inferred || inferred === listingStateCode) return
-    applyListingStateRef.current(inferred)
+    if (!applyListingStateRef.current(inferred)) return
+    onAddressPartChangeRef.current('state', inferred)
   }, [postcode, listingStateCode])
 
   const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
@@ -1417,31 +1634,6 @@ export default function LandlordPropertyFormPage() {
 
   const [qldBondRemittancePreference, setQldBondRemittancePreference] =
     useState<QldBondRemittancePreference>('tenant_choice')
-  stateSpecificAnswersRef.current = hasListingStateSpecificAnswers(state, {
-    nsw: {
-      sharedAreas,
-      additionalCharges,
-      t3ComplianceForm,
-      roomDescription,
-      ft6600Compliance,
-      waterSeparatelyMeteredAgreed,
-      waterSeparatelyMeteredAttestedAt,
-    },
-    qld: {
-      qldRoomingForm,
-      qldHouseRulesCommonAreas,
-      qldHouseRulesExtras,
-      roomsRentedToResidents,
-      roomDescription,
-    },
-    vic: vicRoomingFields,
-    utilities: utilitiesForm,
-    registration: {
-      isRegisteredRoomingHouse,
-      roomingHouseRegistrationNumber,
-    },
-    qldBondIsCustom: qldBondRemittancePreference !== 'tenant_choice',
-  })
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
 
@@ -1451,6 +1643,15 @@ export default function LandlordPropertyFormPage() {
   const photoFileInputRef = useRef<HTMLInputElement>(null)
   const imagesRef = useRef<PropertyImage[]>([])
   imagesRef.current = images
+
+  const addressIsConfirmed =
+    acceptedAddressSig !== '' &&
+    acceptedAddressSig === addressSigFrom({ address, suburb, state, postcode })
+  const showAddressSummary = addressIsConfirmed && !addressEditing
+  const showAddressManual =
+    !showAddressSummary && (placesSearch === 'off' || addressEditing || manualAddressOpen)
+  const showAddressSearch = !showAddressSummary && !showAddressManual && placesSearch === 'on'
+  const showAddressPlaceholder = !showAddressSummary && !showAddressManual && !showAddressSearch
 
   const landlordPropertyDraftSnapshot = useMemo(
     () =>
@@ -1473,6 +1674,9 @@ export default function LandlordPropertyFormPage() {
         postcode,
         universityId,
         campusId,
+        campusSelectionSource,
+        addressConfirmed: addressIsConfirmed,
+        confirmedListingState,
         latitude,
         longitude,
         showAddAnotherUniversity,
@@ -1531,6 +1735,9 @@ export default function LandlordPropertyFormPage() {
       postcode,
       universityId,
       campusId,
+      campusSelectionSource,
+      addressIsConfirmed,
+      confirmedListingState,
       latitude,
       longitude,
       showAddAnotherUniversity,
@@ -1633,12 +1840,11 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const applyNearbySuggestion = useCallback((s: NearbyCampusSuggestion) => {
-    editDeferNearbyAutoFillRef.current = false
-    manualUniCampusSelectionRef.current = true
     universityIdRef.current = s.universityId
     campusIdRef.current = s.campusId
     setUniversityId(s.universityId)
     setCampusId(s.campusId)
+    rememberCampusChoice('landlord', addressSigFrom(addressFieldsRef.current))
   }, [])
 
   const handleDraftStartFresh = useCallback(() => {
@@ -1674,6 +1880,15 @@ export default function LandlordPropertyFormPage() {
     setHouseRulesResetError(null)
     setHouseRulesResetAck(false)
     setAddress('')
+    setAddressUnit('')
+    setAddressStreet('')
+    setAddressEditing(false)
+    setManualAddressOpen(false)
+    setPlaceQuery('')
+    setPlaceSuggestions([])
+    setPlacesHint(null)
+    rememberConfirmedListingState('')
+    setListingStateNotice(null)
     setSuburb('')
     stateChosenByLandlordRef.current = false
     setState('')
@@ -1695,10 +1910,16 @@ export default function LandlordPropertyFormPage() {
     setCampusId('')
     manualUniCampusSelectionRef.current = false
     skipNearbyAutoFillOverwriteRef.current = false
-    editDeferNearbyAutoFillRef.current = false
-    editCampusLookupQueuedRef.current = false
-    runNearbyLookupRef.current = false
     loadedPropertyAddressSigRef.current = ''
+    loadedCampusRef.current = null
+    acceptedCampusSnapRef.current = null
+    acceptedAddressSigRef.current = ''
+    resultsShownSigRef.current = ''
+    setAcceptedAddressSig('')
+    setAddressMatchNote(null)
+    setCampusConfirmMessage(null)
+    rememberCampusChoice('none', '')
+    loadedCoordsRef.current = { lat: null, lon: null }
     addressDirtyRef.current = false
     lastNearbySigRef.current = ''
     setNearbyCampusSuggestions([])
@@ -1755,10 +1976,13 @@ export default function LandlordPropertyFormPage() {
       if (switchedFromEditToNew) {
         skipNearbyAutoFillOverwriteRef.current = false
         manualUniCampusSelectionRef.current = false
-        editDeferNearbyAutoFillRef.current = false
-        editCampusLookupQueuedRef.current = false
-        runNearbyLookupRef.current = false
         loadedPropertyAddressSigRef.current = ''
+        loadedCampusRef.current = null
+        acceptedCampusSnapRef.current = null
+        acceptedAddressSigRef.current = ''
+        resultsShownSigRef.current = ''
+        setAcceptedAddressSig('')
+        rememberCampusChoice('none', '')
         setShowAddAnotherUniversity(false)
         // Navigated from edit → new without unmounting - clear stale edit state.
         setUniversityId('')
@@ -1887,38 +2111,61 @@ export default function LandlordPropertyFormPage() {
         setLinenSupplied(Boolean(prop.linen_supplied))
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
         setOpenToNonStudents(Boolean(prop.open_to_non_students))
-        setAddress(prop.address ?? '')
+        const loadedStreet = prop.address ?? ''
+        const loadedStreetParts = splitUnitFromStreetLine(loadedStreet)
+        setAddress(loadedStreet)
+        setAddressUnit(loadedStreetParts.unit)
+        setAddressStreet(loadedStreetParts.street)
+        setAddressEditing(false)
         setSuburb(prop.suburb ?? '')
         stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(prop.state))
-        setState(listingStateFromLandlordProfile(prop.state) ?? '')
+        const loadedListingState = listingStateFromLandlordProfile(prop.state) ?? ''
+        setState(loadedListingState)
+        rememberConfirmedListingState(loadedListingState)
         setPostcode(prop.postcode ?? '')
         setLatitude(prop.latitude ?? null)
         setLongitude(prop.longitude ?? null)
+        loadedCoordsRef.current = { lat: prop.latitude ?? null, lon: prop.longitude ?? null }
         setUniversityId(prop.university_id ?? '')
         setCampusId(prop.campus_id ?? '')
         universityIdRef.current = prop.university_id ?? ''
         campusIdRef.current = prop.campus_id ?? ''
-        manualUniCampusSelectionRef.current = Boolean(prop.campus_id)
-        skipNearbyAutoFillOverwriteRef.current = Boolean(prop.campus_id)
         // Persisted explicit user preference (default false for older rows / new listings).
         setShowAddAnotherUniversity(Boolean(prop.show_add_another_university ?? false))
-        loadedPropertyAddressSigRef.current = [
-          prop.address ?? '',
-          prop.suburb ?? '',
-          prop.state ?? 'NSW',
-          prop.postcode ?? '',
-        ]
-          .map((x) => x.trim())
-          .join('|')
-          .toLowerCase()
-        editDeferNearbyAutoFillRef.current = !prop.campus_id
+        const loadedSig = addressSigFrom({
+          address: prop.address ?? '',
+          suburb: prop.suburb ?? '',
+          state: listingStateFromLandlordProfile(prop.state) ?? '',
+          postcode: prop.postcode ?? '',
+        })
+        loadedPropertyAddressSigRef.current = loadedSig
+        loadedCampusRef.current = prop.campus_id
+          ? { universityId: prop.university_id ?? '', campusId: prop.campus_id }
+          : null
+        propertyCoordsRef.current = { lat: prop.latitude ?? null, lon: prop.longitude ?? null }
+        rememberCampusChoice(prop.campus_id ? 'saved' : 'none', prop.campus_id ? loadedSig : '')
         addressDirtyRef.current = false
-        if (loadedPropertyAddressSigRef.current) {
-          lastNearbySigRef.current = ''
-          editCampusLookupQueuedRef.current = true
+        resultsShownSigRef.current = ''
+        setAddressMatchNote(null)
+        setCampusConfirmMessage(null)
+        const loadedStateCode = listingStateFromLandlordProfile(prop.state) ?? ''
+        const loadedAddressReady = addressReadyForCampusSearch({
+          address: prop.address ?? '',
+          suburb: prop.suburb ?? '',
+          state: loadedStateCode,
+          postcode: prop.postcode ?? '',
+        })
+        const loadedAddressConfirmed =
+          (loadedStateCode === '' || isListingAgreementState(loadedStateCode)) &&
+          (Boolean(prop.campus_id) || loadedAddressReady)
+        setManualAddressOpen(!loadedAddressConfirmed && Boolean(loadedStreet.trim() || (prop.suburb ?? '').trim()))
+        if (loadedAddressConfirmed) {
+          acceptCampusForAddress(loadedSig, { lat: prop.latitude ?? null, lon: prop.longitude ?? null })
         } else {
+          acceptedAddressSigRef.current = ''
+          setAcceptedAddressSig('')
           lastNearbySigRef.current = ''
-          editCampusLookupQueuedRef.current = false
+          acceptedCampusSnapRef.current = null
         }
         setRentPerWeek(String(prop.rent_per_week ?? ''))
         setMaxOccupants(String(prop.max_occupants ?? 1))
@@ -2076,7 +2323,11 @@ export default function LandlordPropertyFormPage() {
       setWeeklyCleaning(parsed.weeklyCleaning)
       setOpenToNonStudents(parsed.openToNonStudents)
       setSelectedFeatureIds(new Set(featureIds))
+      const restoredStreetParts = splitUnitFromStreetLine(parsed.address)
       setAddress(parsed.address)
+      setAddressUnit(restoredStreetParts.unit)
+      setAddressStreet(restoredStreetParts.street)
+      setAddressEditing(false)
       setSuburb(parsed.suburb)
       stateChosenByLandlordRef.current = Boolean(listingStateFromLandlordProfile(parsed.state))
       setState(listingStateFromLandlordProfile(parsed.state) ?? '')
@@ -2087,9 +2338,50 @@ export default function LandlordPropertyFormPage() {
       campusIdRef.current = parsed.campusId
       setUniversityId(parsed.universityId)
       setCampusId(parsed.campusId)
-      const hasUni = Boolean(parsed.universityId.trim() || parsed.campusId.trim())
-      manualUniCampusSelectionRef.current = hasUni
-      skipNearbyAutoFillOverwriteRef.current = hasUni
+      loadedCoordsRef.current = { lat: parsed.latitude, lon: parsed.longitude }
+      const restoredAddressSig = [parsed.address, parsed.suburb, parsed.state, parsed.postcode]
+        .map((part) => part.trim())
+        .join('|')
+        .toLowerCase()
+      const restoredHasCampus = Boolean(parsed.universityId.trim() || parsed.campusId.trim())
+      const restoredSource: CampusSelectionSource =
+        parsed.campusSelectionSource ?? (restoredHasCampus ? 'saved' : 'none')
+      loadedPropertyAddressSigRef.current = restoredAddressSig
+      loadedCampusRef.current = restoredHasCampus
+        ? { universityId: parsed.universityId, campusId: parsed.campusId }
+        : null
+      propertyCoordsRef.current = { lat: parsed.latitude, lon: parsed.longitude }
+      rememberCampusChoice(restoredHasCampus ? restoredSource : 'none', restoredHasCampus ? restoredAddressSig : '')
+      resultsShownSigRef.current = ''
+      setAddressMatchNote(null)
+      setCampusConfirmMessage(null)
+      const restoredReady = addressReadyForCampusSearch({
+        address: parsed.address,
+        suburb: parsed.suburb,
+        state: parsed.state,
+        postcode: parsed.postcode,
+      })
+      const restoredConfirmed =
+        typeof parsed.addressConfirmed === 'boolean' ? parsed.addressConfirmed : restoredReady || restoredHasCampus
+      const restoredStateCode = listingStateFromLandlordProfile(parsed.state) ?? ''
+      const restoredIsConfirmed =
+        (restoredStateCode === '' || isListingAgreementState(restoredStateCode)) &&
+        restoredConfirmed &&
+        (restoredReady || restoredHasCampus)
+      setManualAddressOpen(!restoredIsConfirmed && Boolean(parsed.address.trim() || parsed.suburb.trim()))
+      if (typeof parsed.confirmedListingState === 'string') {
+        rememberConfirmedListingState(parsed.confirmedListingState)
+      } else if (restoredIsConfirmed) {
+        rememberConfirmedListingState(parsed.state)
+      }
+      if (restoredIsConfirmed) {
+        acceptCampusForAddress(restoredAddressSig, { lat: parsed.latitude, lon: parsed.longitude })
+      } else {
+        acceptedAddressSigRef.current = ''
+        setAcceptedAddressSig('')
+        lastNearbySigRef.current = ''
+        acceptedCampusSnapRef.current = null
+      }
       setShowAddAnotherUniversity(parsed.showAddAnotherUniversity)
       setRentPerWeek(parsed.rentPerWeek)
       setMaxOccupants(parsed.maxOccupants)
@@ -2118,16 +2410,7 @@ export default function LandlordPropertyFormPage() {
       if (parsed.utilitiesForm) setUtilitiesForm(parsed.utilitiesForm)
       if (parsed.ft6600Compliance) setFt6600Compliance(parsed.ft6600Compliance)
 
-      const addrDirty =
-        Boolean(parsed.address.trim()) ||
-        Boolean(parsed.suburb.trim()) ||
-        Boolean(parsed.postcode.trim()) ||
-        parsed.state.trim().toUpperCase() !== 'NSW'
-      addressDirtyRef.current = addrDirty
-      lastNearbySigRef.current = ''
-      if (addrDirty) {
-        setNearbyLookupNonce((n) => n + 1)
-      }
+      addressDirtyRef.current = false
 
       if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
         setShowResumeDraftBanner(true)
@@ -2209,22 +2492,6 @@ export default function LandlordPropertyFormPage() {
   }, [draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
-    if (!isEdit || loadingPage || refsLoading) return
-    if (!editCampusLookupQueuedRef.current) return
-
-    const addr = address.trim()
-    const sub = suburb.trim()
-    const st = state.trim()
-    const pc = postcode.trim()
-    if (!addr || !sub || !st || !pc) return
-
-    editCampusLookupQueuedRef.current = false
-    runNearbyLookupRef.current = true
-    lastNearbySigRef.current = ''
-    setNearbyLookupNonce((n) => n + 1)
-  }, [isEdit, loadingPage, refsLoading, address, suburb, state, postcode])
-
-  useEffect(() => {
     if (!addAnotherUniversityHelpOpen) return
     const close = (e: MouseEvent) => {
       if (addAnotherUniversityHelpRef.current && !addAnotherUniversityHelpRef.current.contains(e.target as Node)) {
@@ -2302,6 +2569,14 @@ export default function LandlordPropertyFormPage() {
     campusIdRef.current = campusId
   }, [campusId])
 
+  useEffect(() => {
+    addressFieldsRef.current = { address, suburb, state, postcode }
+  }, [address, suburb, state, postcode])
+
+  useEffect(() => {
+    propertyCoordsRef.current = { lat: latitude, lon: longitude }
+  }, [latitude, longitude])
+
   function haversineKm(a: GeoPoint, b: GeoPoint): number {
     const R = 6371 // Earth radius km
     const toRad = (deg: number) => (deg * Math.PI) / 180
@@ -2360,36 +2635,6 @@ export default function LandlordPropertyFormPage() {
     return pt
   }
 
-  async function geocodeAddressWithFallbacks(
-    addr: string,
-    sub: string,
-    st: string,
-    pc: string,
-    signal?: AbortSignal,
-  ): Promise<GeoPoint | null> {
-    const candidates = buildGeocodeQueryCandidates(addr, sub, st, pc)
-    for (const q of candidates) {
-      const pt = await geocodeCached(q, signal)
-      if (pt) return pt
-    }
-    return null
-  }
-
-  async function geocodeAddressForSave(
-    addr: string,
-    sub: string,
-    st: string,
-    pc: string,
-  ): Promise<GeoPoint | null> {
-    const ac = new AbortController()
-    const timeout = window.setTimeout(() => ac.abort(), 8000)
-    try {
-      return await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
-    } finally {
-      window.clearTimeout(timeout)
-    }
-  }
-
   function scrollToFormFeedback(anchorId: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
     if (anchorId === 'listing-form-feedback-top') {
       const scroller = getAppShellScrollElement()
@@ -2420,71 +2665,49 @@ export default function LandlordPropertyFormPage() {
     })
   }
 
-  useEffect(() => {
-    const campusCount = campusRefRows.length
-    const uniCount = uniRefRows.length
-    if (!addressDirtyRef.current && !runNearbyLookupRef.current) return
-    if (refsLoading) return
-    if (campusCount === 0 || uniCount === 0) return
+  async function runNearbyCampusLookup(
+    fields: {
+      address: string
+      suburb: string
+      state: string
+      postcode: string
+    },
+    preset: { lat: number; lon: number; precision: 'street' | 'suburb' },
+  ): Promise<boolean> {
+    if (refsLoading || campusRefRows.length === 0 || uniRefRows.length === 0) {
+      setNearbyCampusLoading(false)
+      setNearbyCampusError('No campus reference data found to compare against.')
+      return false
+    }
 
-    const addr = address.trim()
-    const sub = suburb.trim()
-    const st = state.trim()
-    const pc = postcode.trim()
-    const allAddressFieldsFilled = Boolean(addr && sub && st && pc)
-
-    if (!allAddressFieldsFilled) {
-      nearbyRequestIdRef.current += 1
+    const addr = fields.address.trim()
+    const sub = fields.suburb.trim()
+    const st = fields.state.trim()
+    const pc = fields.postcode.trim()
+    if (!addr || !sub || !st || !pc) {
       setNearbyCampusLoading(false)
       setNearbyCampusSuggestions([])
       setNearbyCampusError(null)
-      lastNearbySigRef.current = ''
-      return
+      return false
     }
 
-    const sig = [addr, sub, st, pc].join('|').toLowerCase()
-    if (sig.length < 6) return
-    if (sig === lastNearbySigRef.current) return
+    const sig = addressSigFrom({ address: addr, suburb: sub, state: st, postcode: pc })
+    const propertyPoint: GeoPoint = { lat: preset.lat, lon: preset.lon }
+    const precision = preset.precision
+    propertyCoordsRef.current = propertyPoint
+    setLatitude(propertyPoint.lat)
+    setLongitude(propertyPoint.lon)
 
-    const addressUnchangedFromLoaded =
-      isEdit &&
-      loadedPropertyAddressSigRef.current !== '' &&
-      sig === loadedPropertyAddressSigRef.current
-    const la = latitude != null ? Number(latitude) : NaN
-    const lo = longitude != null ? Number(longitude) : NaN
-    const useSavedPropertyCoords =
-      addressUnchangedFromLoaded && Number.isFinite(la) && Number.isFinite(lo)
-    const debounceMs = useSavedPropertyCoords ? 0 : 800
-
-    const timeout = window.setTimeout(() => {
-      const requestId = ++nearbyRequestIdRef.current
-      runNearbyLookupRef.current = false
-      lastNearbySigRef.current = sig
-      void (async () => {
-        const needPropertyGeocode = !useSavedPropertyCoords
-        if (needPropertyGeocode) {
-          setNearbyCampusLoading(true)
-        }
-        setNearbyCampusError(null)
-        setNearbyCampusSuggestions([])
-
-        const ac = new AbortController()
-        try {
-          let propertyPoint: GeoPoint | null = useSavedPropertyCoords ? { lat: la, lon: lo } : null
-          if (!propertyPoint) {
-            propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
-            if (!propertyPoint) {
-              setNearbyCampusError(
-                'We could not find that street in this suburb. Check the street line, suburb, state and postcode - unit numbers are optional for campus suggestions.',
-              )
-              setNearbyCampusLoading(false)
-              return
-            }
-            setLatitude(propertyPoint.lat)
-            setLongitude(propertyPoint.lon)
-          }
-
-          const stateNorm = state.trim().toUpperCase()
+    nearbyAbortRef.current?.abort()
+    const ac = new AbortController()
+    nearbyAbortRef.current = ac
+    const requestId = ++nearbyRequestIdRef.current
+    setNearbyCampusLoading(true)
+    setNearbyCampusError(null)
+    setNearbyCampusSuggestions([])
+    setAddressMatchNote(null)
+    try {
+          const stateNorm = st.trim().toUpperCase()
           const candidates = campusRefRows.filter((c) => {
             const cSub = c.suburb?.trim() ?? ''
             const cUni = c.university_id ?? ''
@@ -2503,7 +2726,7 @@ export default function LandlordPropertyFormPage() {
           if (effectiveCandidates.length === 0) {
             setNearbyCampusError('No campus reference data found to compare against.')
             setNearbyCampusLoading(false)
-            return
+            return false
           }
 
           const uniById = new Map<string, string>(uniRefRows.map((u) => [u.id, u.name]))
@@ -2514,19 +2737,19 @@ export default function LandlordPropertyFormPage() {
             const fromDb = campusLatLonFromRow(c)
             if (fromDb) {
               campusPointById.set(c.id, fromDb)
-            } else if (!useSavedPropertyCoords) {
+            } else {
               const cState = (c.state ?? stateNorm).trim()
               const q = `${c.name}, ${c.suburb}, ${cState}, Australia`.replace(/\s+/g, ' ').trim()
               campusGeoQueryById.set(c.id, q)
             }
           }
 
-          if (!useSavedPropertyCoords) {
+          {
             const uniqueGeoQueries = [...new Set([...campusGeoQueryById.values()])].slice(0, 30)
             const coordsByQuery = new Map<string, GeoPoint>()
 
             for (const q of uniqueGeoQueries) {
-              if (requestId !== nearbyRequestIdRef.current) return
+              if (requestId !== nearbyRequestIdRef.current) return false
               const pt = await geocodeCached(q, ac.signal)
               if (pt) coordsByQuery.set(q, pt)
               // Light pacing to reduce rate limit risk.
@@ -2543,7 +2766,7 @@ export default function LandlordPropertyFormPage() {
 
           const suggestions: NearbyCampusSuggestion[] = []
           for (const c of effectiveCandidates) {
-            if (requestId !== nearbyRequestIdRef.current) return
+            if (requestId !== nearbyRequestIdRef.current) return false
             const pt = campusPointById.get(c.id)
             if (!pt) continue
             const uName = c.university_id ? uniById.get(c.university_id) ?? '' : ''
@@ -2562,34 +2785,19 @@ export default function LandlordPropertyFormPage() {
           const top = suggestions.slice(0, 5)
 
           if (top.length === 0) {
-            setNearbyCampusError(
-              useSavedPropertyCoords
-                ? 'Could not determine nearby campuses from saved coordinates.'
-                : 'Could not determine nearby campuses from your address.',
-            )
+            setNearbyCampusError('Could not determine nearby campuses from your address.')
             setNearbyCampusLoading(false)
-            return
+            return false
           }
 
+          if (requestId !== nearbyRequestIdRef.current) return false
           setNearbyCampusSuggestions(top)
           setNearbyCampusLoading(false)
+          setAddressMatchNote(precision === 'suburb' ? SUBURB_ONLY_MATCH_MESSAGE : null)
 
           if (
-            isEdit &&
-            editDeferNearbyAutoFillRef.current &&
-            loadedPropertyAddressSigRef.current !== '' &&
-            sig !== loadedPropertyAddressSigRef.current
-          ) {
-            editDeferNearbyAutoFillRef.current = false
-          }
-
-          const deferAutoApplyNearby =
-            isEdit && editDeferNearbyAutoFillRef.current && addressUnchangedFromLoaded
-
-          if (
-            !deferAutoApplyNearby &&
-            !skipNearbyAutoFillOverwriteRef.current &&
-            !manualUniCampusSelectionRef.current &&
+            campusSelectionSourceRef.current !== 'landlord' &&
+            campusSelectionSourceRef.current !== 'saved' &&
             !universityIdRef.current.trim() &&
             !campusIdRef.current.trim()
           ) {
@@ -2597,15 +2805,344 @@ export default function LandlordPropertyFormPage() {
             setCampusId(top[0].campusId)
             universityIdRef.current = top[0].universityId
             campusIdRef.current = top[0].campusId
+            rememberCampusChoice('auto', sig)
           }
-        } finally {
-          ac.abort()
-        }
-      })()
-    }, debounceMs)
+          return true
+    } finally {
+      ac.abort()
+    }
+  }
 
-    return () => window.clearTimeout(timeout)
-  }, [address, postcode, suburb, state, latitude, longitude, campusRefRows, uniRefRows, refsLoading, isEdit, nearbyLookupNonce])
+  function rotatePlaceSession() {
+    placeSessionRef.current = crypto.randomUUID()
+  }
+
+  function holdUnconfirmedAddress(
+    fields: { address: string; suburb: string; state: string; postcode: string },
+    streetParts: { unit: string; street: string },
+  ) {
+    nearbyAbortRef.current?.abort()
+    nearbyRequestIdRef.current += 1
+    setNearbyCampusLoading(false)
+    setNearbyCampusSuggestions([])
+    setNearbyCampusError(null)
+    setAddressMatchNote(null)
+    setCampusConfirmMessage(null)
+    setSubmitError(null)
+    setAddress(fields.address)
+    setAddressUnit(streetParts.unit)
+    setAddressStreet(streetParts.street)
+    setSuburb(fields.suburb)
+    setPostcode(fields.postcode)
+    if (fields.state) {
+      stateChosenByLandlordRef.current = true
+      setState(fields.state)
+    }
+    addressFieldsRef.current = fields
+    addressDirtyRef.current = true
+    setLatitude(null)
+    setLongitude(null)
+    propertyCoordsRef.current = { lat: null, lon: null }
+    setManualAddressOpen(true)
+    setAddressEditing(false)
+    setPlaceQuery('')
+    setPlaceSuggestions([])
+    acceptedAddressSigRef.current = ''
+    setAcceptedAddressSig('')
+    if (campusSelectionSourceRef.current === 'auto') {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+    document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  async function applyConfirmedPlace(parsed: ParsedAustralianAddress) {
+    const nextState = parsed.state.trim().toUpperCase()
+    const current = addressFieldsRef.current
+    const rawLine = (parsed.streetLine.trim() || current.address.trim()).trim()
+    const streetParts = splitUnitFromStreetLine(rawLine)
+    const streetLine = streetParts.unit ? composeStreetLine(streetParts.unit, streetParts.street) : rawLine
+    const resolvedState = (nextState || current.state).trim().toUpperCase()
+    const fields = {
+      address: streetLine,
+      suburb: parsed.suburb,
+      state: resolvedState,
+      postcode: parsed.postcode,
+    }
+    const refusal = addressConfirmRefusal(resolvedState, parsed.postcode)
+    if (refusal) {
+      holdUnconfirmedAddress(fields, streetParts)
+      return
+    }
+    if (!streetLine || !parsed.suburb.trim() || !fields.state.trim() || !parsed.postcode.trim()) {
+      if (nextState) {
+        stateChosenByLandlordRef.current = true
+        setState(nextState)
+      }
+      setAddress(streetLine)
+      setAddressUnit(streetParts.unit)
+      setAddressStreet(streetParts.street)
+      setSuburb(parsed.suburb)
+      setPostcode(parsed.postcode)
+      addressFieldsRef.current = fields
+      setManualAddressOpen(true)
+      setAddressEditing(false)
+      setAddressMatchNote(parsed.precision === 'suburb' ? SUBURB_ONLY_MATCH_MESSAGE : null)
+      setNearbyCampusError('Add the street, then press Confirm address.')
+      return
+    }
+    if (nextState) {
+      stateChosenByLandlordRef.current = true
+      setState(nextState)
+    }
+    setAddress(streetLine)
+    setAddressUnit(streetParts.unit)
+    setAddressStreet(streetParts.street)
+    setSuburb(parsed.suburb)
+    setPostcode(parsed.postcode)
+    addressFieldsRef.current = fields
+    addressDirtyRef.current = true
+    setLatitude(parsed.lat)
+    setLongitude(parsed.lon)
+    propertyCoordsRef.current = { lat: parsed.lat, lon: parsed.lon }
+    setManualAddressOpen(false)
+    setAddressEditing(false)
+    setPlaceQuery('')
+    setPlaceSuggestions([])
+    if (campusSelectionSourceRef.current === 'auto') {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+    await runNearbyCampusLookup(fields, {
+      lat: parsed.lat,
+      lon: parsed.lon,
+      precision: parsed.precision,
+    })
+    if (parsed.precision === 'suburb') setAddressMatchNote(SUBURB_ONLY_MATCH_MESSAGE)
+    acceptCampusForAddress(addressSigFrom(fields), { lat: parsed.lat, lon: parsed.lon })
+    commitConfirmedListingState(fields.state)
+    setCampusConfirmMessage(null)
+    setSubmitError(null)
+  }
+
+  async function pickPlace(placeId: string) {
+    setPlaceSuggestions([])
+    setPlacesHint(null)
+    if (!placeSessionRef.current) rotatePlaceSession()
+    const result = await fetchPlaceDetails(placeId, placeSessionRef.current)
+    rotatePlaceSession()
+    if (!result.ok) {
+      if (result.reason === 'unauthorized' || result.reason === 'forbidden') {
+        setNearbyCampusError('Sign in again to use that address.')
+      } else if (result.reason === 'rate_limited') {
+        setNearbyCampusError('Too many address lookups. Wait a minute and try again.')
+      } else {
+        setNearbyCampusError('We could not read that address. Try another result or enter it manually.')
+      }
+      return
+    }
+    setPlaceQuery('')
+    await applyConfirmedPlace(result.address)
+  }
+
+  async function confirmEnteredAddress() {
+    // Manual entries only. A Google suggestion already has a location from Place Details.
+    const fields = { ...addressFieldsRef.current }
+    if (addressConfirmRefusal(fields.state, fields.postcode)) {
+      setManualAddressOpen(true)
+      setAddressEditing(false)
+      acceptedAddressSigRef.current = ''
+      setAcceptedAddressSig('')
+      return
+    }
+    if (!addressReadyForCampusSearch(fields)) return
+    setCampusConfirmMessage(null)
+    setSubmitError(null)
+    setNearbyCampusError(null)
+    const google = await geocodeAddressWithGoogle(fields)
+    if (google.ok) {
+      await applyConfirmedPlace(google.address)
+      return
+    }
+    if (google.reason === 'mismatch') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(ADDRESS_NOT_MATCHED_MESSAGE)
+      return
+    }
+    if (google.reason === 'forbidden') {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError('Sign in again to confirm this address.')
+      return
+    }
+    if (!manualConfirmCanUseNominatim(google.reason)) {
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(
+        'We could not find that street in this suburb. Check the street line, suburb, state and postcode.',
+      )
+      return
+    }
+    const ac = new AbortController()
+    const timeout = window.setTimeout(() => ac.abort(), 8000)
+    try {
+      const verified = await firstAgreedGeocode(fields, (query) => geocodeQueryWithAddress(query, ac.signal))
+      if (!verified.ok) {
+        setNearbyCampusSuggestions([])
+        setNearbyCampusError(
+          verified.reason === 'mismatch'
+            ? ADDRESS_NOT_MATCHED_MESSAGE
+            : 'We could not find that street in this suburb. Check the street line, suburb, state and postcode.',
+        )
+        return
+      }
+      await applyConfirmedPlace({
+        streetLine: fields.address.trim(),
+        suburb: fields.suburb.trim(),
+        state: fields.state.trim().toUpperCase(),
+        postcode: fields.postcode.trim(),
+        formatted: [fields.address.trim(), fields.suburb.trim(), fields.state.trim(), fields.postcode.trim()]
+          .filter(Boolean)
+          .join(', '),
+        lat: verified.lat,
+        lon: verified.lon,
+        precision: verified.precision,
+      })
+    } finally {
+      window.clearTimeout(timeout)
+    }
+  }
+
+  function writeAddressFromParts(unit: string, street: string) {
+    const composed = composeStreetLine(unit, street)
+    setAddressUnit(unit)
+    setAddressStreet(street)
+    setAddress(composed)
+    onAddressPartChange('address', composed)
+  }
+
+  function beginAddressEdit() {
+    const parts = splitUnitFromStreetLine(address)
+    const composed = parts.unit ? composeStreetLine(parts.unit, parts.street) : address.trim()
+    setAddressUnit(parts.unit)
+    setAddressStreet(parts.street)
+    if (composed !== address.trim()) {
+      setAddress(composed)
+      onAddressPartChange('address', composed)
+    }
+    setAddressEditing(true)
+    setManualAddressOpen(true)
+  }
+
+  function preferAddressSearch() {
+    setAddressEditing(false)
+    setManualAddressOpen(false)
+    setPlaceSuggestions([])
+  }
+
+  function clearAddress() {
+    const empty = { address: '', suburb: '', state: '', postcode: '' }
+    addressFieldsRef.current = empty
+    addressDirtyRef.current = true
+    stateChosenByLandlordRef.current = false
+    nearbyAbortRef.current?.abort()
+    nearbyRequestIdRef.current += 1
+    setNearbyCampusLoading(false)
+    setAddress('')
+    setAddressUnit('')
+    setAddressStreet('')
+    setSuburb('')
+    setState('')
+    setPostcode('')
+    setLatitude(null)
+    setLongitude(null)
+    propertyCoordsRef.current = { lat: null, lon: null }
+    acceptedAddressSigRef.current = ''
+    setAcceptedAddressSig('')
+    setAddressEditing(false)
+    setManualAddressOpen(false)
+    setPlaceQuery('')
+    setPlaceSuggestions([])
+    setPlacesHint(null)
+    setAddressMatchNote(null)
+    setCampusConfirmMessage(null)
+    setNearbyCampusSuggestions([])
+    setNearbyCampusError(null)
+    setListingStateNotice(null)
+    if (!showAddAnotherUniversity) {
+      universityIdRef.current = ''
+      campusIdRef.current = ''
+      setUniversityId('')
+      setCampusId('')
+      rememberCampusChoice('none', '')
+    }
+  }
+
+  function requireConfirmedAddress(): boolean {
+    const sig = addressSigFrom(addressFieldsRef.current)
+    if (sig !== '' && sig === acceptedAddressSigRef.current) return true
+    setCampusConfirmMessage(CONFIRM_ADDRESS_FIRST_MESSAGE)
+    setSubmitError(CONFIRM_ADDRESS_FIRST_MESSAGE)
+    if (showFormSection('section-location')) {
+      document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      navigate(listingHubPath({ propertyId, view: 'location' }))
+    }
+    return false
+  }
+  requireConfirmedAddressRef.current = requireConfirmedAddress
+
+  useEffect(() => {
+    const ac = new AbortController()
+    void fetchPlacesSearchAvailable(ac.signal).then((availability) => {
+      if (ac.signal.aborted) return
+      setPlacesSearch(availability === 'off' ? 'off' : 'on')
+    })
+    return () => ac.abort()
+  }, [])
+
+  useEffect(() => {
+    if (placesSearch !== 'on') return
+    const q = placeQuery.trim()
+    if (q.length < 3) {
+      setPlaceSuggestions([])
+      placeSessionRef.current = ''
+      return
+    }
+    if (!placeSessionRef.current) rotatePlaceSession()
+    const ac = new AbortController()
+    const timer = window.setTimeout(() => {
+      setPlaceSearchLoading(true)
+      void fetchPlaceSuggestions(q, placeSessionRef.current, ac.signal).then((result) => {
+        if (ac.signal.aborted) return
+        setPlaceSearchLoading(false)
+        if (!result.ok) {
+          setPlaceSuggestions([])
+          if (result.reason === 'not_configured') {
+            setPlacesHint(null)
+            setPlacesSearch('off')
+            setManualAddressOpen(true)
+          } else if (result.reason === 'unauthorized' || result.reason === 'forbidden') {
+            setPlacesHint('Sign in again to search for an address. You can still enter it manually.')
+          } else if (result.reason === 'rate_limited') {
+            setPlacesHint('Too many address lookups. Wait a minute and try again.')
+          }
+          return
+        }
+        setPlacesHint(null)
+        setPlaceSuggestions(result.suggestions)
+      })
+    }, 200)
+    return () => {
+      ac.abort()
+      window.clearTimeout(timer)
+      setPlaceSearchLoading(false)
+    }
+  }, [placeQuery, placesSearch])
 
   const removeImage = useCallback(
     async (url: string) => {
@@ -2823,9 +3360,6 @@ export default function LandlordPropertyFormPage() {
       reportSubmitError('You must be signed in to save this listing.')
       return
     }
-    // If the nearby-campus lookup overlay is up, it can intercept clicks and make the
-    // submit button feel unresponsive. Always close it on submit.
-    setNearbyCampusLoading(false)
 
     const t = title.trim()
     if (!t) {
@@ -3162,6 +3696,8 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (!requireConfirmedAddress()) return
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -3189,35 +3725,11 @@ export default function LandlordPropertyFormPage() {
       if (policyErr) throw policyErr
     }
 
-    const topSuggest = nearbyCampusSuggestions[0]
-    const uniFromForm = universityId.trim()
-    const campusFromForm = campusId.trim()
-
-    // If "Add another university" is OFF, we treat the nearby suggestions as the source of truth
-    // and ignore whatever is currently in the dropdown (it may be stale from earlier auto-fill).
-    // If the checkbox is ON, we persist the explicit dropdown selection (or nulls).
-    const resolvedUniversityId = showAddAnotherUniversity ? (uniFromForm || null) : topSuggest?.universityId?.trim() || null
-    const resolvedCampusId = showAddAnotherUniversity ? (campusFromForm || null) : topSuggest?.campusId?.trim() || null
-
-    // Ensure coordinates are persisted on every save/publish.
-    // Nearby-campus lookup usually sets these, but we also geocode here as a fallback so
-    // listings always have latitude/longitude when address fields are present.
-    const addr = address.trim()
-    const sub = suburb.trim()
-    const st = state.trim()
-    const pc = postcode.trim()
-    const canGeocode = Boolean(addr && sub && st && pc)
-    let resolvedLat = latitude
-    let resolvedLon = longitude
-    if (canGeocode && (resolvedLat == null || resolvedLon == null)) {
-      const pt = await geocodeAddressForSave(addr, sub, st, pc)
-      if (pt) {
-        resolvedLat = pt.lat
-        resolvedLon = pt.lon
-        setLatitude(pt.lat)
-        setLongitude(pt.lon)
-      }
-    }
+    const campusColumns = campusColumnsForCurrentAddress()
+    const resolvedUniversityId = campusColumns.university_id
+    const resolvedCampusId = campusColumns.campus_id
+    const resolvedLat = latitude
+    const resolvedLon = longitude
 
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
@@ -3615,6 +4127,7 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    if (!requireConfirmedAddressRef.current()) return
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
     flashDraftSavedIndicator()
@@ -3650,8 +4163,7 @@ export default function LandlordPropertyFormPage() {
               postcode: postcode.trim() || null,
               latitude,
               longitude,
-              university_id: universityId.trim() || null,
-              campus_id: campusId.trim() || null,
+              ...campusColumnsForCurrentAddress(),
               open_to_non_students: openToNonStudents,
               is_registered_rooming_house: isRegisteredRoomingHouse,
               rooming_house_registration_number:
@@ -3818,13 +4330,14 @@ export default function LandlordPropertyFormPage() {
     slug: existingSlug,
   })
 
-  const flushDraftToAccount = useCallback(async () => {
+  const flushDraftToAccount = useCallback(async (): Promise<boolean> => {
     persistLandlordPropertyDraft()
-    if (listingStateCode && !isListingAgreementState(listingStateCode)) return
-    if (postcodeStateConflict) return
-    if (!propertyId || !user?.id) return
+    if (listingStateCode && !isListingAgreementState(listingStateCode)) return true
+    if (postcodeStateConflict) return true
+    if (!propertyId || !user?.id) return true
     const t = title.trim()
-    if (!t) return
+    if (!t) return true
+    if (!requireConfirmedAddressRef.current()) return false
     const rent = Number(rentPerWeek)
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const { error: upErr } = await supabase
@@ -3845,8 +4358,7 @@ export default function LandlordPropertyFormPage() {
         postcode: postcode.trim() || null,
         latitude,
         longitude,
-        university_id: universityId.trim() || null,
-        campus_id: campusId.trim() || null,
+        ...campusColumnsForCurrentAddress(),
         open_to_non_students: openToNonStudents,
         rent_per_week: Number.isFinite(rent) && rent > 0 ? rent : 0,
         max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
@@ -3860,6 +4372,7 @@ export default function LandlordPropertyFormPage() {
     await savePropertyHouseRules(propertyId, selectedRules)
     await saveQldRoomingHouseRules(propertyId)
     await saveQldRoomingStage2(propertyId)
+    return true
   }, [
     persistLandlordPropertyDraft,
     postcodeStateConflict,
@@ -3919,9 +4432,10 @@ export default function LandlordPropertyFormPage() {
     })
     const goingToPreview = hubSectionId === 'photos' && Boolean(propertyId) && isWizardSetupMode
     if (isWizardSetupMode && (goingToPreview || propertyId)) {
+      let saved = true
       try {
         if (goingToPreview) setSubmitting(true)
-        await flushDraftToAccount()
+        saved = await flushDraftToAccount()
       } catch (err) {
         console.error('[LandlordPropertyFormPage] wizard flush failed', err)
         if (goingToPreview) {
@@ -3936,6 +4450,7 @@ export default function LandlordPropertyFormPage() {
       } finally {
         if (goingToPreview) setSubmitting(false)
       }
+      if (!saved) return
     }
     navigate(href)
   }, [
@@ -3966,9 +4481,10 @@ export default function LandlordPropertyFormPage() {
     }
     persistLandlordPropertyDraft()
     if (propertyId && isWizardSetupMode) {
+      let saved = true
       try {
         setSubmitting(true)
-        await flushDraftToAccount()
+        saved = await flushDraftToAccount()
       } catch (err) {
         console.error('[LandlordPropertyFormPage] preview flush failed', err)
         setSubmitError(
@@ -3981,6 +4497,7 @@ export default function LandlordPropertyFormPage() {
       } finally {
         setSubmitting(false)
       }
+      if (!saved) return
     }
     navigate(footerPreviewHref)
   }, [footerPreviewHref, listingStateCode, postcodeStateConflict, persistLandlordPropertyDraft, propertyId, isWizardSetupMode, flushDraftToAccount, navigate])
@@ -4242,7 +4759,7 @@ export default function LandlordPropertyFormPage() {
           </div>
         ) : null}
 
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={blockImplicitFormSubmit} noValidate className="min-w-0 max-w-full">
           <div className="space-y-8">
           {submitError && (
             <div
@@ -4269,9 +4786,7 @@ export default function LandlordPropertyFormPage() {
           )}
 
           {unsupportedListingState && isHubSectionMode && hubSectionId !== 'location' ? (
-            <p className="text-sm text-amber-950" role="status">
-              {unsupportedListingStateMessage(listingStateCode ?? '')}
-            </p>
+            <UnsupportedStateNotice state={listingStateCode ?? ''} />
           ) : null}
 
           {role === 'admin' && (
@@ -4339,119 +4854,304 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'Location',
             <div className="space-y-4">
+              {unsupportedListingState ? <UnsupportedStateNotice state={listingStateCode ?? ''} /> : null}
               <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
                 This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
                 show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
                 casual browsers.
               </p>
-              <div>
-                <label htmlFor="pf-addr" className={labelClass}>
-                  Street address
-                </label>
-                <input
-                  id="pf-addr"
-                  value={address}
-                  onChange={(e) => {
-                    addressDirtyRef.current = true
-                    setAddress(e.target.value)
-                  }}
-                  className={inputClass}
-                  placeholder="e.g. Unit 401, 311 Hume Highway"
-                  autoComplete="street-address"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
-                  street address; the unit is still saved on your listing.
+              {showAddressSummary ? (
+                <div className="rounded-[10px] border border-[var(--quni-line)] bg-white px-4 py-3">
+                  <div className="flex gap-3">
+                    <span className="mt-0.5 text-[var(--quni-success)]" aria-hidden="true">
+                      <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75">
+                        <circle cx="10" cy="10" r="8" />
+                        <path d="M6.5 10.2 8.8 12.5 13.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--quni-ink)]">{address}</p>
+                      <p className="text-sm text-[var(--quni-ink-3)]">
+                        {[suburb.trim(), listingStateCode ?? '', postcode.trim()].filter(Boolean).join(' ')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex gap-4 pl-8">
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-[var(--quni-navy)] underline"
+                      onClick={beginAddressEdit}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-[var(--quni-navy)] underline"
+                      onClick={clearAddress}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {showAddressPlaceholder ? (
+                <p
+                  className="rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] px-4 py-6 text-sm text-[var(--quni-ink-4)]"
+                  role="status"
+                >
+                  Checking address search...
                 </p>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              ) : null}
+              {showAddressSearch ? (
                 <div>
-                  <label htmlFor="pf-suburb" className={labelClass}>
-                    Suburb
+                  <label htmlFor="pf-address-search" className={labelClass}>
+                    Search for the address
                   </label>
-                  <input
-                    id="pf-suburb"
-                    value={suburb}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setSuburb(e.target.value)
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pf-state" className={labelClass}>
-                    State <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="pf-state"
-                    value={listingStateCode ?? ''}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      stateChosenByLandlordRef.current = e.target.value !== ''
-                      applyListingState(e.target.value)
-                    }}
-                    className={inputClass}
-                    required
+                  <div className="relative">
+                    <input
+                      id="pf-address-search"
+                      value={placeQuery}
+                      onChange={(e) => setPlaceQuery(e.target.value)}
+                      className={placeQuery ? `${inputClass} ${placeSearchLoading ? 'pr-16' : 'pr-10'}` : inputClass}
+                      placeholder="Start typing a street address"
+                      autoComplete="off"
+                      role="combobox"
+                      aria-expanded={placeSuggestions.length > 0}
+                      aria-controls="pf-address-suggestions"
+                      aria-busy={placeSearchLoading}
+                    />
+                    {placeSearchLoading ? (
+                      <span
+                        className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[var(--quni-line)] border-t-[var(--quni-navy)] ${placeQuery ? 'right-10' : 'right-3'}`}
+                        role="status"
+                        aria-label="Searching addresses"
+                      />
+                    ) : null}
+                    {placeQuery ? (
+                      <button
+                        type="button"
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-lg leading-none text-[var(--quni-ink-4)] hover:bg-[var(--quni-surface-3)]"
+                        onClick={() => {
+                          setPlaceQuery('')
+                          setPlaceSuggestions([])
+                          setPlacesHint(null)
+                        }}
+                      >
+                        ×
+                      </button>
+                    ) : null}
+                  </div>
+                  {placeSuggestions.length > 0 ? (
+                    <ul
+                      id="pf-address-suggestions"
+                      role="listbox"
+                      className="mt-1 overflow-hidden rounded-[10px] border border-[var(--quni-input-border)] bg-white"
+                    >
+                      {placeSuggestions.map((suggestion) => (
+                        <li key={suggestion.placeId}>
+                          <button
+                            type="button"
+                            role="option"
+                            className="block w-full px-3 py-2 text-left text-sm text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                            onClick={() => void pickPlace(suggestion.placeId)}
+                          >
+                            {suggestion.label}
+                          </button>
+                        </li>
+                      ))}
+                      <li>
+                        <button
+                          type="button"
+                          className="block w-full border-t border-[var(--quni-line-soft)] px-3 py-2 text-left text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                          onClick={() => {
+                            setPlaceSuggestions([])
+                            setManualAddressOpen(true)
+                          }}
+                        >
+                          Can't find it? Enter manually
+                        </button>
+                      </li>
+                    </ul>
+                  ) : null}
+                  {placesHint ? (
+                    <p className="mt-1 text-xs text-gray-600" role="status">
+                      {placesHint}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="mt-2 text-sm font-semibold text-[var(--quni-navy)] underline"
+                    onClick={() => setManualAddressOpen(true)}
                   >
-                    <option value="">Select a state</option>
-                    {AU_LISTING_STATE_CODES.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ))}
-                  </select>
-                  {!listingStateCode ? (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Bond wording, compliance, and rooming house questions stay hidden until this is set.
-                    </p>
-                  ) : null}
-                  {listingStateCode && !isListingAgreementState(listingStateCode) ? (
-                    <p className="mt-2 text-sm text-amber-950" role="status">
-                      {unsupportedListingStateMessage(listingStateCode)}
-                    </p>
-                  ) : null}
+                    Enter address manually
+                  </button>
                 </div>
-                <div className="sm:col-span-2 max-sm:col-span-1">
-                  <label htmlFor="pf-pc" className={labelClass}>
-                    Postcode
-                  </label>
-                  <input
-                    id="pf-pc"
-                    value={postcode}
-                    onChange={(e) => {
-                      addressDirtyRef.current = true
-                      setPostcode(e.target.value)
-                    }}
-                    aria-invalid={postcodeStateConflict ? true : undefined}
-                    className={
-                      postcodeStateConflict
-                        ? `${inputClass} border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]`
-                        : inputClass
+              ) : null}
+              {showAddressManual ? (
+                <div className="space-y-4 rounded-[10px] border border-[var(--quni-line)] bg-[var(--quni-surface-2)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-[var(--quni-ink)]">Enter the address</h3>
+                    {placesSearch === 'on' ? (
+                      <button
+                        type="button"
+                        className="text-sm font-semibold text-[var(--quni-navy)] underline"
+                        onClick={preferAddressSearch}
+                      >
+                        Search instead
+                      </button>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label htmlFor="pf-unit" className={labelClass}>
+                      Unit / apartment (optional)
+                    </label>
+                    <input
+                      id="pf-unit"
+                      value={addressUnit}
+                      onChange={(e) => writeAddressFromParts(e.target.value, addressStreet)}
+                      className={inputClass}
+                      autoComplete="address-line2"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pf-addr" className={labelClass}>
+                      Street address
+                    </label>
+                    <input
+                      id="pf-addr"
+                      value={addressStreet}
+                      onChange={(e) => writeAddressFromParts(addressUnit, e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. 311 Hume Highway"
+                      autoComplete="street-address"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pf-suburb" className={labelClass}>
+                      Suburb
+                    </label>
+                    <input
+                      id="pf-suburb"
+                      value={suburb}
+                      onChange={(e) => {
+                        onAddressPartChange('suburb', e.target.value)
+                        setSuburb(e.target.value)
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="pf-state" className={labelClass}>
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="pf-state"
+                        value={listingStateCode ?? ''}
+                        onChange={(e) => {
+                          stateChosenByLandlordRef.current = e.target.value !== ''
+                          if (!applyListingState(e.target.value)) return
+                          onAddressPartChange('state', e.target.value)
+                        }}
+                        className={inputClass}
+                        required
+                      >
+                        <option value="">Select a state</option>
+                        {AU_LISTING_STATE_CODES.map((code) => (
+                          <option key={code} value={code}>
+                            {code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="pf-pc" className={labelClass}>
+                        Postcode
+                      </label>
+                      <input
+                        id="pf-pc"
+                        value={postcode}
+                        onChange={(e) => {
+                          onAddressPartChange('postcode', e.target.value)
+                          setPostcode(e.target.value)
+                        }}
+                        aria-invalid={postcodeStateConflict ? true : undefined}
+                        className={
+                          postcodeStateConflict
+                            ? `${inputClass} border-red-500 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]`
+                            : inputClass
+                        }
+                      />
+                      {postcodeStateConflict ? (
+                        <p className="mt-1 text-sm text-red-700" role="alert">
+                          {postcodeStateConflict}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    id="confirm-address"
+                    disabled={
+                      refsLoading ||
+                      nearbyCampusLoading ||
+                      !address.trim() ||
+                      !suburb.trim() ||
+                      !listingStateCode ||
+                      !postcode.trim() ||
+                      Boolean(postcodeStateConflict) ||
+                      unsupportedListingState
                     }
-                  />
-                  {postcodeStateConflict ? (
-                    <p className="mt-1 text-sm text-red-700" role="alert">
-                      {postcodeStateConflict}
-                    </p>
-                  ) : null}
+                    onClick={() => void confirmEnteredAddress()}
+                    className="w-full rounded-[10px] bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Confirm address
+                  </button>
                 </div>
-              </div>
+              ) : null}
+              {acceptedAddressSig !== '' &&
+              !campusConfirmMessage &&
+              addressSigFrom({ address, suburb, state, postcode }) !== acceptedAddressSig ? (
+                <p className="text-sm text-gray-700" role="status">
+                  {CONFIRM_ADDRESS_AGAIN_MESSAGE}
+                </p>
+              ) : null}
+              {addressMatchNote ? (
+                <p className="text-sm text-gray-700" role="status">
+                  {addressMatchNote}
+                </p>
+              ) : null}
+              {nearbyCampusError ? (
+                <p className="text-sm text-red-600" role="alert">
+                  {nearbyCampusError}
+                </p>
+              ) : null}
               <div>
                 <span className={labelClass}>Nearest university campus</span>
-                <p className="text-xs text-gray-500 mb-2">
-                  We list the closest campuses from your address. Tap a suggestion to select it; your current choice is
-                  marked <span className="font-medium text-gray-700">Selected</span>.{' '}
-                  <span className="font-medium text-gray-700">New</span> listings save the nearest match automatically
-                  unless you override.
-                </p>
-
-                {nearbyCampusError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {nearbyCampusError}
-                  </p>
+                {addressIsConfirmed ? null : (
+                  <p className="text-sm text-gray-700">Confirm the property address to see nearby campuses.</p>
                 )}
-                {nearbyCampusSuggestions.length > 0 && (
+
+                {addressIsConfirmed && nearbyCampusLoading ? (
+                  <p className="mt-2 text-xs text-gray-600" role="status" aria-live="polite">
+                    Finding nearby campuses...
+                  </p>
+                ) : null}
+                {addressIsConfirmed &&
+                (campusSelectionSource === 'landlord' || campusSelectionSource === 'saved') &&
+                campusId.trim() &&
+                campusAddressSig !== addressSigFrom({ address, suburb, state, postcode }) ? (
+                  <p className="mt-2 text-sm text-gray-700" role="status">
+                    {CAMPUS_CHECK_AFTER_ADDRESS_CHANGE_MESSAGE}
+                  </p>
+                ) : null}
+                {addressIsConfirmed && campusConfirmMessage ? (
+                  <p className="mt-2 text-sm text-gray-700" role="status">
+                    {campusConfirmMessage}
+                  </p>
+                ) : null}
+                {addressIsConfirmed && !nearbyCampusLoading && nearbyCampusSuggestions.length > 0 && (
                   <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
                     <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
                     <div className="space-y-2">
@@ -4479,12 +5179,12 @@ export default function LandlordPropertyFormPage() {
                       ))}
                     </div>
                     <p className="text-[11px] text-gray-500 mt-2">
-                      Based on approximate geocoding from your address.
+                      Based on the confirmed address.
                     </p>
                   </div>
                 )}
 
-                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
+                {addressIsConfirmed ? <div className="mt-4" ref={addAnotherUniversityHelpRef}>
                   <div className="flex flex-wrap items-center gap-2">
                     <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -4519,24 +5219,24 @@ export default function LandlordPropertyFormPage() {
                       is a better fit for a campus other than the closest match we suggested above.
                     </div>
                   )}
-                </div>
+                </div> : null}
 
-                {showAddAnotherUniversity && (
+                {addressIsConfirmed && showAddAnotherUniversity && (
                   <div className="mt-4">
                     <UniversityCampusSelect
                       universityId={universityId || null}
                       campusId={campusId || null}
                       onUniversityChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
                         universityIdRef.current = id
                         setUniversityId(id)
                         campusIdRef.current = ''
                         setCampusId('')
+                        rememberCampusChoice('landlord', addressSigFrom(addressFieldsRef.current))
                       }}
                       onCampusChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
                         campusIdRef.current = id
                         setCampusId(id)
+                        rememberCampusChoice('landlord', addressSigFrom(addressFieldsRef.current))
                       }}
                       referenceScope="full"
                       showState
@@ -4560,6 +5260,11 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'Property details',
             <div className="space-y-4">
+              {listingStateNotice ? (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950" role="status">
+                  {listingStateNotice}
+                </p>
+              ) : null}
               {listingStateCode ? (
               <>
               <div className="space-y-3">
@@ -4866,7 +5571,7 @@ export default function LandlordPropertyFormPage() {
               </>
               ) : (
                 <p className="text-sm text-gray-700">
-                  Choose a state above before these questions. Bond wording, compliance, and the rooming house fields
+                  Confirm the address to see these questions. Bond wording, compliance, and the rooming house fields
                   depend on the state.
                 </p>
               )}
@@ -6129,29 +6834,6 @@ export default function LandlordPropertyFormPage() {
           </div>
         </form>
       </div>
-
-      {nearbyCampusLoading && !submitting && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="campus-search-overlay-title"
-          aria-busy="true"
-        >
-          <div className="quni-modal w-full max-w-sm px-8 py-10 text-center">
-            <div
-              className="mx-auto h-12 w-12 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-5"
-              aria-hidden
-            />
-            <p id="campus-search-overlay-title" className="text-base font-semibold text-gray-900">
-              Finding nearby campuses
-            </p>
-            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-              Working out which university campuses are closest to your address. This may take a few seconds.
-            </p>
-          </div>
-        </div>
-      )}
 
       <AIPricingSuggestionModal
         isOpen={pricingSuggestionOpen}
