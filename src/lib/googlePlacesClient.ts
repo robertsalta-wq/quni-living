@@ -7,7 +7,27 @@ import {
 
 export type PlaceSuggestion = { placeId: string; label: string }
 
-type PlacesFailure = 'not_configured' | 'mismatch' | 'not_found' | 'unavailable' | 'unauthorized' | 'forbidden' | 'rate_limited'
+export type PlacesFailure =
+  | 'not_configured'
+  | 'mismatch'
+  | 'not_found'
+  | 'unavailable'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'rate_limited'
+
+/**
+ * Manual confirm can still use Nominatim when Google never gave a usable answer.
+ * A mismatch or a real zero-result stays with the landlord. Forbidden stays a refusal.
+ */
+export function manualConfirmCanUseNominatim(reason: PlacesFailure): boolean {
+  return (
+    reason === 'not_configured' ||
+    reason === 'unauthorized' ||
+    reason === 'unavailable' ||
+    reason === 'rate_limited'
+  )
+}
 
 async function readPlacesJson(res: Response): Promise<Record<string, unknown> | null> {
   try {

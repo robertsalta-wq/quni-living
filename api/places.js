@@ -84,7 +84,12 @@ export default async function handler(req) {
       geocodeUrl.searchParams.set('key', key)
       const res = await fetch(geocodeUrl)
       const body = await res.json()
-      if (!res.ok || body.status === 'REQUEST_DENIED') return json({ ok: false, error: 'unavailable' }, 502)
+      // ZERO_RESULTS is an answer. Quota, denial, and Google errors are not, so the
+      // form can confirm the same address through Nominatim.
+      const status = typeof body.status === 'string' ? body.status : ''
+      if (!res.ok || (status && status !== 'OK' && status !== 'ZERO_RESULTS')) {
+        return json({ ok: false, error: 'unavailable' }, 502)
+      }
       const results = Array.isArray(body.results) ? body.results.slice(0, 5) : []
       return ok({ ok: true, results }, access)
     }

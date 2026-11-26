@@ -1,6 +1,7 @@
 /**
  * Landlord or platform-admin session for routes that spend the Google Places key.
- * A missing or invalid bearer token returns before any Google call.
+ * A missing or malformed bearer token returns before any Google call.
+ * A well-formed token that this runtime cannot verify locally is checked with Supabase Auth.
  * Suggestion requests can skip the landlord lookup when they carry a fresh pass.
  * Place Details and Confirm always read landlord_profiles or platform_staff.
  */
@@ -29,7 +30,9 @@ export async function requireLandlordOrAdmin(request, options = {}) {
     let user = null
     if (verified.ok) {
       user = { id: verified.sub, email: verified.email }
-    } else if (verified.reason === 'unconfigured' || verified.reason === 'malformed') {
+    } else if (verified.reason === 'malformed') {
+      return { error: 'unauthorized', status: 401 }
+    } else {
       if (!anonKey) return { error: 'unavailable', status: 503 }
       const supabaseAuth = createClient(supabaseUrl, anonKey)
       const {
@@ -38,8 +41,6 @@ export async function requireLandlordOrAdmin(request, options = {}) {
       } = await supabaseAuth.auth.getUser(token)
       if (userErr || !remote) return { error: 'unauthorized', status: 401 }
       user = remote
-    } else {
-      return { error: 'unauthorized', status: 401 }
     }
 
     const presented = request.headers.get('x-quni-places-pass')

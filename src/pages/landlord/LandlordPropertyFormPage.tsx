@@ -201,6 +201,7 @@ import {
   fetchPlacesSearchAvailable,
   fetchPlaceSuggestions,
   geocodeAddressWithGoogle,
+  manualConfirmCanUseNominatim,
   type PlaceSuggestion,
 } from '../../lib/googlePlacesClient'
 import type { ParsedAustralianAddress } from '../../lib/googlePlaceAddress'
@@ -2962,17 +2963,12 @@ export default function LandlordPropertyFormPage() {
       setNearbyCampusError(ADDRESS_NOT_MATCHED_MESSAGE)
       return
     }
-    if (google.reason === 'unauthorized' || google.reason === 'forbidden') {
+    if (google.reason === 'forbidden') {
       setNearbyCampusSuggestions([])
       setNearbyCampusError('Sign in again to confirm this address.')
       return
     }
-    if (google.reason === 'rate_limited') {
-      setNearbyCampusSuggestions([])
-      setNearbyCampusError('Too many address lookups. Wait a minute and try again.')
-      return
-    }
-    if (google.reason !== 'not_configured') {
+    if (!manualConfirmCanUseNominatim(google.reason)) {
       setNearbyCampusSuggestions([])
       setNearbyCampusError(
         'We could not find that street in this suburb. Check the street line, suburb, state and postcode.',

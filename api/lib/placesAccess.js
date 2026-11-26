@@ -10,6 +10,10 @@ const JWKS_TTL_MS = 10 * 60 * 1000
 /** @type {{ expires: number, keys: JsonWebKey[] }} */
 let jwksCache = { expires: 0, keys: [] }
 
+export function clearPlacesAccessCache() {
+  jwksCache = { expires: 0, keys: [] }
+}
+
 function passSecret() {
   return (process.env.SUPABASE_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
 }
@@ -103,18 +107,42 @@ async function verifyWithJwks(header, signingInput, signature) {
       return 'unconfigured'
     }
   }
-  const jwk = jwksCache.keys.find((key) => key.alg === header.alg && (!header.kid || key.kid === header.kid))
+  const jwk = jwksCache.keys.find((key) => jwkMatchesHeader(key, header))
   if (!jwk) return false
   try {
-    const algorithm =
-      header.alg === 'RS256'
-        ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
-        : { name: 'ECDSA', hash: 'SHA-256' }
-    const key = await crypto.subtle.importKey('jwk', jwk, algorithm, false, ['verify'])
-    return crypto.subtle.verify(algorithm, key, base64UrlToBytes(signature), new TextEncoder().encode(signingInput))
+    const signatureBytes = base64UrlToBytes(signature)
+    const data = new TextEncoder().encode(signingInput)
+    if (header.alg === 'RS256') {
+      const key = await crypto.subtle.importKey(
+        'jwk',
+        jwk,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['verify'],
+      )
+      return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signatureBytes, data)
+    }
+    // ECDSA import requires namedCurve. Passing only the hash throws, which used to
+    // look like a bad signature and 401 every ECC (P-256) access token.
+    const namedCurve = jwk.crv === 'P-384' ? 'P-384' : jwk.crv === 'P-521' ? 'P-521' : 'P-256'
+    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve }, false, ['verify'])
+    return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, signatureBytes, data)
   } catch {
     return false
   }
+}
+
+/**
+ * @param {JsonWebKey} key
+ * @param {{ alg?: string, kid?: string }} header
+ */
+function jwkMatchesHeader(key, header) {
+  if (header.kid && key.kid !== header.kid) return false
+  if (header.alg === 'ES256') {
+    return key.kty === 'EC' && (!key.alg || key.alg === 'ES256') && (!key.crv || key.crv === 'P-256')
+  }
+  if (header.alg === 'RS256') return key.kty === 'RSA' && (!key.alg || key.alg === 'RS256')
+  return key.alg === header.alg
 }
 
 /** @param {string} sub */

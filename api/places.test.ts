@@ -121,4 +121,13 @@ describe('/api/places', () => {
     expect(called.searchParams.get('key')).toBe('test-places-key')
     expect(called.searchParams.get('components')).toBe('country:AU')
   })
+
+  it('treats a Google quota response as unavailable so confirm can use Nominatim', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ status: 'OVER_QUERY_LIMIT', results: [] }))
+    const res = await handler(
+      new Request('https://quni.test/api/places?confirm=1&address=244%20Buffalo%20Road&suburb=Ryde&state=NSW&postcode=2112'),
+    )
+    expect(res.status).toBe(502)
+    await expect(res.json()).resolves.toEqual({ ok: false, error: 'unavailable' })
+  })
 })
