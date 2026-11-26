@@ -2848,8 +2848,9 @@ export default function LandlordPropertyFormPage() {
   async function applyConfirmedPlace(parsed: ParsedAustralianAddress) {
     const nextState = parsed.state.trim().toUpperCase()
     const current = addressFieldsRef.current
-    const streetLine = (parsed.streetLine.trim() || current.address.trim()).trim()
-    const streetParts = splitUnitFromStreetLine(streetLine)
+    const rawLine = (parsed.streetLine.trim() || current.address.trim()).trim()
+    const streetParts = splitUnitFromStreetLine(rawLine)
+    const streetLine = streetParts.unit ? composeStreetLine(streetParts.unit, streetParts.street) : rawLine
     const resolvedState = (nextState || current.state).trim().toUpperCase()
     const fields = {
       address: streetLine,
@@ -3016,6 +3017,14 @@ export default function LandlordPropertyFormPage() {
   }
 
   function beginAddressEdit() {
+    const parts = splitUnitFromStreetLine(address)
+    const composed = parts.unit ? composeStreetLine(parts.unit, parts.street) : address.trim()
+    setAddressUnit(parts.unit)
+    setAddressStreet(parts.street)
+    if (composed !== address.trim()) {
+      setAddress(composed)
+      onAddressPartChange('address', composed)
+    }
     setAddressEditing(true)
     setManualAddressOpen(true)
   }

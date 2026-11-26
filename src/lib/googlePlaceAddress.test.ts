@@ -29,6 +29,18 @@ describe('parseGoogleAddressResult', () => {
     })
   })
 
+  it('does not add a second Unit when the subpremise already has one', () => {
+    const parsed = parseGoogleAddressResult({
+      ...place,
+      addressComponents: place.addressComponents.map((component) =>
+        component.types.includes('subpremise')
+          ? { ...component, longText: 'Unit 1', shortText: 'Unit 1' }
+          : component,
+      ),
+    })
+    expect(parsed?.streetLine).toBe('Unit 1, 311 Hume Highway')
+  })
+
   it('reads Essentials Place Details fields without a formatted address or types', () => {
     const parsed = parseGoogleAddressResult({
       location: { latitude: -33.92, longitude: 150.92 },

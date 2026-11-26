@@ -3,6 +3,7 @@ import {
   type GeocodeMatchPrecision,
   type GeocoderLocality,
 } from './geocodeAddressAgreement'
+import { composeStreetLine } from './normalizeAustralianAddressForGeocode'
 
 const AU_STATE_BY_NAME: Record<string, string> = {
   'new south wales': 'NSW',
@@ -115,7 +116,7 @@ export function parseGoogleAddressResult(raw: unknown): ParsedAustralianAddress 
     .filter(Boolean)
     .join(' ')
   const unitText = unit ? componentText(unit) : ''
-  const streetLine = unitText ? (street ? `Unit ${unitText}, ${street}` : `Unit ${unitText}`) : street
+  const streetLine = unitText ? composeStreetLine(unitText, street) : street
   const suburbComponent =
     componentByType(components, 'locality') ||
     componentByType(components, 'postal_town') ||
