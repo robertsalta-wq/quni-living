@@ -247,7 +247,15 @@ import LandlordPropertyFt6600ComplianceFields, {
   type TriState,
 } from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
 import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
-import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
+import {
+  findUnpersistedColumn,
+  LISTING_DETAILS_DID_NOT_SAVE_MESSAGE,
+} from '../../lib/persistedColumnValuesEqual'
+import {
+  formatUserFacingRequestError,
+  looksLikeMissingDbColumn,
+  messageFromSupabaseError,
+} from '../../lib/supabaseErrorMessage'
 import {
   AUTHORITY_TO_LET_ATTESTATION_BULLETS,
   AUTHORITY_TO_LET_ATTESTATION_FOOTER,
@@ -300,22 +308,14 @@ import {
   type ListerRole,
 } from '../../lib/sublettingResources'
 
-const FT6600_COMPLIANCE_MIGRATION_HINT =
-  'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production - check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
-
-function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: boolean): string {
+function submitErrorMessageFromUnknown(err: unknown): string {
   const msg = messageFromSupabaseError(err)
-  if (!looksLikeMissingDbColumn(err)) return msg
-  if (
-    showComplianceSection &&
-    /smoke_alarm|strata_oc|water_usage_charged|electricity_embedded|gas_embedded|strata_bylaws/i.test(msg)
-  ) {
-    return `${msg} ${FT6600_COMPLIANCE_MIGRATION_HINT}`
+  if (msg === LISTING_DETAILS_DID_NOT_SAVE_MESSAGE) return msg
+  if (looksLikeMissingDbColumn(err) || /supabase\/|\.sql\b|sql editor/i.test(msg)) {
+    console.error('[listing save] hidden database detail', err)
+    return LISTING_DETAILS_DID_NOT_SAVE_MESSAGE
   }
-  if (/linen_supplied|weekly_cleaning/i.test(msg)) {
-    return `${msg} Run supabase/property_form_extend.sql in the Supabase SQL editor, then save again.`
-  }
-  return `${msg} A database migration may be missing - check the supabase/migrations folder.`
+  return formatUserFacingRequestError(err, LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
 }
 
 /** Checkbox styling - single pattern for every landlord form checkbox. */
@@ -4033,24 +4033,37 @@ export default function LandlordPropertyFormPage() {
             Boolean(persisted.linen_supplied) !== linenSupplied ||
             Boolean(persisted.weekly_cleaning_service) !== weeklyCleaning)
         ) {
-          throw new Error(
-            'Inclusion settings did not persist (linen_supplied / weekly_cleaning_service columns may be missing in Supabase). Run supabase/property_form_extend.sql in the SQL editor, then save again.',
-          )
+          console.error('[listing save] inclusion settings did not persist', {
+            state: listingStateCode,
+            expected: {
+              furnished,
+              linen_supplied: linenSupplied,
+              weekly_cleaning_service: weeklyCleaning,
+            },
+            actual: {
+              furnished: persisted.furnished ?? null,
+              linen_supplied: persisted.linen_supplied ?? null,
+              weekly_cleaning_service: persisted.weekly_cleaning_service ?? null,
+            },
+          })
+          throw new Error(LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
         }
         if (complianceColumns && persisted) {
-          for (const [key, expected] of Object.entries(complianceColumns)) {
-            const actual = persisted[key] ?? null
-            if (expected !== actual) {
-              throw new Error(
-                `NSW compliance did not persist (${key}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}). ${FT6600_COMPLIANCE_MIGRATION_HINT}`,
-              )
-            }
+          const mismatch = findUnpersistedColumn(complianceColumns, persisted)
+          if (mismatch) {
+            console.error('[listing save] column did not persist', {
+              state: listingStateCode,
+              ...mismatch,
+            })
+            throw new Error(LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
           }
-          setFt6600Compliance(
-            ft6600ComplianceFormStateFromProperty(
-              persisted as Parameters<typeof ft6600ComplianceFormStateFromProperty>[0],
-            ),
-          )
+          if (showNswFt6600ComplianceSection) {
+            setFt6600Compliance(
+              ft6600ComplianceFormStateFromProperty(
+                persisted as Parameters<typeof ft6600ComplianceFormStateFromProperty>[0],
+              ),
+            )
+          }
         }
         const uRow = updatedRow as { university_id: string | null; campus_id: string | null } | null
         if (
@@ -4121,9 +4134,13 @@ export default function LandlordPropertyFormPage() {
           navigate('/landlord/dashboard?tab=listings', { replace: true })
         } else {
           setSubmitSuccessMessage(
-            existingSlug
-              ? 'Listing saved, including NSW compliance details. You can keep editing or view the public listing from your dashboard.'
-              : 'Listing saved, including NSW compliance details.',
+            showNswFt6600ComplianceSection
+              ? existingSlug
+                ? 'Listing saved, including NSW compliance details. You can keep editing or view the public listing from your dashboard.'
+                : 'Listing saved, including NSW compliance details.'
+              : existingSlug
+                ? 'Listing saved. You can keep editing or view the public listing from your dashboard.'
+                : 'Listing saved.',
           )
           window.requestAnimationFrame(() => {
             scrollToFormFeedback('listing-form-feedback-bottom')
@@ -4203,7 +4220,7 @@ export default function LandlordPropertyFormPage() {
       }
     } catch (err) {
       console.error('[LandlordPropertyFormPage] save failed', err)
-      reportSubmitError(submitErrorMessageFromUnknown(err, showNswFt6600ComplianceSection))
+      reportSubmitError(submitErrorMessageFromUnknown(err))
     } finally {
       setSubmitting(false)
     }
