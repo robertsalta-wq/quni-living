@@ -202,12 +202,20 @@ export function fieldsFromHubListingTypeTile(
     propertyListingType: PropertyListingType
     roomType: RoomType | ''
   },
+  roomingOccupancy: 'private' | 'shared' = 'private',
 ): {
   propertyListingType: PropertyListingType
   roomType: RoomType
   isRegisteredRoomingHouse: boolean
 } {
   if (tile === 'rooming') {
+    if (roomingOccupancy === 'shared') {
+      return {
+        propertyListingType: 'shared_room',
+        roomType: 'shared',
+        isRegisteredRoomingHouse: true,
+      }
+    }
     return {
       propertyListingType: 'private_room_landlord_off_site',
       roomType: 'single',

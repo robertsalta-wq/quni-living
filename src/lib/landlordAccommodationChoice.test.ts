@@ -65,13 +65,25 @@ describe('landlordAccommodationChoice', () => {
     )
   })
 
-  it('hides the registration card in Victoria and explains capacity routing', () => {
-    const vic = accommodationOptionsForListingState('VIC').map((opt) => opt.value)
-    expect(vic).not.toContain('registered_rooming_house')
-    expect(vic).toContain('private_room_landlord_off_site')
-    expect(vic).toContain('shared_room')
+  it('shows the Victorian rooming house card and keeps capacity routing for the other room cards', () => {
+    const vic = accommodationOptionsForListingState('VIC')
+    const vicValues = vic.map((opt) => opt.value)
+    expect(vicValues).toContain('registered_rooming_house')
+    expect(vic.find((opt) => opt.value === 'registered_rooming_house')?.description).toBe(
+      'You operate a registered rooming house and rent rooms to residents.',
+    )
+    expect(vicValues).toContain('private_room_landlord_off_site')
+    expect(vicValues).toContain('shared_room')
     expect(accommodationOptionsForListingState('NSW').map((opt) => opt.value)).toContain(
       'registered_rooming_house',
+    )
+    expect(accommodationOptionsForListingState('NSW').find((opt) => opt.value === 'registered_rooming_house')?.description).toContain(
+      'registered boarding house',
+    )
+    expect(accommodationChoiceFromFields('shared_room', 'shared', true)).toBe('registered_rooming_house')
+    expect(accommodationChoiceFromFields('shared_room', 'shared', false)).toBe('shared_room')
+    expect(accommodationChoiceFromFields('private_room_landlord_off_site', 'single', false)).toBe(
+      'private_room_landlord_off_site',
     )
     expect(
       accommodationOptionsForListingState('VIC').find((opt) => opt.value === 'private_room_landlord_off_site')

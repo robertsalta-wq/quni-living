@@ -61,6 +61,29 @@ describe('vicRoomingRouting', () => {
     ).toBe('unsupported')
   })
 
+  it('blocks a registered rooming house card when the building holds fewer than 4', () => {
+    expect(
+      vicRoomingRouting({
+        propertyType: 'shared_room',
+        isRegisteredRoomingHouse: true,
+        premisesOccupantCapacity: 3,
+      }),
+    ).toEqual({
+      kind: 'unsupported',
+      reason: expect.stringContaining('4 or more'),
+    })
+  })
+
+  it('keeps a private room under 4 on Form 1 when the rooming house card is not selected', () => {
+    expect(
+      vicRoomingRouting({
+        propertyType: 'private_room_landlord_off_site',
+        isRegisteredRoomingHouse: false,
+        premisesOccupantCapacity: 3,
+      }).kind,
+    ).toBe('form1')
+  })
+
   it('leaves an on-site room on the licence', () => {
     expect(
       vicRoomingRouting({

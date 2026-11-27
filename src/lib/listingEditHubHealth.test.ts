@@ -82,6 +82,17 @@ describe('listingEditHubHealth', () => {
       'rooming',
     )
     expect(
+      fieldsFromHubListingTypeTile('rooming', {
+        propertyListingType: 'private_room_landlord_off_site',
+        roomType: 'single',
+      }, 'shared'),
+    ).toEqual({
+      propertyListingType: 'shared_room',
+      roomType: 'shared',
+      isRegisteredRoomingHouse: true,
+    })
+    expect(hubListingTypeTileFromFields('shared_room', 'shared', false)).toBe('room')
+    expect(
       fieldsFromHubListingTypeTile('room', {
         propertyListingType: 'entire_property',
         roomType: 'apartment',

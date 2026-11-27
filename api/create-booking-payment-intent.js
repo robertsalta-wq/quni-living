@@ -27,8 +27,11 @@ import { moveInFloorError } from './lib/booking/moveInFloor.js'
 import { leaseEndDateFromMoveIn } from './lib/booking/leaseEndDate.js'
 import {
   isVicRoomingPropertyType,
+  parseVicElectronicServiceAnswer,
   vicRoomingApplyBlock,
   vicRoomingRouting,
+  VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED,
+  VIC_ROOMING_RESIDENT_EMAIL_REQUIRED,
 } from './lib/tenancy/vicRoomingHouse.js'
 import {
   assertRenterEmailConfirmed,
@@ -538,6 +541,7 @@ async function handleListingBookingCommit(request, origin, body) {
 
   const expiresAt = landlordResponseExpiresAtIso('listing')
   const endDate = leaseEndDateFromMoveIn(moveInDate, leaseLength)
+  let vicRoomingResidentAcceptsElectronicService = null
 
   if (String(property.state || '').trim().toUpperCase() === 'VIC') {
     const { data: vicRow, error: vicErr } = await admin
@@ -566,6 +570,27 @@ async function handleListingBookingCommit(request, origin, body) {
     if (route.kind === 'rooming') {
       const block = vicRoomingApplyBlock({ leaseLength, endDate, occupantCount })
       if (!block.ok) return json({ error: 'vic_rooming_booking', message: block.message }, 400, origin)
+      vicRoomingResidentAcceptsElectronicService = parseVicElectronicServiceAnswer(
+        body.vicRoomingResidentAcceptsElectronicService ?? body.vic_rooming_resident_accepts_electronic_service,
+      )
+      if (vicRoomingResidentAcceptsElectronicService == null) {
+        return json(
+          { error: 'vic_rooming_resident_electronic_service', message: VIC_ROOMING_RESIDENT_EMAIL_REQUIRED },
+          400,
+          origin,
+        )
+      }
+      if (
+        occupantCount >= 2 &&
+        coTenant?.accepts_electronic_service !== true &&
+        coTenant?.accepts_electronic_service !== false
+      ) {
+        return json(
+          { error: 'vic_rooming_resident_electronic_service', message: VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED },
+          400,
+          origin,
+        )
+      }
     }
   }
 
@@ -595,6 +620,7 @@ async function handleListingBookingCommit(request, origin, body) {
     tenantInviteId,
     bondAmount,
     listingAcknowledgment,
+    vicRoomingResidentAcceptsElectronicService,
   })
 
   const qldRoomingPkg = resolveTenancyPackage({

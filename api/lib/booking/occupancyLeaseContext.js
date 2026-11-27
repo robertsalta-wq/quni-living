@@ -15,7 +15,7 @@ export class MissingBookingOccupantCountError extends Error {
 
 /**
  * @param {unknown} raw
- * @returns {{ full_name: string, email: string, phone: string, date_of_birth: string } | null}
+ * @returns {{ full_name: string, email: string, phone: string, date_of_birth: string, accepts_electronic_service: boolean | null } | null}
  */
 export function parseCoTenantFromBooking(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
@@ -24,8 +24,10 @@ export function parseCoTenantFromBooking(raw) {
   const phone = typeof raw.phone === 'string' ? raw.phone.trim() : ''
   const date_of_birth =
     typeof raw.date_of_birth === 'string' ? raw.date_of_birth.trim().slice(0, 10) : ''
+  const accepts_electronic_service =
+    raw.accepts_electronic_service === true ? true : raw.accepts_electronic_service === false ? false : null
   if (full_name.length < 2 || !EMAIL_RE.test(email)) return null
-  return { full_name, email, phone, date_of_birth }
+  return { full_name, email, phone, date_of_birth, accepts_electronic_service }
 }
 
 /**

@@ -18,6 +18,7 @@ export function parseCoTenantFromBooking(raw: unknown): {
   email: string
   phone: string
   date_of_birth: string
+  accepts_electronic_service: boolean | null
 } | null
 
 export function occupancyCoResidentNameFromBooking(

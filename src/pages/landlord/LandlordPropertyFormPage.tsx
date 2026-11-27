@@ -3,6 +3,7 @@ import { Link, matchPath, useLocation, useNavigate, useSearchParams } from 'reac
 import { listingChromeActionIcon } from '../../lib/listingChromeActionIcons'
 import {
   emptyVicRoomingHouseFieldValues,
+  VIC_ROOMING_FURNISHED_ITEMS_LET,
   VicRoomingHouseFields,
   type VicRoomingHouseFieldValues,
 } from '../../components/landlord/VicRoomingHouseFields'
@@ -86,6 +87,7 @@ import {
   accommodationIntroForListingState,
   accommodationOptionsForListingState,
   fieldsFromAccommodationChoice,
+  VIC_ROOMING_CAPACITY_LINE,
   normalizeAccommodationForSave,
   roomForRentOptions,
   roomingHouseFieldErrors,
@@ -986,18 +988,36 @@ export default function LandlordPropertyFormPage() {
   const selectAccommodationChoice = useCallback((choice: AccommodationUiChoice) => {
     const prev = accommodationChoice
     const next = fieldsFromAccommodationChoice(choice)
-    setPropertyListingType(next.propertyListingType)
-    setRoomType(next.roomType)
     if (choice === 'registered_rooming_house') {
       setIsRegisteredRoomingHouse(true)
+      if (propertyListingType === 'shared_room') {
+        setPropertyListingType('shared_room')
+        setRoomType('shared')
+      } else {
+        setPropertyListingType('private_room_landlord_off_site')
+        setRoomType(roomType === 'studio' ? 'studio' : 'single')
+      }
     } else {
+      setPropertyListingType(next.propertyListingType)
+      setRoomType(next.roomType)
       setIsRegisteredRoomingHouse(false)
       setRoomingHouseRegistrationNumber('')
     }
     if (shouldScrollAccommodationTypeBlock(prev, choice)) {
       scrollAndFocusTypeSpecificFields()
     }
-  }, [accommodationChoice])
+  }, [accommodationChoice, propertyListingType, roomType])
+
+  const selectRoomingHouseOccupancy = useCallback((occupancy: 'private' | 'shared') => {
+    setIsRegisteredRoomingHouse(true)
+    if (occupancy === 'shared') {
+      setPropertyListingType('shared_room')
+      setRoomType('shared')
+      return
+    }
+    setPropertyListingType('private_room_landlord_off_site')
+    setRoomType((current) => (current === 'studio' ? 'studio' : 'single'))
+  }, [])
   const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [roomDescription, setRoomDescription] = useState('')
@@ -1107,11 +1127,6 @@ export default function LandlordPropertyFormPage() {
   const showPropertyUtilitiesSection = listingStateCode === 'QLD' || listingStateCode === 'VIC'
   const accommodationOptions = accommodationOptionsForListingState(listingStateCode)
   const accommodationIntro = accommodationIntroForListingState(listingStateCode ?? '')
-  const displayedAccommodationChoice =
-    listingStateCode === 'VIC' && accommodationChoice === 'registered_rooming_house'
-      ? 'private_room_landlord_off_site'
-      : accommodationChoice
-
   const [utilitiesForm, setUtilitiesForm] = useState<LandlordPropertyUtilitiesFormState>(
     emptyLandlordPropertyUtilitiesFormState(),
   )
@@ -1476,6 +1491,8 @@ export default function LandlordPropertyFormPage() {
         : { kind: 'form1' as const },
     [state, propertyListingType, isRegisteredRoomingHouse, vicRoomingFields.capacity],
   )
+  const vicItemsPrefillSkipped = useRef(false)
+  const vicBankDepositUnticked = useRef(false)
 
   useEffect(() => {
     if (!isNswT3Listing) return
@@ -1609,6 +1626,60 @@ export default function LandlordPropertyFormPage() {
   const [payeeAccountName, setPayeeAccountName] = useState('')
   const [payeeBsb, setPayeeBsb] = useState('')
   const [payeeAccountNumber, setPayeeAccountNumber] = useState('')
+
+  useEffect(() => {
+    if (!furnished) vicItemsPrefillSkipped.current = false
+  }, [furnished])
+
+  useEffect(() => {
+    if (listingStateCode !== 'VIC' || vicRoomingRoute.kind !== 'rooming') return
+    const box = vicRoomingFields.houseRules
+    if (box.trim() && box !== houseRules) setHouseRules(box)
+  }, [listingStateCode, vicRoomingRoute.kind, vicRoomingFields.houseRules, houseRules])
+
+  useEffect(() => {
+    if (listingStateCode !== 'VIC' || vicRoomingRoute.kind !== 'rooming') return
+    const payoutReady = Boolean(payeeAccountName.trim() && payeeBsb.trim() && payeeAccountNumber.trim())
+    const operatorEmail = (landlordProfile?.email ?? '').trim()
+    setVicRoomingFields((prev) => {
+      let next = prev
+      let changed = false
+      if (!prev.houseRules.trim() && houseRules.trim()) {
+        next = { ...next, houseRules }
+        changed = true
+      }
+      if (furnished && !prev.itemsLet.trim() && !vicItemsPrefillSkipped.current) {
+        next = { ...next, itemsLet: VIC_ROOMING_FURNISHED_ITEMS_LET }
+        changed = true
+      }
+      const noPayChoice =
+        !prev.pay.bankDeposit &&
+        !prev.pay.bpay &&
+        !prev.pay.otherEft &&
+        !prev.pay.directDebit &&
+        !prev.pay.cash &&
+        !prev.pay.cheque
+      if (payoutReady && noPayChoice && !vicBankDepositUnticked.current) {
+        next = { ...next, pay: { ...next.pay, bankDeposit: true } }
+        changed = true
+      }
+      if (prev.operatorAcceptsElectronicService == null && operatorEmail) {
+        next = { ...next, operatorAcceptsElectronicService: true }
+        changed = true
+      }
+      return changed ? next : prev
+    })
+  }, [
+    listingStateCode,
+    vicRoomingRoute.kind,
+    houseRules,
+    furnished,
+    payeeAccountName,
+    payeeBsb,
+    payeeAccountNumber,
+    landlordProfile?.email,
+  ])
+
   const parsedBondWeeks = useMemo(() => {
     const w = parseInt(bondWeeks, 10)
     if (!Number.isFinite(w) || w < 0 || w > bondWeekCap) return null
@@ -3458,7 +3529,11 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
-    if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
+    const genericRoomingErrors =
+      listingStateCode === 'VIC'
+        ? { ...roomingHouseErrors, missingRegistration: null }
+        : roomingHouseErrors
+    if (genericRoomingErrors.onSiteConflict || genericRoomingErrors.missingRegistration) {
       setShowRoomingHouseValidation(true)
       reportSubmitError('Fix rooming house registration details before saving.')
       document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
@@ -3848,7 +3923,6 @@ export default function LandlordPropertyFormPage() {
                   vic_rooming_pay_bpay: vicRoomingFields.pay.bpay,
                   vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
                   rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
-                  is_registered_rooming_house: true,
                   vic_rooming_unshared_weekly_rent:
                     propertyListingType === 'shared_room'
                       ? parseVicRoomingUnsharedWeeklyRent(vicRoomingFields.unsharedWeeklyRent)
@@ -4191,7 +4265,6 @@ export default function LandlordPropertyFormPage() {
                           vic_rooming_pay_bpay: vicRoomingFields.pay.bpay,
                           vic_rooming_pay_other_eft: vicRoomingFields.pay.otherEft,
                           rooming_house_registration_number: vicRoomingFields.registrationNumber.trim() || null,
-                          is_registered_rooming_house: true,
                           vic_rooming_unshared_weekly_rent:
                             propertyListingType === 'shared_room'
                               ? parseVicRoomingUnsharedWeeklyRent(vicRoomingFields.unsharedWeeklyRent)
@@ -5272,7 +5345,7 @@ export default function LandlordPropertyFormPage() {
                 <p className="text-xs text-gray-500">{accommodationIntro}</p>
                 <div className="grid grid-cols-1 gap-2">
                   {accommodationOptions.map((opt) => {
-                    const selected = displayedAccommodationChoice === opt.value
+                    const selected = accommodationChoice === opt.value
                     return (
                       <button
                         key={opt.value}
@@ -5290,13 +5363,47 @@ export default function LandlordPropertyFormPage() {
                     )
                   })}
                 </div>
+                {listingStateCode === 'VIC' ? (
+                  <p className="text-xs text-gray-600">{VIC_ROOMING_CAPACITY_LINE}</p>
+                ) : null}
+                {listingStateCode === 'VIC' && accommodationChoice === 'registered_rooming_house' ? (
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium text-gray-800">Private room or shared room?</legend>
+                    <label className="flex items-center gap-2 text-sm text-gray-800">
+                      <input
+                        type="radio"
+                        name="vic-rooming-occupancy"
+                        checked={propertyListingType !== 'shared_room'}
+                        onChange={() => selectRoomingHouseOccupancy('private')}
+                      />
+                      Private room
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-800">
+                      <input
+                        type="radio"
+                        name="vic-rooming-occupancy"
+                        checked={propertyListingType === 'shared_room'}
+                        onChange={() => selectRoomingHouseOccupancy('shared')}
+                      />
+                      Shared room
+                    </label>
+                  </fieldset>
+                ) : null}
+                {listingStateCode === 'VIC' &&
+                isRegisteredRoomingHouse &&
+                vicRoomingRoute.kind === 'unsupported' &&
+                'reason' in vicRoomingRoute ? (
+                  <p className="text-sm text-red-700" role="alert">
+                    {vicRoomingRoute.reason}
+                  </p>
+                ) : null}
                 {(state.trim() || '').toUpperCase() === 'QLD' &&
                 (accommodationChoice === 'private_room_landlord_off_site' ||
                   accommodationChoice === 'shared_room') ? (
                   <p className="text-sm text-amber-950 leading-relaxed">{qldOffSiteRoomListingNote()}</p>
                 ) : null}
               </div>
-              {showRoomForRentSelect(displayedAccommodationChoice) ? (
+              {showRoomForRentSelect(accommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
               {qldRoomCard ? (
                 <QldSharesKitchenOrBathroomField
@@ -5338,7 +5445,7 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
-              {showRoomForRentSelect(displayedAccommodationChoice) && (
+              {showRoomForRentSelect(accommodationChoice) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
                     Room for rent
@@ -5349,18 +5456,26 @@ export default function LandlordPropertyFormPage() {
                     onChange={(e) => setRoomType(e.target.value as RoomType)}
                     className={inputClass}
                   >
-                    {roomForRentOptions(displayedAccommodationChoice).map(([v, lab]) => (
+                    {roomForRentOptions(
+                      listingStateCode === 'VIC' &&
+                        accommodationChoice === 'registered_rooming_house' &&
+                        propertyListingType === 'shared_room'
+                        ? 'shared_room'
+                        : accommodationChoice,
+                    ).map(([v, lab]) => (
                       <option key={v} value={v}>
                         {lab}
                       </option>
                     ))}
                   </select>
-                  {displayedAccommodationChoice === 'private_room_landlord_off_site' && (
+                  {(accommodationChoice === 'private_room_landlord_off_site' ||
+                    (accommodationChoice === 'registered_rooming_house' &&
+                      propertyListingType !== 'shared_room')) && (
                     <p className="text-xs text-gray-500 mt-1">
                       Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
                     </p>
                   )}
-                  {displayedAccommodationChoice === 'registered_rooming_house' && (
+                  {accommodationChoice === 'registered_rooming_house' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Identify the room you are listing. Registration number is required below.
                     </p>
@@ -5401,7 +5516,18 @@ export default function LandlordPropertyFormPage() {
                   showRoomingFields={vicRoomingRoute.kind === 'rooming'}
                   showUnsharedRent={vicRoomingRoute.kind === 'rooming' && propertyListingType === 'shared_room'}
                   values={vicRoomingFields}
-                  onChange={setVicRoomingFields}
+                  onChange={(next) => {
+                    if (vicRoomingFields.pay.bankDeposit && !next.pay.bankDeposit) {
+                      vicBankDepositUnticked.current = true
+                    }
+                    if (next.itemsLet !== vicRoomingFields.itemsLet && !next.itemsLet.trim()) {
+                      vicItemsPrefillSkipped.current = true
+                    }
+                    if (next.houseRules !== vicRoomingFields.houseRules) {
+                      setHouseRules(next.houseRules)
+                    }
+                    setVicRoomingFields(next)
+                  }}
                 />
               ) : null}
               {isNswT3Listing ? (
@@ -6080,6 +6206,10 @@ export default function LandlordPropertyFormPage() {
                       .join(', ')}
                   />
                 </div>
+              ) : vicRoomingRoute.kind === 'rooming' ? (
+              <p className="border-t border-gray-100 pt-6 text-sm text-gray-600">
+                The house rules box in Property details is what the resident signs. The ticks above stay on the listing.
+              </p>
               ) : (
               <div className="space-y-3 border-t border-gray-100 pt-6">
                 <p className="text-sm text-gray-600">

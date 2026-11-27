@@ -20,6 +20,17 @@ export const VIC_ROOMING_OPERATOR_EMAIL_REQUIRED =
 export const VIC_ROOMING_RESIDENT_EMAIL_REQUIRED =
   'The resident has to answer yes or no to electronic service before this agreement is sent.'
 
+export const VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED =
+  'The second resident has to answer yes or no to electronic service before this agreement is sent.'
+
+export function parseVicElectronicServiceAnswer(value: unknown): boolean | null {
+  if (value === true || value === false) return value
+  return null
+}
+
+export const VIC_ROOMING_REGISTERED_UNDER_CAPACITY =
+  'A registered rooming house in Victoria has to be able to hold 4 or more people. Enter 4 or more, or choose a different arrangement.'
+
 export const VIC_ROOMING_CONDITION_REPORT_REQUIRED =
   'Choose whether the condition report has been provided or will be provided on or before move-in. That choice is required before the agreement generates.'
 
@@ -111,6 +122,9 @@ export function vicRoomingRouting(args: {
   const capacity = parseVicPremisesOccupantCapacity(args.premisesOccupantCapacity)
   if (capacity == null) {
     return { kind: 'unsupported', reason: VIC_ROOMING_CAPACITY_REQUIRED }
+  }
+  if (flagged && capacity < 4) {
+    return { kind: 'unsupported', reason: VIC_ROOMING_REGISTERED_UNDER_CAPACITY }
   }
   if (capacity >= 4) return { kind: 'rooming' }
   return { kind: 'form1' }

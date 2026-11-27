@@ -146,6 +146,18 @@ describe('official Victorian rooming house agreement', () => {
     expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[4]).toBeGreaterThan(298)
     expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[5]).toBeGreaterThan(139)
     expect(residentEmail && 'transform' in residentEmail && residentEmail.transform[5]).toBeLessThan(171)
+
+    const second = await fillOfficialVicRoomingHousePdf(
+      sample({
+        signingTags: false,
+        resident2Name: 'Alex Partner',
+        resident2Email: 'alex@example.com',
+        resident2AcceptsElectronicService: false,
+      }),
+    )
+    const secondText = await textOf(second.pdfBytes)
+    expect(secondText).toContain('Electronic service: No')
+    expect(secondText).toContain('alex@example.com')
   })
 
   it('leaves payment details blank when only BPAY is ticked', async () => {
