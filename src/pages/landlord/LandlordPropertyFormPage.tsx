@@ -273,6 +273,14 @@ import {
   propertyHasCurrentListingAccuracyAttestation,
 } from '../../lib/listingAccuracyAttestation'
 import {
+  formatTogetherAudInput,
+  occupancyPricesForSave,
+  parseTogetherAud,
+  persistedAudMatches,
+  roomOffersTogetherTotal,
+  togetherTotalFromStored,
+} from '../../lib/roomTogetherWeeklyRent'
+import {
   LandlordPropertyUtilitiesFields,
   billsIncludedFromFeatureSelection,
   emptyLandlordPropertyUtilitiesFormState,
@@ -392,6 +400,9 @@ type LandlordPropertyDraftV1 = {
   rentPerWeek: string
   maxOccupants: string
   coupleSurchargePerWeek: string
+  /** Two-together total for a private room. Missing on older device drafts. */
+  togetherEnabled?: boolean
+  togetherWeeklyRent?: string
   parkingSurchargePerWeek: string
   parkingAvailable: boolean
   bondWeeks: string
@@ -592,6 +603,12 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       maxOccupants: typeof d.maxOccupants === 'string' ? d.maxOccupants : '1',
       coupleSurchargePerWeek:
         typeof d.coupleSurchargePerWeek === 'string' ? d.coupleSurchargePerWeek : '',
+      togetherEnabled:
+        typeof d.togetherEnabled === 'boolean'
+          ? d.togetherEnabled
+          : roomOffersTogetherTotal(propertyListingType) &&
+            (typeof d.maxOccupants === 'string' ? Number(d.maxOccupants) >= 2 : false),
+      togetherWeeklyRent: typeof d.togetherWeeklyRent === 'string' ? d.togetherWeeklyRent : '',
       parkingSurchargePerWeek:
         typeof d.parkingSurchargePerWeek === 'string' ? d.parkingSurchargePerWeek : '',
       parkingAvailable: Boolean(d.parkingAvailable),
@@ -669,6 +686,8 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.roomsRentedToResidents !== '' ||
     d.maxOccupants !== '1' ||
     d.coupleSurchargePerWeek.trim() !== '' ||
+    Boolean(d.togetherEnabled) ||
+    (d.togetherWeeklyRent ?? '').trim() !== '' ||
     d.parkingSurchargePerWeek.trim() !== '' ||
     d.parkingAvailable ||
     Boolean(d.listerRole && d.listerRole !== 'owner') ||
@@ -1353,7 +1372,19 @@ export default function LandlordPropertyFormPage() {
   const [rentPerWeek, setRentPerWeek] = useState('')
   const [maxOccupants, setMaxOccupants] = useState('1')
   const [coupleSurchargePerWeek, setCoupleSurchargePerWeek] = useState('')
+  const [togetherEnabled, setTogetherEnabled] = useState(false)
+  const [togetherWeeklyRent, setTogetherWeeklyRent] = useState('')
   const [parkingSurchargePerWeek, setParkingSurchargePerWeek] = useState('')
+
+  useEffect(() => {
+    if (!roomOffersTogetherTotal(propertyListingType) || !togetherEnabled) return
+    const rent = Number(rentPerWeek)
+    const total = parseTogetherAud(togetherWeeklyRent)
+    const nextCouple =
+      total != null && Number.isFinite(rent) && total > rent ? formatTogetherAudInput(total - rent) : ''
+    setMaxOccupants((prev) => (prev === '2' ? prev : '2'))
+    setCoupleSurchargePerWeek((prev) => (prev === nextCouple ? prev : nextCouple))
+  }, [propertyListingType, togetherEnabled, togetherWeeklyRent, rentPerWeek])
   const [parkingAvailable, setParkingAvailable] = useState(false)
   const [ft6600Compliance, setFt6600Compliance] = useState<LandlordFt6600ComplianceFormState>(
     emptyLandlordFt6600ComplianceFormState,
@@ -1460,18 +1491,39 @@ export default function LandlordPropertyFormPage() {
   const bondSuggestedMaxWeeklyRent = useMemo(() => {
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) return null
+    const occupancy = occupancyPricesForSave({
+      propertyType: propertyListingType,
+      rentPerWeek: rent,
+      maxOccupants: parseInt(maxOccupants, 10) || 1,
+      coupleSurcharge: coupleSurchargePerWeek.trim() ? Number(coupleSurchargePerWeek) : null,
+      togetherEnabled,
+      togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+    })
     try {
       return maxWeeklyRentForProperty({
         rent_per_week: rent,
-        max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
-        couple_surcharge_per_week: coupleSurchargePerWeek.trim() || null,
+        max_occupants: occupancy.ok
+          ? occupancy.fields.max_occupants
+          : Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        couple_surcharge_per_week: occupancy.ok
+          ? occupancy.fields.couple_surcharge_per_week
+          : coupleSurchargePerWeek.trim() || null,
         parking_surcharge_per_week: parkingSurchargePerWeek.trim() || null,
         parking_available: parkingAvailable,
       })
     } catch {
       return null
     }
-  }, [rentPerWeek, maxOccupants, coupleSurchargePerWeek, parkingSurchargePerWeek, parkingAvailable])
+  }, [
+    rentPerWeek,
+    maxOccupants,
+    coupleSurchargePerWeek,
+    parkingSurchargePerWeek,
+    parkingAvailable,
+    propertyListingType,
+    togetherEnabled,
+    togetherWeeklyRent,
+  ])
 
   const resolvedPropertyTier = useMemo(
     () =>
@@ -1771,6 +1823,8 @@ export default function LandlordPropertyFormPage() {
         rentPerWeek,
         maxOccupants,
         coupleSurchargePerWeek,
+        togetherEnabled,
+        togetherWeeklyRent,
         parkingSurchargePerWeek,
         parkingAvailable,
         bondWeeks,
@@ -1832,6 +1886,8 @@ export default function LandlordPropertyFormPage() {
       rentPerWeek,
       maxOccupants,
       coupleSurchargePerWeek,
+      togetherEnabled,
+      togetherWeeklyRent,
       parkingSurchargePerWeek,
       parkingAvailable,
       bondWeeks,
@@ -2260,6 +2316,25 @@ export default function LandlordPropertyFormPage() {
         setCoupleSurchargePerWeek(
           prop.couple_surcharge_per_week != null ? String(prop.couple_surcharge_per_week) : '',
         )
+        if (roomOffersTogetherTotal(prop.property_type)) {
+          const loadedRent = Number(prop.rent_per_week ?? 0)
+          const loadedMax = Number(prop.max_occupants ?? 1)
+          const loadedCouple =
+            prop.couple_surcharge_per_week != null ? Number(prop.couple_surcharge_per_week) : null
+          const loadedTogether =
+            prop.together_weekly_rent != null ? Number(prop.together_weekly_rent) : null
+          const prefill = togetherTotalFromStored({
+            rentPerWeek: Number.isFinite(loadedRent) ? loadedRent : 0,
+            maxOccupants: Number.isFinite(loadedMax) ? loadedMax : 1,
+            coupleSurcharge: loadedCouple != null && Number.isFinite(loadedCouple) ? loadedCouple : null,
+            togetherWeeklyRent: loadedTogether != null && Number.isFinite(loadedTogether) ? loadedTogether : null,
+          })
+          setTogetherEnabled(prefill.enabled)
+          setTogetherWeeklyRent(prefill.total)
+        } else {
+          setTogetherEnabled(false)
+          setTogetherWeeklyRent('')
+        }
         setParkingSurchargePerWeek(
           prop.parking_surcharge_per_week != null ? String(prop.parking_surcharge_per_week) : '',
         )
@@ -2474,6 +2549,17 @@ export default function LandlordPropertyFormPage() {
       setRentPerWeek(parsed.rentPerWeek)
       setMaxOccupants(parsed.maxOccupants)
       setCoupleSurchargePerWeek(parsed.coupleSurchargePerWeek)
+      setTogetherEnabled(Boolean(parsed.togetherEnabled))
+      setTogetherWeeklyRent(
+        (parsed.togetherWeeklyRent ?? '').trim()
+          ? parsed.togetherWeeklyRent ?? ''
+          : parsed.togetherEnabled
+            ? formatTogetherAudInput(
+                (Number(parsed.rentPerWeek) || 0) +
+                  (parsed.coupleSurchargePerWeek.trim() ? Number(parsed.coupleSurchargePerWeek) || 0 : 0),
+              )
+            : '',
+      )
       setParkingSurchargePerWeek(parsed.parkingSurchargePerWeek)
       setParkingAvailable(parsed.parkingAvailable)
       setBondWeeks(parsed.bondWeeks)
@@ -3478,13 +3564,33 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    const maxOcc = Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1))
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const coupleRaw = coupleSurchargePerWeek.trim()
-    const coupleAmt = coupleRaw ? Number(coupleRaw) : null
-    if (coupleAmt != null && (!Number.isFinite(coupleAmt) || coupleAmt < 0)) {
+    const coupleAmtInput = coupleRaw ? Number(coupleRaw) : null
+    if (
+      !roomOffersTogetherTotal(accommodation.propertyListingType) &&
+      coupleAmtInput != null &&
+      (!Number.isFinite(coupleAmtInput) || coupleAmtInput < 0)
+    ) {
       setSubmitError('Couple surcharge must be zero or a positive amount.')
+      document.getElementById('pf-couple-surcharge')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    const occupancy = occupancyPricesForSave({
+      propertyType: accommodation.propertyListingType,
+      rentPerWeek: rent,
+      maxOccupants: parseInt(maxOccupants, 10) || 1,
+      coupleSurcharge: coupleAmtInput != null && Number.isFinite(coupleAmtInput) ? coupleAmtInput : null,
+      togetherEnabled,
+      togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+    })
+    if (!occupancy.ok) {
+      setSubmitError(occupancy.message)
+      document.getElementById('pf-together-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    const maxOcc = occupancy.fields.max_occupants
+    const coupleAmt = occupancy.fields.couple_surcharge_per_week
     const parkingRaw = parkingSurchargePerWeek.trim()
     const parkingAmt = parkingAvailable && parkingRaw ? Number(parkingRaw) : null
     if (parkingAmt != null && (!Number.isFinite(parkingAmt) || parkingAmt < 0)) {
@@ -3528,7 +3634,7 @@ export default function LandlordPropertyFormPage() {
         sharesKitchenOrBathroom: qldRoomingForm.sharesKitchenOrBathroom,
         roomDescription,
         personsAtPremises: qldRoomingForm.personsAtPremises,
-        personsInRoom: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        personsInRoom: maxOcc,
         form: qldRoomingForm,
       })
       if (particularsErr) {
@@ -3767,16 +3873,16 @@ export default function LandlordPropertyFormPage() {
     }
 
     // Hash must resolve before the accuracy gate decides - do not write without awaiting.
-    const accommodationForHash = normalizeAccommodationForSave(propertyListingType, roomType)
     const serializedImages = images.length ? serializePropertyImages(images) : null
     const structuredHouseRules = Object.entries(selectedRules)
       .filter((e): e is [string, RulePermitted] => e[1] === 'yes' || e[1] === 'no' || e[1] === 'approval')
       .map(([rule_id, permitted]) => ({ rule_id, permitted }))
     const accuracyContentHash = await computeListingAccuracyContentHash({
       rent_per_week: rent,
+      together_weekly_rent: occupancy.fields.together_weekly_rent,
       bond: loadedBond,
       bond_weeks: Math.min(bondWeekCap, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
-      room_type: accommodationForHash.roomType,
+      room_type: accommodation.roomType,
       max_occupants: maxOcc,
       available_from: availableFrom.trim() || null,
       available_to: loadedAvailableTo,
@@ -3834,7 +3940,6 @@ export default function LandlordPropertyFormPage() {
     const resolvedLat = latitude
     const resolvedLon = longitude
 
-    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
     const complianceColumns = showNswFt6600ComplianceSection
       ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
@@ -3911,7 +4016,8 @@ export default function LandlordPropertyFormPage() {
       additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
       rent_per_week: rent,
       max_occupants: maxOcc,
-      couple_surcharge_per_week: maxOcc >= 2 && coupleAmt != null && coupleAmt > 0 ? coupleAmt : null,
+      couple_surcharge_per_week: coupleAmt,
+      together_weekly_rent: occupancy.fields.together_weekly_rent,
       parking_surcharge_per_week:
         parkingAvailable && parkingAmt != null && parkingAmt > 0 ? parkingAmt : null,
       parking_available: parkingAvailable,
@@ -4019,13 +4125,16 @@ export default function LandlordPropertyFormPage() {
           .from('properties')
           .update(baseFields)
           .eq('id', propertyId)
-          .select(`university_id, campus_id, furnished, linen_supplied, weekly_cleaning_service, slug, ${complianceSelect}`)
+          .select(
+            `university_id, campus_id, furnished, linen_supplied, weekly_cleaning_service, slug, together_weekly_rent, ${complianceSelect}`,
+          )
           .single()
         if (upErr) throw upErr
         const persisted = updatedRow as {
           furnished?: boolean | null
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
+          together_weekly_rent?: number | string | null
         } & Record<string, unknown> | null
         if (
           persisted &&
@@ -4045,6 +4154,17 @@ export default function LandlordPropertyFormPage() {
               linen_supplied: persisted.linen_supplied ?? null,
               weekly_cleaning_service: persisted.weekly_cleaning_service ?? null,
             },
+          })
+          throw new Error(LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
+        }
+        if (
+          persisted &&
+          !persistedAudMatches(occupancy.fields.together_weekly_rent, persisted.together_weekly_rent)
+        ) {
+          console.error('[listing save] together weekly rent did not persist', {
+            state: listingStateCode,
+            expected: occupancy.fields.together_weekly_rent,
+            actual: persisted.together_weekly_rent ?? null,
           })
           throw new Error(LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
         }
@@ -4165,10 +4285,22 @@ export default function LandlordPropertyFormPage() {
             status: adminNewListingStatus(role === 'admin', publishAsActive),
             featured: false,
           } as PropertyInsert & { show_add_another_university?: boolean })
-          .select('id, university_id, campus_id')
+          .select('id, university_id, campus_id, together_weekly_rent')
           .single()
         if (insErr) throw insErr
-        const insertedRow = inserted as { id: string; university_id: string | null; campus_id: string | null }
+        const insertedRow = inserted as {
+          id: string
+          university_id: string | null
+          campus_id: string | null
+          together_weekly_rent?: number | string | null
+        }
+        if (!persistedAudMatches(occupancy.fields.together_weekly_rent, insertedRow.together_weekly_rent)) {
+          console.error('[listing save] together weekly rent did not persist', {
+            expected: occupancy.fields.together_weekly_rent,
+            actual: insertedRow.together_weekly_rent ?? null,
+          })
+          throw new Error(LISTING_DETAILS_DID_NOT_SAVE_MESSAGE)
+        }
         const newId = insertedRow.id
         if (insertedRow.university_id !== resolvedUniversityId || insertedRow.campus_id !== resolvedCampusId) {
           console.warn('University/campus IDs did not persist as expected', {
@@ -4260,6 +4392,20 @@ export default function LandlordPropertyFormPage() {
           setSubmitting(true)
           const slug = generatePropertySlug(t)
           const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+          const draftCoupleRaw = coupleSurchargePerWeek.trim()
+          const draftCouple = draftCoupleRaw ? Number(draftCoupleRaw) : null
+          const draftOccupancy = occupancyPricesForSave({
+            propertyType: accommodation.propertyListingType,
+            rentPerWeek: rent,
+            maxOccupants: parseInt(maxOccupants, 10) || 1,
+            coupleSurcharge: draftCouple != null && Number.isFinite(draftCouple) ? draftCouple : null,
+            togetherEnabled,
+            togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+          })
+          if (!draftOccupancy.ok) {
+            setSubmitError(draftOccupancy.message)
+            return
+          }
           const { data: inserted, error: insErr } = await supabase
             .from('properties')
             .insert({
@@ -4321,7 +4467,9 @@ export default function LandlordPropertyFormPage() {
               shared_areas: isNswT3Listing ? nswT3SharedAreasToJson(sharedAreas) : {},
               additional_charges: isNswT3Listing ? nswT3AdditionalChargesToJson(additionalCharges) : [],
               rent_per_week: rent,
-              max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+              max_occupants: draftOccupancy.fields.max_occupants,
+              couple_surcharge_per_week: draftOccupancy.fields.couple_surcharge_per_week,
+              together_weekly_rent: draftOccupancy.fields.together_weekly_rent,
               bond_weeks: Math.min(
                 bondWeekCap,
                 Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS),
@@ -4424,6 +4572,9 @@ export default function LandlordPropertyFormPage() {
     openToNonStudents,
     roomingHouseRegistrationNumber,
     maxOccupants,
+    coupleSurchargePerWeek,
+    togetherEnabled,
+    togetherWeeklyRent,
     bondWeeks,
     leaseLength,
     availableFrom,
@@ -4458,6 +4609,21 @@ export default function LandlordPropertyFormPage() {
     if (!requireConfirmedAddressRef.current()) return false
     const rent = Number(rentPerWeek)
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const flushRent = Number.isFinite(rent) && rent > 0 ? rent : 0
+    const flushCoupleRaw = coupleSurchargePerWeek.trim()
+    const flushCouple = flushCoupleRaw ? Number(flushCoupleRaw) : null
+    const flushOccupancy = occupancyPricesForSave({
+      propertyType: accommodation.propertyListingType,
+      rentPerWeek: flushRent,
+      maxOccupants: parseInt(maxOccupants, 10) || 1,
+      coupleSurcharge: flushCouple != null && Number.isFinite(flushCouple) ? flushCouple : null,
+      togetherEnabled,
+      togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+    })
+    if (!flushOccupancy.ok) {
+      setSubmitError(flushOccupancy.message)
+      return false
+    }
     const { error: upErr } = await supabase
       .from('properties')
       .update({
@@ -4478,8 +4644,10 @@ export default function LandlordPropertyFormPage() {
         longitude,
         ...campusColumnsForCurrentAddress(),
         open_to_non_students: openToNonStudents,
-        rent_per_week: Number.isFinite(rent) && rent > 0 ? rent : 0,
-        max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        rent_per_week: flushRent,
+        max_occupants: flushOccupancy.fields.max_occupants,
+        couple_surcharge_per_week: flushOccupancy.fields.couple_surcharge_per_week,
+        together_weekly_rent: flushOccupancy.fields.together_weekly_rent,
         available_from: availableFrom.trim() || null,
         images: images.length ? serializePropertyImages(images) : null,
         house_rules: houseRules.trim() || null,
@@ -4516,6 +4684,9 @@ export default function LandlordPropertyFormPage() {
     campusId,
     openToNonStudents,
     maxOccupants,
+    coupleSurchargePerWeek,
+    togetherEnabled,
+    togetherWeeklyRent,
     availableFrom,
     images,
     houseRules,
@@ -6404,6 +6575,9 @@ export default function LandlordPropertyFormPage() {
                   required
                   className={inputClass}
                 />
+                {roomOffersTogetherTotal(propertyListingType) ? (
+                  <p className="mt-1 text-xs text-gray-600">This is the weekly rent for one person.</p>
+                ) : null}
                 {showQldRoomingHouseRules ? (
                   <p className="mt-1 text-xs text-gray-600">{QLD_RENT_ACCOMMODATION_ONLY_HELPER}</p>
                 ) : null}
@@ -6451,47 +6625,101 @@ export default function LandlordPropertyFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Occupancy &amp; optional extras</p>
                   <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-                    Base rent above is for one person. Add an extra if rent is higher for 2 people, or a carpark
-                    surcharge if a carpark can be added at booking.
+                    {roomOffersTogetherTotal(propertyListingType)
+                      ? 'One person pays the rent above. Two people on one booking pay the total below. Add a carpark surcharge if a carpark can be added at booking.'
+                      : 'Base rent above is for one person. Add an extra if rent is higher for 2 people, or a carpark surcharge if a carpark can be added at booking.'}
                   </p>
                 </div>
-                <div>
-                  <label htmlFor="pf-max-occupants" className={labelClass}>
-                    Max people in this room
-                  </label>
-                  <select
-                    id="pf-max-occupants"
-                    value={maxOccupants}
-                    onChange={(e) => {
-                      setMaxOccupants(e.target.value)
-                      if (e.target.value === '1') setCoupleSurchargePerWeek('')
-                    }}
-                    className={inputClass}
-                  >
-                    <option value="1">1 person</option>
-                    <option value="2">2 people (shared)</option>
-                  </select>
-                </div>
-                {maxOccupants !== '1' ? (
-                  <div>
-                    <label htmlFor="pf-couple-surcharge" className={labelClass}>
-                      Extra per week for 2 people ($)
-                    </label>
-                    <input
-                      id="pf-couple-surcharge"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={coupleSurchargePerWeek}
-                      onChange={(e) => setCoupleSurchargePerWeek(e.target.value)}
-                      placeholder="e.g. 100"
-                      className={inputClass}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Added to base rent when a student books for two occupants.
-                    </p>
+                {roomOffersTogetherTotal(propertyListingType) ? (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <input
+                        id="pf-together-enabled"
+                        type="checkbox"
+                        checked={togetherEnabled}
+                        onChange={(e) => {
+                          const on = e.target.checked
+                          setTogetherEnabled(on)
+                          if (!on) {
+                            setMaxOccupants('1')
+                            setCoupleSurchargePerWeek('')
+                            return
+                          }
+                          setMaxOccupants('2')
+                          if (!togetherWeeklyRent.trim() && rentPerWeek.trim()) {
+                            setTogetherWeeklyRent(rentPerWeek.trim())
+                          }
+                        }}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-admin-coral/40"
+                      />
+                      <label htmlFor="pf-together-enabled" className="text-sm text-gray-700 leading-snug">
+                        <span className="font-medium text-gray-900">Two people together</span>
+                        <span className="block text-xs text-gray-500 mt-0.5">
+                          One booking and one agreement for both people.
+                        </span>
+                      </label>
+                    </div>
+                    {togetherEnabled ? (
+                      <div>
+                        <label htmlFor="pf-together-weekly-rent" className={labelClass}>
+                          Weekly rent for two people together ($)
+                        </label>
+                        <input
+                          id="pf-together-weekly-rent"
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={togetherWeeklyRent}
+                          onChange={(e) => setTogetherWeeklyRent(e.target.value)}
+                          className={inputClass}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          This is the total for both people, not an extra on top of the one-person rent.
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                ) : (
+                  <>
+                    <div>
+                      <label htmlFor="pf-max-occupants" className={labelClass}>
+                        Max people in this room
+                      </label>
+                      <select
+                        id="pf-max-occupants"
+                        value={maxOccupants}
+                        onChange={(e) => {
+                          setMaxOccupants(e.target.value)
+                          if (e.target.value === '1') setCoupleSurchargePerWeek('')
+                        }}
+                        className={inputClass}
+                      >
+                        <option value="1">1 person</option>
+                        <option value="2">2 people (shared)</option>
+                      </select>
+                    </div>
+                    {maxOccupants !== '1' ? (
+                      <div>
+                        <label htmlFor="pf-couple-surcharge" className={labelClass}>
+                          Extra per week for 2 people ($)
+                        </label>
+                        <input
+                          id="pf-couple-surcharge"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={coupleSurchargePerWeek}
+                          onChange={(e) => setCoupleSurchargePerWeek(e.target.value)}
+                          placeholder="e.g. 100"
+                          className={inputClass}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Added to base rent when a student books for two occupants.
+                        </p>
+                      </div>
+                    ) : null}
+                  </>
+                )}
                 <div className="flex items-start gap-2">
                   <input
                     id="pf-parking-available"

@@ -20,6 +20,7 @@ export const LISTING_ACCURACY_ATTESTATION_LABEL =
 
 export type ListingAccuracyMaterialFields = {
   rent_per_week: number | null
+  together_weekly_rent: number | null
   bond: number | null
   bond_weeks: number | null
   room_type: string | null
@@ -81,6 +82,7 @@ export function buildListingAccuracyMaterialPayload(
     rent_per_week: fields.rent_per_week,
     room_type: fields.room_type,
     structured_house_rules: structured,
+    together_weekly_rent: fields.together_weekly_rent,
   }
 }
 
