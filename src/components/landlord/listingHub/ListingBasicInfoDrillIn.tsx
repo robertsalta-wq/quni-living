@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  VIC_REGISTERED_ROOMING_HOUSE_DESCRIPTION,
+  VIC_ROOMING_CAPACITY_LINE,
+} from '../../../lib/landlordAccommodationChoice'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import { listingChromeActionIcon } from '../../../lib/listingChromeActionIcons'
 import {
@@ -78,6 +82,10 @@ export default function ListingBasicInfoDrillIn({
       initial.isRegisteredRoomingHouse,
     ),
   )
+  const [roomingOccupancy, setRoomingOccupancy] = useState<'private' | 'shared'>(
+    initial.propertyListingType === 'shared_room' ? 'shared' : 'private',
+  )
+  const vicListing = (listingState ?? '').trim().toUpperCase() === 'VIC'
 
   useEffect(() => {
     setTitle(initial.title)
@@ -91,6 +99,7 @@ export default function ListingBasicInfoDrillIn({
         initial.isRegisteredRoomingHouse,
       ),
     )
+    setRoomingOccupancy(initial.propertyListingType === 'shared_room' ? 'shared' : 'private')
   }, [initial])
 
   const titleCount = title.length
@@ -98,10 +107,14 @@ export default function ListingBasicInfoDrillIn({
 
   const values = useMemo((): ListingBasicInfoValues => {
     const mapped = listingType
-      ? fieldsFromHubListingTypeTile(listingType, {
-          propertyListingType: initial.propertyListingType,
-          roomType: initial.roomType,
-        })
+      ? fieldsFromHubListingTypeTile(
+          listingType,
+          {
+            propertyListingType: initial.propertyListingType,
+            roomType: initial.roomType,
+          },
+          vicListing ? roomingOccupancy : 'private',
+        )
       : {
           propertyListingType: initial.propertyListingType,
           roomType: (initial.roomType || 'apartment') as RoomType,
@@ -122,6 +135,8 @@ export default function ListingBasicInfoDrillIn({
     availableFrom,
     openToNonStudents,
     listingType,
+    roomingOccupancy,
+    vicListing,
     initial.propertyListingType,
     initial.roomType,
     initial.isRegisteredRoomingHouse,
@@ -311,7 +326,12 @@ export default function ListingBasicInfoDrillIn({
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setListingType(t.key)}
+                  onClick={() => {
+                    if (t.key === 'rooming' && listingType !== 'rooming') {
+                      setRoomingOccupancy(values.propertyListingType === 'shared_room' ? 'shared' : 'private')
+                    }
+                    setListingType(t.key)
+                  }}
                   className={`flex-1 rounded-xl p-3 text-left ${
                     sel
                       ? 'border-[1.5px] border-[var(--quni-coral)] bg-[rgba(255,111,97,0.06)] shadow-[0_0_0_1px_var(--quni-coral)]'
@@ -336,11 +356,39 @@ export default function ListingBasicInfoDrillIn({
                       <span className="inline-block h-[18px] w-[18px] rounded-full border-[1.5px] border-[#D2CDC2]" />
                     )}
                   </span>
-                  <span className="block text-[11px] leading-snug text-[var(--quni-ink-5)]">{t.sub}</span>
+                  <span className="block text-[11px] leading-snug text-[var(--quni-ink-5)]">
+                    {vicListing && t.key === 'rooming' ? VIC_REGISTERED_ROOMING_HOUSE_DESCRIPTION : t.sub}
+                  </span>
                 </button>
               )
             })}
           </div>
+          {vicListing ? (
+            <p className="mt-2 text-xs text-[var(--quni-ink-5)]">{VIC_ROOMING_CAPACITY_LINE}</p>
+          ) : null}
+          {vicListing && listingType === 'rooming' ? (
+            <fieldset className="mt-3 space-y-2">
+              <legend className="text-sm font-medium text-[var(--quni-ink)]">Private room or shared room?</legend>
+              <label className="flex items-center gap-2 text-sm text-[var(--quni-ink)]">
+                <input
+                  type="radio"
+                  name="hub-vic-rooming-occupancy"
+                  checked={roomingOccupancy === 'private'}
+                  onChange={() => setRoomingOccupancy('private')}
+                />
+                Private room
+              </label>
+              <label className="flex items-center gap-2 text-sm text-[var(--quni-ink)]">
+                <input
+                  type="radio"
+                  name="hub-vic-rooming-occupancy"
+                  checked={roomingOccupancy === 'shared'}
+                  onChange={() => setRoomingOccupancy('shared')}
+                />
+                Shared room
+              </label>
+            </fieldset>
+          ) : null}
         </div>
 
         <div className="mb-[22px]">

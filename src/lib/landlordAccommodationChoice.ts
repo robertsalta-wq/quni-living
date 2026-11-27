@@ -53,9 +53,18 @@ export const ACCOMMODATION_UI_OPTIONS: {
   },
 ]
 
+export const VIC_ROOMING_CAPACITY_LINE =
+  'In Victoria, 4 or more people in the building counts as a rooming house.'
+
+export const VIC_REGISTERED_ROOMING_HOUSE_DESCRIPTION =
+  'You operate a registered rooming house and rent rooms to residents.'
+
 export function accommodationOptionsForListingState(state: string | null | undefined) {
   if ((state ?? '').trim().toUpperCase() !== 'VIC') return ACCOMMODATION_UI_OPTIONS
-  return ACCOMMODATION_UI_OPTIONS.filter((opt) => opt.value !== 'registered_rooming_house').map((opt) => {
+  return ACCOMMODATION_UI_OPTIONS.map((opt) => {
+    if (opt.value === 'registered_rooming_house') {
+      return { ...opt, description: VIC_REGISTERED_ROOMING_HOUSE_DESCRIPTION }
+    }
     if (opt.value !== 'private_room_landlord_off_site') return opt
     return {
       ...opt,
@@ -117,11 +126,27 @@ export function accommodationChoiceFromFields(
   if (propertyListingType === 'private_room_landlord_on_site') {
     return 'private_room_landlord_on_site'
   }
+  if (isRegisteredRoomingHouse) return 'registered_rooming_house'
   return 'shared_room'
 }
 
 export function showRoomForRentSelect(choice: AccommodationUiChoice): boolean {
   return !isEntirePlaceChoice(choice)
+}
+
+/**
+ * The room dropdown is a second question. Hide it when the card, or the Victorian
+ * private/shared follow-up, already answered it. One private room still offers Studio.
+ */
+export function roomForRentDropdownVisible(
+  choice: AccommodationUiChoice,
+  listingState?: string | null,
+): boolean {
+  if (!showRoomForRentSelect(choice)) return false
+  if (choice === 'registered_rooming_house' && (listingState ?? '').trim().toUpperCase() === 'VIC') {
+    return false
+  }
+  return roomForRentOptions(choice).length > 1
 }
 
 /** Scroll type-specific fields only when a click reveals or grows that block. */

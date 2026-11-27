@@ -172,6 +172,7 @@ export function buildListingApplyBookingRow({
   tenantInviteId = null,
   bondAmount: bondAmountOverride = null,
   listingAcknowledgment = null,
+  vicRoomingResidentAcceptsElectronicService = null,
 }) {
   const bondAmount =
     bondAmountOverride != null
@@ -197,6 +198,10 @@ export function buildListingApplyBookingRow({
     parking_selected: parkingSelected,
     rent_breakdown: breakdownAud,
     co_tenant: coTenant,
+    ...(vicRoomingResidentAcceptsElectronicService === true ||
+    vicRoomingResidentAcceptsElectronicService === false
+      ? { vic_rooming_resident_accepts_electronic_service: vicRoomingResidentAcceptsElectronicService }
+      : {}),
     housemates_count: occupantCount >= 2 ? 1 : 0,
     booking_fee_paid: false,
     ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),

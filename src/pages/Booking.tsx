@@ -55,6 +55,7 @@ import {
   fallbackBondAuthorityPublicLine,
   fallbackSchemeLodgementDeadlineBold,
 } from '../lib/tenancy/bondCopy'
+import { vicRoomingRouting } from '../../api/lib/tenancy/vicRoomingHouse'
 import { isQldRoomingArrangement, resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { qldRoomingApplyHoldingCopy } from '../lib/tenancy/qldRoomingCopy'
 import {
@@ -670,7 +671,9 @@ export default function Booking() {
     email: '',
     phone: '',
     dateOfBirth: '',
+    acceptsElectronicService: null,
   })
+  const [residentAcceptsElectronicService, setResidentAcceptsElectronicService] = useState<boolean | null>(null)
   const [occupancyError, setOccupancyError] = useState<string | null>(null)
   const [qldResidentNotice, setQldResidentNotice] = useState(emptyQldNoticeConsentFormState)
 
@@ -756,8 +759,23 @@ export default function Booking() {
       email: coTenantForm.email.trim(),
       phone: coTenantForm.phone.trim(),
       date_of_birth: coTenantForm.dateOfBirth.trim().slice(0, 10),
+      ...(coTenantForm.acceptsElectronicService === true || coTenantForm.acceptsElectronicService === false
+        ? { accepts_electronic_service: coTenantForm.acceptsElectronicService }
+        : {}),
     }
   }, [coTenantForm])
+
+  const vicRoomingBooking = useMemo(() => {
+    if (!property || String(property.state || '').trim().toUpperCase() !== 'VIC') return false
+    return (
+      vicRoomingRouting({
+        propertyType: property.property_type,
+        isRegisteredRoomingHouse: Boolean(property.is_registered_rooming_house),
+        premisesOccupantCapacity: (property as { vic_premises_occupant_capacity?: number | null })
+          .vic_premises_occupant_capacity,
+      }).kind === 'rooming'
+    )
+  }, [property])
 
   const validateOccupancyStep = useCallback((): string | null => {
     if (rentResolution != null && 'error' in rentResolution) return rentResolution.error
@@ -768,6 +786,8 @@ export default function Booking() {
       parkingAvailable: Boolean(property?.parking_available),
       coTenant: coTenantForm,
       primaryTenantEmail: studentProfile?.email ?? null,
+      showElectronicService: vicRoomingBooking,
+      residentAcceptsElectronicService,
     })
   }, [
     rentResolution,
@@ -777,6 +797,8 @@ export default function Booking() {
     property?.parking_available,
     coTenantForm,
     studentProfile?.email,
+    vicRoomingBooking,
+    residentAcceptsElectronicService,
   ])
 
   const conflictMoveOutDate = useMemo(() => {
@@ -1067,6 +1089,7 @@ export default function Booking() {
           occupantCount?: number
           parkingSelected?: boolean
           coTenantForm?: CoTenantFormState
+          residentAcceptsElectronicService?: boolean | null
         }
         if (!d.listingId || d.listingId === propertyId) {
           restoredDraft = true
@@ -1091,8 +1114,16 @@ export default function Booking() {
               phone: typeof d.coTenantForm.phone === 'string' ? d.coTenantForm.phone : '',
               dateOfBirth:
                 typeof d.coTenantForm.dateOfBirth === 'string' ? d.coTenantForm.dateOfBirth : '',
+              acceptsElectronicService:
+                d.coTenantForm.acceptsElectronicService === true
+                  ? true
+                  : d.coTenantForm.acceptsElectronicService === false
+                    ? false
+                    : null,
             })
           }
+          if (d.residentAcceptsElectronicService === true) setResidentAcceptsElectronicService(true)
+          else if (d.residentAcceptsElectronicService === false) setResidentAcceptsElectronicService(false)
 
           const draftV2 = d.v === 2 || d.v === 3
           let nextStep: 1 | 2 | 3 | 4 = 1
@@ -1167,6 +1198,7 @@ export default function Booking() {
           occupantCount,
           parkingSelected,
           coTenantForm,
+          residentAcceptsElectronicService,
           clientSecret,
           depositCents,
         }),
@@ -1188,6 +1220,7 @@ export default function Booking() {
     occupantCount,
     parkingSelected,
     coTenantForm,
+    residentAcceptsElectronicService,
     clientSecret,
     depositCents,
     success,
@@ -1521,6 +1554,9 @@ export default function Booking() {
           occupantCount,
           parkingSelected,
           qldResidentNoticeConsent: qldResidentNotice,
+          ...(vicRoomingBooking
+            ? { vicRoomingResidentAcceptsElectronicService: residentAcceptsElectronicService }
+            : {}),
           ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
           ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           ...(tenantInviteToken ? { tenantInviteToken } : {}),
@@ -1614,6 +1650,8 @@ export default function Booking() {
     listingCheck,
     qldResidentNotice,
     buildCoTenantPayload,
+    vicRoomingBooking,
+    residentAcceptsElectronicService,
   ])
 
   const finalizeBooking = useCallback(
@@ -1663,6 +1701,9 @@ export default function Booking() {
             rentPaymentMethod,
             occupantCount,
             parkingSelected,
+            ...(vicRoomingBooking
+              ? { vicRoomingResidentAcceptsElectronicService: residentAcceptsElectronicService }
+              : {}),
             ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
             ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
             ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
@@ -1730,6 +1771,8 @@ export default function Booking() {
       parkingSelected,
       listingCheck,
       buildCoTenantPayload,
+      vicRoomingBooking,
+      residentAcceptsElectronicService,
     ],
   )
 
@@ -2083,6 +2126,9 @@ export default function Booking() {
             }}
             coTenant={coTenantForm}
             onCoTenantChange={(patch) => setCoTenantForm((prev) => ({ ...prev, ...patch }))}
+            showElectronicService={vicRoomingBooking}
+            residentAcceptsElectronicService={residentAcceptsElectronicService}
+            onResidentAcceptsElectronicService={setResidentAcceptsElectronicService}
             coTenantEmailWarning={coTenantEmailWarning}
             studentEmail={studentProfile?.email ?? null}
             breakdownAud={breakdownAud}

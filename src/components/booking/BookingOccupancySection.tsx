@@ -1,3 +1,7 @@
+import {
+  VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED,
+  VIC_ROOMING_RESIDENT_EMAIL_REQUIRED,
+} from '../../../api/lib/tenancy/vicRoomingHouse'
 import type { RentBreakdownAud } from '../../lib/pricing'
 import { AUDateField } from '../AUDateField'
 
@@ -6,6 +10,7 @@ export type CoTenantFormState = {
   email: string
   phone: string
   dateOfBirth: string
+  acceptsElectronicService: boolean | null
 }
 
 type Props = {
@@ -19,6 +24,9 @@ type Props = {
   onCoTenantChange: (patch: Partial<CoTenantFormState>) => void
   coTenantEmailWarning: boolean
   studentEmail: string | null
+  showElectronicService?: boolean
+  residentAcceptsElectronicService?: boolean | null
+  onResidentAcceptsElectronicService?: (value: boolean) => void
   breakdownAud: RentBreakdownAud
   weeklyRent: number
   occupancyError: string | null
@@ -35,6 +43,8 @@ export function validateBookingOccupancy(opts: {
   coTenant: CoTenantFormState
   /** Primary tenant email - co-tenant must differ for separate DocuSeal signatures. */
   primaryTenantEmail?: string | null
+  showElectronicService?: boolean
+  residentAcceptsElectronicService?: boolean | null
 }): string | null {
   if (opts.occupantCount > opts.maxOccupants) {
     return opts.maxOccupants === 1
@@ -56,6 +66,16 @@ export function validateBookingOccupancy(opts: {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(opts.coTenant.dateOfBirth.trim())) {
       return 'Please enter your co-tenant’s date of birth (YYYY-MM-DD).'
     }
+    if (opts.showElectronicService && opts.coTenant.acceptsElectronicService == null) {
+      return VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED
+    }
+  }
+  if (
+    opts.showElectronicService &&
+    opts.residentAcceptsElectronicService !== true &&
+    opts.residentAcceptsElectronicService !== false
+  ) {
+    return VIC_ROOMING_RESIDENT_EMAIL_REQUIRED
   }
   return null
 }
@@ -71,6 +91,9 @@ export function BookingOccupancySection({
   onCoTenantChange,
   coTenantEmailWarning,
   studentEmail,
+  showElectronicService = false,
+  residentAcceptsElectronicService = null,
+  onResidentAcceptsElectronicService,
   breakdownAud,
   weeklyRent,
   occupancyError,
@@ -118,6 +141,15 @@ export function BookingOccupancySection({
           <span className="text-sm font-medium text-admin-ink">Two of us (2 people)</span>
         </label>
       </fieldset>
+
+      {showElectronicService ? (
+        <ElectronicServiceQuestion
+          legend="Can Quni and the operator email you notices and other documents?"
+          name="bk-resident-electronic-service"
+          value={residentAcceptsElectronicService}
+          onChange={(value) => onResidentAcceptsElectronicService?.(value)}
+        />
+      ) : null}
 
       {occupantCount === 2 ? (
         <div className="space-y-3 pt-1 border-t border-admin-line-soft">
@@ -186,6 +218,14 @@ export function BookingOccupancySection({
               className={inputClass}
             />
           </div>
+          {showElectronicService ? (
+            <ElectronicServiceQuestion
+              legend="Can Quni and the operator email the second resident notices and other documents?"
+              name="bk-resident-2-electronic-service"
+              value={coTenant.acceptsElectronicService}
+              onChange={(value) => onCoTenantChange({ acceptsElectronicService: value })}
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -236,5 +276,32 @@ export function BookingOccupancySection({
         </p>
       ) : null}
     </div>
+  )
+}
+
+function ElectronicServiceQuestion({
+  legend,
+  name,
+  value,
+  onChange,
+}: {
+  legend: string
+  name: string
+  value: boolean | null
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <fieldset className="space-y-2 pt-1 border-t border-admin-line-soft">
+      <legend className="text-sm font-semibold text-admin-ink">{legend}</legend>
+      <p className="text-xs text-admin-ink-4">Printed on the resident's agreement.</p>
+      <label className="flex items-center gap-2 text-sm text-admin-ink">
+        <input type="radio" name={name} checked={value === true} onChange={() => onChange(true)} />
+        Yes
+      </label>
+      <label className="flex items-center gap-2 text-sm text-admin-ink">
+        <input type="radio" name={name} checked={value === false} onChange={() => onChange(false)} />
+        No
+      </label>
+    </fieldset>
   )
 }

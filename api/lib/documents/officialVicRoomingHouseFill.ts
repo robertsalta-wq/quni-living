@@ -60,6 +60,8 @@ export type VicRoomingHouseFillProps = {
   bankAccountNumber: string
   operatorAcceptsElectronicService: boolean
   residentAcceptsElectronicService: boolean | null
+  /** Resident 2 has no second prescribed box. Printed under their details when answered. */
+  resident2AcceptsElectronicService?: boolean | null
   urgentContactName: string
   urgentContactPhone: string
   urgentContactEmail: string
@@ -186,6 +188,16 @@ export async function fillOfficialVicRoomingHousePdf(
     draw(p2, font, props.resident2Postcode, 510, 452)
     draw(p2, font, props.resident2Phone, 160, 430)
     draw(p2, font, props.resident2Email, 160, 408)
+    if (props.resident2AcceptsElectronicService === true || props.resident2AcceptsElectronicService === false) {
+      draw(
+        p2,
+        font,
+        props.resident2AcceptsElectronicService ? 'Electronic service: Yes' : 'Electronic service: No',
+        160,
+        392,
+        8,
+      )
+    }
   }
   drawInBox(p2, font, props.startDateLabel, BOX.startDate)
   drawInBox(p2, font, props.endDateLabel, BOX.endDate)

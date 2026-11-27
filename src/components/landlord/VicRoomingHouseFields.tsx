@@ -13,6 +13,12 @@ export type VicRoomingHouseFieldValues = {
   pay: VicRoomingPayMethods
 }
 
+export const VIC_ROOMING_FURNISHED_ITEMS_LET = 'Bed, mattress, desk, chair, wardrobe'
+
+function FieldHint({ children }: { children: string }) {
+  return <span className="mt-1 block text-xs text-admin-ink-5">{children}</span>
+}
+
 const PAY_ROWS: { key: keyof VicRoomingPayMethods; label: string }[] = [
   { key: 'bankDeposit', label: 'Bank deposit (fee-free). The account on this listing is printed on the agreement.' },
   { key: 'bpay', label: 'BPAY (fee-free). No biller code is stored. The tick is printed on its own.' },
@@ -47,11 +53,13 @@ export function emptyVicRoomingHouseFieldValues(): VicRoomingHouseFieldValues {
 export function VicRoomingHouseFields({
   showRoomingFields,
   showUnsharedRent,
+  capacityError = null,
   values,
   onChange,
 }: {
   showRoomingFields: boolean
   showUnsharedRent: boolean
+  capacityError?: string | null
   values: VicRoomingHouseFieldValues
   onChange: (next: VicRoomingHouseFieldValues) => void
 }) {
@@ -63,14 +71,20 @@ export function VicRoomingHouseFields({
       <label className="block text-sm text-admin-ink-2">
         <span className="font-semibold">How many people can the building hold in total?</span>
         <input
+          id="pf-vic-building-capacity"
           className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
           inputMode="numeric"
           value={values.capacity}
+          aria-invalid={capacityError ? true : undefined}
+          aria-describedby={capacityError ? 'pf-vic-building-capacity-error' : undefined}
           onChange={(e) => onChange({ ...values, capacity: e.target.value })}
         />
-        <span className="mt-1 block text-xs text-admin-ink-5">
-          Count every room that is let, not only this one. Four or more on a room or shared room uses the rooming house agreement.
-        </span>
+        {capacityError ? (
+          <p id="pf-vic-building-capacity-error" className="mt-1 text-sm text-red-700" role="alert">
+            {capacityError}
+          </p>
+        ) : null}
+        <FieldHint>This decides which Victorian agreement the resident signs.</FieldHint>
       </label>
       {showRoomingFields ? (
         <>
@@ -84,10 +98,7 @@ export function VicRoomingHouseFields({
                 value={values.unsharedWeeklyRent}
                 onChange={(e) => onChange({ ...values, unsharedWeeklyRent: e.target.value })}
               />
-              <span className="mt-1 block text-xs text-admin-ink-5">
-                The shared room notice has to show this next to the rent the resident pays. It must be higher than the
-                weekly rent, because the notice says they pay less for sharing the room.
-              </span>
+              <FieldHint>Printed on the shared room notice. It must be higher than the weekly rent the resident pays.</FieldHint>
             </label>
           ) : null}
           <label className="block text-sm text-admin-ink-2">
@@ -97,6 +108,7 @@ export function VicRoomingHouseFields({
               value={values.roomNumber}
               onChange={(e) => onChange({ ...values, roomNumber: e.target.value })}
             />
+            <FieldHint>Printed on the resident's agreement.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
             <span className="font-semibold">Items let with the room</span>
@@ -106,6 +118,7 @@ export function VicRoomingHouseFields({
               value={values.itemsLet}
               onChange={(e) => onChange({ ...values, itemsLet: e.target.value })}
             />
+            <FieldHint>Printed on the resident's agreement.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
             <span className="font-semibold">House rules</span>
@@ -115,6 +128,7 @@ export function VicRoomingHouseFields({
               value={values.houseRules}
               onChange={(e) => onChange({ ...values, houseRules: e.target.value })}
             />
+            <FieldHint>The resident signs these words. This is the only house rules text on the agreement.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
             <span className="font-semibold">Council registration number</span>
@@ -123,6 +137,7 @@ export function VicRoomingHouseFields({
               value={values.registrationNumber}
               onChange={(e) => onChange({ ...values, registrationNumber: e.target.value })}
             />
+            <FieldHint>Required to publish. Quni records it and does not check the register.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
             <span className="font-semibold">Operator licence number</span>
@@ -131,9 +146,11 @@ export function VicRoomingHouseFields({
               value={values.licenceNumber}
               onChange={(e) => onChange({ ...values, licenceNumber: e.target.value })}
             />
+            <FieldHint>Required to publish. Quni records it and does not check the register.</FieldHint>
           </label>
           <fieldset className="space-y-2 text-sm text-admin-ink-2">
             <legend className="font-semibold">How can the resident pay rent?</legend>
+            <FieldHint>Printed as the payment boxes on the resident's agreement.</FieldHint>
             {PAY_ROWS.map((row) => (
               <label key={row.key} className="flex items-start gap-2">
                 <input
@@ -166,6 +183,7 @@ export function VicRoomingHouseFields({
               />
               No. The agreement cannot be sent, because Quni sends it by email.
             </label>
+            <FieldHint>Printed on the resident's agreement. Quni sends the agreement by email.</FieldHint>
           </fieldset>
           <label className="flex items-start gap-2 text-sm text-admin-ink-2">
             <input
@@ -174,7 +192,10 @@ export function VicRoomingHouseFields({
               checked={values.attestationCurrent}
               onChange={(e) => onChange({ ...values, attestationCurrent: e.target.checked })}
             />
-            <span>The council registration and the operator licence are both current.</span>
+            <span>
+              The council registration and the operator licence are both current.
+              <FieldHint>Quni records this declaration and does not check the register.</FieldHint>
+            </span>
           </label>
         </>
       ) : null}

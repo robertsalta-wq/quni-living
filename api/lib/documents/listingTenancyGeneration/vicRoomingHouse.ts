@@ -23,6 +23,7 @@ import {
   VIC_ROOMING_GENERATOR_ID,
   VIC_ROOMING_OPERATOR_EMAIL_REQUIRED,
   VIC_ROOMING_RESIDENT_EMAIL_REQUIRED,
+  VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED,
   VIC_ROOMING_SIGNING_PACKAGE,
   VIC_ROOMING_TWO_RESIDENTS_MESSAGE,
   VIC_ROOMING_UNSHARED_RENT_HIGHER,
@@ -366,6 +367,9 @@ async function loadVicRoomingHouseContext(
   if (opts.requireResidentConsent && residentConsent == null) {
     return { ok: false, status: 422, error: VIC_ROOMING_RESIDENT_EMAIL_REQUIRED }
   }
+  if (opts.requireResidentConsent && coSigner && coSigner.accepts_electronic_service == null) {
+    return { ok: false, status: 422, error: VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED }
+  }
 
   const houseRules = text(propertyRow.vic_rooming_house_rules)
   if (!houseRules) return { ok: false, status: 422, error: 'Enter the rooming house rules before the agreement is generated.' }
@@ -454,8 +458,9 @@ async function loadVicRoomingHouseContext(
     bankAccountName: text(payout?.account_name),
     bankBsb: text(payout?.bsb),
     bankAccountNumber: text(payout?.account_number),
-    operatorAcceptsElectronicService: true,
+    operatorAcceptsElectronicService: operatorConsent === true,
     residentAcceptsElectronicService: residentConsent,
+    resident2AcceptsElectronicService: coSigner?.accepts_electronic_service ?? null,
     urgentContactName: personName(operator, 'Operator'),
     urgentContactPhone: text(operator.phone),
     urgentContactEmail: text(operator.email),

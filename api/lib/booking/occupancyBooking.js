@@ -86,9 +86,13 @@ export function parseCoTenantFromBody(raw) {
     }
   }
 
+  const accepts = raw.accepts_electronic_service
+  const coTenant = { full_name, email, phone, date_of_birth }
+  if (accepts === true || accepts === false) coTenant.accepts_electronic_service = accepts
+
   return {
     ok: true,
-    coTenant: { full_name, email, phone, date_of_birth },
+    coTenant,
   }
 }
 
