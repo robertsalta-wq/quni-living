@@ -52,6 +52,8 @@ export type ListingDashboardPublishFields = {
   operatorLicenceNumber: unknown
   operatorAcceptsElectronicService: unknown
   houseRules: unknown
+  sharedWeeklyRent: unknown
+  unsharedWeeklyRent: unknown
   pay: VicRoomingPayMethods
   /** True when a current operator attestation matches the registration and licence on the listing. */
   attestationCurrent: boolean
@@ -111,5 +113,8 @@ export function listingDashboardPublishFieldBlock(fields: ListingDashboardPublis
     roomNumber: fields.roomDescription,
     pay: fields.pay,
     attestationCurrent: fields.attestationCurrent,
+    propertyType: fields.propertyType,
+    sharedWeeklyRent: fields.sharedWeeklyRent,
+    unsharedWeeklyRent: fields.unsharedWeeklyRent,
   })
 }

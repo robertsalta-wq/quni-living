@@ -30,6 +30,8 @@ function fields(patch: Partial<ListingDashboardPublishFields>): ListingDashboard
     operatorLicenceNumber: '',
     operatorAcceptsElectronicService: false,
     houseRules: '',
+    sharedWeeklyRent: null,
+    unsharedWeeklyRent: null,
     pay: noPay,
     attestationCurrent: false,
     ...patch,
@@ -115,6 +117,8 @@ describe('listingDashboardPublishFieldBlock', () => {
       operatorAcceptsElectronicService: true,
       houseRules: 'Quiet after 10.',
       roomDescription: 'Room 4',
+      sharedWeeklyRent: 300,
+      unsharedWeeklyRent: 450,
       pay: { ...noPay, bankDeposit: true },
       attestationCurrent: true,
     })

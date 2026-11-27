@@ -78,7 +78,7 @@ async function assertNswT3ComplianceBeforeActivate(
 }
 
 const LISTING_PUBLISH_CHECK_COLUMNS =
-  'state, property_type, is_registered_rooming_house, shared_areas, additional_charges, room_description, vic_premises_occupant_capacity, rooming_house_registration_number, vic_rooming_house_operator_licence_number, vic_rooming_operator_accepts_electronic_service, vic_rooming_house_rules, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft'
+  'state, property_type, is_registered_rooming_house, shared_areas, additional_charges, room_description, vic_premises_occupant_capacity, rooming_house_registration_number, vic_rooming_house_operator_licence_number, vic_rooming_operator_accepts_electronic_service, vic_rooming_house_rules, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft, rent_per_week, vic_rooming_unshared_weekly_rent'
 
 async function assertListingCanGoLive(
   property: LandlordPropertyForListingActions,
@@ -105,6 +105,8 @@ async function assertListingCanGoLive(
     operatorLicenceNumber: data.vic_rooming_house_operator_licence_number,
     operatorAcceptsElectronicService: data.vic_rooming_operator_accepts_electronic_service,
     houseRules: data.vic_rooming_house_rules,
+    sharedWeeklyRent: data.rent_per_week,
+    unsharedWeeklyRent: data.vic_rooming_unshared_weekly_rent,
     pay: vicRoomingPayMethodsFromRow(data),
     attestationCurrent: false,
   }
