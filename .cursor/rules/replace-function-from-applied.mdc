@@ -1,0 +1,18 @@
+---
+description: A migration that replaces a function starts from the latest applied version, not from main.
+alwaysApply: true
+---
+
+# Replace a function from the latest applied version
+
+When a migration uses `create or replace function`, copy the body from the latest version that has been applied to production, then add the change.
+
+`main` can be behind that. A landlord may have run a later migration in the SQL editor and recorded it in the ledger while the pull request is still open.
+
+Before showing the file:
+
+1. Name the applied version you started from.
+2. List every column or argument the new function copies.
+3. Compare that list with the applied version and say what was added and what was not dropped.
+
+Do not tell anyone to run a replace that drops behaviour the applied version already has.

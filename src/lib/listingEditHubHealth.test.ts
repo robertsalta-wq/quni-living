@@ -4,7 +4,9 @@ import {
   fieldsFromHubListingTypeTile,
   hubListingTypeTileFromFields,
   listingHubPath,
+  listingHubSectionIdsForState,
   listingHubSectionStatus,
+  listingSectionSubtitle,
 } from './listingEditHubHealth'
 
 const empty = {
@@ -32,6 +34,24 @@ const empty = {
 }
 
 describe('listingEditHubHealth', () => {
+  it('describes each mobile step by what that step contains', () => {
+    expect(listingSectionSubtitle('basic', 'NSW')).toBe('Listing title, type, and who can enquire')
+    expect(listingSectionSubtitle('location', 'NSW')).toBe(
+      'Address, suburb, state, postcode, and campus',
+    )
+    expect(listingSectionSubtitle('property', 'VIC')).toBe(
+      'Accommodation type, bedrooms, and state questions',
+    )
+    expect(listingSectionSubtitle('inclusions', 'QLD')).toBe('Furnished, linen, cleaning, and features')
+    expect(listingSectionSubtitle('services', 'NSW')).toBe('Smoke alarms, embedded networks, and strata')
+    expect(listingSectionSubtitle('services', 'VIC')).toBe('Utilities, water, and how bills are shared')
+    expect(listingSectionSubtitle('rules', 'NSW')).toBe('House rules - yes, no or on approval')
+    expect(listingSectionSubtitle('pricing', 'NSW')).toBe('Rent, bond, availability, and surcharges')
+    expect(listingSectionSubtitle('description', 'NSW')).toBe('Tell students about the place')
+    expect(listingSectionSubtitle('photos', 'NSW')).toBe('Upload, reorder, add captions')
+    expect(listingHubSectionIdsForState('NSW')).toHaveLength(9)
+  })
+
   it('marks basic complete when title and type are set', () => {
     expect(
       listingHubSectionStatus('basic', {
