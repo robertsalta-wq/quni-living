@@ -1,13 +1,6 @@
--- DO NOT APPLY.
--- Production already runs the duplicate_property_listing from 20261125160000,
--- which copies vic_rooming_unshared_weekly_rent. This file was built from
--- 20261124143000 and would replace that function without the unshared rent.
--- Rewrite it from 20261125160000 after #367 merges. Until then this script stops.
-
-do $$
-begin
-  raise exception 'Do not apply 20261125180000. It drops vic_rooming_unshared_weekly_rent from duplicate_property_listing.';
-end $$;
+-- Replaces duplicate_property_listing from the applied 20261125160000 version.
+-- Keeps vic_rooming_unshared_weekly_rent and also copies shared_areas,
+-- additional_charges, and water_separately_metered_efficient_attested_at.
 
 create or replace function public.duplicate_property_listing(p_source_id uuid)
 returns uuid
@@ -86,6 +79,7 @@ declare
   v_vic_pay_bpay boolean;
   v_vic_pay_other_eft boolean;
   v_vic_capacity integer;
+  v_vic_unshared_weekly_rent numeric;
   v_shared_areas jsonb;
   v_additional_charges jsonb;
   v_water_attested_at timestamptz;
@@ -166,6 +160,7 @@ begin
     p.vic_rooming_pay_bpay,
     p.vic_rooming_pay_other_eft,
     p.vic_premises_occupant_capacity,
+    p.vic_rooming_unshared_weekly_rent,
     p.shared_areas,
     p.additional_charges,
     p.water_separately_metered_efficient_attested_at
@@ -233,6 +228,7 @@ begin
     v_vic_pay_bpay,
     v_vic_pay_other_eft,
     v_vic_capacity,
+    v_vic_unshared_weekly_rent,
     v_shared_areas,
     v_additional_charges,
     v_water_attested_at
@@ -334,6 +330,7 @@ begin
     vic_rooming_pay_bpay,
     vic_rooming_pay_other_eft,
     vic_premises_occupant_capacity,
+    vic_rooming_unshared_weekly_rent,
     shared_areas,
     additional_charges,
     water_separately_metered_efficient_attested_at
@@ -407,6 +404,7 @@ begin
     coalesce(v_vic_pay_bpay, false),
     coalesce(v_vic_pay_other_eft, false),
     v_vic_capacity,
+    v_vic_unshared_weekly_rent,
     coalesce(v_shared_areas, '{}'::jsonb),
     coalesce(v_additional_charges, '[]'::jsonb),
     v_water_attested_at
@@ -448,7 +446,7 @@ end;
 $$;
 
 comment on function public.duplicate_property_listing(uuid) is
-  'Landlord-only: draft copy of a listing (images, payout bank details, utilities/compliance, shared areas, Annexure 2 charges, water efficiency attestation, room number, Victorian rooming fields, null availability), shared property_group_id when set. Does not copy operator attestations.';
+  'Landlord-only: draft copy of a listing (images, payout bank details, utilities/compliance, shared areas, Annexure 2 charges, water efficiency attestation, room number, Victorian rooming fields including the unshared weekly rent, null availability), shared property_group_id when set. Does not copy operator attestations.';
 
 revoke all on function public.duplicate_property_listing(uuid) from public;
 grant execute on function public.duplicate_property_listing(uuid) to authenticated;
