@@ -10,7 +10,9 @@ import {
 import {
   parseVicPremisesOccupantCapacity,
   parseVicRoomingUnsharedWeeklyRent,
+  vicBuildingCapacityFieldError,
   vicRoomingPayMethodsFromRow,
+  VIC_ROOMING_CAPACITY_REQUIRED,
   VIC_ROOMING_UNSHARED_RENT_HIGHER,
   VIC_ROOMING_UNSHARED_RENT_REQUIRED,
   vicRoomingUnsharedWeeklyRentError,
@@ -89,6 +91,7 @@ import {
   fieldsFromAccommodationChoice,
   VIC_ROOMING_CAPACITY_LINE,
   normalizeAccommodationForSave,
+  roomForRentDropdownVisible,
   roomForRentOptions,
   roomingHouseFieldErrors,
   shouldScrollAccommodationTypeBlock,
@@ -1016,7 +1019,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
     setPropertyListingType('private_room_landlord_off_site')
-    setRoomType((current) => (current === 'studio' ? 'studio' : 'single'))
+    setRoomType('single')
   }, [])
   const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
@@ -1120,6 +1123,15 @@ export default function LandlordPropertyFormPage() {
   )
 
   const listingStateCode = listingStateFromLandlordProfile(state)
+  const [vicCapacityAttempted, setVicCapacityAttempted] = useState(false)
+  useEffect(() => {
+    if (listingStateCode !== 'VIC' || accommodationChoice !== 'registered_rooming_house') return
+    if (propertyListingType === 'shared_room') {
+      if (roomType !== 'shared') setRoomType('shared')
+      return
+    }
+    if (roomType !== 'single') setRoomType('single')
+  }, [accommodationChoice, listingStateCode, propertyListingType, roomType])
   const postcodeStateConflict = postcodeStateConflictMessage(postcode, listingStateCode ?? '')
   const unsupportedListingState = Boolean(listingStateCode) && !isListingAgreementState(listingStateCode)
   const listingWritesBlocked = unsupportedListingState || Boolean(postcodeStateConflict)
@@ -1480,6 +1492,11 @@ export default function LandlordPropertyFormPage() {
       isRegisteredRoomingHouse,
     [state, propertyListingType, isRegisteredRoomingHouse],
   )
+  const vicCapacityError = vicBuildingCapacityFieldError({
+    attempted: vicCapacityAttempted,
+    capacity: vicRoomingFields.capacity,
+    registeredRoomingHouse: isRegisteredRoomingHouse,
+  })
   const vicRoomingRoute = useMemo(
     () =>
       (state.trim() || '').toUpperCase() === 'VIC'
@@ -3447,6 +3464,9 @@ export default function LandlordPropertyFormPage() {
       document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    if (listingStateCode === 'VIC' && showRoomForRentSelect(accommodationChoice)) {
+      setVicCapacityAttempted(true)
+    }
     if (postcodeStateConflict) {
       reportSubmitError(postcodeStateConflict)
       document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -3657,11 +3677,19 @@ export default function LandlordPropertyFormPage() {
 
     if (isPublishingListing && listingStateCode === 'VIC') {
       if (!parseVicPremisesOccupantCapacity(vicRoomingFields.capacity)) {
-        reportSubmitError('Enter how many people the building can hold before publishing.')
+        setVicCapacityAttempted(true)
+        reportSubmitError(
+          showRoomForRentSelect(accommodationChoice)
+            ? VIC_ROOMING_CAPACITY_REQUIRED
+            : 'Enter how many people the building can hold before publishing.',
+        )
+        document.getElementById('pf-vic-building-capacity')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (vicRoomingRoute.kind === 'unsupported') {
-        reportSubmitError('reason' in vicRoomingRoute ? vicRoomingRoute.reason : 'This Victorian listing cannot be published yet.')
+        const reason = 'reason' in vicRoomingRoute ? vicRoomingRoute.reason : 'This Victorian listing cannot be published yet.'
+        reportSubmitError(reason)
+        document.getElementById('pf-vic-building-capacity')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (vicRoomingRoute.kind === 'rooming') {
@@ -5389,14 +5417,6 @@ export default function LandlordPropertyFormPage() {
                     </label>
                   </fieldset>
                 ) : null}
-                {listingStateCode === 'VIC' &&
-                isRegisteredRoomingHouse &&
-                vicRoomingRoute.kind === 'unsupported' &&
-                'reason' in vicRoomingRoute ? (
-                  <p className="text-sm text-red-700" role="alert">
-                    {vicRoomingRoute.reason}
-                  </p>
-                ) : null}
                 {(state.trim() || '').toUpperCase() === 'QLD' &&
                 (accommodationChoice === 'private_room_landlord_off_site' ||
                   accommodationChoice === 'shared_room') ? (
@@ -5445,7 +5465,7 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 </div>
               ) : null}
-              {showRoomForRentSelect(accommodationChoice) && (
+              {roomForRentDropdownVisible(accommodationChoice, listingStateCode) && (
                 <div>
                   <label htmlFor="pf-room" className={labelClass}>
                     Room for rent
@@ -5456,30 +5476,23 @@ export default function LandlordPropertyFormPage() {
                     onChange={(e) => setRoomType(e.target.value as RoomType)}
                     className={inputClass}
                   >
-                    {roomForRentOptions(
-                      listingStateCode === 'VIC' &&
-                        accommodationChoice === 'registered_rooming_house' &&
-                        propertyListingType === 'shared_room'
-                        ? 'shared_room'
-                        : accommodationChoice,
-                    ).map(([v, lab]) => (
+                    {roomForRentOptions(accommodationChoice).map(([v, lab]) => (
                       <option key={v} value={v}>
                         {lab}
                       </option>
                     ))}
                   </select>
                   {(accommodationChoice === 'private_room_landlord_off_site' ||
-                    (accommodationChoice === 'registered_rooming_house' &&
-                      propertyListingType !== 'shared_room')) && (
+                    accommodationChoice === 'registered_rooming_house') && (
                     <p className="text-xs text-gray-500 mt-1">
                       Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
                     </p>
                   )}
-                  {accommodationChoice === 'registered_rooming_house' && (
+                  {accommodationChoice === 'registered_rooming_house' && listingStateCode !== 'VIC' ? (
                     <p className="text-xs text-gray-500 mt-1">
                       Identify the room you are listing. Registration number is required below.
                     </p>
-                  )}
+                  ) : null}
                 </div>
               )}
               {isRegisteredRoomingHouse && listingStateCode !== 'VIC' ? (
@@ -5515,6 +5528,7 @@ export default function LandlordPropertyFormPage() {
                 <VicRoomingHouseFields
                   showRoomingFields={vicRoomingRoute.kind === 'rooming'}
                   showUnsharedRent={vicRoomingRoute.kind === 'rooming' && propertyListingType === 'shared_room'}
+                  capacityError={vicCapacityError}
                   values={vicRoomingFields}
                   onChange={(next) => {
                     if (vicRoomingFields.pay.bankDeposit && !next.pay.bankDeposit) {
@@ -6420,8 +6434,8 @@ export default function LandlordPropertyFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Occupancy &amp; optional extras</p>
                   <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-                    Base rent above is for one person. Add surcharges if rent is higher for a couple or optional
-                    carpark at booking.
+                    Base rent above is for one person. Add an extra if rent is higher for 2 people, or a carpark
+                    surcharge if a carpark can be added at booking.
                   </p>
                 </div>
                 <div>
@@ -6438,7 +6452,7 @@ export default function LandlordPropertyFormPage() {
                     className={inputClass}
                   >
                     <option value="1">1 person</option>
-                    <option value="2">2 people (e.g. couple)</option>
+                    <option value="2">2 people (shared)</option>
                   </select>
                 </div>
                 {maxOccupants !== '1' ? (

@@ -53,11 +53,13 @@ export function emptyVicRoomingHouseFieldValues(): VicRoomingHouseFieldValues {
 export function VicRoomingHouseFields({
   showRoomingFields,
   showUnsharedRent,
+  capacityError = null,
   values,
   onChange,
 }: {
   showRoomingFields: boolean
   showUnsharedRent: boolean
+  capacityError?: string | null
   values: VicRoomingHouseFieldValues
   onChange: (next: VicRoomingHouseFieldValues) => void
 }) {
@@ -69,11 +71,19 @@ export function VicRoomingHouseFields({
       <label className="block text-sm text-admin-ink-2">
         <span className="font-semibold">How many people can the building hold in total?</span>
         <input
+          id="pf-vic-building-capacity"
           className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
           inputMode="numeric"
           value={values.capacity}
+          aria-invalid={capacityError ? true : undefined}
+          aria-describedby={capacityError ? 'pf-vic-building-capacity-error' : undefined}
           onChange={(e) => onChange({ ...values, capacity: e.target.value })}
         />
+        {capacityError ? (
+          <p id="pf-vic-building-capacity-error" className="mt-1 text-sm text-red-700" role="alert">
+            {capacityError}
+          </p>
+        ) : null}
         <FieldHint>This decides which Victorian agreement the resident signs.</FieldHint>
       </label>
       {showRoomingFields ? (

@@ -78,6 +78,19 @@ export type VicRoomingPayMethods = {
 
 export type VicRoomingConditionReport = 'provided' | 'will_be_provided'
 
+/** Inline capacity message. Empty until the landlord tries to save or publish. */
+export function vicBuildingCapacityFieldError(args: {
+  attempted: boolean
+  capacity: unknown
+  registeredRoomingHouse: boolean
+}): string | null {
+  if (!args.attempted) return null
+  const capacity = parseVicPremisesOccupantCapacity(args.capacity)
+  if (capacity == null) return VIC_ROOMING_CAPACITY_REQUIRED
+  if (args.registeredRoomingHouse && capacity < 4) return VIC_ROOMING_REGISTERED_UNDER_CAPACITY
+  return null
+}
+
 export function parseVicPremisesOccupantCapacity(value: unknown): number | null {
   if (value == null || value === '') return null
   const n = Math.floor(Number(value))

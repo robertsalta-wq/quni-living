@@ -10,7 +10,10 @@ import {
   vicRoomingPaymentDetailsLine,
   vicRoomingPublishErrors,
   vicRoomingRentInAdvanceError,
+  vicBuildingCapacityFieldError,
   vicRoomingRouting,
+  VIC_ROOMING_CAPACITY_REQUIRED,
+  VIC_ROOMING_REGISTERED_UNDER_CAPACITY,
 } from './vicRoomingHouse.js'
 
 const pay = {
@@ -21,6 +24,26 @@ const pay = {
   bpay: false,
   otherEft: false,
 }
+
+describe('vicBuildingCapacityFieldError', () => {
+  it('stays quiet until save or publish, then sits on an empty or undersized capacity', () => {
+    expect(
+      vicBuildingCapacityFieldError({ attempted: false, capacity: '', registeredRoomingHouse: true }),
+    ).toBeNull()
+    expect(
+      vicBuildingCapacityFieldError({ attempted: true, capacity: '', registeredRoomingHouse: true }),
+    ).toBe(VIC_ROOMING_CAPACITY_REQUIRED)
+    expect(
+      vicBuildingCapacityFieldError({ attempted: true, capacity: '3', registeredRoomingHouse: true }),
+    ).toBe(VIC_ROOMING_REGISTERED_UNDER_CAPACITY)
+    expect(
+      vicBuildingCapacityFieldError({ attempted: true, capacity: '3', registeredRoomingHouse: false }),
+    ).toBeNull()
+    expect(
+      vicBuildingCapacityFieldError({ attempted: true, capacity: '4', registeredRoomingHouse: true }),
+    ).toBeNull()
+  })
+})
 
 describe('vicRoomingRouting', () => {
   it('sends an off-site room of four or more to the rooming agreement without a registration flag', () => {

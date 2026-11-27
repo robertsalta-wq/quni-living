@@ -134,6 +134,21 @@ export function showRoomForRentSelect(choice: AccommodationUiChoice): boolean {
   return !isEntirePlaceChoice(choice)
 }
 
+/**
+ * The room dropdown is a second question. Hide it when the card, or the Victorian
+ * private/shared follow-up, already answered it. One private room still offers Studio.
+ */
+export function roomForRentDropdownVisible(
+  choice: AccommodationUiChoice,
+  listingState?: string | null,
+): boolean {
+  if (!showRoomForRentSelect(choice)) return false
+  if (choice === 'registered_rooming_house' && (listingState ?? '').trim().toUpperCase() === 'VIC') {
+    return false
+  }
+  return roomForRentOptions(choice).length > 1
+}
+
 /** Scroll type-specific fields only when a click reveals or grows that block. */
 export function shouldScrollAccommodationTypeBlock(
   prev: AccommodationUiChoice,
