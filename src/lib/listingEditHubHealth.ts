@@ -77,7 +77,7 @@ export const LISTING_HUB_SECTIONS: ListingHubSectionMeta[] = [
   {
     id: 'basic',
     title: 'Basic info',
-    subtitle: 'Listing title and who can enquire',
+    subtitle: 'Listing title, type, and who can enquire',
     formSectionIds: ['section-basic-info'],
     step: 1,
   },
@@ -367,7 +367,7 @@ export function computeListingHubHealth(
     photos: 'Add a few more photos to reach top-listing quality and rank higher in search.',
     pricing: 'Add rent and an available-from date so students can enquire with confidence.',
     description: 'Write a fuller description - students decide from the story of the place.',
-    basic: 'Finish Basic info (listing title) to unlock a clearer listing.',
+    basic: 'Finish Basic info (title and listing type) to unlock a clearer listing.',
     property: 'Confirm bedrooms and bathrooms so students can filter accurately.',
     location: 'Complete the address so we can pin the map and nearby campuses.',
     inclusions: 'Add inclusions or features so students know what is covered.',

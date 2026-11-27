@@ -35,7 +35,7 @@ const empty = {
 
 describe('listingEditHubHealth', () => {
   it('describes each mobile step by what that step contains', () => {
-    expect(listingSectionSubtitle('basic', 'NSW')).toBe('Listing title and who can enquire')
+    expect(listingSectionSubtitle('basic', 'NSW')).toBe('Listing title, type, and who can enquire')
     expect(listingSectionSubtitle('location', 'NSW')).toBe(
       'Address, suburb, state, postcode, and campus',
     )

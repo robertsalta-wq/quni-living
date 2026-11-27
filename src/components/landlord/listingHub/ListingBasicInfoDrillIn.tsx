@@ -433,7 +433,7 @@ export default function ListingBasicInfoDrillIn({
           <p className="text-[12.5px] leading-snug text-[var(--quni-ink-4)]">
             {basicDone
               ? 'Looking good - saving turns Basic info green on your listing health.'
-              : 'Add a listing title to complete this section and turn it green.'}
+              : 'Add a listing title and listing type to complete this section and turn it green.'}
           </p>
         </div>
       </div>
