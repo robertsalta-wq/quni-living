@@ -133,6 +133,47 @@ describe('resolveWeeklyRent', () => {
   })
 })
 
+describe('letting choice rent', () => {
+  const room = {
+    rent_per_week: 280,
+    max_occupants: 2,
+    couple_surcharge_per_week: 140,
+    together_weekly_rent: 420,
+    parking_surcharge_per_week: 30,
+    parking_available: true,
+  }
+
+  it('charges rent_per_week for room to yourself, plus parking, with no couple line', () => {
+    expect(resolveWeeklyRent(room, { occupantCount: 2, parkingSelected: true, lettingChoice: 'sole' })).toMatchObject({
+      weeklyRent: 310,
+      breakdownAud: { base: 280, parking: 30 },
+    })
+  })
+
+  it('charges the together total, plus parking, and does not add the couple surcharge again', () => {
+    expect(resolveWeeklyRent(room, { occupantCount: 1, parkingSelected: true, lettingChoice: 'together' })).toMatchObject({
+      weeklyRent: 450,
+      breakdownAud: { base: 420, parking: 30 },
+    })
+  })
+
+  it('rejects two together when that total is not set', () => {
+    expect(() =>
+      resolveWeeklyRent(
+        { ...room, together_weekly_rent: null },
+        { occupantCount: 2, lettingChoice: 'together' },
+      ),
+    ).toThrow(/not offered/)
+  })
+
+  it('keeps the shared-room surcharge path when no letting choice is sent', () => {
+    expect(resolveWeeklyRent(room, { occupantCount: 2, parkingSelected: false })).toMatchObject({
+      weeklyRent: 420,
+      breakdownAud: { base: 280, couple: 140 },
+    })
+  })
+})
+
 describe('propertyHasVariableOccupancyPricing', () => {
   it('true when couple or paid parking offered', () => {
     expect(propertyHasVariableOccupancyPricing(casaRoom)).toBe(true)

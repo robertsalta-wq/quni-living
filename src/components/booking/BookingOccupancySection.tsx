@@ -2,6 +2,7 @@ import {
   VIC_ROOMING_RESIDENT_2_EMAIL_REQUIRED,
   VIC_ROOMING_RESIDENT_EMAIL_REQUIRED,
 } from '../../../api/lib/tenancy/vicRoomingHouse'
+import type { ListingLettingOption, LettingChoice } from '../../lib/lettingChoice'
 import type { RentBreakdownAud } from '../../lib/pricing'
 import { AUDateField } from '../AUDateField'
 
@@ -18,6 +19,10 @@ type Props = {
   parkingAvailable: boolean
   occupantCount: 1 | 2
   onOccupantCountChange: (n: 1 | 2) => void
+  /** When set, these choices replace the occupant stepper. Shared rooms leave this empty. */
+  lettingOptions?: ListingLettingOption[]
+  lettingChoice?: LettingChoice
+  onLettingChoiceChange?: (choice: LettingChoice) => void
   parkingSelected: boolean
   onParkingSelectedChange: (v: boolean) => void
   coTenant: CoTenantFormState
@@ -85,6 +90,9 @@ export function BookingOccupancySection({
   parkingAvailable,
   occupantCount,
   onOccupantCountChange,
+  lettingOptions,
+  lettingChoice,
+  onLettingChoiceChange,
   parkingSelected,
   onParkingSelectedChange,
   coTenant,
@@ -103,16 +111,47 @@ export function BookingOccupancySection({
 }: Props) {
   const coupleAllowed = maxOccupants >= 2
   const fmt = (n: number) => n.toLocaleString('en-AU', { maximumFractionDigits: 0 })
+  const lettingMode = (lettingOptions?.length ?? 0) > 0
 
   return (
     <div className="rounded-admin-lg border border-admin-line-soft bg-white p-5 space-y-5">
       <div>
-        <h2 className="text-sm font-bold text-admin-ink">Who will be living here?</h2>
+        <h2 className="text-sm font-bold text-admin-ink">
+          {lettingMode ? 'How will you rent this room?' : 'Who will be living here?'}
+        </h2>
         <p className="text-xs text-admin-ink-4 mt-1 leading-relaxed">
-          This sets your weekly rent and who appears on the lease. You can change it until you pay the deposit.
+          {lettingMode
+            ? 'This is the weekly rent on the agreement. You can change it until you send the request.'
+            : 'This sets your weekly rent and who appears on the lease. You can change it until you pay the deposit.'}
         </p>
       </div>
 
+      {lettingMode ? (
+        <fieldset className="space-y-2">
+          <legend className="sr-only">How you will rent this room</legend>
+          {lettingOptions!.map((option) => (
+            <label
+              key={option.choice}
+              className="flex items-center justify-between gap-3 cursor-pointer rounded-admin-md border border-admin-line px-4 py-3 has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5"
+            >
+              <span className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="bk-letting-choice"
+                  checked={lettingChoice === option.choice}
+                  onChange={() => onLettingChoiceChange?.(option.choice)}
+                  className="h-4 w-4 accent-admin-coral"
+                />
+                <span className="text-sm font-medium text-admin-ink">{option.label}</span>
+              </span>
+              <span className="text-sm font-semibold text-admin-ink tabular-nums">
+                ${fmt(option.weeklyRent)}
+                <span className="font-medium text-admin-ink-4"> / week</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      ) : (
       <fieldset className="space-y-2">
         <legend className="sr-only">Number of occupants</legend>
         <label className="flex items-center gap-3 cursor-pointer rounded-admin-md border border-admin-line px-4 py-3 has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5">
@@ -141,6 +180,7 @@ export function BookingOccupancySection({
           <span className="text-sm font-medium text-admin-ink">Two of us (2 people)</span>
         </label>
       </fieldset>
+      )}
 
       {showElectronicService ? (
         <ElectronicServiceQuestion
@@ -153,7 +193,9 @@ export function BookingOccupancySection({
 
       {occupantCount === 2 ? (
         <div className="space-y-3 pt-1 border-t border-admin-line-soft">
-          <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Co-tenant details</p>
+          <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">
+            {lettingMode ? 'Second resident' : 'Co-tenant details'}
+          </p>
           <div>
             <label htmlFor="bk-co-name" className={labelClass}>
               Full name

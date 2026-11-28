@@ -4,7 +4,13 @@
 import { ResolveWeeklyRentError, resolveWeeklyRent } from '../pricing/resolveWeeklyRent.js'
 
 export const OCCUPANCY_PROPERTY_COLUMNS =
-  'rent_per_week, bond, bond_weeks, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available'
+  'rent_per_week, bond, bond_weeks, max_occupants, couple_surcharge_per_week, together_weekly_rent, parking_surcharge_per_week, parking_available'
+
+/** Rooms that are not shared. Matches src/lib/roomTogetherWeeklyRent.ts. */
+export function roomOffersLettingChoice(propertyType) {
+  const type = typeof propertyType === 'string' ? propertyType.trim() : ''
+  return type === 'private_room_landlord_off_site' || type === 'private_room_landlord_on_site'
+}
 
 /** RTA `housemates_count` = occupants beyond tenant (1) - stored on booking at commit. */
 export function housematesCountFromOccupantCount(occupantCount) {
@@ -171,6 +177,8 @@ function rentErrorCodeToApi(code) {
       return 'invalid_base_rent'
     case 'INVALID_OCCUPANT_COUNT':
       return 'invalid_occupant_count'
+    case 'LETTING_TOGETHER_UNAVAILABLE':
+      return 'letting_together_unavailable'
     default:
       return 'invalid_rent'
   }
@@ -184,11 +192,14 @@ export function occupancyFromPaymentIntentMetadata(meta) {
   const parkingSelected = meta.parkingSelected === 'true'
   const weeklyRentCents = Math.floor(Number(meta.weeklyRentCents ?? meta.depositCents ?? ''))
   const depositCents = Math.floor(Number(meta.depositCents ?? ''))
+  const rawChoice = meta.lettingChoice
+  const lettingChoice = rawChoice === 'sole' || rawChoice === 'together' ? rawChoice : null
   return {
     occupantCount: Number.isFinite(occupantCount) && occupantCount >= 1 ? occupantCount : 1,
     parkingSelected,
     weeklyRentCents: Number.isFinite(weeklyRentCents) ? weeklyRentCents : null,
     depositCents: Number.isFinite(depositCents) ? depositCents : null,
+    lettingChoice,
   }
 }
 
@@ -234,5 +245,106 @@ export function assertPiMetadataMatchesOccupancy(meta, expected) {
       },
     }
   }
+  const expectedChoice =
+    expected.lettingChoice === 'sole' || expected.lettingChoice === 'together' ? expected.lettingChoice : null
+  if ((expectedChoice || fromPi.lettingChoice) && fromPi.lettingChoice !== expectedChoice) {
+    return {
+      ok: false,
+      body: {
+        error: 'payment_occupancy_mismatch',
+        message: 'Payment was authorised for a different room letting choice',
+      },
+    }
+  }
   return { ok: true }
+}
+
+/**
+ * @param {unknown} body
+ * @returns {{ ok: true, lettingChoice: 'sole' | 'together' | null } | { ok: false, status: number, body: Record<string, unknown> }}
+ */
+export function parseLettingChoiceFromBody(body) {
+  const raw = body?.lettingChoice ?? body?.letting_choice
+  if (raw == null || raw === '') return { ok: true, lettingChoice: null }
+  if (raw === 'sole' || raw === 'together') return { ok: true, lettingChoice: raw }
+  return {
+    ok: false,
+    status: 400,
+    body: { error: 'invalid_letting_choice', message: 'lettingChoice must be sole or together' },
+  }
+}
+
+/**
+ * Shared rooms and entire places ignore this and keep occupant_count.
+ * A room that is not shared must send sole or together. Together requires together_weekly_rent.
+ * @param {Record<string, unknown>} property
+ * @param {'sole' | 'together' | null} lettingChoice
+ * @returns {{ ok: true, lettingChoice: 'sole' | 'together' | null, occupantCount: number | null } | { ok: false, status: number, body: Record<string, unknown> }}
+ */
+export function applyLettingChoiceToBooking(property, lettingChoice) {
+  const offered = roomOffersLettingChoice(property?.property_type)
+  if (!offered) {
+    if (lettingChoice) {
+      return {
+        ok: false,
+        status: 400,
+        body: {
+          error: 'letting_choice_not_allowed',
+          message: 'This listing does not take a room letting choice.',
+        },
+      }
+    }
+    return { ok: true, lettingChoice: null, occupantCount: null }
+  }
+  if (!lettingChoice) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: 'letting_choice_required',
+        message: 'Choose room to yourself or two people together before booking.',
+      },
+    }
+  }
+  if (lettingChoice === 'together') {
+    const together = Number(property?.together_weekly_rent)
+    if (!Number.isFinite(together) || together <= 0) {
+      return {
+        ok: false,
+        status: 400,
+        body: {
+          error: 'letting_together_unavailable',
+          message: 'Two people together is not offered on this room.',
+        },
+      }
+    }
+    return { ok: true, lettingChoice: 'together', occupantCount: 2 }
+  }
+  return { ok: true, lettingChoice: 'sole', occupantCount: 1 }
+}
+
+/**
+ * @param {Record<string, unknown>} property
+ * @param {unknown} body
+ * @param {{ occupantCount: number, parkingSelected: boolean }} parsed
+ */
+export function occupancyAfterLettingChoice(property, body, parsed) {
+  const parsedChoice = parseLettingChoiceFromBody(body)
+  if (!parsedChoice.ok) return parsedChoice
+  const applied = applyLettingChoiceToBooking(property, parsedChoice.lettingChoice)
+  if (!applied.ok) return applied
+  if (applied.occupantCount == null) {
+    return {
+      ok: true,
+      occupantCount: parsed.occupantCount,
+      parkingSelected: parsed.parkingSelected,
+      lettingChoice: null,
+    }
+  }
+  return {
+    ok: true,
+    occupantCount: applied.occupantCount,
+    parkingSelected: parsed.parkingSelected,
+    lettingChoice: applied.lettingChoice,
+  }
 }

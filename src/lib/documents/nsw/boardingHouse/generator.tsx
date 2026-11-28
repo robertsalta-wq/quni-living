@@ -317,7 +317,34 @@ function SharedAreaTicks({ areas }: { areas: NswT3SharedAreas }) {
   )
 }
 
-function SignatureBlock() {
+function CoResidentSignatureColumn({ prefix }: { prefix: string }) {
+  const residentSig = licenceOccupyDocusealTag(
+    `${prefix}Resident 2 Signature`,
+    'Co-tenant',
+    'signature',
+    LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE,
+  )
+  const residentDate = licenceOccupyDocusealTag(
+    `${prefix}Resident 2 Sign Date`,
+    'Co-tenant',
+    'date',
+    LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE,
+  )
+  return (
+    <View style={[styles.sigCol, { marginRight: 12 }]}>
+      <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Signed (Resident 2)</Text>
+      <View style={styles.sigBox}>
+        <Text style={styles.hiddenTag}>{residentSig}</Text>
+      </View>
+      <Text style={{ fontSize: 8, marginTop: 6 }}>Date</Text>
+      <View style={[styles.sigBox, { minHeight: 22 }]}>
+        <Text style={styles.hiddenTag}>{residentDate}</Text>
+      </View>
+    </View>
+  )
+}
+
+function SignatureBlock({ includeCoResident }: { includeCoResident: boolean }) {
   const proprietorSig = licenceOccupyDocusealTag(
     'Proprietor Signature',
     'First Party',
@@ -364,11 +391,12 @@ function SignatureBlock() {
           <Text style={styles.hiddenTag}>{residentDate}</Text>
         </View>
       </View>
+      {includeCoResident ? <CoResidentSignatureColumn prefix="" /> : null}
     </View>
   )
 }
 
-function Annexure2Signatures() {
+function Annexure2Signatures({ includeCoResident }: { includeCoResident: boolean }) {
   const proprietorSig = licenceOccupyDocusealTag(
     'Annexure 2 Proprietor Signature',
     'First Party',
@@ -415,6 +443,7 @@ function Annexure2Signatures() {
           <Text style={styles.hiddenTag}>{residentDate}</Text>
         </View>
       </View>
+      {includeCoResident ? <CoResidentSignatureColumn prefix="Annexure 2 " /> : null}
     </View>
   )
 }
@@ -448,6 +477,7 @@ export function NswBoardingHouseOccupancyAgreement(props: NswBoardingHouseAgreem
   const furnished = props.premises.furnished === true
   const unfurnished = props.premises.furnished === false
   const includeAnnexure2 = props.additionalCharges.length >= 1
+  const includeCoResident = Boolean(props.resident2?.fullName?.trim())
   const termLabel = props.term.periodic
     ? 'Periodic'
     : props.term.endDate
@@ -473,6 +503,9 @@ export function NswBoardingHouseOccupancyAgreement(props: NswBoardingHouseAgreem
 
         <Field label={BH_BETWEEN_PROPRIETOR} value={proprietorDisplayName(props)} />
         <Field label="Resident" value={props.resident.fullName} />
+        {props.resident2?.fullName?.trim() ? (
+          <Field label="Resident 2" value={props.resident2.fullName.trim()} />
+        ) : null}
         <Field label={BH_FOR_ROOM} value={props.premises.roomDescription} />
         <Field label="Address" value={props.premises.addressLine} />
 
@@ -562,7 +595,7 @@ export function NswBoardingHouseOccupancyAgreement(props: NswBoardingHouseAgreem
         <Text style={styles.heading}>{BH_CLAUSE_12_HEADING}</Text>
         <Text style={styles.body}>{BH_CLAUSE_12_BODY}</Text>
         <Text style={styles.note}>{BH_NOTE}</Text>
-        <SignatureBlock />
+        <SignatureBlock includeCoResident={includeCoResident} />
         <Text style={[styles.body, { marginTop: 10 }]}>{BH_CROWN}</Text>
         <Text style={[styles.heading, { marginTop: 14 }]}>Optional Information</Text>
         <Text style={styles.body}>The resident may provide contact details to be used in an emergency.</Text>
@@ -592,7 +625,7 @@ export function NswBoardingHouseOccupancyAgreement(props: NswBoardingHouseAgreem
           <Text style={styles.heading}>{BH_ANNEXURE_2_TITLE}</Text>
           <Text style={styles.body}>{BH_ANNEXURE_2_INTRO}</Text>
           <ChargeTable rows={props.additionalCharges} />
-          <Annexure2Signatures />
+          <Annexure2Signatures includeCoResident={includeCoResident} />
         </Page>
       ) : null}
 

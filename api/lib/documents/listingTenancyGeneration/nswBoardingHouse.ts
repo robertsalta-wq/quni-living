@@ -17,6 +17,8 @@ import {
   resolveBookingBondAmountAud,
 } from '../../booking/bookingBondAmount.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
+import { parseCoTenantFromBooking } from '../../booking/occupancyLeaseContext.js'
+import { roomOffersTogetherTotal } from '../../../../src/lib/roomTogetherWeeklyRent.js'
 import { sendForSigning } from '../../docuseal.js'
 import { inclusiveLeaseLastDay, leaseDatesForBooking } from '../../booking/leaseEndDate.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
@@ -275,6 +277,16 @@ async function loadNswBoardingHouseContext(
   const sharedAreas = parseNswT3SharedAreas(prop.shared_areas)
   const additionalCharges = parseNswT3AdditionalCharges(prop.additional_charges)
   const lpRec = lp as Record<string, unknown>
+  const occupantCount = Math.floor(Number(booking.occupant_count ?? 1))
+  const privateRoom = roomOffersTogetherTotal(typeof prop.property_type === 'string' ? prop.property_type : null)
+  const coSigner = privateRoom && occupantCount >= 2 ? parseCoTenantFromBooking(booking.co_tenant) : null
+  if (privateRoom && occupantCount >= 2 && !coSigner) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'Enter the second resident before generating this agreement. Both people sign.',
+    }
+  }
   const pdfProps: NswBoardingHouseAgreementProps = {
     documentId: PREFLIGHT_DOCUMENT_ID,
     generatedAt: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }),
@@ -301,6 +313,9 @@ async function loadNswBoardingHouseContext(
           ? sp.emergency_contact_phone.trim()
           : null,
     },
+    resident2: coSigner
+      ? { fullName: coSigner.full_name, email: coSigner.email, phone: coSigner.phone }
+      : null,
     premises: {
       addressLine: propertyAddressLine(prop) || ' ',
       roomDescription: typeof prop.room_description === 'string' ? prop.room_description.trim() : '',
@@ -502,7 +517,7 @@ export async function runNswBoardingHouseListingTenancy(
       await sendForSigning(documentId, {
         documentPdfName: 'Standard Occupancy Agreement.pdf',
         removeTags: true,
-        skipCoTenantSigner: true,
+        skipCoTenantSigner: !loaded.ctx.pdfProps.resident2?.fullName,
       })
       const { data: docRow } = await admin
         .from('tenancy_documents')

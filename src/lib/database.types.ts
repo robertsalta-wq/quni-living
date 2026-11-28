@@ -2100,6 +2100,7 @@ export interface Database {
           housemates_count: number | null
           conversation_id: string | null
           occupant_count: number
+          letting_choice: 'sole' | 'together' | null
           parking_selected: boolean
           rent_breakdown: Json | null
           co_tenant: Json | null
@@ -2197,6 +2198,7 @@ export interface Database {
           housemates_count?: number | null
           conversation_id?: string | null
           occupant_count?: number
+          letting_choice?: 'sole' | 'together' | null
           parking_selected?: boolean
           rent_breakdown?: Json | null
           co_tenant?: Json | null
@@ -2294,6 +2296,7 @@ export interface Database {
           housemates_count?: number | null
           conversation_id?: string | null
           occupant_count?: number
+          letting_choice?: 'sole' | 'together' | null
           parking_selected?: boolean
           rent_breakdown?: Json | null
           co_tenant?: Json | null

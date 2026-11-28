@@ -21,9 +21,19 @@ import { propertyPayoutDetailsQldRoomingComplete } from '../../../../src/lib/pro
 import { sendQldFormR18PackageForSigning } from '../../docuseal.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import { inclusiveLeaseLastDay } from '../../booking/leaseEndDate.js'
+import { parseCoTenantFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { resolveTenancyPackage, tenancyPackageInputFromPropertyRow } from '../../resolveTenancyPackage.js'
+import { roomOffersTogetherTotal } from '../../../../src/lib/roomTogetherWeeklyRent.js'
 
 export const QLD_FORM_R18_GENERATOR_ID = 'qld-form-r18'
+
+/** Form R18 prints the booking bond snapshot. It does not read properties.bond. */
+export function qldFormR18PrintedBondAmount(bookingBond: unknown): number | null {
+  if (bookingBond == null || bookingBond === '') return null
+  const n = typeof bookingBond === 'number' ? bookingBond : Number(bookingBond)
+  if (!Number.isFinite(n) || n < 0) return null
+  return Math.round(n * 100) / 100
+}
 
 export const QLD_FORM_R18_HOUSE_RULES_REQUIRED =
   'Form R18 cannot be produced without house rules to give the resident (s 275).'
@@ -208,6 +218,7 @@ export async function runQldFormR18ListingTenancy(
       metadata: {
         signing_package: 'rooming_accommodation_qld',
         house_rules_file_path: rulesPath,
+        resident_2_signs: Boolean(loaded.fillProps.resident2FullName?.trim()),
       } as Json,
     })
     .eq('id', documentId)
@@ -268,8 +279,8 @@ async function loadQldFormR18ListingContext(
     .from('bookings')
     .select(
       `
-      id, property_id, student_id, landlord_id, weekly_rent, move_in_date, start_date, end_date, lease_length,
-      qld_house_rules_attested_at, occupant_count,
+      id, property_id, student_id, landlord_id, weekly_rent, bond_amount, move_in_date, start_date, end_date, lease_length,
+      qld_house_rules_attested_at, occupant_count, co_tenant,
       properties (
         title, address, suburb, state, postcode, rent_per_week, max_occupants, property_type, furnished,
         linen_supplied, weekly_cleaning_service, room_description, qld_student_accommodation, qld_persons_at_premises,
@@ -390,6 +401,16 @@ async function loadQldFormR18ListingContext(
     'Provider'
 
   const personsInRoom = Number(booking.occupant_count ?? 1) || 1
+  const privateRoom = roomOffersTogetherTotal(typeof prop.property_type === 'string' ? prop.property_type : null)
+  const coSigner = privateRoom && personsInRoom >= 2 ? parseCoTenantFromBooking(booking.co_tenant) : null
+  if (privateRoom && personsInRoom >= 2 && !coSigner) {
+    return {
+      ok: false,
+      status: 400,
+      error: 'Enter the second resident before generating this agreement. Both people are named on Form R18.',
+    }
+  }
+  const printedBond = qldFormR18PrintedBondAmount(booking.bond_amount)
   const personsAtPremises = Number(prop.qld_persons_at_premises ?? personsInRoom) || personsInRoom
   const lastInc =
     typeof prop.qld_rent_last_increased_on === 'string' && prop.qld_rent_last_increased_on.trim()
@@ -413,6 +434,9 @@ async function loadQldFormR18ListingContext(
     emergencyContactName: typeof sp.emergency_contact_name === 'string' ? sp.emergency_contact_name.trim() : '',
     emergencyContactPhone: typeof sp.emergency_contact_phone === 'string' ? sp.emergency_contact_phone.trim() : '',
     emergencyContactEmail: typeof sp.emergency_contact_email === 'string' ? sp.emergency_contact_email.trim() : '',
+    resident2FullName: coSigner?.full_name ?? '',
+    resident2Phone: coSigner?.phone ?? '',
+    resident2Email: coSigner?.email ?? '',
     premisesStreet: premises.street,
     premisesSuburbLine: premises.suburbLine,
     premisesPostcode: premises.postcode,
@@ -432,7 +456,7 @@ async function loadQldFormR18ListingContext(
         ? inclusiveLeaseLastDay(booking.end_date.slice(0, 10))
         : null,
     weeklyRent,
-    bondAmount: typeof prop.bond === 'number' ? prop.bond : null,
+    bondAmount: printedBond,
     rentDueWeekday: weekdayFromIso(String(moveIn)),
     method1: QLD_RENT_PAYMENT_METHOD_1_DIRECT_CREDIT,
     method2: method2Line,
@@ -474,7 +498,7 @@ async function loadQldFormR18ListingContext(
     lp,
     moveIn: String(moveIn).slice(0, 10),
     weeklyRent,
-    bondAmount: typeof prop.bond === 'number' ? prop.bond : null,
+    bondAmount: printedBond,
   }
 }
 

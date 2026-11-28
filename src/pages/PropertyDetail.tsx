@@ -48,6 +48,12 @@ import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyI
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import type { OccupancyPricingProperty } from '../lib/pricing/resolveWeeklyRent'
+import {
+  appendLettingChoiceQuery,
+  listingLettingOptions,
+  type LettingChoice,
+  type ListingLettingOption,
+} from '../lib/lettingChoice'
 import { isRoomListingProperty } from '../lib/listingAccommodationDisplay'
 import { ListingAccommodationStats } from '../components/ListingAccommodationStats'
 import {
@@ -311,6 +317,53 @@ export function formatListingBondDisplayLabel(
   }
 
   return `$${formatBondAudDisplay(singleBond)}`
+}
+
+function ListingRentChoices({
+  options,
+  choice,
+  onChoice,
+  groupName,
+}: {
+  options: ListingLettingOption[]
+  choice: LettingChoice
+  onChoice: (choice: LettingChoice) => void
+  groupName: string
+}) {
+  const selected = options.find((option) => option.choice === choice) ?? options[0]
+  return (
+    <div>
+      <p className={`${sectionLabelClass} mb-2.5`}>How you'll rent this room</p>
+      <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
+        ${selected.weeklyRent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
+      </p>
+      <fieldset className="mt-3 space-y-2">
+        <legend className="sr-only">How you will rent this room</legend>
+        {options.map((option) => (
+          <label
+            key={option.choice}
+            className="flex items-center justify-between gap-3 cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 has-[:checked]:border-[var(--quni-coral)] has-[:checked]:bg-[var(--quni-cream)]"
+          >
+            <span className="flex items-center gap-2.5 min-w-0">
+              <input
+                type="radio"
+                name={groupName}
+                checked={choice === option.choice}
+                onChange={() => onChoice(option.choice)}
+                className="h-4 w-4 accent-[var(--quni-coral)]"
+              />
+              <span className="text-sm font-medium text-stone-800">{option.label}</span>
+            </span>
+            <span className="text-sm font-semibold text-stone-800 tabular-nums shrink-0">
+              ${option.weeklyRent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <span className="font-medium text-stone-500"> / week</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+    </div>
+  )
 }
 
 export default function PropertyDetail({
@@ -585,6 +638,7 @@ export default function PropertyDetail({
   }, [user, role])
 
   const [activePipelineBookingId, setActivePipelineBookingId] = useState<string | null>(null)
+  const [lettingChoice, setLettingChoice] = useState<LettingChoice>('sole')
 
   useEffect(() => {
     if (!user?.id || !isRenterRole(role) || !property?.id || !isSupabaseConfigured) {
@@ -709,7 +763,8 @@ export default function PropertyDetail({
   const listingBondDisplayLabel = useMemo(() => {
     if (!property) return null
     const listingRent = getListingRentDisplay(property)
-    const coupleRent = listingCoupleOccupancyWeeklyRentAud(property)
+    const together = listingLettingOptions(property).find((option) => option.choice === 'together')
+    const coupleRent = together?.weeklyRent ?? listingCoupleOccupancyWeeklyRentAud(property)
     return formatListingBondDisplayLabel(property, listingRent.primaryAmount, coupleRent)
   }, [property])
 
@@ -1212,7 +1267,15 @@ export default function PropertyDetail({
   })()
 
   const listingRent = getListingRentDisplay(property)
-  const rent = listingRent.primaryAmount
+  const lettingOptions = listingLettingOptions(property)
+  const bookedLettingChoice: LettingChoice =
+    lettingChoice === 'together' && lettingOptions.some((option) => option.choice === 'together')
+      ? 'together'
+      : 'sole'
+  const selectedLettingRent =
+    lettingOptions.find((option) => option.choice === bookedLettingChoice)?.weeklyRent ??
+    listingRent.primaryAmount
+  const rent = lettingOptions.length > 0 ? selectedLettingRent : listingRent.primaryAmount
 
   const availableFormatted = (() => {
     if (isListingAvailableNow(property.available_from)) return 'Available now'
@@ -1225,9 +1288,11 @@ export default function PropertyDetail({
     })
   })()
 
-  const bookPath = appendTenantInviteToBookingPath(
+  const bookPathBase = appendTenantInviteToBookingPath(
     property?.id ? `/booking/${property.id}${availabilitySearchString}` : `/listings/${slug}`,
   )
+  const bookPath =
+    lettingOptions.length > 0 ? appendLettingChoiceQuery(bookPathBase, bookedLettingChoice) : bookPathBase
   const bookHref = user
     ? bookPath
     : `/signup?role=renter&redirect=${encodeURIComponent(bookPath)}`
@@ -1502,14 +1567,25 @@ export default function PropertyDetail({
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
               <div className="quni-card p-5 sm:p-6">
                 <div className="pb-4 border-b border-stone-100">
-                  <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
-                  <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
-                    ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
-                  </p>
-                  {listingRent.breakdownLine ? (
-                    <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
-                  ) : null}
+                  {lettingOptions.length > 0 ? (
+                    <ListingRentChoices
+                      options={lettingOptions}
+                      choice={bookedLettingChoice}
+                      onChoice={setLettingChoice}
+                      groupName="listing-letting-preview"
+                    />
+                  ) : (
+                    <>
+                      <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
+                      <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
+                        ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
+                      </p>
+                      {listingRent.breakdownLine ? (
+                        <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
+                      ) : null}
+                    </>
+                  )}
                 </div>
                 <div className="py-4 space-y-3 border-b border-stone-100">
                   <ListingAccommodationStats property={property} roomLabel={roomLabel} variant="compact" />
@@ -1572,6 +1648,17 @@ export default function PropertyDetail({
                 />
                 )}
               </div>
+
+              {lettingOptions.length > 0 ? (
+                <div className="quni-card p-4 md:hidden">
+                  <ListingRentChoices
+                    options={lettingOptions}
+                    choice={bookedLettingChoice}
+                    onChoice={setLettingChoice}
+                    groupName="listing-letting-mobile"
+                  />
+                </div>
+              ) : null}
 
               <ListingAccommodationStats property={property} roomLabel={roomLabel} />
 
@@ -1764,14 +1851,25 @@ export default function PropertyDetail({
               <div ref={bookingCardRef} className="md:sticky md:top-28">
                 <div className="quni-card hidden p-5 sm:p-6 md:block">
                   <div className="pb-4 border-b border-stone-100">
-                    <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
-                    <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
-                      ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
-                    </p>
-                    {listingRent.breakdownLine ? (
-                      <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
-                    ) : null}
+                    {lettingOptions.length > 0 ? (
+                      <ListingRentChoices
+                        options={lettingOptions}
+                        choice={bookedLettingChoice}
+                        onChoice={setLettingChoice}
+                        groupName="listing-letting-live"
+                      />
+                    ) : (
+                      <>
+                        <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
+                        <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
+                          ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
+                        </p>
+                        {listingRent.breakdownLine ? (
+                          <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
+                        ) : null}
+                      </>
+                    )}
                   </div>
 
                   <div className="py-4 space-y-2.5 border-b border-stone-100">
@@ -2013,7 +2111,7 @@ export default function PropertyDetail({
           aria-label="Book this listing"
         >
           <p className="font-display text-lg font-bold text-[var(--quni-coral)] tabular-nums shrink-0">
-            {listingRent.showFromPrefix ? (
+            {lettingOptions.length === 0 && listingRent.showFromPrefix ? (
               <span className="text-sm font-semibold text-stone-500 font-sans">From </span>
             ) : null}
             ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}

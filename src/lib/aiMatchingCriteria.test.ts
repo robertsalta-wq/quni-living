@@ -231,6 +231,7 @@ describe('aiMatchingCriteria classification drift', () => {
       'housemates_count',
       'conversation_id',
       'occupant_count',
+      'letting_choice',
       'parking_selected',
       'rent_breakdown',
       'tenant_invite_id',

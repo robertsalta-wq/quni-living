@@ -101,10 +101,34 @@ function validateOccupantCoTenantConsistency(merged) {
 /**
  * @param {object} currentBooking
  * @param {Record<string, unknown>} patch
+ * @returns {string | null}
+ */
+function lettingChoiceOccupantLockError(currentBooking, patch) {
+  const choice = currentBooking?.letting_choice
+  if (choice !== 'sole' && choice !== 'together') return null
+  const required = choice === 'together' ? 2 : 1
+  if (Object.prototype.hasOwnProperty.call(patch, 'occupant_count')) {
+    const occ = Math.floor(Number(patch.occupant_count))
+    if (occ !== required) return 'letting_choice_occupant_locked'
+  }
+  if (choice === 'sole' && Object.prototype.hasOwnProperty.call(patch, 'co_tenant') && patch.co_tenant != null) {
+    return 'letting_choice_occupant_locked'
+  }
+  if (choice === 'together' && patch.co_tenant === null) {
+    return 'letting_choice_occupant_locked'
+  }
+  return null
+}
+
+/**
+ * @param {object} currentBooking
+ * @param {Record<string, unknown>} patch
  * @param {{ property: object, primaryTenantEmail?: string | null, landlordProfileId: string, reason: string }} context
  * @returns {Promise<{ patch: object, changes: object, errors: string[], co_tenant_unverified?: boolean }>}
  */
 export async function buildBookingTermsPatch(currentBooking, patch, context) {
+  const locked = lettingChoiceOccupantLockError(currentBooking, patch)
+  if (locked) return { patch: {}, changes: {}, errors: [locked] }
   const errors = []
   /** @type {Record<string, { from: unknown, to: unknown }>} */
   const changes = {}

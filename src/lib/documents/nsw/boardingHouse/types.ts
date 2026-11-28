@@ -24,6 +24,12 @@ export type NswBoardingHouseAgreementProps = {
     emergencyContactName: string | null
     emergencyContactPhone: string | null
   }
+  /** Second resident on a two-together booking. Omitted for one person and for shared rooms. */
+  resident2?: {
+    fullName: string
+    email: string
+    phone: string
+  } | null
   premises: {
     addressLine: string
     roomDescription: string

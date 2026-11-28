@@ -737,14 +737,26 @@ export async function sendQldFormR18PackageForSigning(
   const r18Base64 = Buffer.from(await r18Blob.arrayBuffer()).toString('base64')
   const houseRulesBase64 = Buffer.from(await rulesBlob.arrayBuffer()).toString('base64')
 
+  let coTenantSigner: { name: string; email: string } | null = null
+  if (meta.resident_2_signs === true) {
+    coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, residentEmail)
+    if (!coTenantSigner) {
+      throw new Error('Resident 2 must sign this Form R18. Their name and a different email are required.')
+    }
+  }
+
   const submissionRaw = await createDocusealSubmissionFromPdf({
-    name: `QLD Form R18 - ${landlordName} / ${residentSalutationName}`,
+    name: coTenantSigner
+      ? `QLD Form R18 - ${landlordName} / ${residentSalutationName} / ${coTenantSigner.name}`
+      : `QLD Form R18 - ${landlordName} / ${residentSalutationName}`,
     documents: [
       { name: 'QLD Form R18 Rooming Accommodation Agreement.pdf', file: r18Base64 },
       { name: 'Resident House Rules.pdf', file: houseRulesBase64 },
     ],
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: residentSubmitterName, email: residentEmail },
+    coTenant: coTenantSigner,
+    coTenantRole: 'Co-tenant',
     ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
   })
   const submission = wrapSubmissionSubmitters(submissionRaw, false)

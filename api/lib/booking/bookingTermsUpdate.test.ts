@@ -72,6 +72,13 @@ describe('buildBookingTermsPatch', () => {
     expect(result.patch.end_date).toBeNull()
   })
 
+  it('keeps a together booking at two people', async () => {
+    const booking = { ...baseBooking, letting_choice: 'together', occupant_count: 2, housemates_count: 1 }
+    const result = await buildBookingTermsPatch(booking, { occupant_count: 1 }, baseContext)
+    expect(result.errors).toEqual(['letting_choice_occupant_locked'])
+    expect(result.patch).toEqual({})
+  })
+
   it('clears co-tenant and sets occupant_count to 1 on co_tenant null', async () => {
     const booking = {
       ...baseBooking,
