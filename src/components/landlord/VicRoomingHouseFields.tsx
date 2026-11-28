@@ -1,4 +1,5 @@
 import type { VicRoomingPayMethods } from '../../../api/lib/tenancy/vicRoomingHouse'
+import { RequiredMark } from './RequiredMark'
 
 export type VicRoomingHouseFieldValues = {
   capacity: string
@@ -56,23 +57,37 @@ export function VicRoomingHouseFields({
   capacityError = null,
   values,
   onChange,
+  errorFieldId = null,
+  errorMessage = null,
 }: {
   showRoomingFields: boolean
   showUnsharedRent: boolean
   capacityError?: string | null
   values: VicRoomingHouseFieldValues
   onChange: (next: VicRoomingHouseFieldValues) => void
+  errorFieldId?: string | null
+  errorMessage?: string | null
 }) {
+  const issue = (id: string) =>
+    errorFieldId === id && errorMessage ? (
+      <p className="mt-1 text-sm text-red-700" role="alert">
+        {errorMessage}
+      </p>
+    ) : null
+  const ring = (id: string) => (errorFieldId === id ? ' ring-2 ring-red-600 ring-offset-2' : '')
   const setPay = (key: keyof VicRoomingPayMethods, checked: boolean) => {
     onChange({ ...values, pay: { ...values.pay, [key]: checked } })
   }
   return (
     <div className="space-y-4 rounded-admin-md border border-admin-line bg-admin-surface-1 p-4">
       <label className="block text-sm text-admin-ink-2">
-        <span className="font-semibold">How many people can the building hold in total?</span>
+        <span className="font-semibold">
+          How many people can the building hold in total?
+          <RequiredMark />
+        </span>
         <input
           id="pf-vic-building-capacity"
-          className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
+          className={`mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2${ring('pf-vic-building-capacity')}`}
           inputMode="numeric"
           value={values.capacity}
           aria-invalid={capacityError ? true : undefined}
@@ -83,26 +98,35 @@ export function VicRoomingHouseFields({
           <p id="pf-vic-building-capacity-error" className="mt-1 text-sm text-red-700" role="alert">
             {capacityError}
           </p>
-        ) : null}
+        ) : (
+          issue('pf-vic-building-capacity')
+        )}
         <FieldHint>This decides which Victorian agreement the resident signs.</FieldHint>
       </label>
       {showRoomingFields ? (
         <>
           {showUnsharedRent ? (
             <label className="block text-sm text-admin-ink-2">
-              <span className="font-semibold">Weekly rent if this room were not shared ($)</span>
+              <span className="font-semibold">
+                Weekly rent if this room were not shared ($)
+                <RequiredMark />
+              </span>
               <input
                 id="pf-unshared-weekly-rent"
-                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
+                className={`mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2${ring('pf-unshared-weekly-rent')}`}
                 inputMode="decimal"
                 value={values.unsharedWeeklyRent}
                 onChange={(e) => onChange({ ...values, unsharedWeeklyRent: e.target.value })}
               />
+              {issue('pf-unshared-weekly-rent')}
               <FieldHint>Printed on the shared room notice. It must be higher than the weekly rent the resident pays.</FieldHint>
             </label>
           ) : null}
           <label className="block text-sm text-admin-ink-2">
-            <span className="font-semibold">Room number</span>
+            <span className="font-semibold">
+              Room number
+              <RequiredMark />
+            </span>
             <input
               className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
               value={values.roomNumber}
@@ -121,7 +145,10 @@ export function VicRoomingHouseFields({
             <FieldHint>Printed on the resident's agreement.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
-            <span className="font-semibold">House rules</span>
+            <span className="font-semibold">
+              House rules
+              <RequiredMark />
+            </span>
             <textarea
               className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
               rows={4}
@@ -131,7 +158,10 @@ export function VicRoomingHouseFields({
             <FieldHint>The resident signs these words. This is the only house rules text on the agreement.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
-            <span className="font-semibold">Council registration number</span>
+            <span className="font-semibold">
+              Council registration number
+              <RequiredMark />
+            </span>
             <input
               className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
               value={values.registrationNumber}
@@ -140,7 +170,10 @@ export function VicRoomingHouseFields({
             <FieldHint>Required to publish. Quni records it and does not check the register.</FieldHint>
           </label>
           <label className="block text-sm text-admin-ink-2">
-            <span className="font-semibold">Operator licence number</span>
+            <span className="font-semibold">
+              Operator licence number
+              <RequiredMark />
+            </span>
             <input
               className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2"
               value={values.licenceNumber}
@@ -149,7 +182,10 @@ export function VicRoomingHouseFields({
             <FieldHint>Required to publish. Quni records it and does not check the register.</FieldHint>
           </label>
           <fieldset className="space-y-2 text-sm text-admin-ink-2">
-            <legend className="font-semibold">How can the resident pay rent?</legend>
+            <legend className="font-semibold">
+              How can the resident pay rent?
+              <RequiredMark />
+            </legend>
             <FieldHint>Printed as the payment boxes on the resident's agreement.</FieldHint>
             {PAY_ROWS.map((row) => (
               <label key={row.key} className="flex items-start gap-2">
@@ -164,7 +200,10 @@ export function VicRoomingHouseFields({
             ))}
           </fieldset>
           <fieldset className="space-y-2 text-sm text-admin-ink-2">
-            <legend className="font-semibold">Can Quni email you notices about this agreement?</legend>
+            <legend className="font-semibold">
+              Can Quni email you notices about this agreement?
+              <RequiredMark />
+            </legend>
             <label className="flex items-center gap-2">
               <input
                 type="radio"
@@ -194,6 +233,7 @@ export function VicRoomingHouseFields({
             />
             <span>
               The council registration and the operator licence are both current.
+              <RequiredMark />
               <FieldHint>Quni records this declaration and does not check the register.</FieldHint>
             </span>
           </label>

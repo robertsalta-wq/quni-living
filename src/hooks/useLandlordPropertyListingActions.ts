@@ -25,6 +25,14 @@ import {
   type ListingDashboardPublishFields,
 } from '../lib/tenancy/listingDashboardPublishBlock'
 import { fetchCurrentVicRoomingOperatorAttestation } from '../lib/tenancy/recordVicRoomingOperatorAttestation'
+import {
+  featureNamesForGoLive,
+  listingGoLiveCompletenessBlock,
+  type ListingGoLiveCompletenessInput,
+} from '../lib/tenancy/listingGoLiveCompleteness'
+import { NON_DISCRIMINATION_POLICY_VERSION } from '../lib/nonDiscriminationPolicy'
+import { normalizePropertyPayoutEmbed } from '../lib/propertyPayoutDetails'
+import { loadQldNoticeConsentForm } from '../lib/tenancy/persistQldNoticeConsentEvents'
 import { vicRoomingPayMethodsFromRow } from '../../api/lib/tenancy/vicRoomingHouse'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
@@ -78,7 +86,7 @@ async function assertNswT3ComplianceBeforeActivate(
 }
 
 const LISTING_PUBLISH_CHECK_COLUMNS =
-  'state, property_type, is_registered_rooming_house, shared_areas, additional_charges, room_description, vic_premises_occupant_capacity, rooming_house_registration_number, vic_rooming_house_operator_licence_number, vic_rooming_operator_accepts_electronic_service, vic_rooming_house_rules, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft, rent_per_week, vic_rooming_unshared_weekly_rent'
+  'landlord_id, state, property_type, is_registered_rooming_house, service_tier, shared_areas, additional_charges, room_description, rooms_rented_to_residents, qld_shares_kitchen_or_bathroom, qld_persons_at_premises, max_occupants, qld_rent_payment_method_2, qld_rent_payment_method_2_costs, qld_rent_payment_method_2_financial_benefit, qld_rent_last_increased_on, vic_premises_occupant_capacity, rooming_house_registration_number, vic_rooming_house_operator_licence_number, vic_rooming_operator_accepts_electronic_service, vic_rooming_house_rules, vic_rooming_pay_direct_debit, vic_rooming_pay_bank_deposit, vic_rooming_pay_cash, vic_rooming_pay_cheque, vic_rooming_pay_bpay, vic_rooming_pay_other_eft, rent_per_week, vic_rooming_unshared_weekly_rent, water_usage_charged_separately, water_separately_metered_efficient_attested_at, accuracy_attested_at, utilities_services, smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable'
 
 async function assertListingCanGoLive(
   property: LandlordPropertyForListingActions,
@@ -119,7 +127,73 @@ async function assertListingCanGoLive(
       fields.operatorLicenceNumber,
     )
   }
-  return listingDashboardPublishFieldBlock(fields)
+  const fieldBlock = listingDashboardPublishFieldBlock(fields)
+  if (fieldBlock) return fieldBlock
+
+  const { data: featureRows, error: featureError } = await supabase
+    .from('property_features')
+    .select('features(name)')
+    .eq('property_id', property.id)
+  if (featureError) return 'Could not check this listing before publishing.'
+
+  const { data: payoutRow, error: payoutError } = await supabase
+    .from('property_payout_details')
+    .select('bank_name, account_name, bsb, account_number')
+    .eq('property_id', property.id)
+    .maybeSingle()
+  if (payoutError) return 'Could not check this listing before publishing.'
+
+  let nonDiscriminationAccepted = false
+  if (data.landlord_id) {
+    const { data: profile, error: profileError } = await supabase
+      .from('landlord_profiles')
+      .select('non_discrimination_policy_accepted_at, non_discrimination_policy_version')
+      .eq('id', data.landlord_id)
+      .maybeSingle()
+    if (profileError) return 'Could not check this listing before publishing.'
+    nonDiscriminationAccepted =
+      Boolean(profile?.non_discrimination_policy_accepted_at) &&
+      profile?.non_discrimination_policy_version === NON_DISCRIMINATION_POLICY_VERSION
+  }
+
+  let providerNotice: ListingGoLiveCompletenessInput['providerNotice'] = null
+  if ((data.state ?? '').trim().toUpperCase() === 'QLD') {
+    try {
+      providerNotice = await loadQldNoticeConsentForm(supabase, {
+        propertyId: property.id,
+        party: 'provider',
+      })
+    } catch {
+      return 'Could not check this listing before publishing.'
+    }
+  }
+
+  const completeness: ListingGoLiveCompletenessInput = {
+    state: data.state,
+    propertyType: data.property_type,
+    isRegisteredRoomingHouse: data.is_registered_rooming_house,
+    serviceTier: data.service_tier,
+    roomDescription: data.room_description,
+    roomsRentedToResidents: data.rooms_rented_to_residents,
+    sharesKitchenOrBathroom: data.qld_shares_kitchen_or_bathroom,
+    personsAtPremises: data.qld_persons_at_premises,
+    maxOccupants: data.max_occupants,
+    rentPaymentMethod2: data.qld_rent_payment_method_2,
+    rentPaymentMethod2Costs: data.qld_rent_payment_method_2_costs,
+    rentPaymentMethod2FinancialBenefit: data.qld_rent_payment_method_2_financial_benefit,
+    rentLastIncreasedOn: data.qld_rent_last_increased_on,
+    registrationNumber: data.rooming_house_registration_number,
+    featureNames: featureNamesForGoLive(featureRows),
+    waterUsageChargedSeparately: data.water_usage_charged_separately,
+    waterAttested: Boolean(data.water_separately_metered_efficient_attested_at),
+    accuracyAttested: Boolean(data.accuracy_attested_at),
+    nonDiscriminationAccepted,
+    utilitiesServices: data.utilities_services,
+    compliance: data,
+    payee: normalizePropertyPayoutEmbed(payoutRow),
+    providerNotice,
+  }
+  return listingGoLiveCompletenessBlock(completeness)
 }
 
 function listingNeedsGoLiveConfirmation(property: LandlordPropertyForListingActions): boolean {

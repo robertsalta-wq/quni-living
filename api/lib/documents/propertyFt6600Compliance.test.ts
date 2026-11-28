@@ -120,6 +120,21 @@ describe('missingNswFt6600ComplianceFieldLabels', () => {
     })).toBe(true)
   })
 
+  it('a property that is not in a strata scheme does not require by-laws', () => {
+    const missing = missingNswFt6600ComplianceFieldLabels(completeBattery, { isStrataScheme: false })
+    expect(missing).not.toContain('Strata or community scheme by-laws apply')
+    expect(missing).not.toContain('Owners corporation responsible for smoke alarms')
+    expect(nswFt6600ComplianceCompleteForProperty(completeBattery, { isStrataScheme: false })).toBe(true)
+  })
+
+  it('an unanswered strata question does not also require by-laws', () => {
+    const missing = missingNswFt6600ComplianceFieldLabels(
+      { ...completeBattery, strata_bylaws_applicable: null },
+      { isStrataScheme: null },
+    )
+    expect(missing).not.toContain('Strata or community scheme by-laws apply')
+  })
+
   it('OC answered no still counts as strata for accept-gate', () => {
     const missing = missingNswFt6600ComplianceFieldLabels({
       ...completeBattery,

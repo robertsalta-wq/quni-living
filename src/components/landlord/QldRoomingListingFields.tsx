@@ -1,4 +1,5 @@
 import { QldNoticeConsentFields } from '../tenancy/QldNoticeConsentFields'
+import { RequiredMark } from './RequiredMark'
 import {
   formatPropertyPayoutBsbDisplay,
   propertyPayoutDetailsQldRoomingComplete,
@@ -24,17 +25,26 @@ type Props = {
   payout: PropertyPayoutDetailsInput
   labelClass: string
   inputClass: string
+  banner?: string | null
 }
 
 const CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer'
 
-export function QldRoomingParticularsFields({ form, onChange, payout, labelClass, inputClass }: Props) {
+export function QldRoomingParticularsFields({ form, onChange, payout, labelClass, inputClass, banner = null }: Props) {
   const payoutComplete = propertyPayoutDetailsQldRoomingComplete(payout)
   const bsbDisplay = payout.bsb ? formatPropertyPayoutBsbDisplay(payout.bsb) : ''
 
   return (
-    <div id="section-qld-rooming-particulars" className="space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
+    <div
+      id="section-qld-rooming-particulars"
+      className={`space-y-5 rounded-xl border border-stone-200 bg-stone-50 p-4${banner ? ' ring-2 ring-red-600 ring-offset-2' : ''}`}
+    >
+      {banner ? (
+        <p className="text-sm font-medium text-red-700" role="alert">
+          {banner}
+        </p>
+      ) : null}
       <p className="text-sm font-medium text-gray-900">Queensland rooming particulars</p>
       <p className="text-xs text-gray-600 leading-relaxed">{QLD_LEVEL_1_LOCKED_COPY}</p>
       <p className="text-xs text-gray-600 leading-relaxed">{QLD_RENT_ACCOMMODATION_ONLY_HELPER}</p>
@@ -55,6 +65,7 @@ export function QldRoomingParticularsFields({ form, onChange, payout, labelClass
       <div>
         <label htmlFor="pf-qld-persons-premises" className={labelClass}>
           People allowed at the premises
+          <RequiredMark />
         </label>
         <p className="text-xs text-gray-600 mt-0.5 mb-1">
           The whole home, including this room. Not only the people in this room.
@@ -111,6 +122,7 @@ export function QldRoomingParticularsFields({ form, onChange, payout, labelClass
         <div>
           <label htmlFor="pf-qld-rent-method-2" className={labelClass}>
             Method 2
+            <RequiredMark />
           </label>
           <input
             id="pf-qld-rent-method-2"
@@ -122,9 +134,12 @@ export function QldRoomingParticularsFields({ form, onChange, payout, labelClass
             autoComplete="off"
           />
         </div>
+        {form.rentPaymentMethod2.trim() ? (
+        <>
         <div>
           <label htmlFor="pf-qld-rent-method-2-costs" className={labelClass}>
             Costs of method 2 for the resident
+            <RequiredMark />
           </label>
           <p className="text-xs text-gray-600 mt-0.5 mb-1 leading-relaxed">{QLD_ITEM_11_METHOD_2_COSTS_HELPER}</p>
           <input
@@ -140,6 +155,7 @@ export function QldRoomingParticularsFields({ form, onChange, payout, labelClass
         <div>
           <label htmlFor="pf-qld-rent-method-2-benefit" className={labelClass}>
             Financial benefit you receive from method 2
+            <RequiredMark />
           </label>
           <p className="text-xs text-gray-600 mt-0.5 mb-1 leading-relaxed">{QLD_ITEM_11_METHOD_2_BENEFIT_HELPER}</p>
           <input
@@ -152,6 +168,8 @@ export function QldRoomingParticularsFields({ form, onChange, payout, labelClass
             autoComplete="off"
           />
         </div>
+        </>
+        ) : null}
       </fieldset>
 
       <div>
@@ -192,7 +210,10 @@ export function QldSharesKitchenOrBathroomField({
 }) {
   return (
     <div>
-      <p className={labelClass}>Does the renter share a kitchen or bathroom with anyone else?</p>
+      <p className={labelClass}>
+        Does the renter share a kitchen or bathroom with anyone else?
+        <RequiredMark />
+      </p>
       <p className="text-xs text-gray-600 mt-0.5 mb-2">
         Yes if they share a kitchen or bathroom with you or with another resident. No if this room has its own
         kitchen and bathroom.
