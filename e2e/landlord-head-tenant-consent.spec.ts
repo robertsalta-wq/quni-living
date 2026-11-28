@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { NON_DISCRIMINATION_POLICY_VERSION } from '../src/lib/nonDiscriminationPolicy'
 import { createConfirmedLandlord, createSupabaseAdmin, deleteTestUser, getLandlordProfileId } from './helpers/supabaseAdmin'
 import { assertNoAppErrorBoundary } from './helpers/signupUi'
 
@@ -17,6 +18,11 @@ test.describe('landlord head-tenant consent', () => {
     if (!userId) return
     const landlordId = await getLandlordProfileId(admin, userId).catch(() => null)
     if (landlordId) {
+      const { data: props } = await admin.from('properties').select('id').eq('landlord_id', landlordId)
+      const ids = (props ?? []).map((row) => row.id)
+      if (ids.length > 0) {
+        await admin.from('property_payout_details').delete().in('property_id', ids)
+      }
       await admin.from('properties').delete().eq('landlord_id', landlordId)
     }
     await deleteTestUser(admin, userId)
@@ -38,6 +44,8 @@ test.describe('landlord head-tenant consent', () => {
         suburb: 'Auchenflower',
         postcode: '4066',
         state: 'QLD',
+        non_discrimination_policy_accepted_at: now,
+        non_discrimination_policy_version: NON_DISCRIMINATION_POLICY_VERSION,
       })
       .eq('id', landlordId)
     if (profileErr) throw profileErr
@@ -146,9 +154,28 @@ async function insertListing(
       slug,
       rent_per_week: 250,
       status: 'draft',
+      service_tier: 'listing',
       lister_role: args.listerRole,
       room_type: 'single',
       property_type: 'private_room_landlord_off_site',
+      room_description: 'Room 1',
+      qld_shares_kitchen_or_bathroom: false,
+      water_usage_charged_separately: false,
+      accuracy_attested_at: new Date().toISOString(),
+      utilities_services: {
+        electricity: {
+          tenant_pays: false,
+          individually_metered: null,
+          apportionment_percent: null,
+          how_must_be_paid: null,
+        },
+        gas: {
+          tenant_pays: false,
+          individually_metered: null,
+          apportionment_percent: null,
+          how_must_be_paid: null,
+        },
+      },
       address: '12 Test Street',
       suburb: 'Auchenflower',
       state: 'QLD',
@@ -160,6 +187,13 @@ async function insertListing(
     .select('id')
     .single()
   if (error) throw error
+  const { error: payoutErr } = await admin.from('property_payout_details').insert({
+    property_id: data.id,
+    account_name: 'E2E Landlord',
+    bsb: '062000',
+    account_number: '12345678',
+  })
+  if (payoutErr) throw payoutErr
   return { id: data.id, title: args.title }
 }
 
