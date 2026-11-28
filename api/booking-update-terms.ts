@@ -234,10 +234,7 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'Landlord profile not found' }, 404, origin)
     }
 
-    const { data: booking, error: bErr } = await admin
-      .from('bookings')
-      .select(
-        `
+    const bookingTermsSelect = `
         id,
         property_id,
         student_id,
@@ -265,10 +262,24 @@ export default async function handler(req, res) {
           property_type,
           is_registered_rooming_house
         )
-      `,
-      )
+      `
+    let { data: booking, error: bErr } = await admin
+      .from('bookings')
+      .select(bookingTermsSelect)
       .eq('id', bookingId)
       .maybeSingle()
+
+    const missingLettingChoice =
+      Boolean(bErr) &&
+      /letting_choice/i.test(`${bErr?.message || ''} ${bErr?.details || ''}`) &&
+      /schema cache|does not exist/i.test(`${bErr?.message || ''} ${bErr?.details || ''}`)
+    if (missingLettingChoice) {
+      ;({ data: booking, error: bErr } = await admin
+        .from('bookings')
+        .select(bookingTermsSelect.replace(/\n\s*letting_choice,/, ''))
+        .eq('id', bookingId)
+        .maybeSingle())
+    }
 
     if (bErr || !booking) {
       return corsJson(res, { error: 'Booking not found' }, 404, origin)

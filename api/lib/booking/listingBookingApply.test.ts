@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   bookingHasStudentDepositAuthorization,
+  bookingRowWithoutLettingChoiceIfColumnMissing,
   buildListingApplyBookingRow,
   isListingBookingApplyRow,
   isListingServiceTier,
@@ -102,6 +103,23 @@ describe('listingBookingApply helpers', () => {
     expect(row.occupant_count).toBe(2)
     expect(row.weekly_rent).toBe(420)
     expect(row.housemates_count).toBe(1)
+  })
+
+  it('drops letting_choice only when the column is not in the schema cache yet', () => {
+    const row = { letting_choice: 'sole', occupant_count: 1, weekly_rent: 280 }
+    const dropped = bookingRowWithoutLettingChoiceIfColumnMissing(row, {
+      message: "Could not find the 'letting_choice' column of 'bookings' in the schema cache",
+    })
+    expect(dropped).toEqual({ occupant_count: 1, weekly_rent: 280 })
+    expect(
+      bookingRowWithoutLettingChoiceIfColumnMissing(row, { message: 'duplicate key value' }),
+    ).toBeNull()
+    expect(
+      bookingRowWithoutLettingChoiceIfColumnMissing(
+        { occupant_count: 1 },
+        { message: "Could not find the 'letting_choice' column of 'bookings' in the schema cache" },
+      ),
+    ).toBeNull()
   })
 })
 

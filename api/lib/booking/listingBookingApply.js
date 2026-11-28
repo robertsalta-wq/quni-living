@@ -218,3 +218,17 @@ export function buildListingApplyBookingRow({
       : {}),
   }
 }
+
+/**
+ * PostgREST rejects letting_choice until the column is in the schema cache.
+ * Occupant count and weekly rent already carry the student's pick.
+ * Returns the row without letting_choice so the insert can be retried, or null when the error is something else.
+ */
+export function bookingRowWithoutLettingChoiceIfColumnMissing(row, error) {
+  if (row?.letting_choice !== 'sole' && row?.letting_choice !== 'together') return null
+  const msg = `${error?.message || ''} ${error?.details || ''}`
+  if (!/letting_choice/i.test(msg)) return null
+  if (!/schema cache|does not exist/i.test(msg)) return null
+  const { letting_choice: _omitted, ...rest } = row
+  return rest
+}

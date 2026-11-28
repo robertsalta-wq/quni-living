@@ -57,6 +57,7 @@ import { TENANT_BOOKING_PIPELINE_STATUSES } from './lib/booking/tenantBookingPip
 import { checkPropertyAvailableForNewApplication } from './lib/booking/propertyAvailability.js'
 import { assertNoPropertyGroupDoubleHold } from './lib/booking/termination/propertyGroupOverlap.js'
 import {
+  bookingRowWithoutLettingChoiceIfColumnMissing,
   buildListingAcknowledgmentColumns,
   buildListingApplyBookingRow,
   isListingServiceTier,
@@ -666,7 +667,15 @@ async function handleListingBookingCommit(request, origin, body) {
     }
   }
 
-  const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id, student_id').single()
+  let { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id, student_id').single()
+  const rowWithoutLettingChoice = insErr ? bookingRowWithoutLettingChoiceIfColumnMissing(row, insErr) : null
+  if (rowWithoutLettingChoice) {
+    ;({ data: inserted, error: insErr } = await admin
+      .from('bookings')
+      .insert(rowWithoutLettingChoice)
+      .select('id, student_id')
+      .single())
+  }
 
   if (!insErr && inserted?.id) {
     if (qldRoomingApply && residentNotice) {
