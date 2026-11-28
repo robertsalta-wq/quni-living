@@ -77,6 +77,7 @@ import {
   listingPreviewPath,
   writeListingWizardResume,
 } from '../../lib/listingHubWizard'
+import { listingDraftLeaveIssue } from '../../lib/listingDraftLeave'
 import {
   clearLandlordPropertyEditDraft,
   clearLandlordPropertyNewDraft,
@@ -932,7 +933,24 @@ export default function LandlordPropertyFormPage() {
   const publishGapAppliedRef = useRef(false)
   useEffect(() => {
     if (publishGapAppliedRef.current) return
-    const gap = (location.state as { listingPublishGap?: unknown } | null)?.listingPublishGap
+    const navState = location.state as {
+      listingPublishGap?: unknown
+      listingFormLeaveError?: { message?: unknown; fieldId?: unknown }
+    } | null
+    const leave = navState?.listingFormLeaveError
+    if (
+      leave &&
+      typeof leave.message === 'string' &&
+      leave.message.trim() &&
+      typeof leave.fieldId === 'string' &&
+      leave.fieldId.trim()
+    ) {
+      publishGapAppliedRef.current = true
+      setSubmitError(leave.message)
+      setSubmitErrorFieldId(leave.fieldId)
+      return
+    }
+    const gap = navState?.listingPublishGap
     if (typeof gap !== 'string' || !gap.trim()) return
     publishGapAppliedRef.current = true
     setSubmitError(gap)
@@ -1269,6 +1287,7 @@ export default function LandlordPropertyFormPage() {
   const propertyCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
   const loadedCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
   const requireConfirmedAddressRef = useRef<() => boolean>(() => true)
+  const flushDraftToAccountRef = useRef<() => Promise<boolean>>(async () => false)
 
   function rememberCampusChoice(next: CampusSelectionSource, sig: string) {
     campusSelectionSourceRef.current = next
@@ -3271,7 +3290,14 @@ export default function LandlordPropertyFormPage() {
     setCampusConfirmMessage(CONFIRM_ADDRESS_FIRST_MESSAGE)
     reportSubmitError(CONFIRM_ADDRESS_FIRST_MESSAGE, 'section-location')
     if (!showFormSection('section-location')) {
-      navigate(listingHubPath({ propertyId, view: 'location' }))
+      navigate(listingHubPath({ propertyId, view: 'location' }), {
+        state: {
+          listingFormLeaveError: {
+            message: CONFIRM_ADDRESS_FIRST_MESSAGE,
+            fieldId: 'section-location',
+          },
+        },
+      })
     }
     return false
   }
@@ -4373,42 +4399,98 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleSaveDraftAndLeave = useCallback(async () => {
-    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
-      reportSubmitError(unsupportedListingStateMessage(listingStateCode), 'pf-state')
+    if (!user?.id) {
+      reportSubmitError('You must be signed in to save this listing.')
       return
     }
-    if (postcodeStateConflict) {
-      reportSubmitError(postcodeStateConflict, 'pf-pc')
+    const blocked = listingDraftLeaveIssue({
+      title,
+      listingStateCode: listingStateCode ?? '',
+      unsupportedStateMessage:
+        listingStateCode && !isListingAgreementState(listingStateCode)
+          ? unsupportedListingStateMessage(listingStateCode)
+          : null,
+      postcodeStateConflict,
+      rentPerWeek,
+      rentRequiredMessage: LISTING_HUB_RENT_REQUIRED_MESSAGE,
+    })
+    if (blocked) {
+      reportSubmitError(blocked.message, blocked.fieldId)
+      if (!showFormSection(blocked.sectionDomId)) {
+        const view = hubSectionIdFromFormSectionId(blocked.sectionDomId)
+        if (view) {
+          navigate(listingHubPath({ propertyId, view }), {
+            state: { listingFormLeaveError: { message: blocked.message, fieldId: blocked.fieldId } },
+          })
+        }
+      }
       return
     }
     if (!requireConfirmedAddressRef.current()) return
+    const t = title.trim()
+    const rent = Number(rentPerWeek)
+    const landlordId = role === 'admin' ? adminLandlordId || null : landlordProfile?.id ?? null
+    if (!landlordId) {
+      reportSubmitError(
+        role === 'admin'
+          ? 'Select a landlord for this listing.'
+          : 'Landlord profile is missing. Complete landlord onboarding first.',
+        role === 'admin' ? 'admin-landlord' : null,
+      )
+      return
+    }
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const draftCoupleRaw = coupleSurchargePerWeek.trim()
+    const draftCouple = draftCoupleRaw ? Number(draftCoupleRaw) : null
+    const draftOccupancy = occupancyPricesForSave({
+      propertyType: accommodation.propertyListingType,
+      rentPerWeek: rent,
+      maxOccupants: parseInt(maxOccupants, 10) || 1,
+      coupleSurcharge: draftCouple != null && Number.isFinite(draftCouple) ? draftCouple : null,
+      togetherEnabled,
+      togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+    })
+    if (!draftOccupancy.ok) {
+      reportSubmitError(draftOccupancy.message, 'pf-together-weekly-rent')
+      if (!showFormSection('section-pricing-availability')) {
+        navigate(listingHubPath({ propertyId, view: 'pricing' }), {
+          state: {
+            listingFormLeaveError: {
+              message: draftOccupancy.message,
+              fieldId: 'pf-together-weekly-rent',
+            },
+          },
+        })
+      }
+      return
+    }
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
-    flashDraftSavedIndicator()
 
-    if (!isEdit && user?.id) {
-      const t = title.trim()
-      const rent = Number(rentPerWeek)
-      const landlordId = role === 'admin' ? adminLandlordId || null : landlordProfile?.id ?? null
-      if (t && Number.isFinite(rent) && rent > 0 && landlordId) {
-        try {
-          setSubmitting(true)
+    const leaveAfterSaved = (savedId: string) => {
+      flashDraftSavedIndicator()
+      if (role === 'admin') {
+        navigate(`/landlord/property/edit/${savedId}`, {
+          replace: true,
+          state: { conciergeDraftCreated: !isEdit },
+        })
+        return
+      }
+      if (isHubSectionMode) {
+        navigate(listingHubPath({ propertyId: savedId }), {
+          replace: true,
+          state: { listingHubIntent: true },
+        })
+        return
+      }
+      navigate('/landlord/dashboard?tab=listings', { replace: true })
+    }
+
+    let createdId: string | null = null
+    try {
+      setSubmitting(true)
+      if (!isEdit) {
           const slug = generatePropertySlug(t)
-          const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
-          const draftCoupleRaw = coupleSurchargePerWeek.trim()
-          const draftCouple = draftCoupleRaw ? Number(draftCoupleRaw) : null
-          const draftOccupancy = occupancyPricesForSave({
-            propertyType: accommodation.propertyListingType,
-            rentPerWeek: rent,
-            maxOccupants: parseInt(maxOccupants, 10) || 1,
-            coupleSurcharge: draftCouple != null && Number.isFinite(draftCouple) ? draftCouple : null,
-            togetherEnabled,
-            togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
-          })
-          if (!draftOccupancy.ok) {
-            reportSubmitError(draftOccupancy.message, 'pf-together-weekly-rent')
-            return
-          }
           const { data: inserted, error: insErr } = await supabase
             .from('properties')
             .insert({
@@ -4488,6 +4570,7 @@ export default function LandlordPropertyFormPage() {
             .single()
           if (insErr) throw insErr
           const newId = (inserted as { id: string }).id
+          createdId = newId
           const featureIds = [...selectedFeatureIds]
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
@@ -4511,32 +4594,26 @@ export default function LandlordPropertyFormPage() {
             if (auditErr) console.warn('[concierge listing] audit', auditErr.message)
           }
           clearLandlordPropertyNewDraft()
-          navigate(
-            role === 'admin'
-              ? `/landlord/property/edit/${newId}`
-              : listingHubPath({ propertyId: newId }),
-            role === 'admin' ? { replace: true, state: { conciergeDraftCreated: true } } : { replace: true },
-          )
+          leaveAfterSaved(newId)
           return
-        } catch (err) {
-          console.error('[LandlordPropertyFormPage] server draft save failed', err)
-          setDraftPersistError(
-            err instanceof Error
-              ? `Saved on this device only - account draft failed: ${err.message}`
-              : 'Saved on this device only - could not create account draft.',
-          )
-        } finally {
-          setSubmitting(false)
-        }
       }
-    }
-
-    if (isHubSectionMode) {
-      navigate(hubReturnPath, { state: { listingHubIntent: true } })
-    } else if (isEdit && propertyId) {
-      navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
-    } else {
-      navigate('/landlord/dashboard?tab=listings')
+      if (!propertyId) {
+        reportSubmitError('This draft has no saved listing yet.')
+        return
+      }
+      const saved = await flushDraftToAccountRef.current()
+      if (!saved) return
+      leaveAfterSaved(propertyId)
+    } catch (err) {
+      console.error('[LandlordPropertyFormPage] server draft save failed', err)
+      if (createdId) {
+        clearLandlordPropertyNewDraft()
+        leaveAfterSaved(createdId)
+        return
+      }
+      reportSubmitError(submitErrorMessageFromUnknown(err))
+    } finally {
+      setSubmitting(false)
     }
   }, [
     listingStateCode,
@@ -4588,9 +4665,9 @@ export default function LandlordPropertyFormPage() {
     selectedFeatureIds,
     selectedRules,
     isHubSectionMode,
-    hubReturnPath,
     propertyId,
     navigate,
+    showFormSection,
     skipAttestations,
     t3ComplianceForm,
   ])
@@ -4696,6 +4773,7 @@ export default function LandlordPropertyFormPage() {
     selectedFeatureIds,
     selectedRules,
   ])
+  flushDraftToAccountRef.current = flushDraftToAccount
 
   const handleWizardPrev = useCallback(() => {
     if (!hubSectionId) return
