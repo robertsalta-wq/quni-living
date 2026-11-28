@@ -79,6 +79,21 @@ describe('officialQldFormR18Fill', () => {
     20_000,
   )
 
+  it('names resident 2 and adds a Co-tenant signature tag', async () => {
+    const { pdfBytes } = await fillOfficialQldFormR18Pdf({
+      ...qldFormR18SampleFillProps(),
+      bondAmount: 880,
+      personsInRoom: 2,
+      resident2FullName: 'Blair Example',
+      resident2Phone: '0400000003',
+      resident2Email: 'blair.example@example.com',
+    })
+    const text = (await allPageText(pdfBytes)).replace(/\s+/g, ' ')
+    expect(text).toContain('Blair Example')
+    expect(text).toContain('880')
+    expect(text).toContain('Resident 2 Signature;role=Co-tenant')
+  }, 20_000)
+
   it('throws on Item 11 payment reference overflow instead of clipping', async () => {
     await expect(
       fillOfficialQldFormR18Pdf({

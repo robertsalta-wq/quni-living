@@ -173,6 +173,7 @@ export function buildListingApplyBookingRow({
   bondAmount: bondAmountOverride = null,
   listingAcknowledgment = null,
   vicRoomingResidentAcceptsElectronicService = null,
+  lettingChoice = null,
 }) {
   const bondAmount =
     bondAmountOverride != null
@@ -195,6 +196,7 @@ export function buildListingApplyBookingRow({
     property_type: propertyType,
     expires_at: expiresAt,
     occupant_count: occupantCount,
+    ...(lettingChoice === 'sole' || lettingChoice === 'together' ? { letting_choice: lettingChoice } : {}),
     parking_selected: parkingSelected,
     rent_breakdown: breakdownAud,
     co_tenant: coTenant,

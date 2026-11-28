@@ -50,6 +50,8 @@ import {
   housematesCountFromOccupantCount,
   resolveCoTenantForCommit,
   resolveWeeklyRentForBooking,
+  occupancyAfterLettingChoice,
+  parseLettingChoiceFromBody,
 } from './lib/booking/occupancyBooking.js'
 import { TENANT_BOOKING_PIPELINE_STATUSES } from './lib/booking/tenantBookingPipelineStatuses.js'
 import { checkPropertyAvailableForNewApplication } from './lib/booking/propertyAvailability.js'
@@ -355,7 +357,12 @@ async function handleListingBookingCommit(request, origin, body) {
   if (!occupancyParsed.ok) {
     return json(occupancyParsed.body, occupancyParsed.status, origin)
   }
-  const { occupantCount, parkingSelected } = occupancyParsed
+  let { occupantCount, parkingSelected } = occupancyParsed
+  let lettingChoice = null
+  const choiceParsed = parseLettingChoiceFromBody(body)
+  if (!choiceParsed.ok) {
+    return json(choiceParsed.body, choiceParsed.status, origin)
+  }
 
   if (!propertyId || !moveInDate || !leaseLength) {
     return json({ error: 'propertyId, moveInDate, and leaseLength are required' }, 400, origin)
@@ -422,7 +429,7 @@ async function handleListingBookingCommit(request, origin, body) {
   if (!coTenantResolved.ok) {
     return json(coTenantResolved.body, coTenantResolved.status, origin)
   }
-  const coTenant = coTenantResolved.coTenant
+  let coTenant = coTenantResolved.coTenant
 
   const listingVis = buildBookingRejectVisibility(user, propertyId, 'listing_commit', {
     attempt_id: attemptId,
@@ -495,7 +502,24 @@ async function handleListingBookingCommit(request, origin, body) {
     )
   }
 
-  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  const lettingApplied = occupancyAfterLettingChoice(property, body, { occupantCount, parkingSelected })
+  if (!lettingApplied.ok) {
+    return json(lettingApplied.body, lettingApplied.status, origin)
+  }
+  occupantCount = lettingApplied.occupantCount
+  parkingSelected = lettingApplied.parkingSelected
+  lettingChoice = lettingApplied.lettingChoice
+  if (lettingChoice) {
+    const coTenantForChoice = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant, {
+      primaryTenantEmail: student.email,
+    })
+    if (!coTenantForChoice.ok) {
+      return json(coTenantForChoice.body, coTenantForChoice.status, origin)
+    }
+    coTenant = coTenantForChoice.coTenant
+  }
+
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected, lettingChoice })
   if (!rentResolved.ok) {
     return json(rentResolved.body, rentResolved.status, origin)
   }
@@ -611,6 +635,7 @@ async function handleListingBookingCommit(request, origin, body) {
     propertyType,
     occupantCount,
     parkingSelected,
+    lettingChoice,
     weeklyRent,
     breakdownAud,
     coTenant,
@@ -851,7 +876,12 @@ export default async function handler(request) {
   if (!occupancyParsed.ok) {
     return json(occupancyParsed.body, occupancyParsed.status, origin)
   }
-  const { occupantCount, parkingSelected } = occupancyParsed
+  let { occupantCount, parkingSelected } = occupancyParsed
+  let lettingChoice = null
+  const choiceParsed = parseLettingChoiceFromBody(body)
+  if (!choiceParsed.ok) {
+    return json(choiceParsed.body, choiceParsed.status, origin)
+  }
 
   const supabaseAuth = createClient(supabaseUrl, anonKey)
   const {
@@ -991,7 +1021,15 @@ export default async function handler(request) {
     )
   }
 
-  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  const lettingApplied = occupancyAfterLettingChoice(property, body, { occupantCount, parkingSelected })
+  if (!lettingApplied.ok) {
+    return json(lettingApplied.body, lettingApplied.status, origin)
+  }
+  occupantCount = lettingApplied.occupantCount
+  parkingSelected = lettingApplied.parkingSelected
+  lettingChoice = lettingApplied.lettingChoice
+
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected, lettingChoice })
   if (!rentResolved.ok) {
     return json(rentResolved.body, rentResolved.status, origin)
   }
@@ -1032,6 +1070,7 @@ export default async function handler(request) {
         bondAmountAud: offerApplied.bondAmount,
         occupantCount,
         parkingSelected,
+        lettingChoice,
       },
       200,
       origin,

@@ -3,7 +3,7 @@
  * Keep in sync with src/lib/pricing/resolveWeeklyRent.ts
  */
 
-/** @typedef {'INVALID_BASE_RENT' | 'INVALID_OCCUPANT_COUNT' | 'OCCUPANTS_EXCEED_MAX' | 'PARKING_NOT_AVAILABLE'} ResolveWeeklyRentErrorCode */
+/** @typedef {'INVALID_BASE_RENT' | 'INVALID_OCCUPANT_COUNT' | 'OCCUPANTS_EXCEED_MAX' | 'PARKING_NOT_AVAILABLE' | 'LETTING_TOGETHER_UNAVAILABLE'} ResolveWeeklyRentErrorCode */
 
 export class ResolveWeeklyRentError extends Error {
   /**
@@ -25,12 +25,14 @@ export class ResolveWeeklyRentError extends Error {
  * @property {number | string | null | undefined} couple_surcharge_per_week
  * @property {number | string | null | undefined} parking_surcharge_per_week
  * @property {boolean | null | undefined} parking_available
+ * @property {number | string | null | undefined} [together_weekly_rent]
  */
 
 /**
  * @typedef {Object} ResolveWeeklyRentInput
  * @property {number} occupantCount
  * @property {boolean} [parkingSelected]
+ * @property {'sole' | 'together' | null} [lettingChoice]
  */
 
 /**
@@ -85,16 +87,44 @@ function parseAudAmount(value) {
  * @returns {ResolveWeeklyRentResult}
  */
 export function resolveWeeklyRent(property, input) {
-  const base = parseAudAmount(property?.rent_per_week)
-  if (base == null) {
-    throw new ResolveWeeklyRentError('INVALID_BASE_RENT', 'Invalid base weekly rent on listing')
+  const lettingChoice =
+    input?.lettingChoice === 'sole' || input?.lettingChoice === 'together' ? input.lettingChoice : null
+  const parkingSelected = Boolean(input?.parkingSelected)
+  const maxOccupants = parseMaxOccupants(property?.max_occupants, 1)
+
+  let base
+  let occupantCount
+  if (lettingChoice === 'together') {
+    if (property?.together_weekly_rent == null || property.together_weekly_rent === '') {
+      throw new ResolveWeeklyRentError(
+        'LETTING_TOGETHER_UNAVAILABLE',
+        'Two people together is not offered on this room',
+      )
+    }
+    const together = parseAudAmount(property.together_weekly_rent)
+    if (together == null || together <= 0) {
+      throw new ResolveWeeklyRentError(
+        'LETTING_TOGETHER_UNAVAILABLE',
+        'Two people together is not offered on this room',
+      )
+    }
+    base = together
+    occupantCount = 2
+  } else if (lettingChoice === 'sole') {
+    base = parseAudAmount(property?.rent_per_week)
+    if (base == null) {
+      throw new ResolveWeeklyRentError('INVALID_BASE_RENT', 'Invalid base weekly rent on listing')
+    }
+    occupantCount = 1
+  } else {
+    base = parseAudAmount(property?.rent_per_week)
+    if (base == null) {
+      throw new ResolveWeeklyRentError('INVALID_BASE_RENT', 'Invalid base weekly rent on listing')
+    }
+    occupantCount = parseOccupantCount(input?.occupantCount)
   }
 
-  const maxOccupants = parseMaxOccupants(property?.max_occupants, 1)
-  const occupantCount = parseOccupantCount(input?.occupantCount)
-  const parkingSelected = Boolean(input?.parkingSelected)
-
-  if (occupantCount > maxOccupants) {
+  if (!lettingChoice && occupantCount > maxOccupants) {
     throw new ResolveWeeklyRentError(
       'OCCUPANTS_EXCEED_MAX',
       `This listing allows at most ${maxOccupants} occupant${maxOccupants === 1 ? '' : 's'}`,
@@ -110,7 +140,7 @@ export function resolveWeeklyRent(property, input) {
 
   let weeklyRent = base
 
-  if (occupantCount >= 2) {
+  if (!lettingChoice && occupantCount >= 2) {
     const couple = parseAudAmount(property?.couple_surcharge_per_week) ?? 0
     if (couple > 0) {
       breakdownAud.couple = couple

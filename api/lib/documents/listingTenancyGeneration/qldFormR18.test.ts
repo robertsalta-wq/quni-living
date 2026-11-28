@@ -4,6 +4,7 @@ import { resolveTenancyPackage } from '../../resolveTenancyPackage.js'
 import {
   buildQldFormR18Pdfs,
   QLD_FORM_R18_GENERATOR_ID,
+  qldFormR18PrintedBondAmount,
   qldFormR18SamplePackageProps,
 } from './qldFormR18.js'
 
@@ -18,6 +19,15 @@ async function pdfText(pdfBytes: Uint8Array): Promise<string> {
   }
   return pages.join('\n')
 }
+
+describe('qldFormR18PrintedBondAmount', () => {
+  it('prints the booking snapshot and ignores a missing snapshot', () => {
+    expect(qldFormR18PrintedBondAmount(880)).toBe(880)
+    expect(qldFormR18PrintedBondAmount('880.50')).toBe(880.5)
+    expect(qldFormR18PrintedBondAmount(null)).toBeNull()
+    expect(qldFormR18PrintedBondAmount('')).toBeNull()
+  })
+})
 
 describe('qld-form-r18 listing generator', () => {
   it('is on the listing registry and QLD T3 is supported', () => {

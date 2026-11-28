@@ -126,6 +126,31 @@ describe('NswBoardingHouseOccupancyAgreement', () => {
     expect(text).toContain('Metered use apportioned equally among occupied rooms')
     expect(text).toContain('Annexure 2 Proprietor Signature')
     expect(text).toContain('Annexure 2 Resident Signature')
+    expect(text).not.toContain('Resident 2 Signature')
+  })
+
+  it('names resident 2 and gives them a Co-tenant signature on a two-together booking', async () => {
+    const text = await pdfText(
+      sampleProps({
+        resident2: {
+          fullName: 'Blair Resident',
+          email: 'blair@example.com',
+          phone: '0403 000 000',
+        },
+        additionalCharges: [
+          {
+            item: 'Electricity',
+            amount: 'Actual cost',
+            whenDue: 'Monthly',
+            howCalculated: 'Metered use apportioned equally among occupied rooms',
+          },
+        ],
+      }),
+    )
+    expect(text).toContain('Blair Resident')
+    expect(text).toContain('Resident 2 Signature')
+    expect(text).toContain('role=Co-tenant')
+    expect(text).toContain('Annexure 2 Resident 2 Signature')
   })
 
   it('leaves clause 5 and 11 override columns blank by default', async () => {

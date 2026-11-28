@@ -254,6 +254,7 @@ export default async function handler(req, res) {
         lease_length,
         notes,
         occupant_count,
+        letting_choice,
         housemates_count,
         co_tenant,
         properties (

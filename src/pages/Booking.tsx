@@ -82,6 +82,7 @@ import {
   validateBookingOccupancy,
   type CoTenantFormState,
 } from '../components/booking/BookingOccupancySection'
+import { listingLettingOptions, parseLettingChoiceParam, type LettingChoice } from '../lib/lettingChoice'
 import {
   calculateBookingFeeCents,
   fetchPricingForPropertyTier,
@@ -665,6 +666,13 @@ export default function Booking() {
   const [bondCheck, setBondCheck] = useState(false)
   const [listingCheck, setListingCheck] = useState(false)
   const [occupantCount, setOccupantCount] = useState<1 | 2>(1)
+  const [lettingChoice, setLettingChoice] = useState<LettingChoice>(() => {
+    try {
+      return parseLettingChoiceParam(new URLSearchParams(window.location.search).get('letting')) ?? 'sole'
+    } catch {
+      return 'sole'
+    }
+  })
   const [parkingSelected, setParkingSelected] = useState(false)
   const [coTenantForm, setCoTenantForm] = useState<CoTenantFormState>({
     fullName: '',
@@ -711,10 +719,11 @@ export default function Booking() {
   const studentProfile = isRenterRole(role) && profile ? (profile as StudentRow) : null
 
   useEffect(() => {
+    if (property && listingLettingOptions(property).length > 0) return
     if (studentProfile?.occupancy_type === 'couple') {
       setOccupantCount(2)
     }
-  }, [studentProfile?.occupancy_type])
+  }, [studentProfile?.occupancy_type, property])
 
   useEffect(() => {
     if (!tenantInviteToken || loadingProperty || !property) return
@@ -725,12 +734,20 @@ export default function Booking() {
 
   const maxOccupants = Math.min(10, Math.max(1, Math.floor(Number(property?.max_occupants ?? 1))))
 
+  const lettingOptions = useMemo(() => (property ? listingLettingOptions(property) : []), [property])
+  const lettingMode = lettingOptions.length > 0
+  const togetherOffered = lettingOptions.some((option) => option.choice === 'together')
+  const bookedLettingChoice: LettingChoice =
+    lettingMode && lettingChoice === 'together' && togetherOffered ? 'together' : 'sole'
+  const bookedOccupantCount: 1 | 2 = lettingMode ? (bookedLettingChoice === 'together' ? 2 : 1) : occupantCount
+
   const occupancyPricingInput = useMemo(() => {
     if (!property) return null
     return {
       rent_per_week: property.rent_per_week,
       max_occupants: property.max_occupants ?? 1,
       couple_surcharge_per_week: property.couple_surcharge_per_week,
+      together_weekly_rent: property.together_weekly_rent,
       parking_surcharge_per_week: property.parking_surcharge_per_week,
       parking_available: property.parking_available ?? false,
     }
@@ -739,13 +756,17 @@ export default function Booking() {
   const rentResolution = useMemo(() => {
     if (!occupancyPricingInput) return null
     try {
-      return resolveWeeklyRent(occupancyPricingInput, { occupantCount, parkingSelected })
+      return resolveWeeklyRent(occupancyPricingInput, {
+        occupantCount: bookedOccupantCount,
+        parkingSelected,
+        lettingChoice: lettingMode ? bookedLettingChoice : null,
+      })
     } catch (e) {
       const msg =
         e instanceof ResolveWeeklyRentError ? e.message : 'Could not calculate weekly rent for this selection.'
       return { error: msg }
     }
-  }, [occupancyPricingInput, occupantCount, parkingSelected])
+  }, [occupancyPricingInput, bookedOccupantCount, parkingSelected, lettingMode, bookedLettingChoice])
 
   const coTenantEmailWarning = useMemo(() => {
     const studentEmail = studentProfile?.email?.trim().toLowerCase() ?? ''
@@ -780,8 +801,8 @@ export default function Booking() {
   const validateOccupancyStep = useCallback((): string | null => {
     if (rentResolution != null && 'error' in rentResolution) return rentResolution.error
     return validateBookingOccupancy({
-      maxOccupants,
-      occupantCount,
+      maxOccupants: lettingMode ? Math.max(maxOccupants, bookedOccupantCount) : maxOccupants,
+      occupantCount: bookedOccupantCount,
       parkingSelected,
       parkingAvailable: Boolean(property?.parking_available),
       coTenant: coTenantForm,
@@ -792,7 +813,8 @@ export default function Booking() {
   }, [
     rentResolution,
     maxOccupants,
-    occupantCount,
+    lettingMode,
+    bookedOccupantCount,
     parkingSelected,
     property?.parking_available,
     coTenantForm,
@@ -1087,6 +1109,7 @@ export default function Booking() {
           depositCents?: number | null
           rentPaymentMethod?: string
           occupantCount?: number
+          lettingChoice?: LettingChoice
           parkingSelected?: boolean
           coTenantForm?: CoTenantFormState
           residentAcceptsElectronicService?: boolean | null
@@ -1106,6 +1129,12 @@ export default function Booking() {
           }
           if (d.occupantCount === 2) setOccupantCount(2)
           else if (d.occupantCount === 1) setOccupantCount(1)
+          if (
+            (d.lettingChoice === 'sole' || d.lettingChoice === 'together') &&
+            !parseLettingChoiceParam(new URLSearchParams(window.location.search).get('letting'))
+          ) {
+            setLettingChoice(d.lettingChoice)
+          }
           if (typeof d.parkingSelected === 'boolean') setParkingSelected(d.parkingSelected)
           if (d.coTenantForm && typeof d.coTenantForm === 'object') {
             setCoTenantForm({
@@ -1195,7 +1224,8 @@ export default function Booking() {
           rentPaymentMethod,
           bondCheck,
           listingCheck,
-          occupantCount,
+          occupantCount: bookedOccupantCount,
+          lettingChoice: lettingMode ? bookedLettingChoice : undefined,
           parkingSelected,
           coTenantForm,
           residentAcceptsElectronicService,
@@ -1217,7 +1247,9 @@ export default function Booking() {
     rentPaymentMethod,
     bondCheck,
     listingCheck,
-    occupantCount,
+    bookedOccupantCount,
+    bookedLettingChoice,
+    lettingMode,
     parkingSelected,
     coTenantForm,
     residentAcceptsElectronicService,
@@ -1401,7 +1433,8 @@ export default function Booking() {
           studentMessage: message.trim(),
           bondAcknowledged: true,
           listingAcknowledged: listingCheck,
-          occupantCount,
+          occupantCount: bookedOccupantCount,
+          ...(lettingMode ? { lettingChoice: bookedLettingChoice } : {}),
           parkingSelected,
           ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
         }),
@@ -1501,7 +1534,9 @@ export default function Booking() {
     moveInValidationOpts,
     leaseLength,
     message,
-    occupantCount,
+    bookedOccupantCount,
+    bookedLettingChoice,
+    lettingMode,
     parkingSelected,
     listingCheck,
     validateOccupancyStep,
@@ -1551,13 +1586,14 @@ export default function Booking() {
           bondAcknowledged: true,
           listingAcknowledged: listingCheck,
           propertyType: propertyTypeSnapshot,
-          occupantCount,
+          occupantCount: bookedOccupantCount,
+          ...(lettingMode ? { lettingChoice: bookedLettingChoice } : {}),
           parkingSelected,
           qldResidentNoticeConsent: qldResidentNotice,
           ...(vicRoomingBooking
             ? { vicRoomingResidentAcceptsElectronicService: residentAcceptsElectronicService }
             : {}),
-          ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
+          ...(bookedOccupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
           ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           ...(tenantInviteToken ? { tenantInviteToken } : {}),
           ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
@@ -1645,7 +1681,9 @@ export default function Booking() {
     message,
     conversationIdFromThread,
     tenantInviteToken,
-    occupantCount,
+    bookedOccupantCount,
+    bookedLettingChoice,
+    lettingMode,
     parkingSelected,
     listingCheck,
     qldResidentNotice,
@@ -1699,12 +1737,13 @@ export default function Booking() {
             listingAcknowledged: listingCheck,
             propertyType: propertyTypeSnapshot,
             rentPaymentMethod,
-            occupantCount,
+            occupantCount: bookedOccupantCount,
+            ...(lettingMode ? { lettingChoice: bookedLettingChoice } : {}),
             parkingSelected,
             ...(vicRoomingBooking
               ? { vicRoomingResidentAcceptsElectronicService: residentAcceptsElectronicService }
               : {}),
-            ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
+            ...(bookedOccupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
             ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
             ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
           }),
@@ -1767,7 +1806,9 @@ export default function Booking() {
       message,
       rentPaymentMethod,
       conversationIdFromThread,
-      occupantCount,
+      bookedOccupantCount,
+      bookedLettingChoice,
+      lettingMode,
       parkingSelected,
       listingCheck,
       buildCoTenantPayload,
@@ -1972,7 +2013,7 @@ export default function Booking() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mt-1">{property.title}</h1>
           {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
           <p className="text-lg font-semibold text-gray-900 mt-2">
-            {listingShowsFromPrice && occupantCount === 1 && !parkingSelected ? (
+            {!lettingMode && listingShowsFromPrice && occupantCount === 1 && !parkingSelected ? (
               <>
                 From ${baseRentDisplay.toLocaleString('en-AU', { maximumFractionDigits: 0 })} / week
                 <span className="block text-xs font-normal text-gray-500 mt-0.5">
@@ -2113,7 +2154,14 @@ export default function Booking() {
           <BookingOccupancySection
             maxOccupants={maxOccupants}
             parkingAvailable={Boolean(property.parking_available)}
-            occupantCount={occupantCount}
+            occupantCount={bookedOccupantCount}
+            lettingOptions={lettingMode ? lettingOptions : undefined}
+            lettingChoice={bookedLettingChoice}
+            onLettingChoiceChange={(choice) => {
+              setLettingChoice(choice)
+              setOccupantCount(choice === 'together' ? 2 : 1)
+              setOccupancyError(null)
+            }}
             onOccupantCountChange={(n) => {
               setOccupantCount(n)
               setOccupancyError(null)
@@ -2172,7 +2220,7 @@ export default function Booking() {
                   ${weeklyRent.toLocaleString('en-AU')}
                 </span>
               </div>
-              {breakdownAud.couple != null && breakdownAud.couple > 0 && occupantCount === 2 ? (
+              {breakdownAud.couple != null && breakdownAud.couple > 0 && bookedOccupantCount === 2 ? (
                 <div className="flex justify-between text-xs text-gray-600">
                   <span>Includes second person</span>
                   <span className="tabular-nums">+${breakdownAud.couple.toLocaleString('en-AU')}</span>

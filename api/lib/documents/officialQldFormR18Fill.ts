@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { PDFDict, PDFDocument, PDFName, StandardFonts, type PDFFont, type PDFForm } from 'pdf-lib'
+import { PDFDict, PDFDocument, PDFName, rgb, StandardFonts, type PDFFont, type PDFForm } from 'pdf-lib'
 import { QLD_FORM_R18_ACTION_BUTTONS, QLD_FORM_R18_CHECKS as C, QLD_FORM_R18_FIELDS as F } from './qldFormR18Fields.js'
 import {
   assertQldFormR18Part3Fits,
@@ -69,6 +69,10 @@ export type QldFormR18FillProps = {
   residentNoticeEmail: QldFormR18NoticeChannel
   residentNoticeSms: QldFormR18NoticeChannel
   specialTermsText?: string
+  /** Second resident on a two-together booking. Left blank for one person. */
+  resident2FullName?: string
+  resident2Phone?: string
+  resident2Email?: string
 }
 
 export type OfficialQldFormR18FillResult = {
@@ -223,6 +227,14 @@ export async function applyOfficialQldFormR18Fill(
   pushText(form, F.Resident1_emergency_phone, props.emergencyContactPhone, filled)
   pushText(form, F.Resident1_emergency_email, props.emergencyContactEmail, filled)
 
+  const resident2Name = props.resident2FullName?.trim() ?? ''
+  if (resident2Name) {
+    pushText(form, F.Resident2_full_name, resident2Name, filled)
+    pushText(form, F.Resident2_phone, props.resident2Phone ?? '', filled)
+    pushText(form, F.Resident2_email, props.resident2Email ?? '', filled)
+    pushText(form, F.Sign_resident_2_name, resident2Name, filled)
+  }
+
   pushText(form, F.Premises_address_1, props.premisesStreet, filled)
   pushText(form, F.Premises_address_2, props.premisesSuburbLine, filled)
   pushText(form, F.Premises_postcode, props.premisesPostcode, filled)
@@ -330,9 +342,21 @@ export async function applyOfficialQldFormR18Fill(
   return { filledFieldNames: [...new Set(filled)], specialTerms }
 }
 
+function resident2SignatureSpot(doc: PDFDocument): { pageIndex: number; x: number; y: number } | null {
+  const field = doc.getForm().getTextField(F.Sign_resident_2_name)
+  const widget = field.acroField.getWidgets()[0]
+  if (!widget) return null
+  const rect = widget.getRectangle()
+  const pageRef = widget.P()
+  const pages = doc.getPages()
+  const found = pages.findIndex((page) => page.ref === pageRef)
+  return { pageIndex: found >= 0 ? found : pages.length - 1, x: rect.x, y: rect.y + rect.height + 4 }
+}
+
 export async function fillOfficialQldFormR18Pdf(props: QldFormR18FillProps): Promise<OfficialQldFormR18FillResult> {
   const doc = await loadOfficialQldFormR18Template()
   const { filledFieldNames } = await applyOfficialQldFormR18Fill(doc, props)
+  const resident2Spot = props.resident2FullName?.trim() ? resident2SignatureSpot(doc) : null
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const form = doc.getForm()
   form.updateFieldAppearances(font)
@@ -343,6 +367,25 @@ export async function fillOfficialQldFormR18Pdf(props: QldFormR18FillProps): Pro
     acroForm.delete(PDFName.of('NeedAppearances'))
   }
   flattenAndCleanForm(doc)
+  if (resident2Spot) {
+    const page = doc.getPages()[resident2Spot.pageIndex]
+    const y = Math.min(resident2Spot.y, page.getHeight() - 24)
+    const hidden = rgb(1, 1, 1)
+    page.drawText('{{Resident 2 Signature;role=Co-tenant;type=signature;width=160;height=28}}', {
+      x: resident2Spot.x,
+      y,
+      size: 6,
+      font,
+      color: hidden,
+    })
+    page.drawText('{{Resident 2 Sign Date;role=Co-tenant;type=date;width=100;height=16}}', {
+      x: resident2Spot.x + 170,
+      y,
+      size: 6,
+      font,
+      color: hidden,
+    })
+  }
   const pdfBytes = await saveNormalizedPdf(doc)
   return { pdfBytes, filledFieldNames }
 }

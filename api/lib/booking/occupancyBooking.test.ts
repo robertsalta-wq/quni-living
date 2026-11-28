@@ -8,6 +8,7 @@ import {
   parseOccupancyScalarsFromBody,
   resolveCoTenantForCommit,
   resolveWeeklyRentForBooking,
+  occupancyAfterLettingChoice,
 } from './occupancyBooking.js'
 
 const property = {
@@ -112,6 +113,48 @@ describe('assertPiMetadataMatchesOccupancy', () => {
         },
       ).ok,
     ).toBe(false)
+  })
+})
+
+describe('occupancyAfterLettingChoice', () => {
+  const room = {
+    property_type: 'private_room_landlord_off_site',
+    rent_per_week: 280,
+    together_weekly_rent: 420,
+  }
+
+  it('stores together as two people and sole as one', () => {
+    expect(occupancyAfterLettingChoice(room, { lettingChoice: 'together' }, { occupantCount: 1, parkingSelected: true })).toEqual({
+      ok: true,
+      occupantCount: 2,
+      parkingSelected: true,
+      lettingChoice: 'together',
+    })
+    expect(occupancyAfterLettingChoice(room, { lettingChoice: 'sole' }, { occupantCount: 2, parkingSelected: false })).toEqual({
+      ok: true,
+      occupantCount: 1,
+      parkingSelected: false,
+      lettingChoice: 'sole',
+    })
+  })
+
+  it('leaves a shared room on the occupant stepper', () => {
+    expect(
+      occupancyAfterLettingChoice(
+        { property_type: 'shared_room', rent_per_week: 200 },
+        {},
+        { occupantCount: 2, parkingSelected: false },
+      ),
+    ).toEqual({ ok: true, occupantCount: 2, parkingSelected: false, lettingChoice: null })
+  })
+
+  it('rejects a letting choice on a shared room', () => {
+    const result = occupancyAfterLettingChoice(
+      { property_type: 'shared_room' },
+      { lettingChoice: 'sole' },
+      { occupantCount: 1, parkingSelected: false },
+    )
+    expect(result.ok).toBe(false)
   })
 })
 

@@ -173,6 +173,7 @@ export const BOOKING_FIELD_STATUS = {
   weekly_rent: 'USE',
   lease_length: 'USE',
   occupant_count: 'USE',
+  letting_choice: 'NOT_MATCHING',
   parking_selected: 'USE',
   property_type: 'FACTS_ONLY',
   service_tier_at_request: 'NOT_MATCHING',
