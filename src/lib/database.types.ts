@@ -1623,6 +1623,7 @@ export interface Database {
           service_tier: 'listing' | 'managed'
           max_occupants: number
           couple_surcharge_per_week: number | null
+          together_weekly_rent: number | null
           parking_surcharge_per_week: number | null
           parking_available: boolean
           smoke_alarm_type: 'hardwired' | 'battery' | null
@@ -1710,6 +1711,7 @@ export interface Database {
           service_tier?: 'listing' | 'managed'
           max_occupants?: number
           couple_surcharge_per_week?: number | null
+          together_weekly_rent?: number | null
           parking_surcharge_per_week?: number | null
           parking_available?: boolean
           smoke_alarm_type?: 'hardwired' | 'battery' | null
@@ -1796,6 +1798,7 @@ export interface Database {
           service_tier?: 'listing' | 'managed'
           max_occupants?: number
           couple_surcharge_per_week?: number | null
+          together_weekly_rent?: number | null
           parking_surcharge_per_week?: number | null
           parking_available?: boolean
           smoke_alarm_type?: 'hardwired' | 'battery' | null
