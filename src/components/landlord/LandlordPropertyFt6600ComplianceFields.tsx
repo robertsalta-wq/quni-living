@@ -1,10 +1,11 @@
 import {
   missingNswFt6600ComplianceFieldLabels,
+  NSW_FT6600_COMPLIANCE_FIELD_LABELS,
+  NSW_FT6600_STRATA_SCHEME_LABEL,
 } from '../../../api/lib/documents/propertyFt6600Compliance.js'
+import { RequiredMark } from './RequiredMark'
 
 export type TriState = 'yes' | 'no' | ''
-
-const STRATA_SCHEME_FIELD_LABEL = 'Property in strata or community scheme'
 
 export type LandlordFt6600ComplianceFormState = {
   smokeAlarmType: '' | 'hardwired' | 'battery'
@@ -64,14 +65,14 @@ export function ft6600ComplianceFormStateFromProperty(prop: {
     prop.smoke_alarm_type === 'hardwired' || prop.smoke_alarm_type === 'battery'
       ? prop.smoke_alarm_type
       : ''
-  // OC is only asked when the property is in a strata scheme: false = strata + OC not responsible;
-  // null = not in a strata scheme (or legacy row before this encoding).
+  // OC answered means the property is in a scheme. By-laws false means it is not.
+  // By-laws true, with no OC answer yet, still means it is in a scheme.
   const isStrataScheme: TriState =
     prop.strata_oc_responsible_for_alarms === true || prop.strata_oc_responsible_for_alarms === false
       ? 'yes'
       : prop.strata_bylaws_applicable === true
         ? 'yes'
-        : prop.strata_bylaws_applicable === false && smokeType
+        : prop.strata_bylaws_applicable === false
           ? 'no'
           : ''
 
@@ -136,7 +137,42 @@ export function ft6600ComplianceColumnsFromFormState(
     water_usage_charged_separately: triToBool(form.waterUsageChargedSeparately),
     electricity_embedded_network: triToBool(form.electricityEmbeddedNetwork),
     gas_embedded_network: triToBool(form.gasEmbeddedNetwork),
-    strata_bylaws_applicable: triToBool(form.strataBylawsApplicable),
+    strata_bylaws_applicable:
+      form.isStrataScheme === 'yes'
+        ? triToBool(form.strataBylawsApplicable)
+        : form.isStrataScheme === 'no'
+          ? false
+          : null,
+  }
+}
+
+/** Scroll target for the first missing NSW compliance answer. */
+export function ft6600ComplianceFieldIdForLabel(label: string): string {
+  switch (label) {
+    case NSW_FT6600_STRATA_SCHEME_LABEL:
+      return 'ft6600-strata-scheme'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_type:
+      return 'ft6600-smoke-type'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_oc_responsible_for_alarms:
+      return 'ft6600-strata-oc'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_tenant_replaceable:
+      return 'ft6600-battery-replaceable'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_type:
+      return 'ft6600-battery-type'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_tenant_replaceable:
+      return 'ft6600-backup-replaceable'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_battery_type:
+      return 'ft6600-backup-type'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.water_usage_charged_separately:
+      return 'ft6600-water-usage'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.electricity_embedded_network:
+      return 'ft6600-elec-embedded'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.gas_embedded_network:
+      return 'ft6600-gas-embedded'
+    case NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_bylaws_applicable:
+      return 'ft6600-strata-bylaws'
+    default:
+      return 'section-ft6600-compliance'
   }
 }
 
@@ -148,7 +184,7 @@ export function missingFt6600ComplianceFieldLabelsFromForm(
     form.isStrataScheme === 'yes' ? true : form.isStrataScheme === 'no' ? false : null
   const missing = missingNswFt6600ComplianceFieldLabels(cols, { isStrataScheme })
   if (form.isStrataScheme === '') {
-    missing.unshift(STRATA_SCHEME_FIELD_LABEL)
+    missing.unshift(NSW_FT6600_STRATA_SCHEME_LABEL)
   }
   return missing
 }
@@ -158,6 +194,8 @@ type Props = {
   onChange: (patch: Partial<LandlordFt6600ComplianceFormState>) => void
   inputClass: string
   labelClass: string
+  errorFieldId?: string | null
+  errorMessage?: string | null
 }
 
 const fieldHelperClass = 'text-xs text-gray-500 mt-0.5 mb-1 leading-relaxed'
@@ -169,6 +207,9 @@ function YesNoField({
   value,
   onChange,
   labelClass,
+  required,
+  invalid,
+  errorMessage,
 }: {
   id: string
   label: string
@@ -176,11 +217,22 @@ function YesNoField({
   value: TriState
   onChange: (v: TriState) => void
   labelClass: string
+  required?: boolean
+  invalid?: boolean
+  errorMessage?: string | null
 }) {
   return (
-    <fieldset className="space-y-2">
-      <legend className={labelClass}>{label}</legend>
+    <fieldset id={id} className={`space-y-2 ${invalid ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : ''}`}>
+      <legend className={labelClass}>
+        {label}
+        {required ? <RequiredMark /> : null}
+      </legend>
       {helperText ? <p className={fieldHelperClass}>{helperText}</p> : null}
+      {invalid && errorMessage ? (
+        <p id={`${id}-error`} className="text-sm text-red-700" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-4">
         <label htmlFor={`${id}-yes`} className="flex items-center gap-2 cursor-pointer text-sm text-gray-800">
           <input
@@ -214,10 +266,14 @@ export default function LandlordPropertyFt6600ComplianceFields({
   onChange,
   inputClass,
   labelClass,
+  errorFieldId = null,
+  errorMessage = null,
 }: Props) {
   const ocResponsibleForAlarms =
     form.isStrataScheme === 'yes' && form.strataOcResponsibleForAlarms === 'yes'
   const showSmokeAlarmReplaceability = !ocResponsibleForAlarms
+  const fieldInvalid = (id: string) => errorFieldId === id
+  const fieldError = (id: string) => (fieldInvalid(id) ? errorMessage : null)
 
   return (
     <div className="space-y-6">
@@ -227,8 +283,19 @@ export default function LandlordPropertyFt6600ComplianceFields({
         property. (Premises inclusions are taken from the Inclusions &amp; features section above.)
       </p>
 
-      <fieldset className="space-y-2">
-        <legend className={labelClass}>Smoke alarm type</legend>
+      <fieldset
+        id="ft6600-smoke-type"
+        className={`space-y-2 ${fieldInvalid('ft6600-smoke-type') ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : ''}`}
+      >
+        <legend className={labelClass}>
+          Smoke alarm type
+          <RequiredMark />
+        </legend>
+        {fieldError('ft6600-smoke-type') ? (
+          <p id="ft6600-smoke-type-error" className="text-sm text-red-700" role="alert">
+            {fieldError('ft6600-smoke-type')}
+          </p>
+        ) : null}
         <p className={fieldHelperClass}>
           Hardwired alarms run off mains power (usually with a backup battery); battery-operated alarms run on batteries
           only. Check the unit or ask your electrician if unsure.
@@ -271,9 +338,13 @@ export default function LandlordPropertyFt6600ComplianceFields({
           onChange({
             isStrataScheme: v,
             strataOcResponsibleForAlarms: v === 'yes' ? form.strataOcResponsibleForAlarms : '',
+            strataBylawsApplicable: v === 'yes' ? form.strataBylawsApplicable : '',
           })
         }
         labelClass={labelClass}
+        required
+        invalid={fieldInvalid('ft6600-strata-scheme')}
+        errorMessage={fieldError('ft6600-strata-scheme')}
       />
 
       {form.isStrataScheme === 'yes' ? (
@@ -296,6 +367,9 @@ export default function LandlordPropertyFt6600ComplianceFields({
             })
           }
           labelClass={labelClass}
+          required
+          invalid={fieldInvalid('ft6600-strata-oc')}
+          errorMessage={fieldError('ft6600-strata-oc')}
         />
       ) : null}
 
@@ -313,15 +387,24 @@ export default function LandlordPropertyFt6600ComplianceFields({
               })
             }
             labelClass={labelClass}
+            required
+            invalid={fieldInvalid('ft6600-battery-replaceable')}
+            errorMessage={fieldError('ft6600-battery-replaceable')}
           />
           {form.smokeAlarmBatteryTenantReplaceable === 'yes' ? (
-            <div>
-              <label htmlFor="ft6600-battery-type" className={labelClass}>
+            <div id="ft6600-battery-type" className={fieldInvalid('ft6600-battery-type') ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : ''}>
+              {fieldError('ft6600-battery-type') ? (
+                <p className="mb-1 text-sm text-red-700" role="alert">
+                  {fieldError('ft6600-battery-type')}
+                </p>
+              ) : null}
+              <label htmlFor="ft6600-battery-type-input" className={labelClass}>
                 Battery type
+                <RequiredMark />
               </label>
               <p className={fieldHelperClass}>e.g. 9V or AA, so the tenant knows what to buy.</p>
               <input
-                id="ft6600-battery-type"
+                id="ft6600-battery-type-input"
                 type="text"
                 value={form.smokeAlarmBatteryType}
                 onChange={(e) => onChange({ smokeAlarmBatteryType: e.target.value })}
@@ -347,15 +430,24 @@ export default function LandlordPropertyFt6600ComplianceFields({
               })
             }
             labelClass={labelClass}
+            required
+            invalid={fieldInvalid('ft6600-backup-replaceable')}
+            errorMessage={fieldError('ft6600-backup-replaceable')}
           />
           {form.smokeAlarmBackupTenantReplaceable === 'yes' ? (
-            <div>
-              <label htmlFor="ft6600-backup-type" className={labelClass}>
+            <div id="ft6600-backup-type" className={fieldInvalid('ft6600-backup-type') ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : ''}>
+              {fieldError('ft6600-backup-type') ? (
+                <p className="mb-1 text-sm text-red-700" role="alert">
+                  {fieldError('ft6600-backup-type')}
+                </p>
+              ) : null}
+              <label htmlFor="ft6600-backup-type-input" className={labelClass}>
                 Backup battery type
+                <RequiredMark />
               </label>
               <p className={fieldHelperClass}>e.g. 9V, the backup the tenant would replace.</p>
               <input
-                id="ft6600-backup-type"
+                id="ft6600-backup-type-input"
                 type="text"
                 value={form.smokeAlarmBackupBatteryType}
                 onChange={(e) => onChange({ smokeAlarmBackupBatteryType: e.target.value })}
@@ -374,6 +466,9 @@ export default function LandlordPropertyFt6600ComplianceFields({
         value={form.waterUsageChargedSeparately}
         onChange={(v) => onChange({ waterUsageChargedSeparately: v })}
         labelClass={labelClass}
+        required
+        invalid={fieldInvalid('ft6600-water-usage')}
+        errorMessage={fieldError('ft6600-water-usage')}
       />
 
       <YesNoField
@@ -383,6 +478,9 @@ export default function LandlordPropertyFt6600ComplianceFields({
         value={form.electricityEmbeddedNetwork}
         onChange={(v) => onChange({ electricityEmbeddedNetwork: v })}
         labelClass={labelClass}
+        required
+        invalid={fieldInvalid('ft6600-elec-embedded')}
+        errorMessage={fieldError('ft6600-elec-embedded')}
       />
 
       <YesNoField
@@ -392,16 +490,24 @@ export default function LandlordPropertyFt6600ComplianceFields({
         value={form.gasEmbeddedNetwork}
         onChange={(v) => onChange({ gasEmbeddedNetwork: v })}
         labelClass={labelClass}
+        required
+        invalid={fieldInvalid('ft6600-gas-embedded')}
+        errorMessage={fieldError('ft6600-gas-embedded')}
       />
 
-      <YesNoField
-        id="ft6600-strata-bylaws"
-        label="Do strata or community scheme by-laws apply to the premises?"
-        helperText="By-laws are the owners-corporation rules (noise, pets, common areas). If the property's in a strata/community scheme they usually apply, and you must give the tenant a copy."
-        value={form.strataBylawsApplicable}
-        onChange={(v) => onChange({ strataBylawsApplicable: v })}
-        labelClass={labelClass}
-      />
+      {form.isStrataScheme === 'yes' ? (
+        <YesNoField
+          id="ft6600-strata-bylaws"
+          label="Do strata or community scheme by-laws apply to the premises?"
+          helperText="By-laws are the owners-corporation rules (noise, pets, common areas). They usually apply in a strata or community scheme, and you must give the tenant a copy."
+          value={form.strataBylawsApplicable}
+          onChange={(v) => onChange({ strataBylawsApplicable: v })}
+          labelClass={labelClass}
+          required
+          invalid={fieldInvalid('ft6600-strata-bylaws')}
+          errorMessage={fieldError('ft6600-strata-bylaws')}
+        />
+      ) : null}
     </div>
   )
 }

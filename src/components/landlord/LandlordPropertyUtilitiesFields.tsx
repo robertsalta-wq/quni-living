@@ -16,6 +16,7 @@ import {
   WATER_SEPARATELY_METERED_ATTESTATION_LABEL,
 } from '../../lib/waterSeparatelyMeteredAttestation'
 import { type TriState } from './LandlordPropertyFt6600ComplianceFields'
+import { RequiredMark } from './RequiredMark'
 
 export type { LandlordPropertyUtilitiesFormState, PerServiceUtilitiesFormState } from '../../lib/propertyUtilitiesFormState'
 export {
@@ -41,10 +42,28 @@ type YesNoFieldProps = {
   labelClass: string
 }
 
-function YesNoField({ id, label, helperText, value, onChange, labelClass }: YesNoFieldProps) {
+function YesNoField({
+  id,
+  label,
+  helperText,
+  value,
+  onChange,
+  labelClass,
+  required,
+  invalid,
+  errorMessage,
+}: YesNoFieldProps & { required?: boolean; invalid?: boolean; errorMessage?: string | null }) {
   return (
-    <div>
-      <p className={labelClass}>{label}</p>
+    <div id={id} className={invalid ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
+      <p className={labelClass}>
+        {label}
+        {required ? <RequiredMark /> : null}
+      </p>
+      {invalid && errorMessage ? (
+        <p className="mb-2 text-sm text-red-700" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
       {helperText ? <p className="mb-2 text-xs text-gray-600">{helperText}</p> : null}
       <div className="flex flex-wrap gap-4">
         <label htmlFor={`${id}-yes`} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
@@ -86,7 +105,9 @@ function PerServiceUtilitiesFields({
   onChange,
   labelClass,
   inputClass,
-}: PerServiceFieldsProps) {
+  errorFieldId,
+  errorMessage,
+}: PerServiceFieldsProps & { errorFieldId?: string | null; errorMessage?: string | null }) {
   const label = UTILITY_SERVICE_DISPLAY_LABELS[serviceId]
   const tenantPays = form.tenantPays === 'yes'
 
@@ -106,6 +127,9 @@ function PerServiceUtilitiesFields({
           })
         }
         labelClass={labelClass}
+        required
+        invalid={errorFieldId === `utilities-${serviceId}-tenant-pays`}
+        errorMessage={errorFieldId === `utilities-${serviceId}-tenant-pays` ? errorMessage : null}
       />
       {tenantPays ? (
         <>
@@ -121,18 +145,27 @@ function PerServiceUtilitiesFields({
               })
             }
             labelClass={labelClass}
+            required
+            invalid={errorFieldId === `utilities-${serviceId}-metered`}
+            errorMessage={errorFieldId === `utilities-${serviceId}-metered` ? errorMessage : null}
           />
           {form.individuallyMetered === 'no' ? (
-            <div>
-              <label htmlFor={`utilities-${serviceId}-apportionment`} className={labelClass}>
+            <div id={`utilities-${serviceId}-apportionment`} className={errorFieldId === `utilities-${serviceId}-apportionment` ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
+              {errorFieldId === `utilities-${serviceId}-apportionment` && errorMessage ? (
+                <p className="mb-1 text-sm text-red-700" role="alert">
+                  {errorMessage}
+                </p>
+              ) : null}
+              <label htmlFor={`utilities-${serviceId}-apportionment-input`} className={labelClass}>
                 Percentage of total {label.toLowerCase()} charge (Form 18a Item 14)
+                <RequiredMark />
               </label>
               <p className="mb-2 text-xs text-gray-600">
                 The tenant pays this percentage of the total charge (1–100, one decimal allowed).
               </p>
               <div className="flex items-center gap-1.5">
                 <input
-                  id={`utilities-${serviceId}-apportionment`}
+                  id={`utilities-${serviceId}-apportionment-input`}
                   type="number"
                   min={1}
                   max={100}
@@ -147,15 +180,21 @@ function PerServiceUtilitiesFields({
               </div>
             </div>
           ) : null}
-          <div>
-            <label htmlFor={`utilities-${serviceId}-how-paid`} className={labelClass}>
+          <div id={`utilities-${serviceId}-how-paid`} className={errorFieldId === `utilities-${serviceId}-how-paid` ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
+            {errorFieldId === `utilities-${serviceId}-how-paid` && errorMessage ? (
+              <p className="mb-1 text-sm text-red-700" role="alert">
+                {errorMessage}
+              </p>
+            ) : null}
+            <label htmlFor={`utilities-${serviceId}-how-paid-input`} className={labelClass}>
               How the tenant must pay (Form 18a Item 15)
+              <RequiredMark />
             </label>
             <p className="mb-2 text-xs text-gray-600">
               e.g. direct to retailer, invoiced quarterly, or paid with rent.
             </p>
             <input
-              id={`utilities-${serviceId}-how-paid`}
+              id={`utilities-${serviceId}-how-paid-input`}
               type="text"
               value={form.howMustBePaid}
               onChange={(e) => onChange({ howMustBePaid: e.target.value })}
@@ -179,6 +218,8 @@ type Props = {
   billsIncluded: boolean
   /** When set, replaces the default Form 18a instrument mention. */
   utilitiesAgreementHint?: string | null
+  errorFieldId?: string | null
+  errorMessage?: string | null
 }
 
 export function LandlordPropertyUtilitiesFields({
@@ -190,6 +231,8 @@ export function LandlordPropertyUtilitiesFields({
   waterAttestationPersisted,
   billsIncluded,
   utilitiesAgreementHint,
+  errorFieldId = null,
+  errorMessage = null,
 }: Props) {
   const showWaterAttestation = form.waterUsageChargedSeparately === 'yes'
   const showPerServiceCapture = !billsIncluded
@@ -210,6 +253,8 @@ export function LandlordPropertyUtilitiesFields({
               onChange={(patch) => onServiceChange(serviceId, patch)}
               labelClass={labelClass}
               inputClass={inputClass}
+              errorFieldId={errorFieldId}
+              errorMessage={errorMessage}
             />
           ))}
         </div>
@@ -229,8 +274,16 @@ export function LandlordPropertyUtilitiesFields({
         labelClass={labelClass}
       />
 
-      {showWaterAttestation && !waterAttestationPersisted ? (
-        <div id="section-water-metered-attestation">
+        {showWaterAttestation && !waterAttestationPersisted ? (
+        <div
+          id="utilities-water-attestation"
+          className={errorFieldId === 'utilities-water-attestation' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}
+        >
+          {errorFieldId === 'utilities-water-attestation' && errorMessage ? (
+            <p className="mb-2 text-sm text-red-700" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
           <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
             <input
               type="checkbox"
@@ -241,6 +294,7 @@ export function LandlordPropertyUtilitiesFields({
             <span className="space-y-2">
               <span className="block font-medium text-gray-900">
                 {WATER_SEPARATELY_METERED_ATTESTATION_LABEL}
+                <RequiredMark />
               </span>
               <span className="block text-gray-800">{WATER_SEPARATELY_METERED_ATTESTATION_INTRO}</span>
               <ul className="list-disc space-y-1 pl-5 text-gray-800">

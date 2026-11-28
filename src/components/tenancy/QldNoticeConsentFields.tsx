@@ -1,4 +1,5 @@
 import type { QldNoticeConsentFormState, QldYesNo } from '../../lib/tenancy/qldRoomingListingFields'
+import { RequiredMark } from '../landlord/RequiredMark'
 
 type Props = {
   legend: string
@@ -23,7 +24,10 @@ function YesNo({
 }) {
   return (
     <div>
-      <p className="text-sm font-medium text-gray-900">{label}</p>
+      <p className="text-sm font-medium text-gray-900">
+        {label}
+        <RequiredMark />
+      </p>
       <div className="mt-2 flex flex-wrap gap-4">
         <label htmlFor={`${id}-yes`} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
           <input
@@ -79,6 +83,7 @@ export function QldNoticeConsentFields({
         <div>
           <label htmlFor={`${partyLabel}-email-address`} className={labelClass}>
             Email address for notices
+            <RequiredMark />
           </label>
           <input
             id={`${partyLabel}-email-address`}
@@ -106,6 +111,7 @@ export function QldNoticeConsentFields({
         <div>
           <label htmlFor={`${partyLabel}-sms-address`} className={labelClass}>
             Mobile number for text-message notices
+            <RequiredMark />
           </label>
           <input
             id={`${partyLabel}-sms-address`}

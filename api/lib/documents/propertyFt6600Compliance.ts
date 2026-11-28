@@ -20,6 +20,9 @@ export const NSW_FT6600_COMPLIANCE_FIELD_LABELS = {
   strata_bylaws_applicable: 'Strata or community scheme by-laws apply',
 } as const
 
+/** Asked before the by-laws question. By-laws only apply once this is Yes. */
+export const NSW_FT6600_STRATA_SCHEME_LABEL = 'Property in strata or community scheme'
+
 export type NswFt6600ComplianceFieldKey = keyof typeof NSW_FT6600_COMPLIANCE_FIELD_LABELS
 
 function readBool(raw: unknown): boolean | null {
@@ -108,9 +111,24 @@ export function nswFt6600PremisesInclusionsFromPropertyRow(
   return parts
 }
 
+function strataSchemeAnswer(
+  compliance: NswFt6600PropertyCompliance,
+  opts?: { isStrataScheme?: boolean | null },
+): boolean | null {
+  if (opts && Object.prototype.hasOwnProperty.call(opts, 'isStrataScheme')) {
+    if (opts.isStrataScheme === true) return true
+    if (opts.isStrataScheme === false) return false
+    return null
+  }
+  if (compliance.strataOcResponsibleForAlarms != null) return true
+  if (compliance.strataBylawsApplicable === true) return true
+  if (compliance.strataBylawsApplicable === false) return false
+  return null
+}
+
 /**
  * Returns human-readable labels for FT6600 compliance fields still null on the property row.
- * `isStrataScheme` mirrors the landlord form: when false, strata OC is not required.
+ * When the property is not in a strata scheme, owners-corporation and by-laws answers are not required.
  */
 export function missingNswFt6600ComplianceFieldLabels(
   prop: Record<string, unknown> | null | undefined,
@@ -123,11 +141,10 @@ export function missingNswFt6600ComplianceFieldLabels(
     missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_type)
   }
 
-  const isStrata =
-    opts?.isStrataScheme ??
-    (compliance.strataOcResponsibleForAlarms != null || compliance.strataBylawsApplicable === true)
+  const explicitStrata = Boolean(opts && Object.prototype.hasOwnProperty.call(opts, 'isStrataScheme'))
+  const isStrata = strataSchemeAnswer(compliance, opts)
   const ocSkipsTenantReplaceability =
-    isStrata && compliance.strataOcResponsibleForAlarms === true
+    isStrata === true && compliance.strataOcResponsibleForAlarms === true
 
   if (!ocSkipsTenantReplaceability) {
     if (compliance.smokeAlarmType === 'battery') {
@@ -153,8 +170,13 @@ export function missingNswFt6600ComplianceFieldLabels(
     }
   }
 
-  if (isStrata && compliance.strataOcResponsibleForAlarms == null) {
+  if (isStrata === true && compliance.strataOcResponsibleForAlarms == null) {
     missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_oc_responsible_for_alarms)
+  }
+  if (isStrata === true && compliance.strataBylawsApplicable == null) {
+    missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_bylaws_applicable)
+  } else if (isStrata == null && !explicitStrata) {
+    missing.push(NSW_FT6600_STRATA_SCHEME_LABEL)
   }
 
   if (compliance.waterUsageChargedSeparately == null) {
@@ -165,9 +187,6 @@ export function missingNswFt6600ComplianceFieldLabels(
   }
   if (compliance.gasEmbeddedNetwork == null) {
     missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.gas_embedded_network)
-  }
-  if (compliance.strataBylawsApplicable == null) {
-    missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_bylaws_applicable)
   }
 
   return missing

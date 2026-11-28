@@ -77,6 +77,7 @@ import {
   listingPreviewPath,
   writeListingWizardResume,
 } from '../../lib/listingHubWizard'
+import { listingDraftLeaveIssue } from '../../lib/listingDraftLeave'
 import {
   clearLandlordPropertyEditDraft,
   clearLandlordPropertyNewDraft,
@@ -238,10 +239,13 @@ import {
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
 import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
+import { RequiredMark } from '../../components/landlord/RequiredMark'
+import { missingPerServiceUtilitiesFormIssues } from '../../lib/propertyUtilitiesFormValidation'
 import LandlordPropertyFt6600ComplianceFields, {
   emptyLandlordFt6600ComplianceFormState,
   ft6600ComplianceColumnsFromFormState,
   ft6600ComplianceFormStateFromProperty,
+  ft6600ComplianceFieldIdForLabel,
   missingFt6600ComplianceFieldLabelsFromForm,
   type LandlordFt6600ComplianceFormState,
   type TriState,
@@ -286,7 +290,6 @@ import {
   emptyLandlordPropertyUtilitiesFormState,
   landlordPropertyUtilitiesColumnsFromFormState,
   landlordPropertyUtilitiesFormStateFromProperty,
-  missingLandlordPropertyUtilitiesFormMessages,
   type LandlordPropertyUtilitiesFormState,
   type PerServiceUtilitiesFormState,
 } from '../../components/landlord/LandlordPropertyUtilitiesFields'
@@ -926,10 +929,28 @@ export default function LandlordPropertyFormPage() {
   const [pageError, setPageError] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitErrorFieldId, setSubmitErrorFieldId] = useState<string | null>(null)
   const publishGapAppliedRef = useRef(false)
   useEffect(() => {
     if (publishGapAppliedRef.current) return
-    const gap = (location.state as { listingPublishGap?: unknown } | null)?.listingPublishGap
+    const navState = location.state as {
+      listingPublishGap?: unknown
+      listingFormLeaveError?: { message?: unknown; fieldId?: unknown }
+    } | null
+    const leave = navState?.listingFormLeaveError
+    if (
+      leave &&
+      typeof leave.message === 'string' &&
+      leave.message.trim() &&
+      typeof leave.fieldId === 'string' &&
+      leave.fieldId.trim()
+    ) {
+      publishGapAppliedRef.current = true
+      setSubmitError(leave.message)
+      setSubmitErrorFieldId(leave.fieldId)
+      return
+    }
+    const gap = navState?.listingPublishGap
     if (typeof gap !== 'string' || !gap.trim()) return
     publishGapAppliedRef.current = true
     setSubmitError(gap)
@@ -1266,6 +1287,7 @@ export default function LandlordPropertyFormPage() {
   const propertyCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
   const loadedCoordsRef = useRef<{ lat: number | null; lon: number | null }>({ lat: null, lon: null })
   const requireConfirmedAddressRef = useRef<() => boolean>(() => true)
+  const flushDraftToAccountRef = useRef<() => Promise<boolean>>(async () => false)
 
   function rememberCampusChoice(next: CampusSelectionSource, sig: string) {
     campusSelectionSourceRef.current = next
@@ -2822,22 +2844,28 @@ export default function LandlordPropertyFormPage() {
   }
 
   function revealWizardStepError(sectionId: ListingHubSectionId, message: string) {
-    reportSubmitError(message, 'listing-form-feedback-top')
-    const focusId = listingHubWizardStepFocusId(sectionId)
-    window.requestAnimationFrame(() => {
-      if (!focusId) return
-      const el = document.getElementById(focusId)
-      if (el instanceof HTMLElement) el.focus({ preventScroll: true })
-    })
+    reportSubmitError(message, listingHubWizardStepFocusId(sectionId))
   }
 
-  function reportSubmitError(message: string, anchorId?: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
+  function reportSubmitError(message: string, fieldId?: string | null) {
     setSubmitSuccessMessage(null)
     setSubmitError(message)
-    window.requestAnimationFrame(() => {
-      scrollToFormFeedback(anchorId ?? 'listing-form-feedback-bottom')
-    })
+    setSubmitErrorFieldId(fieldId ?? null)
   }
+
+  useEffect(() => {
+    if (!submitError || !submitErrorFieldId) return
+    const el = document.getElementById(submitErrorFieldId)
+    if (!el) {
+      scrollToFormFeedback('listing-form-feedback-top')
+      return
+    }
+    const block = el.id.startsWith('section-') ? 'start' : 'center'
+    el.scrollIntoView({ behavior: 'smooth', block })
+    if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) {
+      el.focus({ preventScroll: true })
+    }
+  }, [submitError, submitErrorFieldId])
 
   async function runNearbyCampusLookup(
     fields: {
@@ -3260,11 +3288,16 @@ export default function LandlordPropertyFormPage() {
     const sig = addressSigFrom(addressFieldsRef.current)
     if (sig !== '' && sig === acceptedAddressSigRef.current) return true
     setCampusConfirmMessage(CONFIRM_ADDRESS_FIRST_MESSAGE)
-    setSubmitError(CONFIRM_ADDRESS_FIRST_MESSAGE)
-    if (showFormSection('section-location')) {
-      document.getElementById('section-location')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    } else {
-      navigate(listingHubPath({ propertyId, view: 'location' }))
+    reportSubmitError(CONFIRM_ADDRESS_FIRST_MESSAGE, 'section-location')
+    if (!showFormSection('section-location')) {
+      navigate(listingHubPath({ propertyId, view: 'location' }), {
+        state: {
+          listingFormLeaveError: {
+            message: CONFIRM_ADDRESS_FIRST_MESSAGE,
+            fieldId: 'section-location',
+          },
+        },
+      })
     }
     return false
   }
@@ -3537,32 +3570,30 @@ export default function LandlordPropertyFormPage() {
 
     const t = title.trim()
     if (!t) {
-      setSubmitError('Title is required.')
+      reportSubmitError('Title is required.', 'pf-title')
       return
     }
     if (!listingStateCode) {
-      setSubmitError('Choose the state before saving. The questions below depend on it.')
-      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError('Choose the state before saving. The questions below depend on it.', 'pf-state')
       return
     }
     if (!isListingAgreementState(listingStateCode)) {
-      reportSubmitError(unsupportedListingStateMessage(listingStateCode))
-      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(unsupportedListingStateMessage(listingStateCode), 'pf-state')
       return
     }
     if (listingStateCode === 'VIC' && showRoomForRentSelect(accommodationChoice)) {
       setVicCapacityAttempted(true)
     }
     if (postcodeStateConflict) {
-      reportSubmitError(postcodeStateConflict)
-      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(postcodeStateConflict, 'pf-pc')
       return
     }
     const rent = Number(rentPerWeek)
     if (!Number.isFinite(rent) || rent <= 0) {
-      setSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE)
+      reportSubmitError(LISTING_HUB_RENT_REQUIRED_MESSAGE, 'pf-rent')
       return
     }
+    const requireCompleteness = publishDraft || existingListingStatus === 'active'
 
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const coupleRaw = coupleSurchargePerWeek.trim()
@@ -3572,8 +3603,7 @@ export default function LandlordPropertyFormPage() {
       coupleAmtInput != null &&
       (!Number.isFinite(coupleAmtInput) || coupleAmtInput < 0)
     ) {
-      setSubmitError('Couple surcharge must be zero or a positive amount.')
-      document.getElementById('pf-couple-surcharge')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError('Couple surcharge must be zero or a positive amount.', 'pf-couple-surcharge')
       return
     }
     const occupancy = occupancyPricesForSave({
@@ -3585,8 +3615,7 @@ export default function LandlordPropertyFormPage() {
       togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
     })
     if (!occupancy.ok) {
-      setSubmitError(occupancy.message)
-      document.getElementById('pf-together-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(occupancy.message, 'pf-together-weekly-rent')
       return
     }
     const maxOcc = occupancy.fields.max_occupants
@@ -3594,7 +3623,7 @@ export default function LandlordPropertyFormPage() {
     const parkingRaw = parkingSurchargePerWeek.trim()
     const parkingAmt = parkingAvailable && parkingRaw ? Number(parkingRaw) : null
     if (parkingAmt != null && (!Number.isFinite(parkingAmt) || parkingAmt < 0)) {
-      setSubmitError('Carpark surcharge must be zero or a positive amount.')
+      reportSubmitError('Carpark surcharge must be zero or a positive amount.', 'pf-parking-surcharge')
       return
     }
 
@@ -3609,27 +3638,25 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (qldRoomsRentedError) {
-      reportSubmitError(qldRoomsRentedError)
+    if (requireCompleteness && qldRoomsRentedError) {
+      reportSubmitError(qldRoomsRentedError, 'pf-qld-rooms-rented')
       return
     }
 
-    if (qldRoomCard) {
+    if (requireCompleteness && qldRoomCard) {
       const sharesErr = qldSharesKitchenOrBathroomError(qldRoomingForm.sharesKitchenOrBathroom)
       if (sharesErr) {
-        reportSubmitError(sharesErr)
-        document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
+        reportSubmitError(sharesErr, 'pf-qld-shares')
         return
       }
       const roomErr = qldRoomDescriptionError(roomDescription)
       if (roomErr) {
-        reportSubmitError(roomErr)
-        document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
+        reportSubmitError(roomErr, 'pf-qld-room-description')
         return
       }
     }
 
-    if (showQldRoomingHouseRules) {
+    if (requireCompleteness && showQldRoomingHouseRules) {
       const particularsErr = qldRoomingListingSaveError({
         sharesKitchenOrBathroom: qldRoomingForm.sharesKitchenOrBathroom,
         roomDescription,
@@ -3638,8 +3665,7 @@ export default function LandlordPropertyFormPage() {
         form: qldRoomingForm,
       })
       if (particularsErr) {
-        reportSubmitError(particularsErr)
-        document.getElementById('section-qld-rooming-particulars')?.scrollIntoView({ behavior: userScrollBehavior() })
+        reportSubmitError(particularsErr, 'section-qld-rooming-particulars')
         return
       }
       const qldPayeeErr = propertyPayoutDetailsQldRoomingSaveError({
@@ -3649,8 +3675,7 @@ export default function LandlordPropertyFormPage() {
         account_number: payeeAccountNumber,
       })
       if (qldPayeeErr) {
-        reportSubmitError(qldPayeeErr)
-        document.getElementById('section-pricing-availability')?.scrollIntoView({ behavior: userScrollBehavior() })
+        reportSubmitError(qldPayeeErr, 'pf-payee-bank-name')
         return
       }
     }
@@ -3659,30 +3684,31 @@ export default function LandlordPropertyFormPage() {
       listingStateCode === 'VIC'
         ? { ...roomingHouseErrors, missingRegistration: null }
         : roomingHouseErrors
-    if (genericRoomingErrors.onSiteConflict || genericRoomingErrors.missingRegistration) {
+    if (genericRoomingErrors.onSiteConflict) {
       setShowRoomingHouseValidation(true)
-      reportSubmitError('Fix rooming house registration details before saving.')
-      document.getElementById('section-accommodation')?.scrollIntoView({ behavior: userScrollBehavior() })
+      reportSubmitError(genericRoomingErrors.onSiteConflict, 'pf-rooming-reg')
+      return
+    }
+    if (requireCompleteness && genericRoomingErrors.missingRegistration) {
+      setShowRoomingHouseValidation(true)
+      reportSubmitError(genericRoomingErrors.missingRegistration, 'pf-rooming-reg')
       return
     }
 
-    if (isNswT3Listing) {
+    if (requireCompleteness && isNswT3Listing) {
       const roomErr = nswT3RoomDescriptionError(roomDescription)
       if (roomErr) {
-        reportSubmitError(roomErr)
-        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        reportSubmitError(roomErr, 'pf-room-description')
         return
       }
       const sharedErr = nswT3SharedAreasError(sharedAreas)
       if (sharedErr) {
-        reportSubmitError(sharedErr)
-        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        reportSubmitError(sharedErr, 'section-nsw-t3-particulars')
         return
       }
       const chargeErr = nswT3AdditionalChargesError(additionalCharges)
       if (chargeErr) {
-        reportSubmitError(chargeErr)
-        document.getElementById('section-nsw-t3-particulars')?.scrollIntoView({ behavior: 'smooth' })
+        reportSubmitError(chargeErr, 'section-nsw-t3-particulars')
         return
       }
     }
@@ -3692,30 +3718,30 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (showNswFt6600ComplianceSection) {
+    if (requireCompleteness && showNswFt6600ComplianceSection) {
       const missingCompliance = missingFt6600ComplianceFieldLabelsFromForm(ft6600Compliance)
       if (missingCompliance.length > 0) {
-        reportSubmitError(nswFt6600ComplianceBlockedMessage(missingCompliance))
-        document.getElementById('section-ft6600-compliance')?.scrollIntoView({ behavior: 'smooth' })
-        return
-      }
-    }
-
-    if (showPropertyUtilitiesSection) {
-      const missingUtilities = missingLandlordPropertyUtilitiesFormMessages(utilitiesForm, {
-        billsIncluded: billsIncludedSelected,
-      })
-      if (missingUtilities.length > 0) {
         reportSubmitError(
-          `Complete utilities on the property listing before saving. ${missingUtilities.join(' ')}`,
+          nswFt6600ComplianceBlockedMessage(missingCompliance),
+          ft6600ComplianceFieldIdForLabel(missingCompliance[0]),
         )
-        document.getElementById('section-utilities')?.scrollIntoView({ behavior: 'smooth' })
         return
       }
     }
 
-    if (needsNonDiscriminationAcceptance && !nonDiscriminationAgreed) {
-      reportSubmitError('Please confirm you have read and agree to Quni\'s Non-Discrimination Policy.')
+    if (requireCompleteness && showPropertyUtilitiesSection) {
+      const utilityIssues = billsIncludedSelected ? [] : missingPerServiceUtilitiesFormIssues(utilitiesForm)
+      if (utilityIssues.length > 0) {
+        reportSubmitError(
+          `Complete utilities on the property listing before saving. ${utilityIssues.map((issue) => issue.message).join(' ')}`,
+          utilityIssues[0].id,
+        )
+        return
+      }
+    }
+
+    if (requireCompleteness && needsNonDiscriminationAcceptance && !nonDiscriminationAgreed) {
+      reportSubmitError('Please confirm you have read and agree to Quni\'s Non-Discrimination Policy.', 'pf-non-discrimination')
       return
     }
 
@@ -3731,8 +3757,8 @@ export default function LandlordPropertyFormPage() {
         headTenantLandlordConsent === false
           ? HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE
           : 'Please confirm whether you have your landlord\'s written consent to sub-let or transfer.',
+        'section-lister-role',
       )
-      document.getElementById('section-lister-role')?.scrollIntoView({ behavior: 'smooth' })
       return
     }
     if (
@@ -3741,8 +3767,7 @@ export default function LandlordPropertyFormPage() {
       !propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt }) &&
       !authorityToLetAgreed
     ) {
-      reportSubmitError(AUTHORITY_TO_LET_BLOCKED_MESSAGE)
-      document.getElementById('section-authority-to-let')?.scrollIntoView({ behavior: 'smooth' })
+      reportSubmitError(AUTHORITY_TO_LET_BLOCKED_MESSAGE, 'section-authority-to-let')
       return
     }
     // Switching an already-attested listing to head tenant is a new legal posture.
@@ -3757,8 +3782,7 @@ export default function LandlordPropertyFormPage() {
       ? activeHeadTenantConsentSaveBlock(existingListingStatus, listerRole, headTenantLandlordConsent)
       : null
     if (liveConsentBlock) {
-      reportSubmitError(liveConsentBlock)
-      document.getElementById('section-lister-role')?.scrollIntoView({ behavior: 'smooth' })
+      reportSubmitError(liveConsentBlock, 'section-lister-role')
       return
     }
 
@@ -3775,27 +3799,25 @@ export default function LandlordPropertyFormPage() {
         required: false,
       })
       if (draftRentErr) {
-        reportSubmitError(draftRentErr)
-        document.getElementById('pf-unshared-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        reportSubmitError(draftRentErr, 'pf-unshared-weekly-rent')
         return
       }
     }
 
-    if (isPublishingListing && listingStateCode === 'VIC') {
+    if (requireCompleteness && listingStateCode === 'VIC') {
       if (!parseVicPremisesOccupantCapacity(vicRoomingFields.capacity)) {
         setVicCapacityAttempted(true)
         reportSubmitError(
           showRoomForRentSelect(accommodationChoice)
             ? VIC_ROOMING_CAPACITY_REQUIRED
             : 'Enter how many people the building can hold before publishing.',
+          'pf-vic-building-capacity',
         )
-        document.getElementById('pf-vic-building-capacity')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (vicRoomingRoute.kind === 'unsupported') {
         const reason = 'reason' in vicRoomingRoute ? vicRoomingRoute.reason : 'This Victorian listing cannot be published yet.'
-        reportSubmitError(reason)
-        document.getElementById('pf-vic-building-capacity')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        reportSubmitError(reason, 'pf-vic-building-capacity')
         return
       }
       if (vicRoomingRoute.kind === 'rooming') {
@@ -3813,10 +3835,11 @@ export default function LandlordPropertyFormPage() {
           unsharedWeeklyRent: vicRoomingFields.unsharedWeeklyRent,
         })
         if (vicErr) {
-          reportSubmitError(vicErr)
-          if (vicErr === VIC_ROOMING_UNSHARED_RENT_REQUIRED || vicErr === VIC_ROOMING_UNSHARED_RENT_HIGHER) {
-            document.getElementById('pf-unshared-weekly-rent')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          }
+          const vicFieldId =
+            vicErr === VIC_ROOMING_UNSHARED_RENT_REQUIRED || vicErr === VIC_ROOMING_UNSHARED_RENT_HIGHER
+              ? 'pf-unshared-weekly-rent'
+              : 'pf-vic-building-capacity'
+          reportSubmitError(vicErr, vicFieldId)
           return
         }
       }
@@ -3825,13 +3848,13 @@ export default function LandlordPropertyFormPage() {
     if (!skipAttestations && isNswT3Listing && (isPublishingListing || existingListingStatus === 'active')) {
       const t3FormErr = nswT3ComplianceFormErrors(t3ComplianceForm, listerRole)
       if (t3FormErr) {
-        reportSubmitError(t3FormErr)
-        document.getElementById('section-nsw-t3-compliance')?.scrollIntoView({ behavior: 'smooth' })
+        reportSubmitError(t3FormErr, 'section-nsw-t3-compliance')
         return
       }
     }
 
     if (
+      requireCompleteness &&
       !skipAttestations &&
       waterUsageChargedSeparatelySelected &&
       !propertyHasWaterSeparatelyMeteredAttestation({
@@ -3841,24 +3864,33 @@ export default function LandlordPropertyFormPage() {
         ? utilitiesForm.waterSeparatelyMeteredAgreed
         : waterSeparatelyMeteredAgreed)
     ) {
-      reportSubmitError(WATER_SEPARATELY_METERED_BLOCKED_MESSAGE)
-      const targetId = showPropertyUtilitiesSection
-        ? 'section-utilities'
-        : 'section-ft6600-compliance'
-      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })
+      reportSubmitError(
+        WATER_SEPARATELY_METERED_BLOCKED_MESSAGE,
+        showPropertyUtilitiesSection ? 'utilities-water-attestation' : 'section-water-metered-attestation',
+      )
       return
     }
 
-    if (showListingPayeeBankDetails) {
-      const payeeErrs = propertyPayoutDetailsFieldErrors({
-        bank_name: payeeBankName,
-        account_name: payeeAccountName,
-        bsb: payeeBsb,
-        account_number: payeeAccountNumber,
-      })
+    if (requireCompleteness && showListingPayeeBankDetails) {
+      const payeeErrs = propertyPayoutDetailsFieldErrors(
+        {
+          bank_name: payeeBankName,
+          account_name: payeeAccountName,
+          bsb: payeeBsb,
+          account_number: payeeAccountNumber,
+        },
+        { requireComplete: true, requireBankName: showQldRoomingHouseRules },
+      )
       if (payeeErrs.length > 0) {
-        setSubmitError(payeeErrs.join(' '))
-        document.getElementById('section-pricing-availability')?.scrollIntoView({ behavior: 'smooth' })
+        const first = payeeErrs[0] ?? ''
+        const payeeFieldId = first.startsWith('Bank name')
+          ? 'pf-payee-bank-name'
+          : first.startsWith('Account name')
+            ? 'pf-payee-account-name'
+            : first.startsWith('BSB')
+              ? 'pf-payee-bsb'
+              : 'pf-payee-account-number'
+        reportSubmitError(payeeErrs.join(' '), payeeFieldId)
         return
       }
     }
@@ -3899,9 +3931,8 @@ export default function LandlordPropertyFormPage() {
       },
       accuracyContentHash,
     )
-    if (!skipAttestations && !hasCurrentAccuracyAttestation && !accuracyAgreed) {
-      reportSubmitError(LISTING_ACCURACY_BLOCKED_MESSAGE)
-      document.getElementById('section-listing-accuracy')?.scrollIntoView({ behavior: 'smooth' })
+    if (requireCompleteness && !skipAttestations && !hasCurrentAccuracyAttestation && !accuracyAgreed) {
+      reportSubmitError(LISTING_ACCURACY_BLOCKED_MESSAGE, 'section-listing-accuracy')
       return
     }
 
@@ -3916,7 +3947,7 @@ export default function LandlordPropertyFormPage() {
         landlordId = (existing as { landlord_id: string | null } | null)?.landlord_id ?? null
       }
       if (!landlordId) {
-        reportSubmitError('Select a landlord for this listing.')
+        reportSubmitError('Select a landlord for this listing.', 'admin-landlord')
         return
       }
     }
@@ -3926,7 +3957,7 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    if (needsNonDiscriminationAcceptance && user.id) {
+    if (needsNonDiscriminationAcceptance && nonDiscriminationAgreed && user.id) {
       const { error: policyErr } = await supabase
         .from('landlord_profiles')
         .update(nonDiscriminationAcceptancePatch())
@@ -4368,44 +4399,98 @@ export default function LandlordPropertyFormPage() {
   }, [])
 
   const handleSaveDraftAndLeave = useCallback(async () => {
-    if (listingStateCode && !isListingAgreementState(listingStateCode)) {
-      setSubmitError(unsupportedListingStateMessage(listingStateCode))
-      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (!user?.id) {
+      reportSubmitError('You must be signed in to save this listing.')
       return
     }
-    if (postcodeStateConflict) {
-      setSubmitError(postcodeStateConflict)
-      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const blocked = listingDraftLeaveIssue({
+      title,
+      listingStateCode: listingStateCode ?? '',
+      unsupportedStateMessage:
+        listingStateCode && !isListingAgreementState(listingStateCode)
+          ? unsupportedListingStateMessage(listingStateCode)
+          : null,
+      postcodeStateConflict,
+      rentPerWeek,
+      rentRequiredMessage: LISTING_HUB_RENT_REQUIRED_MESSAGE,
+    })
+    if (blocked) {
+      reportSubmitError(blocked.message, blocked.fieldId)
+      if (!showFormSection(blocked.sectionDomId)) {
+        const view = hubSectionIdFromFormSectionId(blocked.sectionDomId)
+        if (view) {
+          navigate(listingHubPath({ propertyId, view }), {
+            state: { listingFormLeaveError: { message: blocked.message, fieldId: blocked.fieldId } },
+          })
+        }
+      }
       return
     }
     if (!requireConfirmedAddressRef.current()) return
+    const t = title.trim()
+    const rent = Number(rentPerWeek)
+    const landlordId = role === 'admin' ? adminLandlordId || null : landlordProfile?.id ?? null
+    if (!landlordId) {
+      reportSubmitError(
+        role === 'admin'
+          ? 'Select a landlord for this listing.'
+          : 'Landlord profile is missing. Complete landlord onboarding first.',
+        role === 'admin' ? 'admin-landlord' : null,
+      )
+      return
+    }
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const draftCoupleRaw = coupleSurchargePerWeek.trim()
+    const draftCouple = draftCoupleRaw ? Number(draftCoupleRaw) : null
+    const draftOccupancy = occupancyPricesForSave({
+      propertyType: accommodation.propertyListingType,
+      rentPerWeek: rent,
+      maxOccupants: parseInt(maxOccupants, 10) || 1,
+      coupleSurcharge: draftCouple != null && Number.isFinite(draftCouple) ? draftCouple : null,
+      togetherEnabled,
+      togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
+    })
+    if (!draftOccupancy.ok) {
+      reportSubmitError(draftOccupancy.message, 'pf-together-weekly-rent')
+      if (!showFormSection('section-pricing-availability')) {
+        navigate(listingHubPath({ propertyId, view: 'pricing' }), {
+          state: {
+            listingFormLeaveError: {
+              message: draftOccupancy.message,
+              fieldId: 'pf-together-weekly-rent',
+            },
+          },
+        })
+      }
+      return
+    }
     editDirtyRef.current = true
     persistLandlordPropertyDraft()
-    flashDraftSavedIndicator()
 
-    if (!isEdit && user?.id) {
-      const t = title.trim()
-      const rent = Number(rentPerWeek)
-      const landlordId = role === 'admin' ? adminLandlordId || null : landlordProfile?.id ?? null
-      if (t && Number.isFinite(rent) && rent > 0 && landlordId) {
-        try {
-          setSubmitting(true)
+    const leaveAfterSaved = (savedId: string) => {
+      flashDraftSavedIndicator()
+      if (role === 'admin') {
+        navigate(`/landlord/property/edit/${savedId}`, {
+          replace: true,
+          state: { conciergeDraftCreated: !isEdit },
+        })
+        return
+      }
+      if (isHubSectionMode) {
+        navigate(listingHubPath({ propertyId: savedId }), {
+          replace: true,
+          state: { listingHubIntent: true },
+        })
+        return
+      }
+      navigate('/landlord/dashboard?tab=listings', { replace: true })
+    }
+
+    let createdId: string | null = null
+    try {
+      setSubmitting(true)
+      if (!isEdit) {
           const slug = generatePropertySlug(t)
-          const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
-          const draftCoupleRaw = coupleSurchargePerWeek.trim()
-          const draftCouple = draftCoupleRaw ? Number(draftCoupleRaw) : null
-          const draftOccupancy = occupancyPricesForSave({
-            propertyType: accommodation.propertyListingType,
-            rentPerWeek: rent,
-            maxOccupants: parseInt(maxOccupants, 10) || 1,
-            coupleSurcharge: draftCouple != null && Number.isFinite(draftCouple) ? draftCouple : null,
-            togetherEnabled,
-            togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
-          })
-          if (!draftOccupancy.ok) {
-            setSubmitError(draftOccupancy.message)
-            return
-          }
           const { data: inserted, error: insErr } = await supabase
             .from('properties')
             .insert({
@@ -4485,6 +4570,7 @@ export default function LandlordPropertyFormPage() {
             .single()
           if (insErr) throw insErr
           const newId = (inserted as { id: string }).id
+          createdId = newId
           const featureIds = [...selectedFeatureIds]
           if (featureIds.length) await savePropertyFeatures(newId, featureIds)
           if (Object.keys(selectedRules).length) await savePropertyHouseRules(newId, selectedRules)
@@ -4508,32 +4594,26 @@ export default function LandlordPropertyFormPage() {
             if (auditErr) console.warn('[concierge listing] audit', auditErr.message)
           }
           clearLandlordPropertyNewDraft()
-          navigate(
-            role === 'admin'
-              ? `/landlord/property/edit/${newId}`
-              : listingHubPath({ propertyId: newId }),
-            role === 'admin' ? { replace: true, state: { conciergeDraftCreated: true } } : { replace: true },
-          )
+          leaveAfterSaved(newId)
           return
-        } catch (err) {
-          console.error('[LandlordPropertyFormPage] server draft save failed', err)
-          setDraftPersistError(
-            err instanceof Error
-              ? `Saved on this device only - account draft failed: ${err.message}`
-              : 'Saved on this device only - could not create account draft.',
-          )
-        } finally {
-          setSubmitting(false)
-        }
       }
-    }
-
-    if (isHubSectionMode) {
-      navigate(hubReturnPath, { state: { listingHubIntent: true } })
-    } else if (isEdit && propertyId) {
-      navigate(listingHubPath({ propertyId }), { state: { listingHubIntent: true } })
-    } else {
-      navigate('/landlord/dashboard?tab=listings')
+      if (!propertyId) {
+        reportSubmitError('This draft has no saved listing yet.')
+        return
+      }
+      const saved = await flushDraftToAccountRef.current()
+      if (!saved) return
+      leaveAfterSaved(propertyId)
+    } catch (err) {
+      console.error('[LandlordPropertyFormPage] server draft save failed', err)
+      if (createdId) {
+        clearLandlordPropertyNewDraft()
+        leaveAfterSaved(createdId)
+        return
+      }
+      reportSubmitError(submitErrorMessageFromUnknown(err))
+    } finally {
+      setSubmitting(false)
     }
   }, [
     listingStateCode,
@@ -4585,9 +4665,9 @@ export default function LandlordPropertyFormPage() {
     selectedFeatureIds,
     selectedRules,
     isHubSectionMode,
-    hubReturnPath,
     propertyId,
     navigate,
+    showFormSection,
     skipAttestations,
     t3ComplianceForm,
   ])
@@ -4621,7 +4701,7 @@ export default function LandlordPropertyFormPage() {
       togetherWeeklyRent: parseTogetherAud(togetherWeeklyRent),
     })
     if (!flushOccupancy.ok) {
-      setSubmitError(flushOccupancy.message)
+      reportSubmitError(flushOccupancy.message, 'pf-together-weekly-rent')
       return false
     }
     const { error: upErr } = await supabase
@@ -4693,6 +4773,7 @@ export default function LandlordPropertyFormPage() {
     selectedFeatureIds,
     selectedRules,
   ])
+  flushDraftToAccountRef.current = flushDraftToAccount
 
   const handleWizardPrev = useCallback(() => {
     if (!hubSectionId) return
@@ -4703,8 +4784,7 @@ export default function LandlordPropertyFormPage() {
   const handleWizardNext = useCallback(async () => {
     if (!hubSectionId) return
     if (listingStateCode && !isListingAgreementState(listingStateCode) && hubSectionId !== 'basic') {
-      setSubmitError(unsupportedListingStateMessage(listingStateCode))
-      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(unsupportedListingStateMessage(listingStateCode), 'pf-state')
       return
     }
     const stepError = listingHubWizardStepError(hubSectionId, { title, rentPerWeek })
@@ -4728,6 +4808,7 @@ export default function LandlordPropertyFormPage() {
       } catch (err) {
         console.error('[LandlordPropertyFormPage] wizard flush failed', err)
         if (goingToPreview) {
+          setSubmitErrorFieldId(null)
           setSubmitError(
             err instanceof Error
               ? `Could not save this step before preview: ${err.message}`
@@ -4759,13 +4840,11 @@ export default function LandlordPropertyFormPage() {
   const handleOpenPreview = useCallback(async () => {
     if (!footerPreviewHref) return
     if (listingStateCode && !isListingAgreementState(listingStateCode)) {
-      setSubmitError(unsupportedListingStateMessage(listingStateCode))
-      document.getElementById('pf-state')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(unsupportedListingStateMessage(listingStateCode), 'pf-state')
       return
     }
     if (postcodeStateConflict) {
-      setSubmitError(postcodeStateConflict)
-      document.getElementById('pf-pc')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      reportSubmitError(postcodeStateConflict, 'pf-pc')
       return
     }
     persistLandlordPropertyDraft()
@@ -4776,6 +4855,7 @@ export default function LandlordPropertyFormPage() {
         saved = await flushDraftToAccount()
       } catch (err) {
         console.error('[LandlordPropertyFormPage] preview flush failed', err)
+        setSubmitErrorFieldId(null)
         setSubmitError(
           err instanceof Error
             ? `Could not save before preview: ${err.message}`
@@ -4879,6 +4959,18 @@ export default function LandlordPropertyFormPage() {
   const desktopHeaderPreviewButton = desktopTopPreviewButton(
     'hidden sm:inline-flex items-center rounded-[10px] bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:cursor-not-allowed disabled:opacity-50',
   )
+  const listingFieldIssue = (id: string) =>
+    submitError && submitErrorFieldId === id ? (
+      <p className="mt-2 text-sm font-medium text-red-700" role="alert">
+        {submitError}
+      </p>
+    ) : null
+  const listingInvalidClass = (id: string, className: string) =>
+    submitError && submitErrorFieldId === id ? `${className} ring-2 ring-red-600 ring-offset-2` : className
+  const listingFieldInDocument =
+    Boolean(submitError && submitErrorFieldId) &&
+    typeof document !== 'undefined' &&
+    document.getElementById(submitErrorFieldId ?? '') != null
 
   return (
     <div
@@ -5050,7 +5142,7 @@ export default function LandlordPropertyFormPage() {
 
         <form ref={formRef} onSubmit={handleSubmit} onKeyDown={blockImplicitFormSubmit} noValidate className="min-w-0 max-w-full">
           <div className="space-y-8">
-          {submitError && (
+          {submitError && !listingFieldInDocument && (
             <div
               id="listing-form-feedback-top"
               className={
@@ -5101,7 +5193,7 @@ export default function LandlordPropertyFormPage() {
                 required
                 value={adminLandlordId}
                 onChange={(e) => applyAdminLandlordProfile(e.target.value)}
-                className={inputClass}
+                className={listingInvalidClass('admin-landlord', inputClass)}
               >
                 <option value="">Select landlord…</option>
                 {filteredLandlordOptions.map((o) => {
@@ -5113,6 +5205,7 @@ export default function LandlordPropertyFormPage() {
                   )
                 })}
               </select>
+              {listingFieldIssue('admin-landlord')}
               {adminLandlordQuery.trim() && filteredLandlordOptions.length === 0 ? (
                 <p className="mt-2 text-xs text-gray-600">No landlords match that search.</p>
               ) : null}
@@ -5132,8 +5225,9 @@ export default function LandlordPropertyFormPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className={inputClass}
+                  className={listingInvalidClass('pf-title', inputClass)}
                 />
+                {listingFieldIssue('pf-title')}
               </div>
             </div>,
             'section-basic-info',
@@ -5143,6 +5237,7 @@ export default function LandlordPropertyFormPage() {
             sectionClass(
             'Location',
             <div className="space-y-4">
+              {listingFieldIssue('section-location')}
               {unsupportedListingState ? <UnsupportedStateNotice state={listingStateCode ?? ''} /> : null}
               <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
                 This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
@@ -5343,7 +5438,7 @@ export default function LandlordPropertyFormPage() {
                           if (!applyListingState(e.target.value)) return
                           onAddressPartChange('state', e.target.value)
                         }}
-                        className={inputClass}
+                        className={listingInvalidClass('pf-state', inputClass)}
                         required
                       >
                         <option value="">Select a state</option>
@@ -5353,6 +5448,7 @@ export default function LandlordPropertyFormPage() {
                           </option>
                         ))}
                       </select>
+                      {listingFieldIssue('pf-state')}
                     </div>
                     <div>
                       <label htmlFor="pf-pc" className={labelClass}>
@@ -5376,7 +5472,9 @@ export default function LandlordPropertyFormPage() {
                         <p className="mt-1 text-sm text-red-700" role="alert">
                           {postcodeStateConflict}
                         </p>
-                      ) : null}
+                      ) : (
+                        listingFieldIssue('pf-pc')
+                      )}
                     </div>
                   </div>
                   <button
@@ -5614,6 +5712,7 @@ export default function LandlordPropertyFormPage() {
               {showRoomForRentSelect(accommodationChoice) ? (
                 <div id="section-accommodation" className="space-y-4 scroll-mt-below-header">
               {qldRoomCard ? (
+                <div id="pf-qld-shares" className={submitError && submitErrorFieldId === 'pf-qld-shares' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
                 <QldSharesKitchenOrBathroomField
                   value={qldRoomingForm.sharesKitchenOrBathroom}
                   onChange={(sharesKitchenOrBathroom) =>
@@ -5621,6 +5720,8 @@ export default function LandlordPropertyFormPage() {
                   }
                   labelClass={labelClass}
                 />
+                {listingFieldIssue('pf-qld-shares')}
+                </div>
               ) : null}
               {qldOnSiteBoarderLodger ? (
                 <div className="space-y-3">
@@ -5628,6 +5729,7 @@ export default function LandlordPropertyFormPage() {
                   <div>
                     <label htmlFor="pf-qld-rooms-rented" className={labelClass}>
                       Rooms you rent to residents in this home
+                      <RequiredMark />
                     </label>
                     <p className="text-xs text-gray-600 mt-0.5 mb-1">{QLD_ROOMS_LET_HELPER}</p>
                     <input
@@ -5638,8 +5740,9 @@ export default function LandlordPropertyFormPage() {
                       required
                       value={roomsRentedToResidents}
                       onChange={(e) => setRoomsRentedToResidents(e.target.value)}
-                      className={inputClass}
+                      className={listingInvalidClass('pf-qld-rooms-rented', inputClass)}
                     />
+                    {listingFieldIssue('pf-qld-rooms-rented')}
                     {qldRoomsRentedError ? (
                       <p className="mt-2 text-sm text-amber-800" role="alert">
                         {qldRoomsRentedError}
@@ -5697,9 +5800,10 @@ export default function LandlordPropertyFormPage() {
                     type="text"
                     value={roomingHouseRegistrationNumber}
                     onChange={(e) => setRoomingHouseRegistrationNumber(e.target.value)}
-                    className={inputClass}
+                    className={listingInvalidClass('pf-rooming-reg', inputClass)}
                     autoComplete="off"
                   />
+                  {listingFieldIssue('pf-rooming-reg')}
                   {showRoomingHouseValidation && roomingHouseErrors.missingRegistration ? (
                     <p className="mt-2 text-sm text-red-600" role="alert">
                       {roomingHouseErrors.missingRegistration}
@@ -5717,6 +5821,8 @@ export default function LandlordPropertyFormPage() {
                   showRoomingFields={vicRoomingRoute.kind === 'rooming'}
                   showUnsharedRent={vicRoomingRoute.kind === 'rooming' && propertyListingType === 'shared_room'}
                   capacityError={vicCapacityError}
+                  errorFieldId={submitErrorFieldId}
+                  errorMessage={submitError}
                   values={vicRoomingFields}
                   onChange={(next) => {
                     if (vicRoomingFields.pay.bankDeposit && !next.pay.bankDeposit) {
@@ -5733,7 +5839,8 @@ export default function LandlordPropertyFormPage() {
                 />
               ) : null}
               {isNswT3Listing ? (
-                <div id="section-nsw-t3-particulars" className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <div id="section-nsw-t3-particulars" className={listingInvalidClass('section-nsw-t3-particulars', 'space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4')}>
+                  {listingFieldIssue('section-nsw-t3-particulars')}
                   <p className="text-sm font-medium text-gray-900">Boarding-house occupancy particulars</p>
                   <p className="text-xs text-gray-600 leading-relaxed">
                     These details print on the NSW Standard Occupancy Agreement. Room description is required. Tick
@@ -5742,19 +5849,24 @@ export default function LandlordPropertyFormPage() {
                   <div>
                     <label htmlFor="pf-room-description" className={labelClass}>
                       Room description
+                      <RequiredMark />
                     </label>
                     <input
                       id="pf-room-description"
                       type="text"
                       value={roomDescription}
                       onChange={(e) => setRoomDescription(e.target.value)}
-                      className={inputClass}
+                      className={listingInvalidClass('pf-room-description', inputClass)}
                       placeholder="e.g. Room 3, first floor rear"
                       autoComplete="off"
                     />
+                    {listingFieldIssue('pf-room-description')}
                   </div>
                   <fieldset>
-                    <legend className={labelClass}>Shared areas</legend>
+                    <legend className={labelClass}>
+                      Shared areas
+                      <RequiredMark />
+                    </legend>
                     <div className="mt-2 space-y-2">
                       {(
                         [
@@ -5868,16 +5980,18 @@ export default function LandlordPropertyFormPage() {
                 <div>
                   <label htmlFor="pf-qld-room-description" className={labelClass}>
                     Room description
+                    <RequiredMark />
                   </label>
                   <input
                     id="pf-qld-room-description"
                     type="text"
                     value={roomDescription}
                     onChange={(e) => setRoomDescription(e.target.value)}
-                    className={inputClass}
+                    className={listingInvalidClass('pf-qld-room-description', inputClass)}
                     placeholder="e.g. Room 3, first floor rear"
                     autoComplete="off"
                   />
+                  {listingFieldIssue('pf-qld-room-description')}
                 </div>
               ) : null}
               {showQldRoomingHouseRules ? (
@@ -5892,6 +6006,7 @@ export default function LandlordPropertyFormPage() {
                   }}
                   labelClass={labelClass}
                   inputClass={inputClass}
+                  banner={submitErrorFieldId === 'section-qld-rooming-particulars' ? submitError : null}
                 />
               ) : null}
                 </div>
@@ -5931,7 +6046,8 @@ export default function LandlordPropertyFormPage() {
                   />
                 </div>
               </div>
-              <div id="section-lister-role" className="space-y-3">
+              <div id="section-lister-role" className={listingInvalidClass('section-lister-role', 'space-y-3')}>
+                {listingFieldIssue('section-lister-role')}
                 <p className="text-sm font-medium text-gray-900">Who is listing this property?</p>
                 <div className="space-y-2">
                   <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-admin-coral/50 has-[:checked]:bg-admin-coral/5">
@@ -6021,7 +6137,8 @@ export default function LandlordPropertyFormPage() {
                   {ADMIN_CONCIERGE_DRAFT_NOTE}
                 </p>
               ) : (
-              <div id="section-authority-to-let">
+              <div id="section-authority-to-let" className={submitError && submitErrorFieldId === 'section-authority-to-let' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
+                {listingFieldIssue('section-authority-to-let')}
                 <label
                   className={`flex gap-3 items-start text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 ${
                     headTenantAuthorityAttestationLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
@@ -6061,8 +6178,9 @@ export default function LandlordPropertyFormPage() {
               {isNswT3Listing && !skipAttestations ? (
                 <div
                   id="section-nsw-t3-compliance"
-                  className="space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4 scroll-mt-below-header"
+                  className={listingInvalidClass('section-nsw-t3-compliance', 'space-y-4 rounded-xl border border-stone-200 bg-stone-50 p-4 scroll-mt-below-header')}
                 >
+                  {listingFieldIssue('section-nsw-t3-compliance')}
                   <p className="text-sm font-medium text-gray-900">{NSW_T3_COMPLIANCE_SECTION_TITLE}</p>
                   <p className="text-xs text-gray-600 leading-relaxed">{NSW_T3_COMPLIANCE_INTRO}</p>
                   {t3ComplianceCompleteOnLoad ? (
@@ -6283,6 +6401,8 @@ export default function LandlordPropertyFormPage() {
                   waterAttestationPersisted={propertyHasWaterSeparatelyMeteredAttestation({
                     water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
                   })}
+                  errorFieldId={submitErrorFieldId}
+                  errorMessage={submitError}
                 />,
                 'section-utilities',
               )
@@ -6297,13 +6417,19 @@ export default function LandlordPropertyFormPage() {
                     onChange={(patch) => setFt6600Compliance((prev) => ({ ...prev, ...patch }))}
                     inputClass={inputClass}
                     labelClass={labelClass}
+                    errorFieldId={submitErrorFieldId}
+                    errorMessage={submitError}
                   />
                   {ft6600Compliance.waterUsageChargedSeparately === 'yes' &&
                   !skipAttestations &&
                   !propertyHasWaterSeparatelyMeteredAttestation({
                     water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
                   }) ? (
-                    <div id="section-water-metered-attestation">
+                    <div
+                      id="section-water-metered-attestation"
+                      className={submitError && submitErrorFieldId === 'section-water-metered-attestation' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}
+                    >
+                      {listingFieldIssue('section-water-metered-attestation')}
                       <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                         <input
                           type="checkbox"
@@ -6319,6 +6445,7 @@ export default function LandlordPropertyFormPage() {
                         <span className="space-y-2">
                           <span className="block font-medium text-gray-900">
                             {WATER_SEPARATELY_METERED_ATTESTATION_LABEL}
+                            <RequiredMark />
                           </span>
                           <span className="block text-gray-800">
                             {WATER_SEPARATELY_METERED_ATTESTATION_INTRO}
@@ -6573,8 +6700,9 @@ export default function LandlordPropertyFormPage() {
                   value={rentPerWeek}
                   onChange={(e) => setRentPerWeek(e.target.value)}
                   required
-                  className={inputClass}
+                  className={listingInvalidClass('pf-rent', inputClass)}
                 />
+                {listingFieldIssue('pf-rent')}
                 {roomOffersTogetherTotal(propertyListingType) ? (
                   <p className="mt-1 text-xs text-gray-600">This is the weekly rent for one person.</p>
                 ) : null}
@@ -6663,6 +6791,7 @@ export default function LandlordPropertyFormPage() {
                       <div>
                         <label htmlFor="pf-together-weekly-rent" className={labelClass}>
                           Weekly rent for two people together ($)
+                          <RequiredMark />
                         </label>
                         <input
                           id="pf-together-weekly-rent"
@@ -6671,8 +6800,9 @@ export default function LandlordPropertyFormPage() {
                           step={1}
                           value={togetherWeeklyRent}
                           onChange={(e) => setTogetherWeeklyRent(e.target.value)}
-                          className={inputClass}
+                          className={listingInvalidClass('pf-together-weekly-rent', inputClass)}
                         />
+                        {listingFieldIssue('pf-together-weekly-rent')}
                         <p className="mt-1 text-xs text-gray-500">
                           This is the total for both people, not an extra on top of the one-person rent.
                         </p>
@@ -6711,8 +6841,9 @@ export default function LandlordPropertyFormPage() {
                           value={coupleSurchargePerWeek}
                           onChange={(e) => setCoupleSurchargePerWeek(e.target.value)}
                           placeholder="e.g. 100"
-                          className={inputClass}
+                          className={listingInvalidClass('pf-couple-surcharge', inputClass)}
                         />
+                        {listingFieldIssue('pf-couple-surcharge')}
                         <p className="mt-1 text-xs text-gray-500">
                           Added to base rent when a student books for two occupants.
                         </p>
@@ -6748,8 +6879,9 @@ export default function LandlordPropertyFormPage() {
                       value={parkingSurchargePerWeek}
                       onChange={(e) => setParkingSurchargePerWeek(e.target.value)}
                       placeholder="e.g. 50"
-                      className={inputClass}
+                      className={listingInvalidClass('pf-parking-surcharge', inputClass)}
                     />
+                    {listingFieldIssue('pf-parking-surcharge')}
                   </div>
                 ) : null}
               </div>
@@ -6858,31 +6990,36 @@ export default function LandlordPropertyFormPage() {
                   <div>
                     <label htmlFor="pf-payee-bank-name" className={labelClass}>
                       Bank name
+                      {showQldRoomingHouseRules ? <RequiredMark /> : null}
                     </label>
                     <input
                       id="pf-payee-bank-name"
                       value={payeeBankName}
                       onChange={(e) => setPayeeBankName(e.target.value)}
                       autoComplete="off"
-                      className={inputClass}
+                      className={listingInvalidClass('pf-payee-bank-name', inputClass)}
                     />
+                    {listingFieldIssue('pf-payee-bank-name')}
                   </div>
                   <div>
                     <label htmlFor="pf-payee-account-name" className={labelClass}>
                       Account name
+                      <RequiredMark />
                     </label>
                     <input
                       id="pf-payee-account-name"
                       value={payeeAccountName}
                       onChange={(e) => setPayeeAccountName(e.target.value)}
                       autoComplete="off"
-                      className={inputClass}
+                      className={listingInvalidClass('pf-payee-account-name', inputClass)}
                     />
+                    {listingFieldIssue('pf-payee-account-name')}
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <label htmlFor="pf-payee-bsb" className={labelClass}>
                         BSB
+                        <RequiredMark />
                       </label>
                       <input
                         id="pf-payee-bsb"
@@ -6891,12 +7028,14 @@ export default function LandlordPropertyFormPage() {
                         placeholder="000-000"
                         inputMode="numeric"
                         autoComplete="off"
-                        className={inputClass}
+                        className={listingInvalidClass('pf-payee-bsb', inputClass)}
                       />
+                      {listingFieldIssue('pf-payee-bsb')}
                     </div>
                     <div>
                       <label htmlFor="pf-payee-account-number" className={labelClass}>
                         Account number
+                        <RequiredMark />
                       </label>
                       <input
                         id="pf-payee-account-number"
@@ -6904,8 +7043,9 @@ export default function LandlordPropertyFormPage() {
                         onChange={(e) => setPayeeAccountNumber(e.target.value)}
                         inputMode="numeric"
                         autoComplete="off"
-                        className={inputClass}
+                        className={listingInvalidClass('pf-payee-account-number', inputClass)}
                       />
+                      {listingFieldIssue('pf-payee-account-number')}
                     </div>
                   </div>
                 </div>
@@ -7052,6 +7192,8 @@ export default function LandlordPropertyFormPage() {
 
           <div className="flex flex-col gap-3">
             {needsNonDiscriminationAcceptance ? (
+              <div id="pf-non-discrimination" className={submitError && submitErrorFieldId === 'pf-non-discrimination' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}>
+              {listingFieldIssue('pf-non-discrimination')}
               <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <input
                   type="checkbox"
@@ -7072,10 +7214,16 @@ export default function LandlordPropertyFormPage() {
                   >
                     Non-Discrimination Policy
                   </a>
+                  <RequiredMark />
                 </span>
               </label>
+              </div>
             ) : null}
-            <div id="section-listing-accuracy">
+            <div
+              id="section-listing-accuracy"
+              className={submitError && submitErrorFieldId === 'section-listing-accuracy' ? 'rounded-[10px] ring-2 ring-red-600 ring-offset-2' : undefined}
+            >
+              {listingFieldIssue('section-listing-accuracy')}
               {skipAttestations ? (
                 <p className="text-sm text-gray-700 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                   {ADMIN_CONCIERGE_DRAFT_NOTE}
@@ -7091,12 +7239,15 @@ export default function LandlordPropertyFormPage() {
                   }}
                   className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
                 />
-                <span className="font-medium text-gray-900">{LISTING_ACCURACY_ATTESTATION_LABEL}</span>
+                <span className="font-medium text-gray-900">
+                  {LISTING_ACCURACY_ATTESTATION_LABEL}
+                  <RequiredMark />
+                </span>
               </label>
               )}
             </div>
             <div id="listing-form-feedback-bottom" className="space-y-3">
-              {submitError && !isHubSectionMode ? (
+              {submitError && !listingFieldInDocument && !isHubSectionMode ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                   {submitError}
                 </div>
